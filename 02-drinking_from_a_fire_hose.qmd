@@ -1,0 +1,1238 @@
+---
+engine: knitr
+---
+
+# Drinking from a fire hose {#sec-fire-hose}
+
+**Required material**
+
+- Read *Data science as an atomic habit*, [@citeBarrett]
+- Read *This is how AI bias really happens---and why it's so hard to fix*, [@hao2019]
+- Read *The mundanity of excellence: An ethnographic report on stratification and Olympic swimmers*, [@chambliss1989mundanity]
+
+**Key concepts and skills**
+
+- The statistical programming language R enables us to tell interesting stories using data. It is a language like any other, and the path to mastery can be slow.
+- The framework that we use to approach projects is: plan, simulate, gather, explore, and share.
+- The way to learn R is to start with a small project and break down what is required to achieve it into tiny steps, look at other people's code, and draw on that to achieve each step. Complete that project and move onto the next project. Each project you will get a little better. 
+- The key is to start actively working regularly.
+
+**Key libraries**
+
+- `ggplot2` [@citeggplot]
+- `janitor` [@janitor]
+- `opendatatoronto` [@citeSharla]
+- `tidyr` [@citetidyr]
+- `tidyverse` [@Wickham2017]
+
+**Key functions**
+
+- `<-` 'assign'
+- `|>` 'pipe'
+- `+` 'add'
+- `c()`
+- `citation()`
+- `class()`
+- `dplyr::arrange()`
+- `dplyr::filter()`
+- `dplyr::mutate()`
+- `dplyr::recode()`
+- `dplyr::rename()`
+- `dplyr::select()`
+- `dplyr::summarize()`
+- `ggplot2::geom_bar()`
+- `ggplot2::geom_point()`
+- `ggplot2::ggplot()`
+- `head()`
+- `janitor::clean_names()`
+- `library()`
+- `names()`
+- `readr::read_csv()`
+- `readr::write_csv()`
+- `rep()`
+- `rpois()`
+- `runif()`
+- `sample()`
+- `set.seed()`
+- `stringr::str_remove()`
+- `sum()`
+- `tail()`
+- `tidyr::separate()`
+
+
+## Hello, World!
+
+The way to start, is to start. In this chapter we go through three complete examples of the workflow advocated in this book. This means we will: plan, simulate, acquire, explore, and share. If you are new to R, then some of the code may be a bit unfamiliar to you. If you are new to statistics, then some of the concepts may be unfamiliar. Do not worry. It will all soon become familiar. 
+
+The only way to learn how to tell stories, is to start telling stories yourself. This means that you should try to get these examples working. Do the sketches yourself, type everything out yourself (using R Studio Cloud if you are new to R and do not have it installed on your own computer), and execute it all. It is important, and normal, to realize that it will be challenging at the start.
+
+> Whenever you're learning a new tool, for a long time, you're going to suck... But the good news is that is typical; that's something that happens to everyone, and it's only temporary.
+>
+> Hadley Wickham as quoted by @citeBarrett.
+
+You will be guided thoroughly here. Hopefully by experiencing the power of telling stories with data, you will feel empowered to stick with it.
+
+To get started, go to R Studio Cloud -- https://rstudio.cloud/ -- and create an account. As we are not doing anything too involved the free version will be fine for now. Once you have an account and log in, then it should look something like @fig-opening-r-studio-cloud.
+
+![Opening R Studio Cloud for the first time](figures/opening-r-studio-cloud-for-the-first-time.png){#fig-opening-r-studio-cloud width=85% fig-align="center"}
+
+(You will be in 'Your Workspace', and you will not have an 'Example Workspace'.) From here you should start a 'New Project'. You can give the project a name by clicking on 'Untitled Project' and replacing it. 
+
+We will now go through three worked examples: Australian elections, Toronto homelessness, and neonatal mortality. These examples build increasing complexity, but from the first one, we will be telling a story with data.
+
+
+## Australian elections
+
+Australia is a parliamentary democracy with 151 seats in the House of Representativce, which is the lower house and that from which government is formed. There are two major parties -- 'Liberal' and 'Labor' -- two minor parties -- 'National' and 'Green' -- and many smaller parties and independents. In this example we will create a graph of the number of seats that each party won in the 2019 Federal Election.
+
+### Plan
+
+For this example, we need to plan two aspects. The first is what the dataset that we need will look like, and the second is what the final graph will look like.
+
+The basic requirement for the dataset is that it has the name of the seat (sometimes called a 'division' in Australia) and the party of the person elected. So, a quick sketch of the dataset that we would need could look something like @fig-canadaexampledata.
+
+![Quick sketch of a dataset that could be useful for analyzing Australian elections](figures/number-of-seats.png){#fig-canadaexampledata width=40% fig-align="center"}
+
+We also need to plan the graph that we are interested in. Given we want to display the number of seats that each party won, a quick sketch of what we might aim for is @fig-canadaexampletable
+
+![Quick sketch of a possible graph of the number of seats won by each party](figures/possible-seats.png){#fig-canadaexampletable width=75% fig-align="center"}
+
+### Simulate
+
+We now simulate some data, to bring some specificity to our sketches.
+
+To get started, within R Studio Cloud, make a new R Markdown file ('File' -> 'New File' -> 'R Markdown'). When you do this, you will be asked to install some packages, which you should agree to. For this example, we will put everything into this one R Markdown document. You should save it as 'australian_elections.Rmd' ('File' -> 'Save As...')
+
+In the R Markdown document create a new R code chunk ('Code' -> 'Insert Chunk') and add preamble documentation that explains:
+
+- the purpose of the document;
+- the author and contact details;
+- when the file was written or last updated; and
+- pre-requisites that the file relies on. 
+
+In R, lines that start with '#' are comments. This means that they are not run as code by R, but are instead designed to be read by humans. Each line of this preamble should start with a '#'. Also make it clear that this is the preamble section by surrounding that with '####'.
+
+```{r}
+#| eval: false
+#| echo: true
+
+#### Preamble ####
+# Purpose: Read in data from the 2019 Australian Election and make a
+# graph of the number of seats each party won.
+# Author: Rohan Alexander
+# Email: rohan.alexander@utoronto.ca
+# Date: 1 January 2022
+# Prerequisites: Need to know where to get Australian elections data.
+```
+
+After this we need to set-up the workspace. This involves installing and loading any packages that will be needed. A package only needs to be installed once for each computer, but needs to be loaded each time it is to be used. In this case we are going to use `tidyverse` [@Wickham2017], `janitor` [@janitor], and `tidyr` [@citetidyr]. They will need to be installed because this is the first time they are being used, and then each will need to be loaded.
+
+An example of installing the packages follows (excessive comments have been added to be clear about what is going on; in general, this level of commenting is unnecessary). Run this code by clicking the small green arrow associated with the R code chunk.
+
+```{r}
+#| eval: false
+#| echo: true
+
+#### Workspace set-up ####
+install.packages("tidyverse") # Only need to do this once per computer
+install.packages("janitor") # Only need to do this once per computer
+install.packages("tidyr") # Only need to do this once per computer
+```
+
+Now that the packages are installed, they need to be loaded. As that installation step only needs to be done once per computer, that code can be commented out so that it is not accidentally run.
+
+```{r}
+#| echo: true
+#| eval: true
+#| warning: false
+#| message: false
+
+#### Workspace set-up ####
+# install.packages("tidyverse") # Only need to do this once per computer
+# install.packages("janitor") # Only need to do this once per computer
+# install.packages("tidyr") # Only need to do this once per computer
+
+library(tidyverse) # A collection of data-related packages
+library(janitor) # Helps clean datasets
+library(tidyr) # Helps make tidy datasets
+```
+
+All packages contain a help file that provides information about them and their functions. It can be accessed by appending a question mark before the package name and then running that code. For instance `?tidyverse`.
+
+To simulate our data, we need to create a dataset with two columns: 'Division' and 'Party', and some values for each. In the case of 'Division' reasonable values would be a name of one of the 151 Australian divisions. In the case of 'Party' reasonable values would be one of the following five: 'Liberal', 'Labor', 'National', 'Green', 'Other'. Again, this code can be run by clicking the small green arrow associated with the R code chunk.
+
+```{r}
+#| echo: true
+#| eval: true
+#| warning: false
+#| message: false
+
+simulated_data <-
+  tibble(
+    # Use 1 through to 151 to represent each riding
+    'Riding' = 1:151,
+    # Randomly choose one of five options, with replacement, 151 times
+    'Party' = sample(
+      x = c(
+        'Liberal', 
+        'Labor', 
+        'National', 
+        'Green', 
+        'Other'
+      ),
+      size = 151,
+      replace = TRUE
+    ))
+
+simulated_data
+```
+
+
+At a certain point, your code will not run and you will want to ask others for help. We will discuss how to do this in Chapter \@ref(reproducible-workflows), but for now, if you need help, then you should create a GitHub Gist. The first step is to create an account on GitHub: https://github.com (@fig-githubone).
+
+![GitHub sign-up screen](figures/github_1.png){#fig-githubone width=85% fig-align="center"}
+
+
+Then look for a '+' in the top right, and then select 'New gist' (@fig-githubgistone).
+
+![New GitHub Gist](figures/githubgistone.png){#fig-githubgistone width=85% fig-align="center"}
+
+Then add all the code to that gist, not just the final bit that is giving an error. And give it a meaningful filename that includes '.R' at the end, for instance, 'australian_elections.R'. In @fig-githubgisttwo, we have incorrect capitalization `library(Tidyverse)`.
+
+![Create a public GitHub Gist to share code](figures/githubgisttwo.png){#fig-githubgisttwo width=85% fig-align="center"}
+
+Click 'Create public gist'. We can then share the URL to this Gist, explain what the problem is, and what we are trying to achieve. It will be much easier to help, because all the code is available.
+
+
+
+
+
+### Acquire
+
+Now we want to get the actual data. The data we need is from the Australian Electoral Commission (AEC), which is the non-partisan agency that organizes Australian federal elections. We can pass a website to `read_csv()` from the `readr` package [@citereadr]. We do not need to explicitly load the `readr` package because it is part of the `tidyverse`. The '<-' or 'assignment operator' is allocating the output of `read_csv()` to an object called 'raw_elections_data'. 
+
+
+```{r}
+#| eval: false
+#| echo: true
+
+#### Read in the data ####
+raw_elections_data <- 
+  read_csv(
+    file =
+      "https://results.aec.gov.au/24310/Website/Downloads/HouseMembersElectedDownload-24310.csv",
+    show_col_types = FALSE,
+    skip = 1
+    ) 
+
+# We have read the data from the AEC website. We may like
+# to save it in case something happens or they move it. 
+write_csv(
+  x = raw_elections_data, 
+  file = "australian_voting.csv"
+  )
+```
+
+```{r}
+#| eval: false
+#| echo: false
+
+raw_elections_data <- 
+  read_csv(
+    file =
+      "https://results.aec.gov.au/24310/Website/Downloads/HouseMembersElectedDownload-24310.csv",
+    show_col_types = FALSE,
+    skip = 1
+    ) 
+
+write_csv(
+  x = raw_elections_data, 
+  file = here::here("inputs/data/australian_voting.csv")
+  )
+```
+
+
+```{r}
+#| eval: true
+#| echo: false
+#| warning: false
+
+raw_elections_data <- 
+  read_csv(
+    here::here("inputs/data/australian_voting.csv"),
+    show_col_types = FALSE
+    )
+```
+
+We can take a quick look at the dataset using `head()` which will show the first six rows, and `tail()` which will show the last six rows.
+
+```{r}
+head(raw_elections_data)
+tail(raw_elections_data)
+```
+
+We need to clean the data so that we can use it. We are trying to make it similar to the dataset that we thought we wanted in the planning stage. While it is fine to move away from the plan, this needs to be a deliberate, reasoned, decision. After reading in the dataset that we saved, the first thing that we will do is adjust the names to make them easier to type. Removing the spaces helps to type column names. We will do this using `clean_names()` from `janitor` [@janitor] which changes the names into 'snake_case'.
+
+```{r}
+#| echo: false
+#| eval: true
+
+#### Basic cleaning ####
+raw_elections_data <- 
+  read_csv(file = here::here("inputs/data/australian_voting.csv"),
+           show_col_types = FALSE
+           )
+```
+
+```{r}
+#| echo: true
+#| eval: false
+
+#### Basic cleaning ####
+raw_elections_data <- 
+  read_csv(file = "australian_voting.csv",
+           show_col_types = FALSE
+           )
+```
+
+```{r}
+#| echo: true
+#| eval: true
+
+# Make the names easier to type
+cleaned_elections_data <- 
+  clean_names(raw_elections_data)
+
+# Have a look at the first six rows
+head(cleaned_elections_data)
+```
+
+The names are faster to type because R Studio will auto-complete them. To do this, we begin typing the name of a column and then use 'tab' to auto-complete it.
+
+There are many columns in the dataset, and we are primarily interested in two: 'division_nm', and 'party_nm'. We can choose certain columns of interest using `select()` from `dplyr` [@citedplyr] which we loaded as part of the `tidyverse`. The 'pipe operator', `|>`, pushes the output of one line to be the first input of the function on the next line. 
+
+```{r}
+#| echo: true
+#| eval: true
+
+cleaned_elections_data <- 
+  cleaned_elections_data |> 
+  # Select only certain columns
+  select(division_nm,
+         party_nm
+         )
+
+# Have a look at the first six rows
+head(cleaned_elections_data)
+```
+
+Some of the names of the columns are still not obvious because they are abbreviated. We can look at the names of the columns with `names()`. And we can change the names using `rename()` from `dplyr` [@citedplyr].
+
+```{r}
+names(cleaned_elections_data)
+```
+
+```{r}
+cleaned_elections_data <- 
+  cleaned_elections_data |> 
+  rename(
+    division = division_nm,
+    elected_party = party_nm
+    )
+
+head(cleaned_elections_data)
+```
+
+We will now look at this dataset, and the 'elected_party' column in particular.
+
+```{r}
+head(cleaned_elections_data$elected_party)
+```
+
+<!-- We can see that we have the surname of the elected candidate, followed by a comma, followed by their first name, followed by a space, followed by the name of the party in both English and French, separated by a slash. We can break-up this column into its pieces using `separate()` from `tidyr` [@citetidyr]. -->
+
+<!-- ```{r} -->
+<!-- cleaned_elections_data <-  -->
+<!--   cleaned_elections_data |>  -->
+<!--   # Separate the column into two based on the slash -->
+<!--   separate(col = elected_candidate, -->
+<!--            into = c('other', 'party'), -->
+<!--            sep = '/') |>  -->
+<!--   # Remove the 'other' column -->
+<!--   select(-other) -->
+
+<!-- head(cleaned_elections_data) -->
+<!-- ``` -->
+
+Finally we want to simplify the party names to match what we simulated, using `recode()` from `dplyr` [@citedplyr].
+
+```{r}
+cleaned_elections_data <-
+  cleaned_elections_data |>
+  mutate(
+    elected_party =
+      recode(
+        elected_party,
+        "Australian Labor Party" = "Labor",
+        "Liberal National Party" = "Liberal",
+        "The Nationals" = "Nationals",
+        "The Greens" = "Greens",
+        "Independent" = "Other",
+        "Katter's Australian Party (KAP)" = "Other",
+        "Centre Alliance" = "Other"
+      )
+  )
+
+head(cleaned_elections_data)
+```
+
+Our data now matches our plan (@fig-canadaexampledata) pretty well. For every electoral division we have the party of the person that won it. 
+
+Having now nicely cleaned the dataset, we should save it, so that we can start with that cleaned dataset in the next stage.
+
+```{r}
+#| echo: true
+#| eval: false
+
+write_csv(
+  x = cleaned_elections_data,
+  file = "cleaned_elections_data.csv"
+  )
+```
+
+```{r}
+#| echo: false
+#| eval: true
+
+write_csv(
+  cleaned_elections_data,
+  here::here("outputs/data/cleaned_elections_data.csv")
+  )
+```
+
+### Explore 
+
+At this point we would like to explore the dataset that we created. One way to better understand a dataset is to make a graph. In particular, here we would like to build the graph that we planned in @fig-canadaexampletable.
+
+First, we read in the dataset that we just created. 
+
+```{r}
+#| echo: false
+#| eval: true
+
+# Internal
+cleaned_elections_data <- 
+  read_csv(
+    file = "outputs/data/cleaned_elections_data.csv",
+    show_col_types = FALSE
+    )
+```
+
+```{r}
+#| echo: true
+#| eval: false
+
+#### Read in the data ####
+cleaned_elections_data <- 
+  read_csv(
+    file = "cleaned_elections_data.csv",
+    show_col_types = FALSE
+    )
+```
+
+We can get a quick count of how many seats each party won using `count()` from `dplyr` [@citedplyr].
+
+```{r}
+#| echo: true
+#| eval: true
+#| warning: false
+
+cleaned_elections_data |> 
+  count(elected_party)
+```
+
+To build the graph that we are interested in, we will rely on the `ggplot2` package [@citeggplot]. The key aspect of this package is that we build graphs by adding layers using '+', which we call the 'add operator'. In particular we will create a bar chart using `geom_bar()` from `ggplot2` [@citeggplot].
+
+```{r}
+#| echo: true
+#| eval: true
+#| warning: false
+
+cleaned_elections_data |> 
+  ggplot(aes(x = elected_party)) + # aes abbreviates aesthetics and enables us 
+  # to specify the x axis variable
+  geom_bar()
+```
+
+This accomplishes what we set out to do. But we can make it look a bit nicer by modifying the default options (@fig-canadanice).
+
+```{r}
+#| label: fig-canadanice
+#| echo: true
+#| eval: true
+#| warning: false
+#| fig-cap: "Number of seats won, by political party, at the 2019 Australian Federal Election"
+
+cleaned_elections_data |> 
+  ggplot(aes(x = elected_party)) +
+  geom_bar() +
+  theme_minimal() + # Make the theme neater
+  coord_flip() + # Swap the x and y axis to make parties easier to read
+  labs(x = "Party",
+       y = "Number of seats") # Make the labels more meaningful
+```
+
+
+### Communicate
+
+To this point we have downloaded some data, cleaned it, and made a graph. We would typically need to communicate what we have done at some length. In this case, we can write a few paragraphs about what we did, why we did it, and what we found. An example follows.
+
+> Australia is a parliamentary democracy with 151 seats in the House of Commons, which is the house that forms government. There are two major parties---'Liberal' and 'Labor'---two minor parties---'Nationals' and 'Greens'---and many smaller parties. The 2019 Federal Election occurred on 18 May, and more than 14 million votes were cast. We were interested in the number of seats that were won by each party.
+>
+> We downloaded the results, on a seat-specific basis, from the Australian Electoral Commission website. We cleaned and tidied the dataset using the statistical programming language R [@citeR] as well as the packages `tidyverse` [@citetidyverse] and `janitor` [@janitor]. We then created a graph of the number of seats that each political party won (@fig-canadanice).
+>
+> We found that the Labor Party won 68 seats, followed by the Liberal Party with 67 seats. The minor parties won the following number of seats: Nationals, 10 seats and the Green Party, 1 seats. Finally, candidates from five other parties were elected.
+>
+> The distribution of seats is skewed toward the two major parties which could reflect relatively stable preferences on the part of Australian voters, or possibly inertia due to the benefits of already being a major party such a national network and funding, or some other reason. A better understanding the reasons for this distribution are of interest in future work. While the dataset consists of everyone who voted, it worth noting that in Australia some are systematically excluded from voting; and it is much difficult for some to vote than others.
+
+
+
+## Toronto homelessness
+
+Toronto has a large homeless population [@torontohomeless]. Freezing winters mean it is important there are enough places in shelters. In this example we will make a table of shelter usage in the second half of 2021 that compares average use in each month. Our expectation is that there is greater usage in the colder months, for instance, December, compared with warmer months, for instance, July.
+
+
+### Plan
+
+The dataset that we are interested in would need to have date, the shelter, and the number of beds that were occupied that night. A quick sketch of a dataset that would work is @fig-torontohomelessdataplan.
+
+![Quick sketch of a dataset that could be useful for understanding shelter usage in Toronto](figures/IMG_1817.png){#fig-torontohomelessdataplan width=50% fig-align="center"}
+
+We are interested in creating a table that has the monthly average number of beds occupied each night. The table would probably look something like @fig-houselessexampletable
+
+![Quick sketch of a table of the average number of beds occupied each month](figures/IMG_1818.png){#fig-houselessexampletable width=50% fig-align="center"}
+
+
+### Simulate
+
+The next step is to simulate some data that could resemble our dataset. 
+
+Within R Studio Cloud make a new R Markdown file, save it, and make a new R code chunk and add preamble documentation. Then install and/or load the libraries that are needed. We will again use `tidyverse` [@Wickham2017], `janitor` [@janitor], and `tidyr` [@citetidyr]. As those were installed earlier, they do not need to be installed again. In this example we will also use `lubridate` [@GrolemundWickham2011], which is part of the `tidyverse` and so it does not need to be installed independently. We will also use `opendatatoronto` [@citeSharla], and `knitr` [@citeknitr] and these will need to be installed. 
+
+```{r}
+#| eval: false
+#| echo: true
+
+#### Preamble ####
+# Purpose: Get data about 2021 houseless shelter usage and make a table
+# Author: Rohan Alexander
+# Email: rohan.alexander@utoronto.ca
+# Date: 1 January 2022
+# Prerequisites: - 
+
+#### Workspace set-up ####
+install.packages("opendatatoronto")
+install.packages("lubridate")
+install.packages("knitr")
+
+library(knitr)
+library(janitor)
+library(lubridate)
+library(opendatatoronto)
+library(tidyverse)
+library(tidyr)
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+library(knitr)
+library(janitor)
+library(lubridate)
+library(opendatatoronto)
+library(tidyverse)
+library(tidyr)
+```
+
+To add a bit more detail to the earlier example, libraries contain code that other people have written. There are a few common ones that you will see regularly, especially the `tidyverse`. To use a package, we must first install it and then we need to load it. A package only needs to be installed once per computer but must be loaded every time. So, the packages that we installed earlier do not need to be reinstalled here.
+
+Given that folks freely gave up their time to make `R` and the packages that we use, it is important to cite them. To get the information that is needed, we can use `citation()`. When run without any arguments, that provides the citation information for `R` itself, and when run with an argument that is the name of a package, it provides the citation information for that package.
+
+```{r}
+citation() # Get the citation information for R
+citation('tidyverse') # Get the citation information for a particular package
+```
+
+Turning to the simulation, we need three columns: 'date', 'shelter', and 'occupancy'. This example will build on the earlier one by adding a seed using `set.seed()`. A seed enables us to always generate the same random data. Any integer can be used as the seed. In this case the seed will be 853. If you use that as your seed, then you should get the same random numbers as in this example. If you use a different seed, then you should expect different random numbers. Finally, we use `rep()` to repeat something a certain number of times. For instance, we repeat 'Shelter 1', 184 times which accounts for half a year.
+
+```{r}
+#| echo: true
+#| eval: true
+#| warning: false
+#| message: false
+
+#### Simulate ####
+set.seed(853)   
+
+simulated_occupancy_data <- 
+  tibble(
+    date = rep(x = as.Date("2021-07-01") + c(0:183), times = 3), 
+    # Based on Dirk Eddelbuettel: https://stackoverflow.com/a/21502386
+    shelter = c(rep(x = "Shelter 1", times = 184), 
+                rep(x = "Shelter 2", times = 184),
+                rep(x = "Shelter 3", times = 184)),
+    number_occupied = 
+      rpois(n = 184*3,
+            lambda = 30) # Draw 552 times from the Poisson distribution
+    )
+
+head(simulated_occupancy_data)
+```
+
+In this simulation we first create a list of all the dates in 2021. We repeat that list three times. We assume data for three shelters for every day of the year. To simulate the number of beds that are occupied each night, we draw from a Poisson distribution, assuming a mean number of 30 beds occupied per shelter.
+
+### Acquire
+
+We use data made available about Toronto homeless shelters by the City of Toronto. The premise of the data is that each night at 4am a count is made of the occupied beds. To access the data, we use `opendatatoronto` [@citeSharla] and then save our own copy. 
+
+```{r}
+#| eval: false
+#| echo: true
+
+#### Acquire ####
+# Based on code from: 
+# https://open.toronto.ca/dataset/daily-shelter-overnight-service-occupancy-capacity/
+# Thank you to Heath Priston for assistance
+toronto_shelters <- 
+  # Each package is associated with a unique id which can be found in 
+  # 'For Developers':
+  # https://open.toronto.ca/dataset/daily-shelter-overnight-service-occupancy-capacity/
+  list_package_resources("21c83b32-d5a8-4106-a54f-010dbe49f6f2") |> 
+  # Within that package, we are interested in the 2021 dataset
+  filter(name == "daily-shelter-overnight-service-occupancy-capacity-2021") |> 
+  # Having reduce the dataset down to one row we can get the resource
+  get_resource()
+
+write_csv(
+  x = toronto_shelters, 
+  file = "toronto_shelters.csv"
+  )
+
+head(toronto_shelters)
+```
+
+```{r}
+#| eval: false
+#| echo: false
+#| warning: false
+
+write_csv(
+  x = toronto_shelters, 
+  file = here::here("inputs/data/toronto_shelters.csv")
+  )
+```
+
+```{r}
+#| eval: true
+#| echo: false
+#| warning: false
+
+toronto_shelters <- 
+  read_csv(
+    here::here("inputs/data/toronto_shelters.csv"),
+    show_col_types = FALSE
+    )
+
+head(toronto_shelters)
+```
+
+Not much needs to be done to this to make it similar to the dataset that we were interested in (@fig-torontohomelessdataplan). We need to change the names to make them easier to type using `clean_names()`, reduce the columns to only those that are relevant using `select()`, and only keep the second half of the year using `filter()`. 
+
+```{r}
+toronto_shelters_clean <- 
+  clean_names(toronto_shelters) |> 
+  select(occupancy_date, id, occupied_beds) |> 
+  filter(occupancy_date >= as_date("2021-07-01"))
+
+head(toronto_shelters_clean)
+```
+
+All that remains is to save the cleaned dataset.
+
+```{r}
+#| eval: false
+#| echo: true
+#| warning: false
+
+write_csv(
+  x = toronto_shelters_clean, 
+  file = "cleaned_toronto_shelters.csv"
+  )
+```
+
+```{r}
+#| eval: true
+#| echo: false
+#| warning: false
+
+write_csv(
+  x = toronto_shelters_clean, 
+  file = here::here("outputs/data/cleaned_toronto_shelters.csv")
+  )
+```
+
+### Explore
+
+First, we load the dataset that we just created. 
+
+```{r}
+#| echo: false
+#| eval: true
+
+toronto_shelters_clean <- 
+  read_csv(
+    "outputs/data/cleaned_toronto_shelters.csv",
+    show_col_types = FALSE
+    )
+```
+
+```{r}
+#| echo: true
+#| eval: false
+
+#### Explore ####
+toronto_shelters_clean <- 
+  read_csv(
+    "cleaned_toronto_shelters.csv",
+    show_col_types = FALSE
+    )
+```
+
+The dataset is on a daily basis for each shelter. We are interested in understanding average usage for each month. To do this, we need to and add a month column, which we do using `month()` from `lubridate` [@GrolemundWickham2011]. By default, `month()` provides the number of the month, and so we include two arguments 'label' and 'abbr' to get the full name of the month. We remove rows that do not have any data for the number of beds using `drop_na()` from `tidyr`. And we then create a summary statistic on the basis of monthly groups, using `summarize()` from `dplyr` [@citedplyr]. We use `kable()` from `knitr` [@citeknitr] to create a table.
+
+```{r}
+# Based on code from Florence Vallée-Dubois and Lisa Lendway
+toronto_shelters_clean |>
+  mutate(occupancy_month = month(occupancy_date, 
+                                 label = TRUE, 
+                                 abbr = FALSE)) |>
+  drop_na(occupied_beds) |> # We only want rows that have data
+  group_by(occupancy_month) |> # We want to know the occupancy by month
+  summarize(number_occupied = mean(occupied_beds)) |>
+  kable()
+```
+
+As with before, this looks fine, and achieves what we set out to do. But we can make some tweaks to the defaults to make it look even better (@tbl-homelessoccupancy). We can add a caption, make the column names easier to read, only show an appropriate level of decimal places, and improve the formatting.
+
+```{r}
+#| label: tbl-homelessoccupancy
+#| tbl-cap: "Homeless shelter usage in Toronto in 2021"
+
+toronto_shelters_clean |>
+  mutate(occupancy_month = month(occupancy_date, 
+                                 label = TRUE, 
+                                 abbr = FALSE)) |>
+  drop_na(occupied_beds) |> # We only want rows that have data
+  group_by(occupancy_month) |> # We want to know the occupancy by month
+  summarize(number_occupied = mean(occupied_beds)) |> 
+  kable(col.names = c("Month", "Average daily number of occupied beds"),
+        digits = 1,
+        booktabs = TRUE,
+        linesep = ""
+        )
+```
+
+
+### Communicate
+
+We need to write a few brief paragraphs about what we did, why we did it, and what we found. An example follows.
+
+> Toronto has a large homeless population. Freezing winters mean it is critical there are enough places in shelters. We are interested to understand how usage of shelters changes in colder months, compared with warmer months. 
+> 
+> We use data provided by the City of Toronto about Toronto homeless shelter bed occupancy. Specifically, at 4am each night a count is made of the occupied beds. We are interested in averaging this over the month. We cleaned, tidied, and analyzed the dataset using the statistical programming language R [@citeR] as well as the packages `tidyverse` [@Wickham2017], `janitor` [@janitor], `tidyr` [@citetidyr], `opendatatoronto` [@citeSharla], `lubridate` [@GrolemundWickham2011], and `knitr` [@citeknitr]. We then made a table of the average number of occupied beds each night for each month (@tbl-homelessoccupancy).
+> 
+> We found that the daily average number of occupied beds was higher in December 2021 than July 2021, with 34 occupied beds in December, compared with 30 in July (@tbl-homelessoccupancy). More generally, there was a steady increase in the daily average number of occupied beds between July and December, with a slight increase each month. 
+>
+> The dataset is on the basis of shelters, and so our results may be skewed by changes that are specific to especially large or especially small shelters. It may be that particular shelters are especially attractive in colder months. Additionally, we were concerned with counts of the number of occupied beds, but if the supply of beds changes over the season, then an additional statistic of interest would be proportion occupied.
+
+Although this example is only a few paragraphs, it could be reduced to form an abstract, or increased to form a full report. The first paragraph is a general overview, the second focuses on the data, the third on the results, and the fourth is a discussion. Each of these could be expanded to form sections of a short report.
+
+
+## Neonatal mortality
+
+Neonatal mortality refers to a death that occurs within the first month of life, and in particular, the neonatal mortality rate (NMR) is the number of neonatal deaths per 1,000 live births [@unigme]. Reducing it is part of the third Sustainable Development Goal [@hug2019national]. In this example we will create a graph of the estimated NMR for the past fifty years for: Argentina, Australia, Canada, and Kenya.
+
+### Plan
+
+For this example, we need to think about what our dataset should look like, and what the graph should look like.
+
+The dataset needs to have columns that specify the country, and the year. It also needs to have a column with the NMR estimate for that year for that country. Roughly, it should look like @fig-nmrexampledata.
+
+![Quick sketch of a potentially useful NMR dataset](figures/IMG_1812.png){#fig-nmrexampledata width=40% fig-align="center"}
+
+We are interested to make a graph with year on the x-axis and estimated NMR on the y-axis. Each country should have its own series Roughly similar to @fig-nmrexamplegraph
+
+![Quick sketch of a graph of NMR by country over time](figures/IMG_1813.png){#fig-nmrexamplegraph width=75% fig-align="center"}
+
+### Simulate
+
+We would like to simulate some data that aligns with our plan. In this case we will need three columns: country, year, and NMR.
+
+Within R Studio Cloud make a new R Markdown file and save it. Add preamble documentation and set-up the workspace. We will use `tidyverse` [@Wickham2017], `janitor` [@janitor], and `lubridate` [@GrolemundWickham2011].
+
+```{r}
+#| eval: false
+#| echo: true
+
+#### Preamble ####
+# Purpose: Obtain and prepare data about neonatal mortality for four
+# countries for the past fifty years and create a graph.
+# Author: Rohan Alexander
+# Email: rohan.alexander@utoronto.ca
+# Date: 1 January 2022
+# Prerequisites: - 
+
+#### Workspace set-up ####
+library(janitor)
+library(lubridate)
+library(tidyverse)
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+library(janitor)
+library(lubridate)
+library(tidyverse)
+```
+
+The code contained in libraries can change from time to time as the authors update it and release new versions. We can see which version of a package we are using with `packageVersion()`. For instance, we are using version 1.3.1 of the `tidyverse` and version 2.1.0 of `janitor`.
+
+```{r}
+packageVersion('tidyverse')
+packageVersion('janitor')
+```
+
+To update the version of the package, we use `update.packages()`.
+
+```{r}
+#| echo: true
+#| eval: false
+#| warning: false
+#| message: false
+
+update.packages()
+```
+
+This does not need to be run, say, every day, but from time-to-time it is worth updating packages. While many packages take care to ensure backward compatibility, at a certain point this does not become reasonable, and so it is important to be aware the updating packages can result in old code needing to be updated.
+
+Returning to the simulation, we repeat the name of each country 50 times with `rep()`, and enable the passing of 50 years. Finally, we draw from the uniform distribution with `runif()` to simulate an estimated NMR value for that year for that country.
+
+```{r}
+#| echo: true
+#| eval: true
+#| warning: false
+#| message: false
+
+#### Simulate data ####
+set.seed(853)
+
+simulated_nmr_data <- 
+  tibble(
+    country = 
+      c(
+        rep('Argentina', 50),
+        rep('Australia', 50),
+        rep('Canada', 50),
+        rep('Kenya', 50)
+        ),
+    year = 
+      rep(c(1971:2020), 4),
+    nmr = 
+      runif(n = 200,
+            min = 0, 
+            max = 100)
+  )
+
+head(simulated_nmr_data)
+```
+
+While this simulation works, it would be time-consuming and error-prone if we decided that instead of fifty years, we were interested in simulating, say, sixty years. One way to make this easier is to replace all instances of 50 with a variable. An example follows.
+
+```{r}
+#| echo: true
+#| eval: true
+#| warning: false
+#| message: false
+
+#### Simulate data ####
+set.seed(853)
+
+number_of_years <- 50
+
+simulated_nmr_data <- 
+  tibble(
+    country = 
+      c(
+        rep('Argentina', number_of_years),
+        rep('Australia', number_of_years),
+        rep('Canada', number_of_years),
+        rep('Kenya', number_of_years)
+        ),
+    year = 
+      rep(c(1:number_of_years + 1970), 4),
+    nmr = 
+      runif(n = number_of_years * 4,
+            min = 0, 
+            max = 100)
+  )
+
+head(simulated_nmr_data)
+```
+
+The result will be the same, but now if we want to change from fifty to sixty years is to make the change in one place.
+
+We can have confidence in this simulated dataset because it is relatively straight-forward, and we wrote the code for it. But when we turn to the real dataset, it is more difficult to be sure that it is what it claims to be. Even if we trust the data, it is important that we can share that confidence with others. One way forward is to establish some checks that prove our data are as they should be. For instance, we expect: 
+
+1. That 'country' is, and only is, one of these four: 'Argentina', 'Australia', 'Canada', or 'Kenya'.
+2. Conversely, that 'country' contains all those four countries.
+3. That 'year' is no smaller than 1971 and no larger than 2020, and is a number, not a letter.
+4. That 'nmr' is a value somewhere between 0 and 1,000, and is a number.
+
+We can write a series of tests based on these features, that we expect that dataset to pass.
+
+```{r}
+# Tests for simulated data
+simulated_nmr_data$country |> 
+  unique() == c("Argentina", 
+                "Australia", 
+                "Canada", 
+                "Kenya")
+
+simulated_nmr_data$country |> unique() |> length() == 4
+
+simulated_nmr_data$year |> min() == 1971
+
+simulated_nmr_data$year |> max() == 2020
+
+simulated_nmr_data$nmr |> min() >= 0
+
+simulated_nmr_data$nmr |> max() <= 1000
+
+simulated_nmr_data$nmr |> class() == "numeric"
+```
+
+Having passed these tests, we can have confidence in the simulated dataset. More importantly, we can apply these tests to the real dataset. This enables us to have greater confidence in that dataset and to share that confidence with others.
+
+### Acquire
+
+The UN Inter-agency Group for Child Mortality Estimation (IGME) provides estimates of the NMR -- https://childmortality.org/ -- that we can download and save.
+
+```{r}
+#| eval: false
+#| echo: true
+#| warning: false
+
+#### Acquire data ####
+raw_igme_data <- 
+  read_csv(
+    file =
+      "https://childmortality.org/wp-content/uploads/2021/09/UNIGME-2021.csv",
+    show_col_types = FALSE) 
+
+write_csv(
+  x = raw_igme_data, 
+  file = "igme.csv"
+  )
+```
+
+```{r}
+#| eval: true
+#| echo: false
+#| warning: false
+
+raw_igme_data <- 
+  read_csv(
+    here::here("dont_push/igme.csv"),
+    show_col_types = FALSE
+    )
+```
+
+We can take a quick look to get a better sense of it. We might be interested in what the dataset seems to look like (using `head()` and `tail()`), and what the names of the columns are (using `names()`).
+
+```{r}
+head(raw_igme_data)
+names(raw_igme_data)
+```
+
+We would like to clean up the names and only keep the rows and columns that we are interested in. Based on our plan, we are interested in rows where 'Sex' is 'Total', 'Series Name' is 'UN IGME estimate', 'Geographic area' is one of 'Argentina', 'Australia', 'Canada', and 'Kenya', and the 'Indicator' is 'Neonatal mortality rate'. After this we are interested in just a few columns: 'geographic_area', 'time_period', and 'obs_value'.
+
+```{r}
+#| echo: true
+#| eval: true
+
+cleaned_igme_data <- 
+  clean_names(raw_igme_data) |> 
+  filter(sex == 'Total',
+         series_name == 'UN IGME estimate',
+         geographic_area %in% 
+           c('Argentina', 'Australia', 'Canada', 'Kenya'),
+         indicator == 'Neonatal mortality rate') |> 
+  select(geographic_area,
+         time_period,
+         obs_value)
+
+head(cleaned_igme_data)
+```
+
+Finally, we need to fix two final aspects: the class of 'time_period' is character when we need it to be a year, and the name of 'obs_value' should be 'nmr' to be more informative.
+
+```{r}
+cleaned_igme_data <- 
+  cleaned_igme_data |> 
+  mutate(time_period = str_remove(time_period, "-06"),
+         time_period = as.integer(time_period)) |> 
+  filter(time_period >= 1971) |> 
+  rename(nmr = obs_value,
+         year = time_period,
+         country = geographic_area)
+
+head(cleaned_igme_data)
+```
+
+Finally, we can check that our dataset passes the tests that we developed based on the simulated dataset.
+
+```{r}
+# Test the cleaned dataset
+cleaned_igme_data$country |> 
+  unique() == c("Argentina", 
+                "Australia", 
+                "Canada", 
+                "Kenya")
+
+cleaned_igme_data$country |> unique() |> length() == 4
+
+cleaned_igme_data$year |> min() == 1971
+
+cleaned_igme_data$year |> max() == 2020
+
+cleaned_igme_data$nmr |> min() >= 0
+
+cleaned_igme_data$nmr |> max() <= 1000
+
+cleaned_igme_data$nmr |> class() == "numeric"
+```
+
+All that remains is to save the nicely cleaned dataset.
+
+```{r}
+#| eval: false
+#| echo: true
+#| warning: false
+
+write_csv(
+  x = cleaned_igme_data, 
+  file = "cleaned_igme_data.csv"
+  )
+```
+
+```{r}
+#| eval: true
+#| echo: false
+#| warning: false
+
+write_csv(
+  x = cleaned_igme_data, 
+  file = here::here("outputs/data/cleaned_igme_data.csv")
+  )
+```
+
+### Explore
+
+We would like to make a graph of estimated NMR using the cleaned dataset. First, we read in the dataset.
+
+```{r}
+#| echo: false
+#| eval: true
+
+cleaned_igme_data <- 
+  read_csv(
+    "outputs/data/cleaned_igme_data.csv",
+    show_col_types = FALSE
+    )
+```
+
+```{r}
+#| echo: true
+#| eval: false
+
+#### Explore ####
+cleaned_igme_data <- 
+  read_csv(
+    file = "cleaned_igme_data.csv",
+    show_col_types = FALSE
+    )
+```
+
+We can now make the graph that we are interested in (@fig-nmrgraph). We are interested in showing how NMR has changed over time and the difference between countries.
+
+```{r}
+#| label: fig-nmrgraph
+#| echo: true
+#| eval: true
+#| warning: false
+#| fig-cap: "Neonatal Mortality Rate (NMR), for Argentina, Australia, Canada, and Kenya, (1971-2020)"
+
+cleaned_igme_data |> 
+  ggplot(aes(x = year, y = nmr, color = country)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Year",
+       y = "Neonatal Mortality Rate (NMR)",
+       color = "Country") +
+  scale_color_brewer(palette = "Set1")
+```
+
+
+### Communicate
+
+To this point we downloaded some data, cleaned it, wrote some tests, and made a graph. We would typically need to communicate what we have done at some length. In this case, we will write a few paragraphs about what we did, why we did it, and what we found. 
+
+> Neonatal mortality refers to a death that occurs within the first month of life. In particular, the neonatal mortality rate (NMR) is the number of neonatal deaths per 1,000 live births [@alexander2018global]. We obtain estimates for NMR for four countries---Argentina, Australia, Canada, China, and Kenya---over the past fifty years.
+> 
+> The UN Inter-agency Group for Child Mortality Estimation (IGME) provides estimates of the NMR at the website: https://childmortality.org/. We downloaded their estimates then cleaned and tidied the dataset using the statistical programming language R [@citeR].
+> 
+> We found considerable change in the estimated NMR over time and between the four countries of interest (@fig-nmrgraph). We found that the 1970s tended to be associated with reductions in the estimated NMR. Australia and Canada were estimated to have a low NMR at that point and remained there through 2020, with slight improvements. The estimates for Argentina and Kenya continued to have substantial reductions through 2020. Data were only available from 1990 for China and the estimates show a substantial reduction in the NMR, especially in the 1990s and 2000s.
+> 
+> Our results suggest considerable improvements in estimated NMR over time. But it is worth emphasizing that estimates of the NMR are based on a statistical model and underlying data. The paradox of data availability is that often high-quality data are less easily available for countries with worse outcomes. For instance, @alexander2018global say '[t]here is large variability in the availability of data on neonatal mortality'. Our conclusions are subject to the model that underpins the estimates, and the quality of the underlying data and we did not independently verify either of these. 
+
+
+
+
+## Exercises and tutorial
+
+### Exercises
+
+1. Following @citeBarrett, please write a stack of four or five atomic habits, related to learning data science, that you could implement this week.
+2. What is not one of the four challenges for mitigating bias mentioned in @hao2019 (pick one)? 
+    a. Unknown unknowns. 
+    b. Imperfect processes. 
+    c. The definitions of fairness. 
+    d. Lack of social context. 
+    e. Disinterest given profit considerations.
+3. When was the dataset that underpins @chambliss1989mundanity collected (pick one)? 
+    a. August 1983 to August 1984
+    b. January 1983 to August 1984
+    c. January 1983 to January 1984
+    d. August 1983 to January 1984
+4. When @chambliss1989mundanity talks of stratification, what is he talking about?
+5. How does @chambliss1989mundanity define 'excellence' (pick one)?
+    a. Prolonged performance at world-class level.
+    b. All Olympic medal winners.
+    c. Consistent superiority of performance.
+    d. All national-level athletes.
+6. Think about the following quote from @chambliss1989mundanity [p.81] and list three small skills or activities that could help you achieve excellence in data science.
+
+> Excellence is mundane. Superlative performance is really a confluence of dozens of small skills or activities, each one learned or stumbled upon, which have been carefully drilled into habit and then are fitted together in a synthesized whole. There is nothing extraordinary or super-human in any one of those actions; only the fact that they are done consistently and correctly, and all together, produce excellence.
+
+7. Which of the following are arguments for `read_csv()` from `readr` [@citereadr] (select all that apply)? (Hint: You can access the help for the function with `?readr::read_csv()`.)
+    a. 'all_cols'
+    b. 'file'
+    c. 'show_col_types'
+    d. 'number'
+8. We used `rpois()` and `runif()` to draw from the Poisson and Uniform distributions, respectively. Which of the following can be used to draw from the Normal and Binomial distributions (select all that apply)?
+    a. `rnormal()` and `rbinom()`
+    b. `rnorm()` and `rbinomial()`
+    c. `rnormal()` and `rbinomial()`
+    d.  `rnorm()` and `rbinom()`
+9. What is the result of `sample(x = letters, size = 2)` when the seed is set to '853'? What about when the seed is set to '1234' (pick one)?
+    a.  '"i" "q"' and '"p" "v"'
+    b. '"e" "l"' and '"e" "r"'
+    c. '"i" "q"' and '"e" "r"'
+    d. '"e" "l"' and '"p" "v"'
+10. Which function provides the recommended citation to cite R (pick one)? 
+    a. `cite('R')`. 
+    b. `cite()`.
+    c. `citation('R')`.
+    d. `citation()`.
+11. How do we get the citation information for `opendatatoronto` (pick one)?
+    a. cite()
+    b. citation()
+    c. cite('opendatatoronto')
+    d. citation('opendatatoronto')
+12. Which argument needs to be changed to change the headings in `kable()` from `knitr` [@citeknitr] (pick one)?
+    a. 'booktabs'
+    b. 'col.names'
+    c. 'digits'
+    d. 'linesep'
+    e. 'caption'
+13. Which function is used to update packages (pick one)? 
+    a. `update.packages()`
+    b. `upgrade.packages()`
+    c. `revise.packages()`
+    d. `renovate.packages()`
+14. What are some features that we might typically expect of a column that claimed to be a year (select all that apply)? 
+    a. The class is 'character'.
+    b. There are no negative numbers.
+    c. There are letters in the column.
+    d. Each entry has four digits.
+15. Please consider the following code, add a small mistake to it, and then create a GitHub Gist that contains all of the code, and submit the URL.
+
+```{r}
+#| eval: false
+#| include: true
+
+library(tidyverse)
+
+midwest |> 
+  ggplot(aes(x = poptotal, y = popdensity, color = state)) +
+  geom_point() +
+  scale_x_log10() +
+  scale_y_log10()
+```
+
+
+
+### Tutorial
+
+The purpose of this tutorial is to provide an opportunity to do a small self-contained project. We will redo the Australian Elections worked example, but for Canada.
+
+Canada is a parliamentary democracy with 338 seats in the House of Commons, which is the lower house and that from which government is formed. There are two major parties -- 'Liberal' and 'Conservative' -- three minor parties -- 'Bloc Québécois', 'New Democratic', and 'Green' -- and many smaller parties and independents. In this example we will create a graph of the number of seats that each party won in the 2019 Federal Election.
+
+Begin by planning what the dataset that we need will look like, and what the final graph will look like. The basic requirement for the dataset is that it has the name of the seat (sometimes called a 'riding' in Canada) and the party of the person elected. 
+
+Please do a quick sketch of the dataset that we would need. And then do a quick sketch of a graph that we might be interested in.
+
+Then put together an R Markdown document that simulates some data. Add preamble documentation, then load the packages that are needed: `tidyverse`, `janitor`, and `tidyr`. Add numbers for the riding, then use `sample()` to randomly choose one of six options, with replacement, 338 times.
+
+Next we need to get the actual data, from Elections Canada, and the file that we need to download is: "https://www.elections.ca/res/rep/off/ovr2019app/51/data_donnees/table_tableau11.csv".
+
+Clean the names, and then select the two columns that are of interest: 'electoral_district_name_nom_de_circonscription', and 'elected_candidate_candidat_elu'. Finally, rename the columns to remove the French and simplify the names.
+
+The column that we need is about the elected canadidates. That has the surname of the elected candidate, followed by a comma, followed by their first name, followed by a space, followed by the name of the party in both English and French, separated by a slash. Break-up this column into its pieces using `separate()` from `tidyr` [@citetidyr].
+
+```{r}
+#| eval: false
+#| echo: true
+
+cleaned_elections_data <- 
+  cleaned_elections_data |> 
+  # Separate the column into two based on the slash
+  separate(col = elected_candidate,
+           into = c('other', 'party'),
+           sep = '/') |> 
+  # Remove the 'other' column
+  select(-other)
+```
+
+Then recode the party names from French to English to match what we simulated. 
+
+At this point we can make a nice graph of the number of ridings won by each party in the 2019 Canadian Federal Election.
+
+

@@ -1,0 +1,1821 @@
+---
+engine: knitr
+---
+
+# Gather data {#sec-gather-data}
+
+```{r}
+#| include: false
+
+library(gt)
+```
+
+**Required material**
+
+- Read *Turning History into Data: Data Collection, Measurement, and Inference in HPE*, [@cirone].
+- Read *Two Regimes of Prison Data Collection*, [@Johnson2021Two].
+
+
+
+<!-- - Cardoso, Tom, 2019, 'Introduction to scraping', https://github.com/tomcardoso/intro-to-scraping. -->
+<!-- - Clavelle, Tyler, 2017, 'Using R to extract data from web APIs', 5 June, https://www.tylerclavelle.com/code/2017/randapis/. -->
+<!-- - Cooksey, Brian, 2014, 'An Introduction to APIs', Zapier, 22 April, https://zapier.com/learn/apis/. -->
+<!-- - Dogucu, Mine, and Mine Çetinkaya-Runde, 2020 ,'Web Scraping in the Statistics and Data Science Curriculum: Challenges and Opportunities', 6 May. -->
+<!-- - Gelfand, Sharla, 2019, 'Crying @ Sephora', 8 November, https://sharla.party/post/crying-sephora/. -->
+<!-- - Goldman, Shayna, 2019, 'How Much Do NHL Players Really Make? Part 2: Taxes', https://hockey-graphs.com/2019/01/08/how-much-do-nhl-players-really-make-part-2-taxes/. -->
+<!-- - Graham, Shawn, 2019, 'Scraping with rvest', 7 November, https://electricarchaeology.ca/2019/11/07/scraping-with-rvest/. -->
+<!-- - Henze, Martin, 2020, 'Web Scraping with rvest + Astro Throwback', 23 January, https://heads0rtai1s.github.io/2020/01/23/rvest-intro-astro/. -->
+<!-- - Hudon, Caitlin, 2017, ''Blue Christmas: A data-driven search for the most depressing Christmas song', 22 December, https://caitlinhudon.com/2017/12/22/blue-christmas/. -->
+<!-- - Luscombe, Alex, 2020, 'A Gentle Introduction to Tesseract OCR', 3 June, https://alexluscombe.ca/post/ocr-tutorial/. -->
+<!-- - Luscombe, Alex, 2020, 'Getting your .pdfs into R', 5 August, https://alexluscombe.ca/post/r-pdftools/. -->
+<!-- - Luscombe, Alex, 2020, 'Parsing your .pdfs in R', 10 August, https://alexluscombe.ca/post/parsing-pdfs/. -->
+<!-- - Marshall, James, 'HTML Made Really Easy', https://www.jmarshall.com/easy/html/. -->
+<!-- - Marshall, James, 'HTTP Made Really Easy', https://www.jmarshall.com/easy/http/. -->
+<!-- - Nakagawara, Ryo, 2020, 'Intro to {polite} Web Scraping of Soccer Data with R!', 14 May, https://ryo-n7.github.io/2020-05-14-webscrape-soccer-data-with-R/. -->
+<!-- - Pavlik, Kaylin, 2020, 'How do fiber types appear together in yarn blends?', 17 February, https://www.kaylinpavlik.com/ravelry-yarn-fibers/. -->
+<!-- - Silge, Julia and David Robinson, 2020, *Text Mining with R*, Chapters 1, 3, and 6, https://www.tidytextmining.com/. -->
+<!-- - Silge, Julia, 2017, 'Scraping CRAN with rvest', 5 March, https://juliasilge.com/blog/scraping-cran/. -->
+<!-- - Wickham, Hadley, 'Managing Secrets', https://cran.r-project.org/web/packages/httr/vignettes/secrets.html. -->
+<!-- - Wickham, Hadley, 2014, 'rvest: easy web scraping with R', 24 November, https://blog.rstudio.com/2014/11/24/rvest-easy-web-scraping-with-r/. -->
+<!-- - Wickham, Hadley, nd, 'Getting started with httr', https://cran.r-project.org/web/packages/httr/vignettes/quickstart.html. -->
+
+
+<!-- - D'Agostino McGowan, Lucy, 2020 'Harnessing the Power of the Web via R Clients for Web APIs', talk at ASA Joint Statistical Meeting 2018, https://www.lucymcgowan.com/talk/asa_joint_statistical_meeting_2018/. -->
+<!-- - Tatman, Rachel, 2018, 'Character Encoding and You', 21 February, https://youtu.be/2U9EHYqc59Y. -->
+
+
+**Key concepts and skills**
+
+- Initial usage of APIs, both directly, including dealing with semi-structured data, and indirectly through R Packages. 
+- Use R environments to manage keys.
+- Web scraping, especially reasonable use and ethical concerns.
+- Cleaning data from unstructured data to structured, tidy, data.
+- Extracting data from PDFs, both those that are able to be parsed and those that are an image and require OCR.
+
+
+**Key libraries**
+
+- `babynames` [@citebabynames]
+- `httr` [@citehttr]
+- `jsonlite` [@jsonlite]
+- `lubridate` [@GrolemundWickham2011]
+- `pdftools` [@Ooms2018pdftools]
+- `purrr` [@citepurrr]
+- `rtweet` [@rtweet]
+- `rvest` [@citervest]
+- `spotifyr` [@spotifyr]
+- `tesseract` [@Ooms2018tesseract]
+- `tidyverse` [@citetidyverse]
+- `usethis` [@citeusethis]
+- `xml2` [@xml2]
+
+
+**Key functions**
+
+- `download.file()`
+- `factor()`
+- `function()`
+- `httr::GET()`
+- `pdftools::pdf_text()`
+- `purrr::walk2()`
+- `rtweet::get_favorites()`
+- `rtweet::get_friends()`
+- `rtweet::get_timelines()`
+- `rtweet::search_tweets()`
+- `rvest::html_nodes()`
+- `rvest::html_text()`
+- `set.seed()`
+- `spotifyr::get_artist_audio_features()`
+- `sys.sleep()`
+- `tesseract::ocr()`
+- `usethis::edit_r_environ()`
+
+
+## Introduction
+
+
+
+In this chapter we first 
+go through a variety of approaches for gathering data, including the use of APIs and semi-structured data, such as JSON and XML, web scraping, converting PDFs,
+and using optical character recognition, especially to obtain text data.
+
+
+
+
+## APIs
+
+In everyday language, and for our purposes, an Application Programming Interface (API) is a situation in which someone has set up specific files on their computer such that we can follow their instructions to get them. For instance, when we use a gif on Slack, Slack asks Giphy's server for the appropriate gif, Giphy's server gives that gif to Slack and then Slack inserts it into your chat. The way in which Slack and Giphy interact is determined by Giphy's API. More strictly, an API is just an application that runs on a server that we access using the HTTP protocol. 
+
+We focus on using APIs for gathering data. And so, with that focus, an API is a website that is set-up for another computer to be able to access, rather than a person. For instance, we could go to Google Maps: https://www.google.com/maps. And we could then scroll and click and drag to center the map on Canberra, Australia. Or we could paste this into the browser: https://www.google.com/maps/@-35.2812958,149.1248113,16z. We just used the Google Maps API, and the result should be a map similar to @fig-focuson2020).
+
+![Example of Google Maps, as at 29 January 2022](figures/googlemaps.png){#fig-focuson2020 width=90% fig-align="center"}
+
+The advantage of using an API is that the data provider specifies exactly the data that they are willing to provide, and the terms under which they will provide it. These terms may include aspects such as rate limits (i.e. how often we can ask for data), and what we can do with the data, for instance, we might not be allowed to use it for commercial purposes, or to republish it. Additionally, because the API is being provided specifically for us to use it, it is less likely to be subject to unexpected changes or legal issues. Because of this it is ethically and legally clear that when an API is available we should try to use it rather than web scraping.
+
+We will now go through a few case studies of using APIs. In the first we deal directly with an API using `httr` [@citehttr]. In the second we access data from Twitter using `rtweet` [@rtweet]. And in the third we access data from Spotify using `spotifyr` [@spotifyr]. Developing comfort with gathering data through APIs enables access to exciting datasets. For instance, @facebookapitrump use the Facebook Political Ad API to gather all 218,100 of the Trump 2020 campaign ads to better understand the campaign.
+
+
+
+### Case study: Gathering data from arXiv, NASA, and Dataverse
+
+We use `GET()` from `httr` [@citehttr] to obtain data from an API directly. This will try to get some specific data and the main argument is 'url'. In a way, this is very similar to the earlier Google Maps example. In that example, the specific information that we were interested in was a map. 
+
+In this case study we will use an API provided by arXiv: https://arxiv.org. arXiv is an online repository for academic papers before they go through peer-review, and these are typically referred to as 'pre-prints'. After installing and loading `httr`, we use `GET()` to ask arXiv to obtain some information about the pre-print of @Alexander2020. 
+
+```{r}
+library(httr)
+library(tidyverse)
+library(xml2)
+
+arxiv <-
+  GET("http://export.arxiv.org/api/query?id_list=2111.09299")
+
+status_code(arxiv)
+```
+
+We can use `status_code()` to check whether we received an error from the server. And assuming we received something back from the server, we can use `content()` to display the information. In this case we have received XML formatted data, which we can read using `read_xml()` from `xml2` [@xml2]. XML is a semi-formatted structure, and it can be useful to start by having a look at it using `html_structure()`.
+
+```{r}
+content(arxiv) |>
+  read_xml() |>
+  html_structure()
+```
+
+Or we might be interested to create a dataset based on extracting various aspects of this XML tree. For instance, we might be interested to look at the 'entry', which is the eighth item, and in particular to obtain the title and the URL, which are the fourth and ninth items, respectively, within entry. 
+
+```{r}
+data_from_arxiv <-
+  tibble(
+    title = content(arxiv) |>
+      read_xml() |>
+      xml_child(search = 8) |>
+      xml_child(search = 4) |>
+      xml_text(),
+    link = content(arxiv) |>
+      read_xml() |>
+      xml_child(search = 8) |>
+      xml_child(search = 9) |>
+      xml_attr("href")
+  )
+data_from_arxiv
+```
+
+Each day NASA provides the Astronomy Picture of the Day (APOD) through its APOD API. We can again use `GET()` to obtain the URL for the photo on particular dates and then display it. 
+
+```{r}
+NASA_APOD_20211226 <-
+  GET("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&date=2021-12-26")
+
+NASA_APOD_20190719 <-
+  GET("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&date=2019-07-19")
+```
+
+Examining the returned data using `content()`, we can see that we are provided with various fields, such as date, title, explanation, and a URL. And we can provide that URL to `include_graphics()` from `knitr` to display it (@fig-nasaone)).
+
+```{r}
+content(NASA_APOD_20211226)$date
+content(NASA_APOD_20211226)$title
+content(NASA_APOD_20211226)$explanation
+content(NASA_APOD_20211226)$url
+
+content(NASA_APOD_20190719)$date
+content(NASA_APOD_20190719)$title
+content(NASA_APOD_20190719)$explanation
+content(NASA_APOD_20190719)$url
+```
+
+![Photo of the James Webb Space Telescope over Earth and another of Tranquility Base obtained from the NASA APOD API](figures/JwstLaunch_Arianespace_1080.jpg){#fig-nasaone width=50% fig-align="center"}
+
+Finally, another common API response in semi-structured form is JSON. We can parse JSON with `jsonlite` [@jsonlite]. A Dataverse is a web application that makes it easier to share dataset. We can use an API go query a demonstration dataverse. For instance we might be interested in datasets related to politics.
+
+```{r}
+#| message: false
+#| warning: false
+
+library(jsonlite)
+
+politics_datasets <- fromJSON("https://demo.dataverse.org/api/search?q=politics")
+```
+
+We can also look at the dataset using `View(politics_datasets)`, which allows us to expand the tree based on what we are interested in and even get the code that we need to focus on different aspects by hovering on the item and then clicking the icon with the green arrow (@fig-jsonfirst)).
+
+![Example of hovering over an JSON element, 'items', where the icon with a green arrow can be clicked on to get the code that would focus on that element](figures/jsonlite.png){#fig-jsonfirst width=90% fig-align="center"}
+
+This tells us how to obtain the dataset of interest.
+
+```{r}
+as_tibble(politics_datasets[["data"]][["items"]])
+```
+
+
+
+
+### Case study: Gathering data from Twitter
+
+Twitter is a rich source of text and other data. The Twitter API is the way in which Twitter asks that we gather these data. And `rtweet` [@rtweet] is built around this API and allows us to interact with it in ways that are similar to using any other R package. Initially, we can use the Twitter API with just a regular Twitter account. 
+
+Begin by installing and loading `rtweet` and `tidyverse`. We then need to authorize `rtweet` and we start that process by calling a function from the package, for instance `get_favorites()` which will return a tibble of a user's favorites. This will open a browser, and we then log into a regular Twitter account (@fig-rtweetlogin)).
+
+```{r}
+#| warning: false
+#| message: false
+#| label: loadpackages
+
+library(rtweet)
+library(tidyverse)
+```
+
+```{r}
+#| eval: false
+#| label: initialise_rtweet
+
+get_favorites(user = "RohanAlexander")
+```
+
+![rtweet authorisation page](figures/rtweet.png){#fig-rtweetlogin width=90% fig-align="center"}
+
+Once the application is authorized, then we can use `get_favorites()` to actually get the favorites of a user and save them.
+
+```{r}
+#| label: get_rohan_favs
+#| eval: false
+
+rohans_favorites <- get_favorites("RohanAlexander")
+
+saveRDS(rohans_favorites, "rohans_favorites.rds")
+```
+
+```{r}
+#| label: get_rohan_favsactual
+#| include: false
+#| eval: false
+
+rohans_favorites <- get_favorites("RohanAlexander")
+
+saveRDS(rohans_favorites, "dont_push/rohans_favs.rds")
+```
+
+```{r}
+#| include: false
+rohans_favorites <- readRDS("dont_push/rohans_favs.rds")
+```
+
+We could then look at some recent favorites, keeping in mind that they may be different depending on when they are being accessed.
+
+```{r}
+#| label: look_at_rohans_favs
+
+rohans_favorites |> 
+  arrange(desc(created_at)) |> 
+  slice(1:10) |> 
+  select(screen_name, text)
+```
+
+We can use `search_tweets()` to search for tweets about a particular topic. For instance, we could look at tweets using a hashtag commonly associated with R: '#rstats'. 
+
+```{r}
+#| label: get_rstats
+#| eval: false
+
+rstats_tweets <- search_tweets(
+  q = "#rstats",
+  include_rts = FALSE
+)
+
+saveRDS(rstats_tweets, "rstats_tweets.rds")
+```
+
+```{r}
+#| label: get_rstatsactual
+#| include: false
+#| eval: false
+
+rstats_tweets <- search_tweets(
+  q = "#rstats",
+  include_rts = FALSE
+)
+
+saveRDS(rstats_tweets, "dont_push/rstats_tweets.rds")
+```
+
+```{r}
+#| include: false
+rstats_tweets <- readRDS("dont_push/rstats_tweets.rds")
+```
+
+```{r}
+#| label: look_at_rstats
+
+rstats_tweets |> 
+  select(screen_name, text) |> 
+  head()
+```
+
+Other useful functions that can be used include `get_friends()` to get all the accounts that a user follows, and `get_timelines()` to get a user's recent tweets. Registering as a developer enables access to more API functionality. 
+
+When using APIs, even when they are wrapped in an R package, in this case `rtweet`, it is important to read the terms under which access is provided. The Twitter API docs are surprisingly readable, and the developer policy is especially clear: https://developer.twitter.com/en/developer-terms/policy. To see how easy it is to violate the terms under which an API provider makes data available, consider that we saved the tweets that we downloaded. If we were to push these to GitHub, then it is possible that we may have accidentally stored sensitive information if there happened to be some in the tweets. Twitter is also explicit about asking those that use their API to be especially careful about sensitive information and not matching Twitter users with off-Twitter folks. Again, the documentation around these restricted uses is clear and readable: https://developer.twitter.com/en/developer-terms/more-on-restricted-use-cases.
+
+
+
+### Case study: Gathering data from Spotify
+
+For the final case study, we will use `spotifyr` [@spotifyr], which is a wrapper around the Spotify API. Install `install.packages('spotifyr')` and load the package.
+
+```{r}
+library(spotifyr)
+```
+
+To access the Spotify API, we need a Spotify Developer Account: https://developer.spotify.com/dashboard/. This will require logging in with a Spotify account and then accepting the Developer Terms (@fig-spotifyaccept).
+
+![Spotify Developer Account Terms agreement page](figures/spotify.png){#fig-spotifyaccept width=90% fig-align="center"}
+
+Continuing with the registration process, in our case, we 'do not know' what we are building and so Spotify requires us to use a non-commercial agreement. To use the Spotify API we need a 'Client ID' and a 'Client Secret'. These are things that we want to keep to ourselves because anyone with the details could use our developer account as though they were us. One way to keep these details secret with a minimum of hassle is to keep them in our 'System Environment'. In this way, when we push to GitHub they should not be included. (We followed this process without explanation in Chapter \@ref(interactive-communication) when we used `mapdeck`.) We will use `usethis` [@citeusethis] to modify our System Environment. In particular, there is a file called '.Renviron' which we will open using `edit_r_environ()` and add our 'Client ID' and 'Client Secret' to.
+
+```{r}
+#| eval: false
+
+library(usethis)
+
+edit_r_environ()
+```
+
+When we run `edit_r_environ()`, our '.Renviron' file will open and we can add our 'Spotify Client ID' and 'Client Secret'. It is important to use the same names, because `spotifyr` will look in our environment for keys with those specific names. 
+
+```{r}
+#| eval: false
+
+SPOTIFY_CLIENT_ID = 'PUT_YOUR_CLIENT_ID_HERE'
+SPOTIFY_CLIENT_SECRET = 'PUT_YOUR_SECRET_HERE'
+```
+
+Save the '.Renviron' file, and then restart R ('Session' -> 'Restart R'). We can now use our 'Spotify Client ID' and 'Client Secret' as needed. And functions that require those details as arguments will work without them being explicitly specified again. We will get and save some information about Radiohead, the English rock band, using `get_artist_audio_features()`. One of the required arguments is `authorization`, but as that is set, by default, to look at the '.Renviron' file, we do not need to specify it here. 
+
+```{r}
+#| eval: false
+
+radiohead <- get_artist_audio_features('radiohead')
+saveRDS(radiohead, "radiohead.rds")
+```
+
+```{r}
+#| include: false
+#| eval: false
+
+# INTERNAL
+
+radiohead <- get_artist_audio_features('radiohead')
+saveRDS(radiohead, "inputs/data/radiohead.rds")
+```
+
+```{r}
+#| eval: true
+#| include: false
+
+radiohead <- readRDS("inputs/data/radiohead.rds")
+```
+
+```{r}
+#| eval: false
+#| include: true
+
+radiohead <- readRDS("radiohead.rds")
+```
+
+There is a variety of information available based on songs. We might be interested to see whether their songs are getting longer over time (@fig-readioovertime)).
+
+```{r}
+radiohead |> 
+  select(artist_name, track_name, album_name) |> 
+  head()
+```
+
+```{r}
+#| fig-cap: "Length of each Radiohead song, over time, as gathered from Spotify"
+#| label: fig-readioovertime
+#| message: false
+#| warning: false
+
+library(lubridate)
+
+radiohead |> 
+  mutate(album_release_date = ymd(album_release_date)) |> 
+  ggplot(aes(x = album_release_date, y = duration_ms)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Album release date",
+       y = "Duration of song (ms)"
+       ) 
+```
+
+One interesting variable provided by Spotify about each song is 'valence'. The Spotify documentation describe this as a measure between 0 and 1 that signals the 'the musical positiveness' of the track with higher values being more positive. Further details are available at the documentation: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features. We might be interested to compare valence over time between a few artists, for instance, the American rock band The National, and the American singer Taylor Swift.
+
+First, we need to gather the data.
+
+```{r}
+#| eval: false
+
+taylor_swift <- get_artist_audio_features('taylor swift')
+the_national <- get_artist_audio_features('the national')
+
+saveRDS(taylor_swift, "taylor_swift.rds")
+saveRDS(the_national, "the_national.rds")
+```
+
+
+```{r}
+#| include: false
+#| eval: false
+
+# INTERNAL
+
+taylor_swift <- get_artist_audio_features('taylor swift')
+the_national <- get_artist_audio_features('the national')
+
+saveRDS(taylor_swift, "inputs/data/taylor_swift.rds")
+saveRDS(the_national, "inputs/data/the_national.rds")
+```
+
+```{r}
+#| eval: true
+#| include: false
+
+# INTERNAL
+
+taylor_swift <- readRDS("inputs/data/taylor_swift.rds")
+the_national <- readRDS("inputs/data/the_national.rds")
+```
+
+
+Then we can bring them together and make the graph (@fig-swiftyvsnationalvsradiohead)). This appears to show that while Taylor Swift and Radiohead have largely maintained their level of valence overtime, The National has decreased theirs.
+
+```{r}
+#| fig-cap: "Comparing valence, over time, for Radiohead, Taylor Swift, and The National"
+#| label: fig-swiftyvsnationalvsradiohead
+#| message: false
+#| warning: false
+
+three_artists <-
+  rbind(taylor_swift, the_national, radiohead) |>
+  select(artist_name, album_release_date, valence) |>
+  mutate(album_release_date = ymd(album_release_date))
+
+three_artists |>
+  ggplot(aes(x = album_release_date,
+             y = valence,
+             color = artist_name)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth() +
+  theme_minimal() +
+  labs(x = "Album release date",
+       y = "Valence",
+       color = "Artist") +
+  scale_color_brewer(palette = "Set1")
+```
+
+How amazing that we live in a world that all that information is available with very little effort or cost. And having gathered the data, there is a lot that could be done. For instance, @kaylinpavlik uses an expanded dataset to classify musical genres and @theeconomistonspotify looks at how language is associated with music streaming on Spotify. Our ability to gather such data enables us to answer questions that had to be considered experimentally in the past, for instance @salganik2006experimental had to use experimental data rather than the real data we are able to access. But at the same time, it is worth thinking about what valence is purporting to represent. Little information is available in the Spotify documentation about how this is being created. And it is doubtful that one number can completely represent how positive a song is. 
+
+
+<!-- ## NBA statistics -->
+
+<!-- NBA: https://github.com/toddwschneider/ballr -->
+
+
+
+
+<!-- ## tidyquant -->
+
+<!-- Financial markets data: tidyquant -->
+
+<!-- ## Danish statistics -->
+
+<!-- https://cran.r-project.org/web/packages/danstat/vignettes/Introduction_to_danstat.html -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Web scraping
+
+
+Web scraping is a way to get data from websites. Rather than going to a website using a browser the copy and pasting, we write code that does it for us. This opens a lot of data to us, but on the other hand, it is not typically data that is being made available for these purposes. This means that it is important to be respectful of it. While generally not illegal, the specifics about the legality of web scraping depend on jurisdictions and the specifics of what we are doing, and so it is also important to be mindful of this. While our use would rarely be commercially competitive, of particular concern is the conflict between the need for our work to be reproducible with the need to respect terms of service that may disallow data republishing [@luscombe2021algorithmic]. And finally, web scraping imposes a cost on the website host, and so it is important to reduce this to the extent possible.
+
+That all said, web scraping is an invaluable source of data. But they are typically datasets that can be created as a by-product of someone trying to achieve another aim. For instance, a retailer may have a website with their products and their prices. That has not been created deliberately as a source of data, but we can scrape it to create a dataset. As such, the following principles are useful to guide web scraping.
+
+1. Avoid it. Try to use an API wherever possible.
+2. Abide by their desires. Some websites have a 'robots.txt' file that contains information about what they are comfortable with scrapers doing, for instance 'https://www.google.com/robots.txt'. 
+3. Reduce the impact. 
+    - Firstly, slow down the scraper, for instance, rather than having it visit the website every second, slow it down using `sys.sleep()`. If we only need a few hundred files, then why not just have it visit the website a few times a minute, running in the background overnight?
+   - Secondly, consider the timing of when we run our scraper. For instance, if we are scraping a retailer then maybe we should set our script to run from 10pm through to the morning, when fewer customers are likely using the site. Similarly, if it is a government website and they have a big monthly release, then it might be polite to avoid that day.
+4. Take only what is needed. For instance, we do not need to scrape the entire of Wikipedia if all we need is the names of the ten largest cities in Croatia. This reduces the impact on the website, and allows us to more easily justify our actions.
+5. Only scrape once. This means we should save everything as we go so that we do not have to re-collect data. Similarly, once we have the data, we should keep that separate and not modify it. Of course, if we need data over time then we will need to go back, but this is different to needlessly re-scraping a page.
+6. Do not republish the pages that were scraped. (This contrasts with datasets that we create from it.)
+7. Take ownership and ask permission if possible. At a minimum level all scripts should have our contact details in them. Depending on the circumstances, it may be worthwhile asking for permission before you scrape.
+
+
+
+Web scraping is possible by taking advantage of the underlying structure of a webpage. We use patterns in the HTML/CSS to get the data that we want. To look at the underlying HTML/CSS we can either: 
+
+1) open a browser, right-click, and choose something like 'Inspect'; or 
+2) save the website and then open it with a text editor rather than a browser.
+
+HTML/CSS is a markup language comprised of matching tags. If we want text to be bold, then we would use something like:
+
+```{CSS, , }
+#| eval: false
+#| echo: true
+
+<b>My bold text</b>
+```
+
+Similarly, if we want a list then we start and end the list, as well as each item. 
+
+```{CSS, , }
+#| eval: false
+#| echo: true
+
+<ul>
+  <li>Learn webscraping</li>
+  <li>Do data science</li>
+  <li>Proft</li>
+</ul>
+```
+
+When scraping we will search for these tags.
+
+To get started, we can pretend that we obtained some HTML from a website, and that we want to get the name from it. We can see that the name is in bold, so we want to focus on that feature and extract it.
+
+```{r}
+#| eval: true
+
+website_extract <- "<p>Hi, I’m <b>Rohan</b> Alexander.</p>"
+#| echo: true
+```
+
+We will use `read_html()` from `rvest` [@citervest] to read in the data. 
+
+```{r}
+#| eval: true
+#| warning: false
+#| message: false
+
+# install.packages("rvest")
+#| echo: true
+library(rvest)
+
+rohans_data <- read_html(website_extract)
+
+rohans_data
+```
+
+The language used by `rvest` to look for tags is 'node', so we focus on bold nodes. By default `html_nodes()` returns the tags as well. We can focus on the text that they contain, with `html_text()`.
+
+```{r}
+#| eval: true
+
+rohans_data |> 
+#| echo: true
+  html_nodes("b")
+
+first_name <- 
+  rohans_data |> 
+  html_nodes("b") |>
+  html_text()
+
+first_name
+```
+
+
+
+### Case study: Web scraping book information
+
+In this case study we will scrape a list of books from: https://rohanalexander.com/bookshelf.html. We will then clean the data and look at the distribution of the first letters of author surnames. It is slightly more complicated than the example above, but the underlying approach is the same: download the website, look for the nodes of interest, extract the information, clean it.
+
+We use `rvest` [@citervest] to download a website, and to then navigate the html to find the aspects that we are interested in. And we use `tidyverse` to clean the dataset. We first need to go to the website and then save a local copy.
+
+```{r}
+#| include: false
+#| eval: false
+#| echo: true
+
+# INTERNAL
+
+library(rvest)
+library(tidyverse)
+library(xml2)
+
+books_data <- read_html("https://rohanalexander.com/bookshelf.html")
+
+write_html(books_data, "inputs/my_website/raw_data.html") 
+```
+
+```{r}
+#| echo: true
+#| eval: false
+#| include: true
+
+library(rvest)
+library(tidyverse)
+library(xml2)
+
+books_data <- read_html("https://rohanalexander.com/bookshelf.html")
+
+write_html(books_data, "raw_data.html") 
+```
+
+Now we need to navigate the HTML to get the aspects that we want, and to then put them into some sensible structure. We will start with trying to get the data into a tibble as quickly as possible because this will allow us to more easily use `dplyr` verbs and `tidyverse` functions.
+
+```{r}
+#| eval: true
+#| include: true
+#| message: false
+#| warning: false
+
+books_data <- read_html("inputs/my_website/raw_data.html")
+#| echo: true
+```
+
+```{r}
+#| eval: true
+#| include: true
+#| message: false
+#| warning: false
+#| echo: true
+
+books_data
+```
+
+To get the data into a tibble we first need to identify the data that we are interested in using html tags. If we look at the website then we need to focus on list items (@fig-rohansbooks). And we can look at the source, focusing particularly on looking for a list (@fig-rohanssourceone).
+
+![Books website as displayed](figures/rohansbooks.png){#fig-rohansbooks width=90% fig-align="center"}
+
+![HTML for the top of the books website and the list of books](figures/sourcetop.png){#fig-rohanssourceone width=90% fig-align="center"}
+
+![](figures/sourcelist.png){#fig-d width=90% fig-align="center"}
+
+The tag for a list item is 'li', so we can use that to focus on the list.
+
+```{r}
+#| eval: true
+#| include: true
+#| echo: true
+
+text_data <- 
+  books_data |>
+  html_nodes("li") |>
+  html_text()
+
+all_books <- 
+  tibble(books = text_data)
+
+head(all_books)
+```
+
+We now need to clean the data. First we want to separate the title and the author using `separate()` and then clean up the author and title columns.
+
+```{r}
+#| eval: true
+#| include: true
+#| message: false
+#| warning: false
+#| echo: true
+
+all_books <-
+  all_books |>
+  slice(7:nrow(all_books)) |>
+  separate(books, into = c("author", "title"), sep = ", ‘")
+
+all_books <-
+  all_books |>
+  separate(title, into = c("title", "debris"), sep = "’.") |>
+  select(-debris) |>
+  mutate(author = str_remove_all(author, "^, "),
+         author = str_squish(author),
+         title = str_remove(title, "“"),
+         title = str_remove(title, "^-")
+         )
+
+head(all_books)
+```
+
+<!-- Finally, some specific cleaning is needed. -->
+
+<!-- ```{r
+#|  include: true
+#| eval: true
+
+<!-- all_books <- -->
+#| echo: true
+<!--   all_books |> -->
+<!--   mutate(author = str_replace_all(author, -->
+<!--                               c("J. K. Rowling." = "J K Rowling.", -->
+<!--                                 "M. Mitchell Waldrop." = "M Mitchell Waldrop.", -->
+<!--                                 "David A. Price" = "David A Price") -->
+<!--                               ) -->
+<!--          ) |> -->
+<!--   separate(author, into = c("author_correct", "throw_away"), sep = "\\.", extra = "drop") |> -->
+<!--   select(-throw_away) |> -->
+<!--   rename(author = author_correct) -->
+
+<!-- # One has multiple authors: -->
+<!-- # "Daniela Witten, Gareth James, Robert Tibshirani, and Trevor Hastie" -->
+<!-- all_books <- -->
+<!--   all_books |> -->
+<!--   mutate(author = str_replace(author, -->
+<!--                               "Daniela Witten, Gareth James, Robert Tibshirani, and Trevor Hastie", -->
+<!--                               "Daniela Witten and Gareth James and Robert Tibshirani and Trevor Hastie")) |> -->
+<!--   separate(author, into = c("author_first", "author_second", "author_third", "author_fourth"), sep = " and ", fill = "right") |> -->
+<!--   pivot_longer(cols = starts_with("author_"), -->
+<!--                names_to = "author_position", -->
+<!--                values_to = "author") |> -->
+<!--   select(-author_position) |> -->
+<!--   filter(!is.na(author)) -->
+
+<!-- head(all_books) -->
+<!-- ``` -->
+
+There are some at the end that we need to get rid of because they are from a 'best of'. 
+
+```{r}
+#| eval: true
+#| include: true
+#| echo: true
+
+all_books <- 
+  all_books |> 
+  slice(1:142) |>
+  filter(author != "‘150 Years of Stats Canada!’.")
+```
+
+Finally, we could make a table of the distribution of the first letter of the names (@tbl-lettersofbooks).
+
+```{r}
+#| label: tbl-lettersofbooks
+#| eval: true
+#| echo: true
+#| tbl-cap: "Distribution of first letter of author names in a collection of books"
+
+all_books |> 
+  mutate(
+    first_letter = str_sub(author, 1, 1)
+    ) |> 
+  group_by(first_letter) |> 
+  count() |>
+  knitr::kable(
+    col.names = c("First letter", "Number of times"),
+    booktabs = TRUE, 
+    linesep = ""
+    )
+```
+
+
+
+
+### Case study: Web scraping UK Prime Ministers from Wikipedia
+
+In this case study we are interested in how long UK prime ministers lived, based on the year that they were born. We will scrape data from Wikipedia using `rvest` [@citervest], clean it, and then make a graph. Every time we scrape a website things will change. Each scrape will largely be bespoke, even if we can borrow some code from earlier projects. It is completely normal to feel frustrated at times. It helps to begin with an end in mind. 
+
+To that end, we can start by generating some simulated data. Ideally, we want a table that has a row for each prime minister, a column for their name, and a column each for the birth and death years. If they are still alive, then that death year can be empty. We know that birth and death years should be somewhere between 1700 and 1990, and that death year should be larger than birth year. Finally, we also know that the years should be integers, and the names should be characters. So, we want something that looks roughly like this:
+
+```{r}
+#| echo: true
+#| message: false
+#| warning: false
+
+library(babynames)
+
+set.seed(853)
+
+simulated_dataset <-
+  tibble(
+    prime_minister = sample(
+      x = babynames |> filter(prop > 0.01) |>
+        select(name) |> unique() |> unlist(),
+      size = 10,
+      replace = FALSE
+    ),
+    birth_year = sample(
+      x = c(1700:1990),
+      size = 10,
+      replace = TRUE
+    ),
+    years_lived = sample(
+      x = c(50:100),
+      size = 10,
+      replace = TRUE
+    ),
+    death_year = birth_year + years_lived
+  ) |>
+  select(prime_minister, birth_year, death_year, years_lived) |>
+  arrange(birth_year)
+```
+
+One of the advantages of generating a simulated dataset is that if we are working in groups then one person can start making the graph, using the simulated dataset, while the other person gathers the data. In terms of a graph, we are aiming for something like @fig-pmsgraphexample.
+
+![Sketch of planned graph showing how long UK prime ministers lived](figures/pms_graph_plan.png){#fig-pmsgraphexample width=95% fig-align="center"}
+
+We are starting with a question that is of interest, which how long each UK prime minister lived. As such, we need to identify a source of data While there are plenty of data sources that have the births and deaths of each prime minister, we want one that we can trust, and as we are going to be scraping, we want one that has some structure to it. The Wikipedia page about UK prime ministers fits both these criteria: https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom. As it is a popular page the information is more likely to be correct, and the data are available in a table.
+
+We load `rvest` and then download the page using `read_html()`. Saving it locally provides us with a copy that we need for reproducibility in case the website changes, and also means that we do not have to keep visiting the website. But it is likely not our property, and so this is typically not something that should be necessarily redistributed.
+
+```{r}
+#| echo: true
+#| message: false
+#| warning: false
+
+library(rvest)
+library(tidyverse)
+```
+
+```{r}
+#| echo: true
+#| eval: false
+#| include: false
+
+# INTERNAL
+
+raw_data <- read_html("https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom")
+write_html(raw_data, "inputs/wiki/pms.html") # Note that we save the file as a html file.
+```
+
+```{r} 
+#| echo: true
+#| eval: false
+#| include: true
+
+raw_data <-
+  read_html("https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom")
+write_html(raw_data, "pms.html")
+```
+
+As with the earlier case study we are looking for patterns in the HTML that we can use to help us get closer to the data that we want. This is an iterative process and requires a lot of trial and error. Even simple examples will take time. 
+
+One tool that may help is the SelectorGadget: https://rvest.tidyverse.org/articles/articles/selectorgadget.html. This allows us to pick and choose the elements that we want, and then gives us the input to give to `html_nodes()` (@fig-selectorgadget))
+
+![Using the Selector Gadget to identify the tag, as at 13 March 2020.](figures/uk_pms.png){#fig-selectorgadget width=90% fig-align="center"}
+
+
+
+
+```{r}
+#| eval: false
+#| include: true
+
+# Read in our saved data
+raw_data <- read_html("pms.html")
+```
+
+```{r}
+#| eval: true
+#| include: false
+
+raw_data <- read_html("inputs/wiki/pms.html")
+
+raw_data
+```
+
+```{r}
+#| eval: true
+#| include: true
+
+# We can parse tags in order
+parse_data_selector_gadget <- 
+  raw_data |> 
+  html_nodes("td:nth-child(3)") |> 
+  html_text()
+
+head(parse_data_selector_gadget)
+```
+
+In this case there is are a few blank lines that  we will need to filter away.
+
+```{r}
+#| eval: true
+#| include: true
+
+parsed_data <-
+  tibble(raw_text = parse_data_selector_gadget) |>
+  filter(raw_text != "—\n") |>
+  filter(
+    !raw_text %in% c(
+      "\n1868\n",
+      "\n1874\n",
+      "\n1880\n",
+      "\n1885\n",
+      "\n1892\n",
+      "\n1979\n",
+      "\n1997\n",
+      "\n2010\n"
+    )
+  ) |>
+  filter(
+    !raw_text %in% c(
+      "\nNational Labour\n",
+      "\nWilliam Pulteney1st Earl of Bath(1684–1764)\n",
+      "\nJames Waldegrave2nd Earl Waldegrave(1715–1763)\n",
+      "\nEdward VII\n\n\n1901–1910\n\n", 
+      "\nGeorge V\n\n\n1910–1936\n\n"
+    )
+  )
+
+head(parsed_data)
+```
+
+Now that we have the parsed data, we need to clean it to match what we wanted. In particular we want a names column, as well as columns for birth year and death year. We will use `separate()` to take advantage of the fact that it looks like the dates are distinguished by brackets.
+
+```{r}
+#| eval: true
+#| include: true
+
+initial_clean <- 
+  parsed_data |> 
+  mutate(raw_text = str_remove_all(raw_text, "\n")) |>
+  separate(raw_text, 
+            into = c("Name", "not_name"), 
+            sep = "\\(",
+            remove = FALSE) |> # The remove = FALSE option here means that we 
+  # keep the original column that we are separating.
+  separate(not_name, 
+            into = c("Date", "all_the_rest"), 
+            sep = "\\)",
+            remove = FALSE)
+
+head(initial_clean)
+```
+
+Finally, we need to clean up the columns.
+
+```{r}
+#| eval: true
+#| include: true
+
+initial_clean <- 
+ initial_clean |> 
+  separate(col = Name, 
+           into = c("Name", "Title"),
+           sep = "[[:digit:]]",
+           extra = "merge",
+           fill = "right") |>
+  separate(col = Name, 
+           into = c("Name", "Title"),
+           sep = "MP for",
+           extra = "merge",
+           fill = "right") |>
+  mutate(Name = str_remove(Name, "\\[b\\]"))
+
+head(initial_clean)
+```
+
+
+```{r}
+#| message: false
+#| warning: false
+
+cleaned_data <- 
+  initial_clean |> 
+  select(Name, Date) |> 
+  separate(Date, into = c("Birth", "Died"), sep = "–", remove = FALSE) |> # The 
+  # PMs who have died have their birth and death years separated by a hyphen, but 
+  # we need to be careful with the hyphen as it seems to be a slightly odd type of 
+  # hyphen and we need to copy/paste it.
+  mutate(Birth = str_remove_all(Birth, "born"),
+         Birth = str_trim(Birth)
+         ) |> # Alive PMs have slightly different format
+  select(-Date) |> 
+  mutate(Name = str_remove(Name, "\n")) |> # Remove some html tags that remain
+  mutate_at(vars(Birth, Died), ~as.integer(.)) |> # Change birth and death to integers
+  mutate(Age_at_Death = Died - Birth) |>  # Add column of the number of years they lived
+  distinct() # Some of the PMs had two goes at it.
+
+head(cleaned_data)
+```
+
+Our dataset looks similar to the one that we said we wanted at the start (@tbl-canadianpmscleanddata).
+
+```{r}
+#| echo: true
+#| eval: true
+#| label: tbl-canadianpmscleanddata
+#| tbl-cap: "UK Prime Ministers, by how old they were when they died"
+
+cleaned_data |> 
+  knitr::kable(
+    col.names = c("Prime Minister", "Birth year", "Death year", "Age at death"),
+    booktabs = TRUE, 
+    linesep = ""
+    )
+```
+
+
+At this point we would like to make a graph that illustrates how long each prime minister lived. If they are still alive then we would like them to run to the end, but we would like to color them differently.
+
+```{r}
+#| echo: true
+
+cleaned_data |> 
+  mutate(still_alive = if_else(is.na(Died), "Yes", "No"),
+         Died = if_else(is.na(Died), as.integer(2022), Died)) |> 
+  mutate(Name = as_factor(Name)) |> 
+  ggplot(aes(x = Birth, 
+             xend = Died,
+             y = Name,
+             yend = Name, 
+             color = still_alive)) +
+  geom_segment() +
+  labs(x = "Year of birth",
+       y = "Prime minister",
+       color = "PM is alive",
+       title = "How long each UK Prime Minister lived, by year of birth") +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1")
+```
+
+
+### Case study: Downloading multiple files
+
+Considering text as data is exciting and opens up a lot of different research questions. Many guides assume that we already have a nicely formatted text dataset, but that is rarely actually the case. In this case study we will download files from a few different pages. While we have already seen two examples of web scraping, those were focused on just one page, whereas we often need many. Here we will focus on this iteration. We will use `download.file()` to do the download, and `purrr` [@citepurrr] to apply this function across multiple sites.
+
+The Reserve Bank of Australia (RBA) is Australia's central bank and sets monetary policy. It has responsibility for setting the cash rate, which is the interest rate used for loans between banks. This interest rate is an especially important one, and has a large impact on the other interest rates in the economy. Four times a year -- February, May, August, and November -- the RBA publishes a statement on monetary policy, and these are available as PDFs. In this example we will download the four statements published in 2021.
+
+First we set-up a dataframe that has the information that we need.
+
+```{r}
+#| eval: true
+#| message: false
+
+library(tidyverse)
+
+statements_of_interest <- 
+  tibble(
+    address = c("https://www.rba.gov.au/publications/smp/2021/nov/pdf/00-overview.pdf",
+                "https://www.rba.gov.au/publications/smp/2021/aug/pdf/00-overview.pdf",
+                "https://www.rba.gov.au/publications/smp/2021/may/pdf/00-overview.pdf",
+                "https://www.rba.gov.au/publications/smp/2021/feb/pdf/00-overview.pdf"
+                ),
+    local_save_name = c(
+      "2021-11.pdf",
+      "2021-08.pdf",
+      "2021-05.pdf",
+      "2021-02.pdf"
+    )
+  )
+
+statements_of_interest
+```
+
+Then we can apply the function `download.files()` to these four 
+
+Then we can write a function that will download the file, let us know that it was downloaded, wait a polite amount of time, and then go get the next file. 
+
+
+```{r}
+#| eval: false
+
+visit_download_and_wait <-
+  function(the_address_to_visit, where_to_save_it_locally) {
+    
+    download.file(url = the_address_to_visit,
+                  destfile = where_to_save_it_locally
+                  )
+
+    print(paste("Done with", the_address_to_visit, "at", Sys.time()))
+    
+    Sys.sleep(sample(5:10, 1))
+  }
+```
+
+We now apply that function to our list of URLs.
+
+```{r}
+#| eval: false
+#| include: true
+
+walk2(statements_of_interest$address,
+      statements_of_interest$local_save_name,
+      ~visit_download_and_wait(.x, .y))
+```
+
+The result is that we have downloaded these four PDFs and saved them to our computer. In the next section we will build on this to discuss getting information from these PDFs.
+
+
+## PDFs
+
+In contrast to an API, a PDF is usually only produced for human rather than computer consumption. The nice thing about PDFs is that they are static and constant. And it is nice that they make data available at all. But the trade-off is that:
+
+- It is not overly useful to do larger-scale statistical analysis.
+- We do not know how the PDF was put together so we do not know whether we can trust it.
+- We cannot manipulate the data to get results that we are interested in.
+
+
+
+Indeed, sometimes governments publish data as PDFs because they do not actually want us to be able to analyze it. Being able to get data from PDFs opens up a large number of datasets.
+
+There are two important aspects to keep in mind when approaching a PDF with a mind to extracting data from it:
+
+1. Begin with an end in mind. Planning and then literally sketching out what we want from a final dataset/graph/paper stops us wasting time and keeps us focused. 
+2. Start simple, then iterate. The quickest way to make a complicated model is often to first build a simple model and then complicate it. Start with just trying to get one page of the PDF working or even just one line. Then iterate from there.
+
+We will start by walking through several examples and then go through a case study where we will gather data on US Total Fertility Rate, by state.
+
+@fig-firstpdfexample is a PDF that consists of just the first sentence from Jane Eyre taken from Project Gutenberg [@janeeyre].
+
+![First sentence of Jane Eyre](inputs/pdfs/first_example.png){#fig-firstpdfexample width=90% fig-align="center"}
+
+If assume that it was saved as 'first_example.pdf', then we can `pdftools` [@citepdftools] to get the text from this one-page PDF into R.
+
+
+```{r}
+#| eval: false
+#| include: true
+
+library(pdftools)
+library(tidyverse)
+
+first_example <- pdf_text("first_example.pdf")
+
+first_example
+
+class(first_example)
+```
+
+```{r}
+#| eval: true
+#| include: false
+
+library(pdftools)
+library(tidyverse)
+
+first_example <- pdf_text("inputs/pdfs/first_example.pdf")
+
+first_example
+
+class(first_example)
+```
+
+We can see that the PDF has been correctly read in, as a character vector.
+
+We will now try a slightly more complicated example that consists of the first few paragraphs of Jane Eyre (@fig-secondpdfexample). Also notice that now we have the chapter heading as well.
+
+![First few paragraphs of Jane Eyre](inputs/pdfs/second_example.png){#fig-secondpdfexample width=90% fig-align="center"}
+
+We use the same function as before.
+
+```{r}
+#| eval: false
+#| include: true
+
+second_example <- pdftools::pdf_text("second_example.pdf")
+
+second_example
+
+class(second_example)
+```
+
+```{r}
+#| eval: true
+#| include: false
+
+second_example <- pdftools::pdf_text("inputs/pdfs/second_example.pdf")
+
+second_example
+
+class(second_example)
+```
+
+Again, we have a character vector. The end of each line is signaled by '\\n', but other than that it looks pretty good. Finally, we consider the first two pages.
+
+```{r}
+#| eval: false
+#| include: true
+
+third_example <- pdftools::pdf_text("third_example.pdf")
+
+third_example
+
+class(third_example)
+```
+
+
+```{r}
+#| eval: true
+#| include: false
+
+third_example <- pdftools::pdf_text("inputs/pdfs/third_example.pdf")
+
+third_example
+
+class(third_example)
+```
+
+Notice that the first page is the first element of the character vector, and the second page is the second element. As we are most familiar with rectangular data, we will try to get it into that format as quickly as possible. And then we can use our regular `tidyverse` functions to deal with it.
+
+First we want to convert the character vector into a tibble. At this point we may like to add page numbers as well.
+
+```{r}
+#| echo: true
+
+jane_eyre <- tibble(raw_text = third_example,
+                    page_number = c(1:2))
+```
+
+We then want to separate the lines so that each line is an observation. We can do that by looking for '\\n' remembering that we need to escape the backslash as it is a special character.
+
+```{r}
+#| echo: true
+
+jane_eyre <- 
+  separate_rows(jane_eyre, raw_text, sep = "\\n", convert = FALSE)
+jane_eyre
+```
+
+
+
+
+
+
+
+### Case-study: Gathering data on the US Total Fertility Rate
+
+The US Department of Health and Human Services Vital Statistics Report provides information about the total fertility rate (the average number of births per woman if women experience the current age-specific fertility rates throughout their reproductive years) for each state for nineteen years. The US persists in only making this data available in PDFs, which hinders research. But we can use the approaches above to get the data into a nice dataset.
+
+For instance, in the case of the year 2000 the table that we are interested in is on page 40 of a PDF that is available at https://www.cdc.gov/nchs/data/nvsr/nvsr50/nvsr50_05.pdf. The column of interest is labelled: "Total fertility rate" (@fig-dhsexample). 
+
+![Example Vital Statistics Report, from 2000](figures/dhs_example.png){#fig-dhsexample width=90% fig-align="center"}
+
+The first step when getting data out of a PDF is to sketch out what we eventually want. A PDF typically contains a lot of information, and so it is handy to be very clear about what you need. This helps keep you focused, and prevents scope creep, but it is also helpful when thinking about data checks. We literally write down on paper what we have in mind. In this case, what is needed is a table with a column for state, year and TFR (@fig-tfrdesired). 
+
+![Planned dataset of TFR for each year and US state](figures/tfr_dataset_sketch.png){#fig-tfrdesired width=40% fig-align="center"}
+
+There are 19 different PDFs, and we are interested in a particular column in a particular table in each of them. Unfortunately, there is nothing magical about what is coming. This first step requires working out the link for each, and the page and column name that is of interest. In the end, this looks like this.
+
+```{r}
+#| eval: true
+#| include: false
+#| warning: false
+#| message: false
+
+summary_tfr_dataset <- read_csv("inputs/tfr_tables_info.csv")
+```
+
+
+```{r}
+library(gt)
+
+summary_tfr_dataset |> 
+  select(year, page, table, column_name, url) |> 
+  gt()
+```
+
+The first step is to get some code that works for one of them. I'll step through the code in a lot more detail than normal because we're going to use these pieces a lot. 
+
+We will choose the year 2000. We first download and save the PDF using `download.file()`.
+
+```{r}
+#| echo: true
+#| label: justfirstyearr
+#| eval: false
+
+download.file(url = summary_tfr_dataset$url[1], 
+              destfile = "year_2000.pdf")
+```
+
+```{r}
+#| label: justfirstyear
+#| eval: false
+#| echo: true
+
+# INTERNAL
+
+download.file(url = summary_tfr_dataset$url[1], 
+              destfile = "inputs/pdfs/dhs/year_2000.pdf")
+```
+
+We then read the PDF in as a character vector using `pdf_text()` from `pdftools`. And then convert it to a tibble, so that we can use familiar verbs on it.
+
+```{r}
+#| eval: false
+#| echo: true
+
+library(pdftools)
+dhs_2000 <- pdf_text("year_2000.pdf")
+```
+
+```{r}
+#| eval: true
+#| echo: false
+
+library(pdftools)
+
+dhs_2000 <- pdftools::pdf_text("inputs/pdfs/dhs/year_2000.pdf")
+```
+
+```{r}
+#| echo: true
+
+dhs_2000 <- tibble(raw_data = dhs_2000)
+
+head(dhs_2000)
+```
+
+Grab the page that is of interest (remembering that each page is a element of the character vector, hence a row in the tibble).
+
+```{r}
+#| echo: true
+
+dhs_2000 <- 
+  dhs_2000 |> 
+  slice(summary_tfr_dataset$page[1])
+
+head(dhs_2000)
+```
+
+Now we want to separate the rows.
+
+```{r}
+#| echo: true
+
+dhs_2000 <- 
+  dhs_2000 |> 
+  separate_rows(raw_data, sep = "\\n", convert = FALSE)
+
+head(dhs_2000)
+```
+
+Now we are searching for patterns that we can use. Let us look at the first ten lines of content.
+
+```{r}
+#| echo: true
+
+dhs_2000[13:22,]
+```
+
+It does not get much better than this:
+
+1. We have dots separating the states from the data.
+2. We have a space between each of the columns.
+
+So we can now separate this in to separate columns. First we want to match on when there is at least two dots (remembering that the dot is a special character and so needs to be escaped).
+
+```{r}
+#| echo: true
+
+dhs_2000 <- 
+  dhs_2000 |> 
+  separate(col = raw_data, 
+           into = c("state", "data"), 
+           sep = "\\.{2,}", 
+           remove = FALSE,
+           fill = "right"
+           )
+
+head(dhs_2000)
+```
+
+We get the expected warnings about the top and the bottom as they do not have multiple dots. (Another option here is to use `pdf_data()` which would allow us to use location rather than delimiters.)
+
+We can now separate the data based on spaces. There is an inconsistent number of spaces, so we first squish any example of more than one space into just one.
+
+```{r}
+#| echo: true
+
+dhs_2000 <- 
+  dhs_2000 |>
+  mutate(data = str_squish(data)) |> 
+  tidyr::separate(col = data, 
+           into = c("number_of_births", 
+                    "birth_rate", 
+                    "fertility_rate", 
+                    "TFR", 
+                    "teen_births_all", 
+                    "teen_births_15_17", 
+                    "teen_births_18_19"), 
+           sep = "\\s", 
+           remove = FALSE
+           )
+
+head(dhs_2000)
+```
+
+This is all looking fairly great. The only thing left is to clean up.
+
+```{r}
+#| echo: true
+
+dhs_2000 <- 
+  dhs_2000 |> 
+  select(state, TFR) |> 
+  slice(13:69) |> 
+  mutate(year = 2000)
+
+dhs_2000
+```
+
+And we're done for that year. Now we want to take these pieces, put them into a function and then run that function over all 19 years.
+
+The first part is downloading each of the 19 PDFs that we need. We are going to build on the code that we used before. That code was:
+
+```{r}
+#| eval: false
+#| echo: true
+
+download.file(url = summary_tfr_dataset$url[1], destfile = "year_2000.pdf")
+```
+
+
+To modify this we need:
+
+1. To have it iterate through each of the lines in the dataset that contains our CSVs (i.e. where it says 1, we want 1, then 2, then 3, etc.). 
+2. Where it has a filename, we need it to iterate through our desired filenames (i.e. year_2000, then year_2001, then year_2002, etc). 
+3. We would like for it to do all of this in a way that is a little robust to errors. For instance, if one of the URLs is wrong or the internet drops out then we would like it to just move onto the next PDF, and then warn us at the end that it missed one, not to stop. (This does not really matter because it is only 19 files, but it is easy to find oneself doing this for thousands of files). 
+
+We will draw on `purrr` for this [@citepurrr].
+
+```{r}
+#| eval: false
+#| echo: true
+
+library(purrr)
+
+summary_tfr_dataset <- 
+  summary_tfr_dataset |> 
+  mutate(pdf_name = paste0("dhs/year_", year, ".pdf"))
+```
+
+```{r}
+#| eval: true
+#| echo: false
+
+library(purrr)
+
+summary_tfr_dataset <- 
+  summary_tfr_dataset |> 
+  mutate(pdf_name = paste0("inputs/pdfs/dhs/year_", year, ".pdf"))
+```
+
+```{r}
+#| eval: false
+#| echo: true
+
+walk2(
+  summary_tfr_dataset$url,
+  summary_tfr_dataset$pdf_name,
+  safely( ~ download.file(.x , .y))
+)
+```
+
+Here we take `download.file()` and pass it two arguments: `.x` and `.y`. Then `walk2()` applies that function to the inputs that we give it, in this case the URLs columns is the `.x` and the pdf_names column is the `.y`. Finally, `safely()` means that if there are any failures then it just moves onto the next file instead of throwing an error.
+
+We now have each of the PDFs saved and we can move onto getting the data from them.
+
+Now we need to get the data from the PDFs. As before, we are going to build on the code that we used before. That code (overly condensed) was:
+
+```{r}
+#| echo: true
+#| eval: false
+
+dhs_2000 <- pdftools::pdf_text("year_2000.pdf")
+
+dhs_2000 <-
+  tibble(raw_data = dhs_2000) |>
+  slice(summary_tfr_dataset$page[1]) |>
+  separate_rows(raw_data, sep = "\\n", convert = FALSE) |>
+  separate(
+    col = raw_data,
+    into = c("state", "data"),
+    sep = "\\.{2,}",
+    remove = FALSE
+  ) |>
+  mutate(data = str_squish(data)) |>
+  separate(
+    col = data,
+    into = c(
+      "number_of_births",
+      "birth_rate",
+      "fertility_rate",
+      "TFR",
+      "teen_births_all",
+      "teen_births_15_17",
+      "teen_births_18_19"
+    ),
+    sep = "\\s",
+    remove = FALSE
+  ) |>
+  select(state, TFR) |>
+  slice(13:69) |>
+  mutate(year = 2000)
+
+dhs_2000
+```
+
+The first thing that we want to iterate is the argument to `pdf_text()`, then the number in in `slice()` will also need to change (that is doing the work to get only the page that we are interested in).
+
+Two aspects are hardcoded, and these may need to be updated. In particular: 
+
+1) The separate only works if each of the tables has the same columns in the same order; and 
+2) the slice (which restricts the data to just the states) only works in this case. 
+
+Finally, we add the year only at the end, whereas we would need to bring that up earlier in the process. 
+
+We will start by writing a function that will go through all the files, grab the data, get the page of interest, and then expand the rows. We will then use `pmap_dfr()` from `purrr` to apply that function to all of the PDFs and to output a tibble.
+
+```{r}
+#| message: false
+#| warning: false
+
+get_pdf_convert_to_tibble <- function(pdf_name, page, year){
+#| echo: true
+  
+  dhs_table_of_interest <- 
+    tibble(raw_data = pdftools::pdf_text(pdf_name)) |> 
+    slice(page) |> 
+    separate_rows(raw_data, sep = "\\n", convert = FALSE) |> 
+    separate(col = raw_data, 
+             into = c("state", "data"), 
+             sep = "[�|\\.]\\s+(?=[[:digit:]])", 
+             remove = FALSE) |> 
+    mutate(
+      data = str_squish(data),
+      year_of_data = year)
+
+  print(paste("Done with", year))
+  
+  return(dhs_table_of_interest)
+}
+
+raw_dhs_data <- purrr::pmap_dfr(summary_tfr_dataset |> select(pdf_name, page, year),
+                                get_pdf_convert_to_tibble)
+
+head(raw_dhs_data)
+```
+
+Now we need to clean up the state names and then filter on them.
+
+```{r}
+#| message: false
+#| warning: false
+
+states <- c("Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", 
+#| echo: true
+            "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", 
+            "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", 
+            "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", 
+            "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", 
+            "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", 
+            "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", 
+            "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", 
+            "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", 
+            "Wyoming", "District of Columbia")
+
+raw_dhs_data <- 
+  raw_dhs_data |> 
+  mutate(state = str_remove_all(state, "\\."),
+         state = str_remove_all(state, "�"),
+         state = str_remove_all(state, "\u0008"),
+         state = str_replace_all(state, "United States 1", "United States"),
+         state = str_replace_all(state, "United States1", "United States"),
+         state = str_replace_all(state, "United States 2", "United States"),
+         state = str_replace_all(state, "United States2", "United States"),
+         state = str_replace_all(state, "United States²", "United States"),
+         ) |> 
+  mutate(state = str_squish(state)) |> 
+  filter(state %in% states)
+
+head(raw_dhs_data)
+```
+
+The next step is to separate the data and get the correct column from it. We are going to separate based on spaces once it is cleaned up.
+
+
+```{r}
+#| message: false
+#| warning: false
+
+raw_dhs_data <- 
+#| echo: true
+  raw_dhs_data |> 
+  mutate(data = str_remove_all(data, "\\*")) |> 
+  separate(data, into = c("col_1", "col_2", "col_3", "col_4", "col_5", 
+                          "col_6", "col_7", "col_8", "col_9", "col_10"), 
+           sep = " ",
+           remove = FALSE)
+head(raw_dhs_data)
+```
+
+We can now grab the correct column.
+
+```{r}
+#| echo: true
+
+tfr_data <- 
+  raw_dhs_data |> 
+  mutate(TFR = if_else(year_of_data < 2008, col_4, col_3)) |> 
+  select(state, year_of_data, TFR) |> 
+  rename(year = year_of_data)
+
+head(tfr_data)
+```
+
+
+Finally, we need to convert the case.
+
+```{r}
+#| echo: true
+
+head(tfr_data)
+
+tfr_data <- 
+  tfr_data |> 
+  mutate(TFR = str_remove_all(TFR, ","),
+         TFR = as.numeric(TFR))
+
+head(tfr_data)
+```
+
+And run some checks.
+
+```{r}
+#| echo: true
+
+tfr_data$state |> unique() |> length() == 51
+tfr_data$year |> unique() |> length() == 19
+```
+
+In particular we want for there to be 51 states and for there to be 19 years.
+
+And we are done (@tbl-tfrforthewin)!
+
+```{r}
+#| label: tbl-tfrforthewin
+#| echo: true
+#| tbl-cap: "First ten rows of a dataset of TFR by US state, 2000-2019"
+
+tfr_data |>
+  slice(1:10) |>
+  knitr:: kable(
+    col.names = c("State", "Year", "TFR"),
+    digits = 0,
+    booktabs = TRUE, 
+    linesep = "",
+    format.args = list(big.mark = ",")
+  )
+```
+
+```{r}
+#| eval: true
+#| include: false
+
+write_csv(tfr_data, "outputs/monicas_tfr.csv")
+```
+
+
+
+
+
+<!-- ## Semi-structured -->
+
+<!-- ### JSON and XML -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- @benoit2020text -->
+
+
+
+<!-- Text data is all around us, and in many cases is some of the earliest types of data that we are exposed to. Recent increases in computational power, the development of new methods, and the enormous availability of text, means that there has been a great deal of interest in using text as data. Initial methods tend to focus, essentially, on converting text into numbers and then analyzing them using traditional methods. More recent methods have begun to take advantage of the structure that is inherent in text, to draw additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, you can do more by knowing that a crocodile could eat you, and a tree probably won't. -->
+
+<!-- Here we cover a variety of techniques designed to equip you with the basics of using text as data. One of the great things about text data is that it is typically not generated for the purposes of our analysis. That is great because it removes one of the unobservable variables that we typically have to worry about. The trade-off is that we typically have to do a bunch more work to get it into a form that we can work with. -->
+
+
+
+### Optical Character Recognition
+
+All of the above is predicated on having a PDF that is already 'digitized'. But what if it is images? In that case we need to first use Optical Character Recognition (OCR) using `tesseract` [@citetesseract]. This is a R wrapper around the Tesseract open-source OCR engine.
+
+Let us see an example with a scan from the first page of Jane Eyre (@fig-janescan).
+
+![Scan of first page of Jane Eyre](figures/jane_scan.png){#fig-janescan width=90% fig-align="center"}
+
+```{r}
+#| eval: false
+#| include: true
+
+library(tesseract)
+
+text <- tesseract::ocr(here::here("jane_scan.png"), engine = tesseract("eng"))
+cat(text)
+```
+
+```{r}
+#| eval: true
+#| include: false
+
+library(tesseract)
+
+text <- tesseract::ocr(here::here("figures/jane_scan.png"), engine = tesseract("eng"))
+cat(text)
+```
+
+
+
+
+
+
+## Exercises and tutorial
+
+### Exercises
+
+1. What are some types of probability sampling, and in what circumstances might you want to implement them (write two or three pages)?
+2. There have been some substantial political polling 'misses' in recent years (Trump and Brexit come to mind). To what extent do you think non-response bias was the cause of this (write a page or two, being sure to ground your writing with citations)?
+3. It seems like a lot of businesses have closed since the pandemic. To investigate this, we walk along some blocks downtown and count the number of businesses that are closed and open. To decide which blocks to walk, we open a map, start at the lake, and then pick every 10th street. This type of sampling is (pick one)?
+    a. Cluster sampling.
+    b.  Systematic sampling.
+    c. Stratified sampling.
+    d. Convenience sampling.
+4. Please name some reasons why you may wish to use cluster sampling (select all)?
+    a. Balance in responses.
+    b. Administrative convenience.
+    c. Efficiency in terms of money.
+    d. Underlying systematic concerns.
+    e. Estimation of sub-populations.
+5. Please consider Beaumont, 2020, 'Are probability surveys bound to disappear for the production of official statistics?'. With reference to that paper, do you think that probability surveys will disappear, and why or why not (please write a paragraph or two)?
+6. In your own words, what is an API (write a paragraph or two)?
+7. Find two APIs and discuss how you could use them to tell interesting stories (write a paragraph or two for each)?
+8. Find two APIs that have an R packages written around them. How could you use these to tell interesting stories (write a paragraph or two)?
+9. What is the main argument to `httr::GET()` (pick one)?
+    a.  'url'
+    b. 'website'
+    c. 'domain'
+    d. 'location'
+10. What are three reasons why we should be respectful when getting scraping data from websites  (write a paragraph or two)?
+11. What features of a website do we typically take advantage of when we parse the code (pick on)?
+    a. HTML/CSS mark-up.
+    b. Cookies.
+    c. Facebook beacons.
+    d. Code comments.
+12. What are three advantages and three disadvantages of scraping compared with using an API (write a paragraph or two)?
+13. What are three delimiters that could be useful when trying to bring order to the PDF that you read in as a character vector (write a paragraph or two)?
+9. Which of the following, used as part of a regular expression, would match a full stop (hint: see the 'strings' cheat sheet) (pick one)? 
+    a. '.'
+    b. '\.'
+    c.  '\\.'
+    d. '\\\.'
+10. Name three reasons for sketching out what you want before starting to try to extract data from a PDF (write a paragraph or two for each)?
+11. What are three checks that we might like to use for demographic data, such as the number of births in a country in a particular year (write a paragraph or two for check)?
+12. What are three checks that we might like to use for economic data, such as GDP for a particular country in a particular year (write a paragraph or two for check)?
+13. What does the `purrr` package do (select all that apply)?
+    a.  Enhances R's functional programming toolkit.
+    b.  Makes loops easier to code and read.
+    c. Checks the consistency of datasets.
+    d. Identifies issues in data structures and proposes replacements.
+14. Which of these are functions from the `purrr` package (select all that apply)?
+    a.  `map()`
+    b.  `walk()`
+    c. `run()`
+    d.  `safely()`
+15. What are some principles to follow when scraping (select all that apply)?
+    a. Avoid it if possible
+    b. Follow the site’s guidance
+    c. Slow down
+    d. Use a scalpel not an axe.  
+16. What is a robots.txt file (pick one)?
+    a. The instructions that Frankenstein followed.
+    b. Notes that web scrapers should follow when scraping.
+17. What is the html tag for an item in list (pick one)?
+    a. `li`
+    b. `body`
+    c. `b`
+    d. `em`
+18. Which function should we use if we have the following text data: 'rohan_alexander' in a column called 'names' and want to split it into first name and surname based on the underbar (pick one)?
+    a.  `separate()`
+    b. `slice()`
+    c. `spacing()`
+    d. `text_to_columns()`
+
+
+
+### Tutorial
+
+Please redo the web scraping example, but for one of: [Australia](https://en.wikipedia.org/wiki/List_of_prime_ministers_of_Australia), [Canada](https://en.wikipedia.org/wiki/List_of_prime_ministers_of_Canada), [India](https://en.wikipedia.org/wiki/List_of_prime_ministers_of_India), or [New Zealand](https://en.wikipedia.org/wiki/List_of_prime_ministers_of_New_Zealand). 
+
+Plan, gather, and clean the data, and then use it to create a similar table to the one created above. Write a few paragraphs about your findings. Then write a few paragraphs about the data source, what you gathered, and how you went about it. What took longer than you expected? When did it become fun? What would you do differently next time you do this? Your submission should be at least two pages and likely more.
+
+Please submit a link to a PDF produced using R Markdown that includes a link to the GitHub repo.

@@ -1,0 +1,1436 @@
+---
+engine: knitr
+---
+
+# Exploratory data analysis {#sec-exploratory-data-analysis}
+
+**Required material**
+
+- Read *The Future of Data Analysis*, Part 1 'General Considerations', [@tukey1962future].
+
+**Key concepts and skills**
+
+- Quickly coming to terms with a new dataset by constructing graphs and tables.
+- Understanding the issues and features of the dataset and how this may affect analysis decisions.
+- Thinking about missing values and outliers.
+
+
+**Key libraries**
+
+- `broom`
+- `ggrepel`
+- `here`
+- `janitor`
+- `lubridate`
+- `opendatatoronto`
+- `tidymodels`
+- `tidyverse`
+- `visdat`
+
+
+**Key functions**
+
+- `augment()`
+- `clean_names()`
+- `coord_flip()`
+- `count()`
+- `distinct()`
+- `facet_grid()`
+- `facet_wrap()`
+- `geom_bar()`
+- `geom_col()`
+- `geom_density()`
+- `geom_histogram()`
+- `geom_line()`
+- `geom_point()`
+- `geom_smooth()`
+- `geom_text_repel()`
+- `get_dupes()`
+- `glance()`
+- `if_else()`
+- `ifelse()`
+- `initial_split()`
+- `left_join()`
+- `mutate()`
+- `mutate_all()`
+- `names()`
+- `ncol()`
+- `nrow()`
+- `pivot_wider()`
+- `scale_color_brewer()`
+- `scale_fill_brewer()`
+- `scale_x_log10()`
+- `scale_y_log10()`
+- `str_detect()`
+- `str_extract()`
+- `str_remove()`
+- `str_split()`
+- `str_starts()`
+- `summarise()`
+- `summarise_all()`
+- `theme_classic()`
+- `theme_minimal()`
+- `vis_dat()`
+- `vis_miss()`
+
+
+
+
+
+## Introduction
+
+> The future of data analysis can involve great progress, the overcoming of real difficulties, and the provision of a great service to all fields of science and technology. Will it? That remains to us, to our willingness to take up the rocky road of real problems in preference to the smooth road of unreal assumptions, arbitrary criteria, and abstract results without real attachments. Who is for the challenge?
+> 
+> @tukey1962future [p. 64].
+
+Exploratory data analysis is never finished, you just die. It is the active process of exploring and becoming familiar with our data. Like a farmer with their hands in the earth, we need to know every contour and aspect of our data. We need to know how it changes, what it shows, hides, and what are its limits. Exploratory data analysis (EDA) is the unstructured process of doing this.
+
+EDA is a means to an end. While it will inform the entire paper, especially the data section, it is not typically something that ends up in the final paper. 
+The way to proceed is to make a separate R Markdown file, and add code as well as brief notes on-the-go. Do not delete previous code, just add to it. By the end of it we will have created a useful notebook that captures our exploration of the dataset. This is a document that will guide the subsequent analysis and modelling.
+
+EDA draws on a variety of skills and there are a lot of options for EDA [@staniak2019landscape]. Every tool should be considered. Look at the data and scroll through it. Make tables, plots, summary statistics, even some models. The key is to iterate, move quickly rather than perfectly, and come to a thorough understanding of the data.
+
+In this chapter we will go through various examples of EDA including TTC subway delays, and Airbnb.
+<!-- , and something else? -->
+
+
+## Case study: TTC subway delays 
+
+We can use `opendatatoronto` [@citeSharla] and `tidyverse` [@citetidyverse] to obtain data about the Toronto subway system, and especially the delays that have occurred. The idea for this case study comes from Monica Alexander.
+
+
+<!-- We will eprovides an interface to all data available on the [Open Data Portal](https://open.toronto.ca/) provided by the City of Toronto. We are going to use that to take a quick lo ok at the subway delays. We're additionally going to especially draw on the , as well as the `ggrepel` [@citeggrepel], `janitor` [@janitor], `lubridate` [@GrolemundWickham2011], and `visdat` [@citevisdat] packages. -->
+
+<!-- ```{r} -->
+#| message: false
+#| warning: false
+
+<!-- library(opendatatoronto) -->
+#| echo: true
+<!-- library(tidyverse) -->
+<!-- library(ggrepel) -->
+<!-- library(janitor) -->
+<!-- library(lubridate) -->
+<!-- library(visdat) -->
+<!-- ``` -->
+
+To begin, we download the data on Toronto Transit Commission (TTC) subway delays in 2020. The data are available as a separate dataset for each month. We are interested in 2020, so we create a column that of the year, and then filter the resources to just those months that were in 2020. We download them using `get_resource()`, iterating through each month using `map_dfr` from `purrr` [@citepurrr] which brings each of the twelve datasets together, and then save them.
+then save them. 
+
+```{r}
+#| eval: false
+#| include: true
+
+library(janitor)
+library(opendatatoronto)
+library(tidyverse)
+
+# We know this unique key by looking the 'id' of the interest.
+ttc_resources <- 
+  list_package_resources("996cfe8d-fb35-40ce-b569-698d51fc683b") |>
+  mutate(year = str_extract(name, "20..?")) |>  
+  filter(year == 2020)
+
+all_2020_ttc_data <- 
+  map_dfr(ttc_resources$id, get_resource)
+
+all_2020_ttc_data <- clean_names(all_2020_ttc_data)
+
+write_csv(all_2020_ttc_data, "all_2020_ttc_data.csv")
+
+all_2020_ttc_data
+```
+
+```{r}
+#| include: false
+#| eval: false
+
+# INTERNAL - Run above and then run this to save it in the appropriate place.
+
+write_csv(all_2020_ttc_data, "inputs/data/all_2020_ttc_data.csv")
+```
+
+```{r}
+#| eval: true
+#| include: false
+
+library(janitor)
+library(opendatatoronto)
+library(tidyverse)
+
+all_2020_ttc_data <- read_csv("inputs/data/all_2020_ttc_data.csv")
+
+all_2020_ttc_data
+```
+
+The dataset has a variety of columns, and we can find out more about each of them by downloading the codebook. The reason for the delay is coded, and so we can also download the explanations. One particular variable of interest appears to be 'min_delay', which gives the extent of the delay in minutes. 
+
+```{r}
+#| eval: false
+#| include: true
+
+# Data codebook
+delay_data_codebook <- get_resource("54247e39-5a7d-40db-a137-82b2a9ab0708")
+delay_data_codebook <- clean_names(delay_data_codebook)
+write_csv(delay_data_codebook, "delay_data_codebook.csv")
+
+# Explanation for delay codes
+delay_codes <- get_resource("fece136b-224a-412a-b191-8d31eb00491e")
+delay_codes <- clean_names(delay_codes)
+write_csv(delay_codes, "delay_codes.csv")
+```
+
+```{r}
+#| include: false
+#| eval: false
+
+# INTERNAL - Run above and then run this to save it in the appropriate place.
+write_csv(delay_data_codebook, "inputs/data/delay_data_codebook.csv")
+write_csv(delay_codes, "inputs/data/delay_codes.csv")
+```
+
+```{r}
+#| eval: true
+#| include: false
+
+delay_data_codebook <- read_csv("inputs/data/delay_data_codebook.csv")
+delay_data_codebook
+
+delay_codes <- read_csv("inputs/data/delay_codes.csv")
+delay_codes
+```
+
+There is no one way to explore a dataset while conducting EDA, but we are usually especially interested in: 
+
+- What should the variables look like? For instance, what is their type, what are the values, and what does the distribution of these look like?
+- What aspects are surprising, both in terms of data that are there that we do not expect, such as outliers, but also in terms of data that we may expect here but do not have such as missing data.
+- Developing a goal for our analysis. For instance, in this case, it might be understanding the factors such as stations and the time of day, that are associated with delays.
+
+It is important to document all aspects as we go through and make note of anything surprising. We are looking to create a record of the steps and assumptions that we made as we were going because these will be important when we come to modelling. 
+
+
+### Checking data
+
+We should check that the variables are what they say they are. If they are not, then we need to work out what to do, for instance, should we recode them, or even remove them? It is also important to ensure that the class of the variables is as we expect, for instance variables that should be a factor are a factor and those that should be a character are a character. And also that we do not accidentally have, say, factors as numbers, or vice versa. One way to do this is to use `unique()`, and another is to use `table()`.
+
+```{r}
+unique(all_2020_ttc_data$day)
+
+unique(all_2020_ttc_data$line)
+
+table(all_2020_ttc_data$day)
+
+table(all_2020_ttc_data$line)
+```
+
+It is clear that we have likely issues in terms of the lines. Some of them have a clear re-code, but not all. One option would be to drop them, but we would need to think about whether these errors might be correlated with something that is of interest, because if they were then we may be dropping important information. There is usually no one right answer, because it will usually depend on what we are using the data for. We would note the issue, as we continued with EDA and then decide later about what to do. For now, we will remove all the lines that are not the ones that we know to be correct.
+
+```{r}
+all_2020_ttc_data <- 
+  all_2020_ttc_data |> 
+  filter(line %in% c("BD", "YU", "SHP", "SRT"))
+```
+
+
+Exploring missing data could be a course in itself, but the presence, or lack, of missing values can haunt an analysis. To get started we could look at known-unknowns, which are the NAs for each variable. And `vis_dat()` and `vis_miss()` from `visdat` [@citevisdat] can be useful to get a feel for how the missing values are distributed.
+
+```{r}
+#| eval: true
+#| include: true
+#| message: false
+#| warning: false
+
+library(visdat)
+
+all_2020_ttc_data |>
+  summarise_all(list( ~ sum(is.na(.))))
+
+vis_dat(x = all_2020_ttc_data,
+         palette = "cb_safe"
+         )
+
+vis_miss(all_2020_ttc_data)
+```
+
+In this case we have many missing values in 'bound' and two in 'line'. For these known-unknowns, we are interested in whether the they are missing at random. We want to, ideally, show that data happened to just drop out. This is unlikely, and so we are usually trying to look at what is systematic about how our data are missing.
+
+Sometime data happen to be duplicated. If we did not notice this then our analysis would be wrong in ways that we'd not be able to consistently expect. There are a variety of ways to look for duplicated rows, but `get_dupes()` from `janitor` [@janitor] is especially useful.
+
+```{r}
+#| eval: true
+#| include: true
+
+get_dupes(all_2020_ttc_data)
+```
+
+This dataset has many duplicates. Again, we are interested in whether there is something systematic going on. Remembering that during EDA we are trying to quickly come to terms with a dataset, one way forward is to flag this as an issue to come back to and explore later, and to just remove duplicates for now using `distinct()`.
+
+```{r}
+#| eval: true
+#| include: true
+
+all_2020_ttc_data <- 
+  all_2020_ttc_data |> 
+  distinct()
+```
+
+The station names are a mess. We could try to quickly bring a little order to the chaos by just taking just the first word (or, the first two if it starts with 'ST').
+
+```{r}
+#| eval: true
+#| include: true
+
+all_2020_ttc_data <-
+  all_2020_ttc_data |>
+  mutate(station_clean = if_else(str_starts(station, "ST"), 
+                                 word(station, 1, 2), 
+                                 word(station, 1)))
+```
+
+
+
+### Visualizing data
+
+We need to see the data in its original state to understand it and we use bar charts, scatterplots, line plots and histograms extensively for this. During EDA we are not as concerned with whether the graph is aesthetically pleasing, but are instead trying to acquire a sense of the data as quickly as possible. We can start by looking at the distribution of 'min_delay', which is one outcome of interest.
+
+```{r}
+#| eval: true
+#| include: true
+
+all_2020_ttc_data |>
+  ggplot(aes(x = min_delay)) + 
+  geom_bar()
+```
+
+The largely empty graph suggests the presence of outliers. There are a variety of ways to try to understand what could be going on, but one quick way to proceed it to use a log, remembering that we would expect values of 0 to drop away.
+
+```{r}
+#| eval: true
+#| include: true
+#| message: false
+#| warning: false
+
+all_2020_ttc_data |>
+  ggplot(aes(x = min_delay)) + 
+  geom_bar() +
+  scale_x_log10()
+```
+
+This initial exploration further hints at an issue that we might like to explore further. We will join this dataset with 'delay_codes' to understand what is going on. 
+
+```{r}
+#| eval: true
+#| include: true
+
+all_2020_ttc_data <-
+  all_2020_ttc_data |>
+  left_join(
+    delay_codes |>
+      rename(code = sub_rmenu_code, 
+             code_desc = code_description_3) |>
+      select(code, code_desc),
+    by = "code"
+  )
+
+all_2020_ttc_data <-
+  all_2020_ttc_data |>
+  mutate(code_srt = ifelse(line == "SRT", code, "NA")) |>
+  left_join(
+    delay_codes |>
+      rename(code_srt = sub_rmenu_code, code_desc_srt = code_description_7) |>
+      select(code_srt, code_desc_srt),
+    by = "code_srt"
+  ) |>
+  mutate(
+    code = ifelse(code_srt == "NA", code, code_srt),
+    code_desc = ifelse(is.na(code_desc_srt), code_desc, code_desc_srt)
+  ) |>
+  select(-code_srt,-code_desc_srt)
+```
+
+And so we can see that the 450 minute delay was due to 'Transit Control Related Problems', the 446 minute delay was due to 'Miscellaneous Other', they seem to be outliers, even among the outliers.
+
+```{r}
+#| eval: true
+#| include: true
+
+all_2020_ttc_data |> 
+  left_join(delay_codes |> 
+              rename(code = sub_rmenu_code, code_desc = code_description_3) |>
+              select(code, code_desc)) |> 
+  arrange(-min_delay) |> 
+  select(date, time, station, line, min_delay, code, code_desc)
+```
+
+### Groups of small counts
+
+Another thing that we are looking for is various groupings of the data, especially where sub-groups may end up with only a small numbers of observations in them. This is because any analysis could be especially influenced by them. One quick way to do this is to group the data by a variable that is of interest, for instance 'line', using color.
+
+```{r}
+#| eval: true
+#| fig-cap: "Density of the distribution of delay, in minutes"
+#| include: true
+#| label: fig-delaydensity
+#| message: false
+#| warning: false
+
+ggplot(data = all_2020_ttc_data) + 
+  geom_histogram(aes(x = min_delay, y = ..density.., fill = line), 
+                 position = 'dodge', 
+                 bins = 10) + 
+  scale_x_log10()
+```
+
+@fig-delaydensity uses density so that we can look at the the distributions more comparably, but we should also be aware of differences in frequency (@fig-delayfreq)). In this case, we will see that 'SHP' and 'SRT' have much smaller counts.
+
+```{r}
+#| eval: true
+#| fig-cap: "Frequency of the distribution of delay, in minutes"
+#| include: true
+#| label: fig-delayfreq
+#| message: false
+#| warning: false
+
+ggplot(data = all_2020_ttc_data) + 
+  geom_histogram(aes(x = min_delay, fill = line), 
+                 position = 'dodge', 
+                 bins = 10) + 
+  scale_x_log10()
+```
+
+To group by another variable we can add facets (@fig-delayfreqfacet).
+
+```{r}
+#| eval: true
+#| fig-cap: "Frequency of the distribution of delay, in minutes, by day"
+#| include: true
+#| label: fig-delayfreqfacet
+#| message: false
+#| warning: false
+
+ggplot(data = all_2020_ttc_data) + 
+  geom_density(aes(x = min_delay, color = line), 
+               bw = .08) + 
+  scale_x_log10() + 
+  facet_wrap(vars(day))
+```
+
+
+We can now plot the top five stations by mean delay.
+
+```{r}
+#| eval: true
+#| include: true
+
+all_2020_ttc_data |> 
+  group_by(line, station_clean) |> 
+  summarise(mean_delay = mean(min_delay), n_obs = n()) |> 
+  filter(n_obs>1) |> 
+  arrange(line, -mean_delay) |> 
+  slice(1:5) |> 
+  ggplot(aes(station_clean, mean_delay)) + 
+    geom_col() + 
+    coord_flip() + 
+    facet_wrap(vars(line), 
+               scales = "free_y")
+```
+
+### Dates
+
+Dates are often difficult to work with because they are so prone to having issues. For this reason, it is especially important to consider them during EDA. We could create a graph by week, to see if there is any seasonality. When using dates, `lubridate` [@GrolemundWickham2011] is especially useful. For instance, we can look at the average delay, of those that were delayed, by week drawing on `week()` to construct the weeks (@fig-delaybyweek).
+
+```{r}
+#| eval: true
+#| fig-cap: "Average delay, in minutes, by week, for the Toronto subway"
+#| include: true
+#| label: fig-delaybyweek
+#| message: false
+#| warning: false
+
+library(lubridate)
+
+all_2020_ttc_data |>
+  filter(min_delay > 0) |>
+  mutate(week = week(date)) |>
+  group_by(week, line) |>
+  summarise(mean_delay = mean(min_delay)) |>
+  ggplot(aes(week, mean_delay, color = line)) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(vars(line),
+              scales = "free_y"
+             )
+```
+
+Now let us look at the proportion of delays that were greater than 10 minutes (@fig-longdelaybyweek).
+
+```{r}
+#| eval: true
+#| fig-cap: "Delays longer than ten minutes, by week, for the Toronto subway"
+#| include: true
+#| label: fig-longdelaybyweek
+#| message: false
+#| warning: false
+
+all_2020_ttc_data |> 
+  mutate(week = week(date)) |> 
+  group_by(week, line) |> 
+  summarise(prop_delay = sum(min_delay>10)/n()) |> 
+  ggplot(aes(week, prop_delay, color = line)) + 
+    geom_point() + 
+    geom_smooth() + 
+      facet_wrap(vars(line),
+              scales = "free_y"
+             )
+```
+
+These figures, tables, and analysis have no place in a final paper. Instead, they allow us to become comfortable with the data. We note aspects about each that stand out, as well as the warnings and any implications or aspects to return to.
+
+### Relationships
+
+We are also interested in looking at the relationship between two variables. Scatter plots are especially useful here for continuous variables, and are a good precursor to modeling. For instance, we may be interested in the relationship between the delay and the gap (@fig-delayvsgap).
+
+```{r}
+#| eval: true
+#| fig-cap: "Relationship between delay and gap for the Toronto subway in 2020"
+#| include: true
+#| label: fig-delayvsgap
+#| message: false
+#| warning: false
+
+all_2020_ttc_data |>
+  ggplot(aes(x = min_delay, y = min_gap)) +
+  geom_point() +
+  scale_x_log10() +
+  scale_y_log10()
+```
+
+The relationship between categorical variables takes more work, but we could also, for instance, look at the top five reasons for delay by station. In particular, we may be interested in whether they differ, and how any difference could be modeled (@fig-categorical).
+
+```{r}
+#| eval: true
+#| fig-cap: "Relationship between categorical variables for the Toronto subway in 2020"
+#| include: true
+#| label: fig-categorical
+#| message: false
+#| warning: false
+
+all_2020_ttc_data |>
+  group_by(line, code_desc) |>
+  summarise(mean_delay = mean(min_delay)) |>
+  arrange(-mean_delay) |>
+  slice(1:5) |>
+  ggplot(aes(x = code_desc,
+             y = mean_delay)) +
+  geom_col() + 
+  facet_wrap(vars(line), 
+             scales = "free_y",
+             nrow = 4) +
+  coord_flip()
+```
+
+Principal components analysis (PCA) is another powerful exploratory tool. It allows us to pick up potential clusters and outliers that can help to inform modeling. To see this, we can look at the types of delay by station. The delay categories are messy and there a lot of them, but as we are trying to come to terms with the dataset, we will just take the first word.
+
+```{r}
+#| eval: true
+#| include: true
+
+all_2020_ttc_data <-
+  all_2020_ttc_data |>
+  mutate(code_red = case_when(
+    str_starts(code_desc, "No") ~ word(code_desc, 1, 2),
+    str_starts(code_desc, "Operator") ~ word(code_desc, 1, 2),
+    TRUE ~ word(code_desc, 1)
+  ))
+```
+
+Let us also just restrict the analysis to causes that happen at least 50 times over 2019. To do the PCA, the dataframe also needs to be switched to wide format.
+
+```{r}
+#| eval: true
+#| include: true
+
+dwide <-
+  all_2020_ttc_data |>
+  group_by(line, station_clean) |>
+  mutate(n_obs = n()) |>
+  filter(n_obs > 1) |>
+  group_by(code_red) |>
+  mutate(tot_delay = n()) |>
+  arrange(tot_delay) |>
+  filter(tot_delay > 50) |>
+  group_by(line, station_clean, code_red) |>
+  summarise(n_delay = n()) |>
+  pivot_wider(names_from = code_red, values_from = n_delay) |>
+  mutate_all(.funs = funs(ifelse(is.na(.), 0, .)))
+```
+
+Now we can quickly do some PCA.
+
+```{r}
+#| eval: true
+#| include: true
+
+delay_pca <- prcomp(dwide[,3:ncol(dwide)])
+
+df_out <- as_tibble(delay_pca$x)
+df_out <- bind_cols(dwide |> select(line, station_clean), df_out)
+head(df_out)
+```
+
+
+We can plot the first two principal components, and add labels to some of the outlying stations.
+
+```{r}
+#| eval: true
+#| include: true
+
+library(ggrepel)
+ggplot(df_out,aes(x=PC1,y=PC2,color=line )) + 
+  geom_point() + 
+  geom_text_repel(data = df_out |> filter(PC2>100|PC1<100*-1), 
+                  aes(label = station_clean)
+                  )
+```
+
+We could also plot the factor loadings. We see some evidence that perhaps one is to do with the public, compared with another to do with the operator.
+
+```{r}
+#| eval: true
+#| include: true
+
+df_out_r <- as_tibble(delay_pca$rotation)
+df_out_r$feature <- colnames(dwide[,3:ncol(dwide)])
+
+df_out_r
+
+ggplot(df_out_r,aes(x=PC1,y=PC2,label=feature )) + geom_text_repel()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- ## Case study - Historical Canadian elections -->
+
+
+<!-- https://twitter.com/semrasevi/status/1122889166008745985?s=21  -->
+
+
+
+
+<!-- ```{r}
+#| eval: false
+#| include: true
+
+<!-- library(tidyverse) -->
+
+<!-- elections_data <- read_csv("inputs/federal_candidates-1.csv") -->
+
+
+<!-- elections_data$Province |> table() -->
+
+<!-- # There are inconsistencies in the province names -->
+<!-- elections_data$Province[elections_data$Province == "Québec"] <- "Quebec" -->
+
+
+<!-- elections_data <- elections_data |> -->
+<!--   filter(!is.na(Province)) -->
+
+<!-- # Check gender -->
+<!-- elections_data$Gender |> table() -->
+
+<!-- # Check occupation -->
+<!-- elections_data$occupation |> table() -->
+<!-- # Get a count of how many uniques there are -->
+<!-- elections_data$occupation |> unique() |> length() -->
+
+<!-- # Check party -->
+<!-- elections_data$party_short |> table() -->
+<!-- elections_data$party_short |> unique() |> length() -->
+
+<!-- # Check incumbency -->
+<!-- elections_data$incumbent_candidate |> table() -->
+<!-- elections_data$party_short |> unique() |> length() -->
+
+
+<!-- # Add year -->
+<!-- elections_data <- -->
+<!--   elections_data |> -->
+<!--   mutate(year = year(edate)) -->
+
+<!-- # Add a counter for year -->
+<!-- elections_data <- -->
+<!--   elections_data |> -->
+<!--   mutate(counter = year - 1867) -->
+
+
+
+<!-- #### Save #### -->
+<!-- write_csv(elections_data, "outputs/elections.csv") -->
+<!-- ``` -->
+
+
+
+<!-- ```{r}
+#| eval: false
+#| include: true
+
+<!-- library(lubridate) -->
+<!-- library(tidyverse) -->
+
+<!-- elections_data <- read_csv("outputs/elections.csv") -->
+
+<!-- elections_data |> -->
+<!--   ggplot(aes(x = edate)) + -->
+<!--   geom_histogram() -->
+
+<!-- elections_data |> -->
+<!--   ggplot(aes(x = edate, y = Result, color = Gender)) + -->
+<!--   geom_point() + -->
+<!--   facet_wrap(vars(Province)) -->
+
+
+<!-- elections_data |> -->
+<!--   ggplot(aes(x = Province, fill = Gender)) + -->
+<!--   geom_bar(position = "dodge") -->
+<!-- # We discovered WW1! -->
+
+
+
+
+<!-- ``` -->
+
+<!-- ```{r}
+#| eval: false
+#| include: true
+
+
+<!-- #### Set up workspace ### -->
+<!-- library(broom) -->
+<!-- library(tidyverse) -->
+
+<!-- #### Read in data #### -->
+<!-- elections_data <- read_csv("outputs/elections.csv") -->
+
+<!-- #### Model #### -->
+<!-- # Just gender -->
+<!-- model1 <- lm(Result ~ Gender, data = elections_data) -->
+
+<!-- tidy(model1) -->
+
+<!-- # Gender and incumbent -->
+<!-- model2 <- lm(Result ~ Gender + incumbent_candidate, data = elections_data) -->
+
+<!-- tidy(model2) -->
+
+<!-- # Gender and incumbent and province -->
+<!-- model3 <- lm(Result ~ Gender + incumbent_candidate + Province, data = elections_data) -->
+
+<!-- tidy(model3) -->
+
+<!-- # Gender and incumbent and province and year -->
+<!-- model4 <- lm(Result ~ Gender + incumbent_candidate + Province + year, data = elections_data) -->
+<!-- model5 <- lm(Result ~ Gender + incumbent_candidate + Province + year*Gender, data = elections_data) -->
+
+<!-- tidy(model4) -->
+<!-- tidy(model5) -->
+
+<!-- # CHange the year into a counter that increments one for each year -->
+<!-- model6 <- lm(Result ~ Gender + incumbent_candidate + Province + counter + counter*Gender, data = elections_data) -->
+<!-- tidy(model6) -->
+
+
+<!-- ``` -->
+
+
+
+## Case study: Airbnb listing in Toronto
+
+<!-- - Kommenda, Niko, Helen Pidd and Libby Brooks, 2020, 'Revealed: the areas in the UK with one Airbnb for every four homes', *The Guardian*, 20 February, https://www.theguardian.com/technology/2020/feb/20/revealed-the-areas-in-the-uk-with-one-airbnb-for-every-four-homes. -->
+
+In this case study we look at Airbnb listings in Toronto. The dataset is from Inside Airbnb [@airbnbdata] and we will read it from their website, and then save a local copy. We can give `read_csv()` a link to where the dataset is and it will download it. This helps with reproducibility because the source is clear. But, as that link could change at any time, longer-term reproducibility, as well as wanting to minimize the effect on the Inside Airbnb servers, suggest that we should also save a local copy of the data and then use that. As the original data is not ours, we should not make that public without first getting written permission. The 'guess_max' option in read_csv helps us avoid having to specify the column types. Usually `read_csv()` takes a best guess at the column types based on the first few rows. But sometimes those first ones are misleading and so 'guess_max' forces it to look at a larger number of rows to try to work out what is going on.
+
+```{r}
+#| include: true
+#| message: false
+#| warning: false
+#| eval: false
+
+library(tidyverse)
+
+airbnb_data <- 
+  read_csv("http://data.insideairbnb.com/canada/on/toronto/2021-01-02/data/listings.csv.gz", 
+           guess_max = 20000)
+
+write_csv(airbnb_data, "airbnb_data.csv")
+
+airbnb_data
+```
+
+```{r}
+#| eval: true
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+airbnb_data <- 
+  read_csv(here::here("dont_push/airbnb_toronto_2021_january-listings.csv"), 
+           guess_max = 20000)
+
+airbnb_data
+```
+
+### Explore individual variables
+
+There are a large number of columns, so we will just select a few.
+
+```{r}
+#| eval: true
+#| include: true
+
+names(airbnb_data) |> 
+  length()
+
+airbnb_data_selected <- 
+  airbnb_data |> 
+  select(host_id, 
+         host_since, 
+         host_response_time, 
+         host_is_superhost, 
+         host_listings_count,
+         host_total_listings_count,
+         host_neighbourhood, 
+         host_listings_count, 
+         neighbourhood_cleansed, 
+         room_type, 
+         bathrooms, 
+         bedrooms, 
+         price, 
+         number_of_reviews, 
+         has_availability, 
+         review_scores_rating, 
+         review_scores_accuracy, 
+         review_scores_cleanliness, 
+         review_scores_checkin, 
+         review_scores_communication, 
+         review_scores_location, 
+         review_scores_value
+         )
+
+airbnb_data_selected
+```
+
+First we might be interested in price. It is a character at the moment and so we need to convert it to a numeric. This is a common problem, and we need to be a little careful that it does not all just convert to NAs. In our case if we just force the price data to be a numeric then it will go to NA because there are a lot of characters where it is unclear what the numeric equivalent is, such as '$'. So we need to remove those characters first.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected$price |> head()
+
+airbnb_data_selected$price |> str_split("") |> unlist() |> unique()
+
+airbnb_data_selected |> 
+  select(price) |> 
+  filter(str_detect(price, ","))
+
+airbnb_data_selected <- 
+  airbnb_data_selected |> 
+  mutate(price = str_remove(price, "\\$"),
+         price = str_remove(price, ","),
+         price = as.integer(price)
+         )
+```
+
+Now we can have a look at the distribution of prices (@fig-airbnbpricesfirst).
+
+```{r}
+#| include: true
+#| fig-cap: "Distribution of prices of Toronto Airbnb rentals in January 2021"
+#| label: fig-airbnbpricesfirst
+#| eval: true
+#| warning: false
+#| message: false
+
+airbnb_data_selected |>
+  ggplot(aes(x = price)) +
+  geom_histogram(binwidth = 10) +
+  theme_classic() +
+  labs(x = "Price per night",
+       y = "Number of properties")
+```
+
+It is clear that there are outliers, so again we might like to consider it on the log scale (@fig-airbnbpriceslog). 
+
+```{r}
+#| fig-cap: "Distribution of log prices of Toronto Airbnb rentals in January 2021"
+#| include: true
+#| label: fig-airbnbpriceslog
+#| eval: true
+#| warning: false
+#| message: false
+
+airbnb_data_selected |>
+  filter(price > 1000) |> 
+  ggplot(aes(x = price)) +
+  geom_histogram(binwidth = 10) +
+  theme_classic() +
+  labs(x = "Price per night",
+       y = "Number of properties") +
+  scale_y_log10()
+```
+
+
+If we focus on prices that are less than $1,000 then we see that the majority of properties have a nightly price less than $250. Interestingly it looks like there is some bunching of prices, possible around numbers ending in zero or nine. Let us just zoom in on prices between $90 and $210, out of interest, but change the bins to be smaller (@fig-airbnbpricesbunch).
+
+```{r}
+#| eval: true
+#| fig-cap: "Distribution of prices less than $1000 for Toronto Airbnb rentals in January 2021 shows bunching"
+#| fig-show: "hold"
+#| include: true
+#| label: fig-airbnbpricesbunch
+#| message: false
+#| out-width: "49%"
+#| warning: false
+
+airbnb_data_selected |>
+  filter(price < 1000) |> 
+  ggplot(aes(x = price)) +
+  geom_histogram(binwidth = 10) +
+  theme_classic() +
+  labs(x = "Price per night",
+       y = "Number of properties")
+
+airbnb_data_selected |>
+  filter(price > 90) |> 
+  filter(price < 210) |> 
+  ggplot(aes(x = price)) +
+  geom_histogram(binwidth = 1) +
+  theme_classic() +
+  labs(x = "Price per night",
+       y = "Number of properties")
+```
+
+For now, we will just remove all prices that are more than $999.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected <- 
+  airbnb_data_selected |> 
+  filter(price < 1000)
+```
+
+Superhosts are especially experienced Airbnb hosts, and we might be interested to learn more about them. For instance, a host either is or is not a superhost, and so we would not expect any NAs. But we can see that there are. It might be that the host removed a listing or similar. For now, we will remove them.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected |>
+  filter(is.na(host_is_superhost))
+```
+
+We will also want to create a binary variable from this. It is true/false at the moment, which is fine for the modelling, but there are a handful of situations where it will be easier if we have a 0/1. And for now we will just remove anyone with an NA for whether they are a super host.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected <- 
+  airbnb_data_selected |>
+  filter(!is.na(host_is_superhost)) |>
+  mutate(host_is_superhost_binary = if_else(
+    host_is_superhost == TRUE, 1, 0)
+    )
+```
+
+On Airbnb, guests can give 1-5 star ratings across a variety of different aspects, including cleanliness, accuracy, value, and others. But when we look at the reviews in our dataset, it is less clear how this is being constructed, because it appears to be a rating between 20 and 100 and there are also NA values (@fig-airbnbreviews).
+
+```{r}
+#| eval: true
+#| fig-cap: "Distribution of review scores rating for Toronto Airbnb rentals in January 2021"
+#| include: true
+#| label: fig-airbnbreviews
+#| message: false
+#| warning: false
+
+airbnb_data_selected |>
+  ggplot(aes(x = review_scores_rating)) +
+  geom_bar() +
+  theme_classic() +
+  labs(x = "Reviews scores rating",
+       y = "Number of properties")
+```
+
+We would like to deal with the NAs in 'review_scores_rating', but this is more complicated as there are a lot of them. It may be that this is just because they do not have any reviews.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected |>
+  filter(is.na(review_scores_rating)) |>
+  nrow()
+
+airbnb_data_selected |>
+  filter(is.na(review_scores_rating)) |> 
+  select(number_of_reviews) |> 
+  table()
+```
+
+So these properties do not have a review rating yet because they do not have enough reviews. It is a large proportion of the total, at almost a fifth of them so we might like to look at this in more detail using `vis_miss()` from `visdat` [@citevisdat]. We are interested to see whether there is something systematic happening with these properties. For instance, if the NAs were being driven by, say, some requirement of a minimum number of reviews, then we would expect they would all be missing.
+
+```{r}
+#| eval: true
+#| include: true
+
+library(visdat)
+airbnb_data_selected |> 
+  select(review_scores_rating, 
+         review_scores_accuracy, 
+         review_scores_cleanliness, 
+         review_scores_checkin, 
+         review_scores_communication, 
+         review_scores_location, 
+         review_scores_value) |> 
+  vis_miss()
+```
+
+Given it looks convincing that in almost all cases, the different types of reviews are missing for the same observation. One approach would be to just focus on those that are not missing and the main review score. It is clear that almost all the reviews are more than 80. Let us just zoom in on that 60 to 80 range to check what the distribution looks like in that range (@fig-airbnbreviewsselected).
+
+```{r}
+#| include: true
+#| fig-cap: "Distribution of review scores, between 60 and 80, for Toronto Airbnb rentals in January 2021"
+#| label: fig-airbnbreviewsselected
+#| eval: true
+#| warning: false
+#| message: false
+
+airbnb_data_selected |>
+  filter(!is.na(review_scores_rating)) |> 
+  filter(review_scores_rating > 60) |>
+  filter(review_scores_rating < 80) |> 
+  ggplot(aes(x = review_scores_rating)) +
+  geom_histogram(binwidth = 1) +
+  theme_classic() +
+  labs(x = "Average review score",
+       y = "Number of properties")
+```
+
+For now, we will remove anyone with an NA in their main review score, even though this will remove roughly 20 per cent of observations. And we will also focus only on those hosts with a main review score of at least 70. If we ended up using this dataset for actual analysis, then we would want to justify this decision in an appendix or similar.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected <- 
+  airbnb_data_selected |>
+  filter(!is.na(review_scores_rating)) |>
+  filter(review_scores_rating >= 70)
+```
+
+Another important factor is how quickly a host responds to an enquiry. Airbnb allows hosts up to 24 hours to respond, but encourages responses within an hour.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected |>
+  count(host_response_time)
+```
+
+It is unclear a host could have a response time of NA. It may be that they are related to some other variable. Interestingly it seems like what looks like 'NAs' in 'host_response_time' variable are not coded as proper NAs, but are instead being treated as another category. We will recode them to be actual NAs and also change the variable to be a factor.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected <- 
+  airbnb_data_selected |>
+  mutate(host_response_time = if_else(host_response_time == "N/A", NA_character_, host_response_time),
+         host_response_time = factor(host_response_time)
+  )
+```
+
+There is clearly an issue with NAs as there are a lot of them. For instance, we might be interested to see if there is a relationship with the review score (@fig-airbnbreviewsselectednasresponse). There are a lot that have an overall review of 100.
+
+```{r}
+#| eval: true
+#| fig-cap: "Distribution of review scores for properties with NA response time, for Toronto Airbnb rentals in January 2021"
+#| include: true
+#| label: fig-airbnbreviewsselectednasresponse
+#| message: false
+#| warning: false
+
+airbnb_data_selected |> 
+  filter(is.na(host_response_time)) |> 
+  ggplot(aes(x = review_scores_rating)) +
+  geom_histogram(binwidth = 1) +
+  theme_classic() +
+  labs(x = "Average review score",
+       y = "Number of properties")
+```
+
+For now, we will remove anyone with a NA in their response time. This will again removes roughly another 20 per cent of the observations.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected <- 
+  airbnb_data_selected |> 
+  filter(!is.na(host_response_time))
+```
+
+There are two versions of a variable that suggest how many properties a host has on Airbnb. We might be interested to know whether there is a difference between them.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected |> 
+  mutate(listings_count_is_same = if_else(host_listings_count == host_total_listings_count, 1, 0)) |> 
+  filter(listings_count_is_same == 0)
+```
+
+As there are no differences in this dataset, we can just remove one variable for now and have a look at the other one (@fig-airbnbhostlisting).
+
+```{r}
+#| eval: true
+#| fig-cap: "Distribution of the number of properties a host has on Airbnb, for Toronto Airbnb rentals in January 2021"
+#| include: true
+#| label: fig-airbnbhostlisting
+#| message: false
+#| warning: false
+
+airbnb_data_selected <- 
+  airbnb_data_selected |> 
+  select(-host_listings_count)
+
+airbnb_data_selected |> 
+  ggplot(aes(x = host_total_listings_count)) +
+  geom_bar() +
+  scale_x_log10()
+```
+
+There are a large number who have somewhere in the 2-10 properties range, but the usual long tail. The number with 0 listings is unexpected and worth following up on. And there are a bunch with NA that we will need to deal with.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected |> 
+  filter(host_total_listings_count == 0) |> 
+  head()
+```
+
+There is nothing that immediately jumps out as odd about the people with zero listings, but there must be something going on. For now, we will focus on only those with one property.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected <- 
+  airbnb_data_selected |> 
+  add_count(host_id) |> 
+  filter(n == 1) |> 
+  select(-n)
+```
+
+
+
+### Explore relationships between variables
+
+We might like to make some graphs to see if there are any relationships that become clear. Some aspects that come to mind is looking at prices and reviews and super hosts, and number of properties and neighborhood. 
+
+Look at the relationship between price and reviews, and whether they are a super-host (@fig-priceandreview).
+
+```{r}
+#| eval: true
+#| fig-cap: "Relationship between price and review and whether a host is a super host, for Toronto Airbnb rentals in January 2021"
+#| include: true
+#| label: fig-priceandreview
+#| message: false
+#| warning: false
+
+airbnb_data_selected |>
+  ggplot(aes(x = price, y = review_scores_rating, color = host_is_superhost)) +
+  geom_point(size = 1, alpha = 0.1) + 
+  theme_classic() +
+  labs(x = "Price per night",
+       y = "Average review score",
+       color = "Super host") +
+  scale_color_brewer(palette = "Set1")
+```
+
+One of the aspects that may make someone a super host is how quickly they respond to inquiries. One could imagine that being a superhost involves quickly saying yes or no to inquiries. Let us look at the data. First, we want to look at the possible values of superhost by their response times.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected |> 
+  count(host_is_superhost) |>
+  mutate(proportion = n / sum(n),
+         proportion = round(proportion, digits = 2))
+```
+
+Fortunately, it looks like when we removed the reviews rows we removed any NAs from whether they were a super host, but if we go back and look into that we may need to check again. 
+We could build a table that looks at a hosts response time by whether they are a superhost using `tabyl()` from `janitor` [@janitor]. It is clear that is a host does not respond within an hour then it is unlikely that they are a super host.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected |> 
+  tabyl(host_response_time, host_is_superhost) |> 
+  adorn_percentages("row") |>
+  adorn_pct_formatting(digits = 0) |>
+  adorn_ns() |> 
+  adorn_title()
+```
+
+Finally, we could look at neighborhood. The data provider has attempted to clean the neighborhood variable for us, so will just use that variable for now. Although if we ended up using this variable for our actual analysis we would want to check they had not made any errors.
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected |> 
+  tabyl(neighbourhood_cleansed) |> 
+  adorn_totals("row") |> 
+  adorn_pct_formatting() |> 
+  nrow()
+```
+
+```{r}
+#| eval: true
+#| include: true
+
+airbnb_data_selected |> 
+  tabyl(neighbourhood_cleansed) |> 
+  adorn_pct_formatting() |> 
+  arrange(-n) |> 
+  filter(n > 100) |> 
+  adorn_totals("row") |> 
+  head()
+```
+
+
+
+### Explore multiple relationships with a model
+
+We will now run some models on our dataset. We will cover modeling in more detail in Chapter \@ref(ijalm), but we can use models during EDA to help get a better sense of relationships that may exist between multiple variables in a dataset. For instance, we may like to see whether we can forecast whether someone is a super host, and the factors that go into explaining that. As the dependent variable is binary, this is a good opportunity to use logistic regression. We expect that better reviews will be associated with faster responses and higher reviews. Specifically, the model that we estimate is:
+
+$$\mbox{Prob(Is super host} = 1) = \beta_0 + \beta_1 \mbox{Response time} + \beta_2 \mbox{Reviews} + \epsilon$$
+
+We estimate the model using `glm` in the R language [@citeR].
+
+```{r}
+#| eval: true
+#| include: true
+
+logistic_reg_superhost_response_review <- glm(host_is_superhost ~ 
+                                                host_response_time + 
+                                                review_scores_rating,
+                                              data = airbnb_data_selected,
+                                              family = binomial
+                                              )
+```
+
+We can have a quick look at the results using `modelsummary()` from `modelsummary` [@citemodelsummary]
+
+```{r}
+#| eval: true
+#| include: true
+
+library(modelsummary)
+modelsummary(logistic_reg_superhost_response_review)
+```
+
+<!-- We might like to look at what our model predicts, compared with whether the person was actually a super host. We can do that in a variety of ways, but one way is to use `augment` from the `broom` package [@broom]. This will add the prediction and associated uncertainty to the data. For every row we will then have the probability that our model is estimating that they are a superhost. But ultimately, we need a binary forecast. There are a bunch of different options, but one is to just say that if the model estimates a probability of more than 0.5 then we bin it into a superhost, and other not. -->
+
+<!-- ```{r} -->
+
+
+<!-- airbnb_data_filtered_logistic_fit_train <-  -->
+<!--   augment(logistic_reg_superhost_response_review,  -->
+<!--           data = airbnb_train |> select(host_is_superhost,  -->
+<!--                                          host_is_superhost_binary, -->
+<!--                                          host_response_time, -->
+<!--                                          review_scores_rating -->
+<!--                                          ), -->
+<!--           type.predict = "response") |> # We use the "response" option here so that the function does the work of worrying about the exponential and log odds for us. Our result will be a probability. -->
+<!--   select(-.hat, -.sigma, -.cooksd, -.std.resid) |>  -->
+<!--   mutate(predict_host_is_superhost = if_else(.fitted > 0.5, 1, 0), # How do things change if we change the 0.5 cutoff? -->
+<!--          host_is_superhost_binary = as.factor(host_is_superhost_binary), -->
+<!--          predict_host_is_superhost_binary = as.factor(predict_host_is_superhost) -->
+<!--          ) -->
+<!-- ``` -->
+
+<!-- We can look at how far off the model is. There are a bunch of ways of doing this, but one is to look at what probability the model has given each person. -->
+
+<!-- ```{r} -->
+
+
+<!-- airbnb_data_filtered_logistic_fit_train |>  -->
+<!--   ggplot(aes(x = .fitted, fill = host_is_superhost_binary)) + -->
+<!--   geom_histogram(binwidth = 0.05, position = "dodge") + -->
+<!--   theme_classic() + -->
+<!--   labs(x = "Estimated probability that host is super host", -->
+<!--        y = "Number", -->
+<!--        fill = "Host is super host") + -->
+<!--   scale_fill_brewer(palette = "Set1") -->
+<!-- ``` -->
+
+
+<!-- We can look at how the model probabilities change based on average review score, and their average time to respond. -->
+
+<!-- ```{r} -->
+
+
+<!-- ggplot(airbnb_data_filtered_logistic_fit_train,  -->
+<!--        aes(x = review_scores_rating,  -->
+<!--            y = .fitted,  -->
+<!--            color = host_response_time)) + -->
+<!--   geom_line() + -->
+<!--   geom_point() + -->
+<!--   labs(x = "Average review score", -->
+<!--        y = "Predicted probability of being a superhost", -->
+<!--        color = "Host response time") + -->
+<!--   theme_classic() + -->
+<!--   scale_color_brewer(palette = "Set1") -->
+<!-- ``` -->
+
+<!-- This nice thing about this graph is that it illustrates nicely the effect of a host having an average response time of, say, 'within an hour' compared with 'within a few hours'.  -->
+
+<!-- We can focus on how the model does in terms of raw classification using `confusionMatrix` from the caret package (Kuhn, 2020). This also gives a bunch of diagnostics (the help file explains what they are). In general, they suggest this isn't the best model that's ever existed. -->
+
+<!-- ```{r} -->
+
+
+<!-- caret::confusionMatrix(data = airbnb_data_filtered_logistic_fit_train$predict_host_is_superhost_binary, -->
+<!--                        reference = airbnb_data_filtered_logistic_fit_train$host_is_superhost_binary) -->
+<!-- ``` -->
+
+<!-- In any case, to this point we've been looking at how the model has done on the training set. It is also relevant how it does on the test set. Again, there are a bunch of ways to do this, but one is to again use the augment function, but to include a newdata argument. -->
+
+<!-- ```{r} -->
+
+
+<!-- airbnb_data_filtered_logistic_fit_test <-  -->
+<!--   augment(logistic_reg_superhost_response_review,  -->
+<!--           data = airbnb_train |> select(host_is_superhost,  -->
+<!--                                          host_is_superhost_binary, -->
+<!--                                          host_response_time, -->
+<!--                                          review_scores_rating -->
+<!--                                          ), -->
+<!--           newdata = airbnb_test |> select(host_is_superhost,  -->
+<!--                                          host_is_superhost_binary, -->
+<!--                                          host_response_time, -->
+<!--                                          review_scores_rating -->
+<!--                                          ), # I'm selecting just because the -->
+<!--           # dataset is quite wide, and so this makes it easier to look at. -->
+<!--           type.predict = "response") |>  -->
+<!--   mutate(predict_host_is_superhost = if_else(.fitted > 0.5, 1, 0),  -->
+<!--          host_is_superhost_binary = as.factor(host_is_superhost_binary), -->
+<!--          predict_host_is_superhost_binary = as.factor(predict_host_is_superhost) -->
+<!--          ) -->
+<!-- ``` -->
+
+<!-- We would expect the performance to be slightly worse on the test set. But it is actually fairly similar. -->
+
+<!-- ```{r} -->
+
+
+<!-- caret::confusionMatrix(data = airbnb_data_filtered_logistic_fit_test$predict_host_is_superhost_binary, -->
+<!--                        reference = airbnb_data_filtered_logistic_fit_test$host_is_superhost_binary) -->
+<!-- ``` -->
+
+<!-- We could compare the test with the training sets in terms of forecasts. -->
+
+<!-- ```{r} -->
+
+
+<!-- training <- airbnb_data_filtered_logistic_fit_train |>  -->
+<!--   select(host_is_superhost_binary, .fitted) |>  -->
+<!--   mutate(type = "Training set") -->
+
+<!-- test <- airbnb_data_filtered_logistic_fit_test |>  -->
+<!--   select(host_is_superhost_binary, .fitted) |>  -->
+<!--   mutate(type = "Test set") -->
+
+<!-- both <- rbind(training, test) -->
+<!-- rm(training, test) -->
+
+<!-- both |>  -->
+<!--   ggplot(aes(x = .fitted,  -->
+<!--              fill = host_is_superhost_binary)) + -->
+<!--   geom_histogram(binwidth = 0.05, position = "dodge") + -->
+<!--   theme_minimal() + -->
+<!--   labs(x = "Estimated probability that host is super host", -->
+<!--        y = "Number", -->
+<!--        fill = "Host is super host") + -->
+<!--   scale_fill_brewer(palette = "Set1") + -->
+<!--   facet_wrap(vars(type), -->
+<!--              nrow = 2, -->
+<!--              scales = "free_y") -->
+<!-- ``` -->
+
+
+
+
+
+
+
+
+
+
+
+
+## Exercises and tutorial
+
+
+### Exercises
+
+
+1. In your own words what is exploratory data analysis (this will be difficult, but please write only one nuanced paragraph)?
+2. In Tukey's words, what is exploratory data analysis (please write one paragraph)?
+3. Who was Tukey (please write a paragraph or two)? 
+6. If you have a dataset called 'my_data', which has two columns: 'first_col' and 'second_col', then could you please write some rough R code that would generate a graph (the type of graph does not matter).
+7. Consider a dataset that has 500 rows and 3 columns, so there are 1,500 cells. If 100 of the cells are missing data for at least one of the columns, then would you remove the whole row your dataset or try to run your analysis on the data as is, or some other procedure? What if your dataset had 10,000 rows instead, but the same number of missing cells?
+8. Please note three ways of identifying unusual values.
+9. What is the difference between a categorical and continuous variable?
+10. What is the difference between a factor and an integer variable?
+11. How can we think about who is systematically excluded from a dataset?
+12. Using the `opendatatoronto` package, download the data on mayoral campaign contributions for 2014. (note: the 2014 file you will get from `get_resource`, so just keep the sheet that relates to the Mayor election). 
+    1. Clean up the data format (fixing the parsing issue and standardizing the column names using `janitor`)
+    2. Summarize the variables in the dataset. Are there missing values, and if so, should we be worried about them? Is every variable in the format it should be? If not, create new variable(s) that are in the right format.
+    3. Visually explore the distribution of values of the contributions. What contributions are notable outliers? Do they share a similar characteristic(s)? It may be useful to plot the distribution of contributions without these outliers to get a better sense of the majority of the data. 
+    4. List the top five candidates in each of these categories: 1) total contributions; 2) mean contribution; and 3) number of contributions.
+    5. Repeat that process, but without contributions from the candidates themselves.
+    6. How many contributors gave money to more than one candidate?
+13. Name three geoms that produce graphs that have bars on them `ggplot()`.
+14. Consider a dataset 10,000 observations and 27 variables. For each observation, there is at least one missing variable. Please discuss, in a paragraph or two, the steps that you would take to understand what is going on.
+15. Known missing data, are those that leave holes in your dataset. But what about data that were never collected? Please look at @mcclelland2019lock and @luscombe2020policing. Look into how they gathered their dataset and what it took to put this together. What is in the dataset and why? What is missing and why? How could this affect the results? How might similar biases enter into other datasets that you have used or read about? 
+
+
+
+### Tutorial
+
+Redo the Airbnb EDA but for Paris. Please submit a PDF.
