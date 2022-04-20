@@ -132,9 +132,9 @@ In R, lines that start with '#' are comments. This means that they are not run a
 
 ![Screenshot of australian_elections.qmd after initial set-up and with a premable](figures/02-rstudio_cloud-3.png){#fig-quarto-australian-elections-3 width=75% fig-align="center"}
 
-After this we need to set-up the workspace. This involves installing and loading any packages that will be needed. A package only needs to be installed once for each computer, but needs to be loaded each time it is to be used. In this case we are going to use `tidyverse` [@Wickham2017], `janitor` [@janitor], and `tidyr` [@citetidyr]. They will need to be installed because this is the first time they are being used, and then each will need to be loaded.
+After this we need to set-up the workspace. This involves installing and loading any packages that will be needed. A package only needs to be installed once for each computer, but needs to be loaded each time it is to be used. In this case we are going to use the `tidyverse` [@Wickham2017], and `janitor` [@janitor]. They will need to be installed because this is the first time they are being used, and then each will need to be loaded.
 
-An example of installing the packages follows (excessive comments have been added to be clear about what is going on; in general, this level of commenting is unnecessary). Run this code by clicking the small green arrow associated with the R code chunk.
+An example of installing the packages follows (excessive comments have been added to be clear about what is going on; in general, this level of commenting is unnecessary). Run this code by clicking the small green arrow associated with the R code chunk (@fig-quarto-australian-elections-4).
 
 ```{r}
 #| eval: false
@@ -143,8 +143,9 @@ An example of installing the packages follows (excessive comments have been adde
 #### Workspace set-up ####
 install.packages("tidyverse") # Only need to do this once per computer
 install.packages("janitor") # Only need to do this once per computer
-install.packages("tidyr") # Only need to do this once per computer
 ```
+
+![Screenshot of australian_elections.qmd highlighting the green arrow to run the chunk](figures/02-rstudio_cloud-4.png){#fig-quarto-australian-elections-4 width=75% fig-align="center"}
 
 Now that the packages are installed, they need to be loaded. As that installation step only needs to be done once per computer, that code can be commented out so that it is not accidentally run.
 
@@ -164,7 +165,7 @@ library(janitor) # Helps clean datasets
 library(tidyr) # Helps make tidy datasets
 ```
 
-We can render the entire document by clicking 'Render'. When you do this, you will be asked to install some packages, which you should agree to. This will result in a html document.
+We can render the entire document by clicking 'Render'. When you do this, you may be asked to install some packages. If that happens, then you should agree to this. This will result in a html document.
 
 For an introduction to the packages that were just installed, each package contains a help file that provides information about them and their functions. It can be accessed by appending a question mark before the package name and then running that code in the console. For instance `?tidyverse`.
 
@@ -197,7 +198,7 @@ simulated_data
 ```
 
 
-At a certain point, your code will not run and you will want to ask others for help. We will discuss how to do this in [Chapter -@sec-reproducible-workflows], but for now, if you need help, then you should create a GitHub Gist. The first step is to create an account on [GitHub](https://github.com) (@fig-githubone). Thinking about an appropriate username is important because this will become part of your professional profile. So it would make sense to have a username that is professional, independent of any course, and ideally related to your real name.
+At a certain point, your code will not run and you will want to ask others for help. Do not take a screenshot of a small snippet of the code and expect that someone will be able to help based on that. Instead, you need to provide them with your whole script in a way that they can run. We will discuss how to do this more completely in [Chapter -@sec-reproducible-workflows], but for now, if you need help, then you should create a GitHub Gist. The first step is to create an account on [GitHub](https://github.com) (@fig-githubone). Thinking about an appropriate username is important because this will become part of your professional profile. So it would make sense to have a username that is professional, independent of any course, and ideally related to your real name.
 
 ![GitHub sign-up screen](figures/github_1.png){#fig-githubone width=85% fig-align="center"}
 
@@ -352,10 +353,11 @@ cleaned_elections_data <-
 head(cleaned_elections_data)
 ```
 
-We will now look at this dataset, and the 'elected_party' column in particular.
+We will now look at this dataset, and we are particularly interested in the unique values in the 'elected_party' column. We can see these with `unique()`.
 
 ```{r}
-head(cleaned_elections_data$elected_party)
+cleaned_elections_data$elected_party |> 
+  unique()
 ```
 
 <!-- We can see that we have the surname of the elected candidate, followed by a comma, followed by their first name, followed by a space, followed by the name of the party in both English and French, separated by a slash. We can break-up this column into its pieces using `separate()` from `tidyr` [@citetidyr]. -->
@@ -609,7 +611,7 @@ simulated_occupancy_data <-
 head(simulated_occupancy_data)
 ```
 
-In this simulation we first create a list of all the dates in 2021. We repeat that list three times. We assume data for three shelters for every day of the year. To simulate the number of beds that are occupied each night, we draw from a Poisson distribution, assuming a mean number of 30 beds occupied per shelter.
+In this simulation we first create a list of all the dates in 2021. We repeat that list three times. We assume data for three shelters for every day of the year. To simulate the number of beds that are occupied each night, we draw from a Poisson distribution, assuming a mean number of 30 beds occupied per shelter. By way of background, a Poisson distribution is often used when we have count data, and we return to it in [Chapter -@sec-its-just-a-linear-model]. 
 
 ### Acquire
 
@@ -836,7 +838,7 @@ packageVersion('tidyverse')
 packageVersion('janitor')
 ```
 
-To update the version of the package, we use `update.packages()`.
+To update the version of all of the packages that we have installed, we use `update.packages()`. We can use `tidyverse_update()` to just install the `tidyverse` packages.
 
 ```{r}
 #| echo: true
@@ -949,7 +951,7 @@ Having passed these tests, we can have confidence in the simulated dataset. More
 
 ### Acquire
 
-The UN Inter-agency Group for Child Mortality Estimation (IGME) provides estimates of the NMR -- https://childmortality.org/ -- that we can download and save.
+The UN Inter-agency Group for Child Mortality Estimation (IGME) [provides estimates of the NMR](https://childmortality.org/) that we can download and save.
 
 ```{r}
 #| eval: false
@@ -1128,6 +1130,16 @@ To this point we downloaded some data, cleaned it, wrote some tests, and made a 
 > We found considerable change in the estimated NMR over time and between the four countries of interest (@fig-nmrgraph). We found that the 1970s tended to be associated with reductions in the estimated NMR. Australia and Canada were estimated to have a low NMR at that point and remained there through 2020, with slight improvements. The estimates for Argentina and Kenya continued to have substantial reductions through 2020.
 > 
 > Our results suggest considerable improvements in estimated NMR over time. But it is worth emphasizing that estimates of the NMR are based on a statistical model and underlying data. The paradox of data availability is that often high-quality data are less easily available for countries with worse outcomes. For instance, @alexander2018global say '[t]here is large variability in the availability of data on neonatal mortality'. Our conclusions are subject to the model that underpins the estimates, and the quality of the underlying data and we did not independently verify either of these. 
+
+
+
+## Concluding remarks
+
+We have covered a lot of ground in this chapter, and it is normal to have not followed it all if you are new to R. The best way to proceed would be to go through each of the three case-studies in your own time. Type all the code out yourself, rather than copy-pasting, and run it bit by bit, even if you do not entirely understand what it is doing. Then try to add your own comments to it.
+
+It is also the case that it is not necessary to fully understand everything in this chapter at this point. Some students find it best to continue going through the next few chapters of this book, and returning to this one from time to time.
+
+It is normal to feel a little overwhelmed, but the important thing is to stick with it and actively work at learning.
 
 
 

@@ -23,12 +23,13 @@ engine: knitr
 
 **Key libraries**
 
-- `forcats` [@citeforcats]
-- `ggplot2` [@citeggplot]
-- `haven` [@citehaven]
-- `stringr` [@citestringr]
-- `tidyr` [@citetidyr]
 - `tidyverse` [@citetidyverse]
+  - `forcats` [@citeforcats]
+  - `ggplot2` [@citeggplot]
+  - `haven` [@citehaven]
+  - `stringr` [@citestringr]
+  - `tidyr` [@citetidyr]
+
 
 **Key functions**
 
@@ -254,7 +255,7 @@ AustralianPoliticians::get_auspol('all') |> # Imports data from GitHub
 
 We can see that, as at the end of 2021, one female has been prime minister (Julia Gillard), while the other 29 prime ministers were male.
 
-One critical operator when programming is the 'pipe': `|>`. We read this as 'and then'. This takes the output of a line of code and uses it as the first input to the next line of code. It makes code easier to read.
+One critical operator when programming is the 'pipe': `|>`. We read this as 'and then'. This takes the output of a line of code and uses it as the first input to the next line of code. It makes code easier to read. By way of background, for many years R used `%>%` as the pipe, which is from `magrittr` [@magrittr] which is part of the `tidyverse`. Base R added the pipe that we use in this book, `|>`, in 2021, and so if you look at older code, you may see the earlier pipe being used. For the most part, they are interchangeable, but we use the base pipe in this book.
 
 The idea of the pipe is that we take a dataset, and then do something to it. We used this in the earlier example. Another example follows where we will look at the first six lines of a dataset by piping it to `head()`. Notice that `head()` does not explicitly take any arguments in this example. It knows which data to display because the pipe does it implicitly.
 
@@ -274,7 +275,7 @@ One thing to be aware of is that each R Studio Cloud workspace is essentially a 
 
 A few final notes on R Studio Cloud:
 
-1. In the Australian politician's example, we got our data from the website GitHub using an R package, but we can get data into a workspace from a local computer in a variety of ways. One way is to use the 'upload' button in the 'Files' panel.
+1. In the Australian politician's example, we got our data from the website GitHub using an R package, but we can get data into a workspace from a local computer in a variety of ways. One way is to use the 'upload' button in the 'Files' panel. Another is to use `readr` [@citereadr], which is part of the `tidyverse` [@citetidyverse].
 2. R Studio Cloud allows some degree of collaboration. For instance, you can give someone else access to a workspace that you create. This could be useful for collaborating on an assignment, although it is not quite full featured yet and you cannot both be in the workspace at the same time, in contrast to Google Docs, for example.
 3. There are a variety of weaknesses of R Studio Cloud, in particular the RAM limits. Additionally, like any web application, things break from time to time or go down.
 
@@ -494,7 +495,7 @@ australian_politicians |>
   slice(1:3)
 ```
 
-Finally, we could duplicate the first two rows.
+Finally, we could duplicate the first two rows and this takes advantage of `n()` which provides the current group size.
 
 ```{r}
 #| eval: true
@@ -516,7 +517,7 @@ We use `arrange()` to change the order of the dataset based on the values of par
 #| echo: true
 
 australian_politicians |> 
-  arrange(birthDate)
+  arrange(birthYear)
 ```
 
 We could modify `arrange()` with `desc()` to change from ascending to descending order.
@@ -526,7 +527,7 @@ We could modify `arrange()` with `desc()` to change from ascending to descending
 #| echo: true
 
 australian_politicians |> 
-  arrange(desc(birthDate))
+  arrange(desc(birthYear))
 ```
 
 And we could arrange based on more than one column. For instance, if two politicians have the same first name, then we could also arrange based on their birthday.
@@ -536,7 +537,7 @@ And we could arrange based on more than one column. For instance, if two politic
 #| echo: true
 
 australian_politicians |> 
-  arrange(firstName, birthDate)
+  arrange(firstName, birthYear)
 ```
 
 We could achieve the same result by piping between two instances of `arrange()`.
@@ -546,7 +547,7 @@ We could achieve the same result by piping between two instances of `arrange()`.
 #| echo: true
 
 australian_politicians |> 
-  arrange(birthDate) |> 
+  arrange(birthYear) |> 
   arrange(firstName)
 ```
 
@@ -730,7 +731,7 @@ australian_politicians |>
 
 And so we learn that female members of parliament on average lived slightly longer than male members of parliament.
 
-We can use `group_by()` on the basis of more than one group. For instance, we could look at the average number of days lived by gender and by house.
+We can use `group_by()` on the basis of more than one group. For instance, we could look at the average number of days lived by gender and by they were in the House of Representatives or the Senate.
 
 ```{r}
 #| eval: true
@@ -924,6 +925,9 @@ class(ResumeNames$ethnicity)
 ```
 
 There are many ways for code to not run but having an issue with the class is always among the first things to check. Common issues are variables that we think should be 'character' or 'numeric' actually being 'factor'. And variables that we think should be 'numeric' actually being 'character'.
+
+Finally, it is worth pointing out that the class of a vector is whatever the class of its content is. In Python and other languages, a similar data structure to a vector is a 'list'. A 'list' is a class of its own, and the objects in a 'list' have their own classes (for instance, `['a', 1]` is an object of class 'list' with entries of class 'string' and 'int'). This may be counter-intuitive to see that a vector is not its own class if you are coming to R from another language.
+
 
 ### Simulating data
 
@@ -1297,7 +1301,30 @@ main_dataset
 
 There are a variety of other options to join datasets, including `inner_join()`, `right_join()`, and `full_join()`.
 
-Another common dataset manipulation task is pivoting them. Datasets tend to be either long or wide. Generally, in the `tidyverse`, and certainly for `ggplot2`, we need long data. To go from one to the other we use `pivot_longer()` and `pivot_wider()` from `tidyr` [@citetidyr].
+Another common dataset manipulation task is pivoting them. Datasets tend to be either long or wide. Long data means that each variable is on a row, and so possibly there is repetition, whereas with wide data each variable is a column and so there is typically little repetition [@Wickham2009]. For instance, 'anscombe' is wide, and 'anscombe_long' is long. 
+
+```{r}
+anscombe
+```
+
+```{r}
+#| include: false
+anscombe_long <- 
+  anscombe |>
+  pivot_longer(everything(),
+               names_to = c(".value", "set"),
+               names_pattern = "(.)(.)"
+               )
+```
+
+
+```{r}
+anscombe_long
+```
+
+
+
+Generally, in the `tidyverse`, and certainly for `ggplot2`, we need long data. To go from one to the other we use `pivot_longer()` and `pivot_wider()` from `tidyr` [@citetidyr].
 
 We will create some wide data on whether 'mark' or 'lauren' won a running race in each of three years.
 
@@ -1509,10 +1536,10 @@ days_data |>
     d. `mutate()`
     e. `group_by()`
 13. Assume a variable called 'age' is an integer. Which line of code would create a column that is its exponential (pick one)? 
-    a. `mutate(exp_age = exponential(age))`
-    b. `mutate(exp_age = exponent(age))`
-    c. `mutate(exp_age = exp(age))`
-    d. `mutate(exp_age = expon(age))`
+    a. `generate(exp_age = exp(age))`
+    b. `change(exp_age = exp(age))`
+    c. `make(exp_age = exp(age))`
+    d. `mutate(exp_age = exp(age))`
 14. Assume a column called 'age'. Which line of code could create a column that contains the value from five rows above?
     a. `mutate(five_before = lag(age))`
     b. `mutate(five_before = lead(age))`
