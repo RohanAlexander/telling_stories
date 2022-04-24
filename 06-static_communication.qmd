@@ -91,7 +91,7 @@ engine: knitr
 
 When telling stories with data, we would like the data to do much of the work of convincing our reader. The paper is the medium, and the data are the message. To that end, we want to try to show our reader the data that allowed us to come to our understanding of the story. We use graphs, tables, and maps to help achieve this. 
 
-The critical task is to show the actual data that underpin our analysis, or as close to it as we can. For instance, if our dataset consists of 2,500 responses to a survey, then at some point in the paper we would expect a graph that contains, or represents, all 2,500 points. To do this we build graphs using `ggplot2` [@citeggplot]. We will go through a variety of different options here including bar charts, scatterplots, line plots, and histograms.
+The critical task is to show the actual data that underpin our analysis, or as close to it as we can. For instance, if our dataset consists of 2,500 responses to a survey, then at some point in the paper we would expect a graph that contains, or represents, all 2,500 points. To do this we build graphs using `ggplot2` [@citeggplot] which is part of the `tidyverse` [@citetidyverse]. We will go through a variety of different options here including bar charts, scatterplots, line plots, and histograms.
 
 In contrast to the role of graphs, which is to show the actual data, or as close to it as possible, the role of tables is typically to show an extract of the dataset or convey various summary statistics. We will build tables using `knitr` [@citeknitr] and `kableExtra` [@citekableextra] initially, and then `modelsummary` [@citemodelsummary]. 
 
@@ -181,7 +181,7 @@ This is a variant of the famous 'Anscombe's Quartet' which comes with R. The key
 head(anscombe)
 ```
 
-Anscombe's Quartet consists of six observations for four different datasets, again with x and y values for each observation. We need to manipulate this dataset with `pivot_longer()` to get it into a 'tidy format'. 
+Anscombe's Quartet consists of six observations for four different datasets, again with x and y values for each observation. We need to manipulate this dataset with `pivot_longer()` to get it into the 'tidy' format discussed in [Chapter -@sec-r-essentials]. 
 
 ```{r}
 # From Nick Tierney: 
@@ -237,31 +237,7 @@ tidy_anscombe |>
   labs(colour = "Dataset")
 ```
 
-We can add `#| layout-ncol: 2` in an R chunk within a Quarto document to have two graphs appear side-by-side (@fig-anscombegraphsidebyside). Here @fig-anscombegraphsidebyside-1 uses the minimal theme, and @fig-anscombegraphsidebyside-2 uses the classic theme. These cross-reference `#| label: fig-anscombegraphsidebyside` and are created in the text by `(@fig-anscombegraphsidebyside)`, `@fig-anscombegraphsidebyside-1`, and `@fig-anscombegraphsidebyside-2`.
 
-```{r}
-#| eval: true
-#| warning: false
-#| label: fig-anscombegraphsidebyside
-#| echo: true
-#| fig-cap: "Two variants of Anscombe's Quartet"
-#| fig-subcap: ["Theme minimal","Theme classic"]
-#| layout-ncol: 2
-
-tidy_anscombe |> 
-  ggplot(aes(x = x, y = y, colour = set)) +
-  geom_point() +
-  theme_minimal() +
-  facet_wrap(vars(set), nrow = 2, ncol = 2) +
-  labs(colour = "Dataset")
-
-tidy_anscombe |> 
-  ggplot(aes(x = x, y = y, colour = set)) +
-  geom_point() +
-  theme_classic() +
-  facet_wrap(vars(set), nrow = 2, ncol = 2) +
-  labs(colour = "Dataset")
-```
 
 
 ### Bar charts
@@ -496,6 +472,8 @@ beps |>
              scales = "free",
              labeller = labeller(gender = new_labels))
 ```
+
+This means that we now have three ways to have multiple graphs: sub-figures, facets, and `patchwork`. They are useful in different circumstances. For instance, we would often want to use sub-figures (covered in [Chapter -@sec-reproducible-workflows]) when we are considering different variables, facets when considering different values of a categorical variable, and `patchwork` when interested in bringing together entirely different graphs.
 
 There are a variety of different ways to change the colors, and many palettes are available including from `RColorBrewer` [@RColorBrewer], which we specify with `scale_fill_brewer()`, and `viridis` [@viridis], which we specify with `scale_fill_viridis()` and is particularly focused on color-blind palettes (@fig-usecolor). 
 
@@ -930,7 +908,7 @@ world_bank_data |>
 A histogram is useful to show the shape of a continuous variable. They construct counts of the number of observations in different subsets of the support, called 'bins'. In @fig-hisogramone we examine the distribution of GDP in Ethiopia.
 
 ```{r}
-#| fig-cap: "Distribution of GDP in Ethiopia (1960-2020)"
+#| fig-cap: "Distribution of GDP growth in Ethiopia (1960-2020)"
 #| label: fig-hisogramone
 #| message: false
 #| warning: false
@@ -944,7 +922,7 @@ world_bank_data |>
 And again we can add a theme and labels (@fig-hisogramtwo).
 
 ```{r}
-#| fig-cap: "Distribution of GDP in Ethiopia (1960-2020)"
+#| fig-cap: "Distribution of GDP growth in Ethiopia (1960-2020)"
 #| label: fig-hisogramtwo
 #| warning: false
 
@@ -953,7 +931,7 @@ world_bank_data |>
   ggplot(mapping = aes(x = gdp_growth)) +
   geom_histogram() +
   theme_minimal() +
-  labs(x = "GDP",
+  labs(x = "GDP growth",
        y = "Number of occurrences",
        caption = "Data source: World Bank.")
 ```
@@ -964,7 +942,7 @@ The key component determining the shape of a histogram is the number of bins. Th
 2) specifying how wide they should be, 'binwidth'.
 
 ```{r}
-#| fig-cap: "Distribution of GDP in Ethiopia (1960-2020)"
+#| fig-cap: "Distribution of GDP growth in Ethiopia (1960-2020)"
 #| label: fig-hisogrambins
 #| message: false
 #| warning: false
@@ -1036,7 +1014,7 @@ Histograms smooth data, and the number of bins affects how much smoothing occurs
 Finally, while we can use 'fill' to distinguish between different types of observations, it can get quite messy. It is usually better to give away showing the distribution with columns and instead trace the outline of the distribution, using `geom_freqpoly()` (@fig-freq) or to build it up using dots with `geom_dotplot()` (@fig-dotplot) .
 
 ```{r}
-#| fig-cap: "Distribution of GDP in four countries (1960-2020)"
+#| fig-cap: "Distribution of GDP growth in four countries (1960-2020)"
 #| label: fig-freq
 #| message: false
 #| warning: false
@@ -1054,7 +1032,7 @@ world_bank_data |>
 
 
 ```{r}
-#| fig-cap: "Distribution of GDP in four countries (1960-2020)"
+#| fig-cap: "Distribution of GDP growth in four countries (1960-2020)"
 #| label: fig-dotplot
 #| message: false
 #| warning: false
@@ -1433,7 +1411,7 @@ french_cities <-
 head(french_cities)
 ```
 
-With that information in hand, we can then create a map of France that shows the larger cities.  We use `geom_polygon()` from `ggplot2` to draw shapes by connecting points within groups. And `coord_map()` adjusts for the fact that we are making a 2D map to represent a world that is 3D.)
+With that information in hand, we can then create a map of France that shows the larger cities.  We use `geom_polygon()` from `ggplot2` to draw shapes by connecting points within groups. And `coord_map()` adjusts for the fact that we are making a 2D map to represent a world that is 3D.
 
 ```{r}
 #| message: false
@@ -1471,7 +1449,7 @@ In `ggmap`, we use an open-source option for our tile, Stamen Maps. And we use p
 
 In Australia people go to specific locations, called booths, to vote. These booths have latitudes and longitudes and so we can plot these. One reason we may like to do this is to notice patterns over geographies.
 
-To get started we need to get a tile. We are going to use `ggmap` to get a tile from Stamen Maps, which builds on OpenStreetMap (openstreetmap.org). The main argument to this function is to specify a bounding box. This requires two latitudes - one for the top of the box and one for the bottom of the box - and two longitudes - one for the left of the box and one for the right of the box. It can be useful to use Google Maps, or an alternative, to find the values of these that you need. The bounding box provides the coordinates of the edges that you are interested in. In this case we have provided it with coordinates such that it will be centered around Canberra, Australia, which is a small city that was created for the purposes of being the capital.
+To get started we need to get a tile. We are going to use `ggmap` to get a tile from Stamen Maps, which builds on [OpenStreetMap](openstreetmap.org). The main argument to this function is to specify a bounding box. This requires two latitudes - one for the top of the box and one for the bottom of the box - and two longitudes - one for the left of the box and one for the right of the box. It can be useful to use Google Maps, or an alternative, to find the values of these that you need. The bounding box provides the coordinates of the edges that you are interested in. In this case we have provided it with coordinates such that it will be centered around Canberra, Australia, which is a small city that was created for the purposes of being the capital.
 
 ```{r}
 #| warning: false
@@ -1482,7 +1460,7 @@ library(ggmap)
 bbox <- c(left = 148.95, bottom = -35.5, right = 149.3, top = -35.1)
 ```
 
-Once you have defined the bounding box, then the function `get_stamenmap()` will get the tiles in that area. The number of tiles that it needs to get depends on the zoom, and the type of tiles that it gets depends on the maptype. We have used a black-and-white type of map but the helpfile specifies others. At this point we can the map to maps to `ggmap()` and it will plot the tile! It will be actively downloading these tiles, and so it needs an internet connection.
+Once you have defined the bounding box, then the function `get_stamenmap()` will get the tiles in that area. The number of tiles that it needs to get depends on the zoom, and the type of tiles that it gets depends on the maptype. We have used a black-and-white type of map but the helpfile specifies others. At this point we can the map to maps to `ggmap()` and it will plot the tile. It will be actively downloading these tiles, and so it needs an internet connection.
 
 ```{r}
 #| warning: false
