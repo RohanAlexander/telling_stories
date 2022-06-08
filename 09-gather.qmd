@@ -17,7 +17,7 @@ engine: knitr
 
 - Initial usage of APIs, both directly, including dealing with semi-structured data, and indirectly through R Packages. 
 - Use R environments to manage keys.
-- Web scraping, especially reasonable use, and ethical concerns.
+- Web scraping, especially reasonable use and ethical concerns.
 - Cleaning data from unstructured data to structured, tidy, data.
 - Extracting data from PDFs, both those that can be parsed and those that are an image and require OCR.
 
@@ -72,14 +72,14 @@ Decisions need to be made at the start of a project about the values the group w
 
 The results of a data science workflow will never be better than their data [@bailey2008design]. And even the best statistical analysis will struggle to adjust for poorly gathered data. This means when working in a team, it is important that data gathering is conducted and overseen by the senior members of the team. And when working by oneself, it is important to give special consideration and care to this stage. 
 
-In this chapter we go through a variety of approaches for gathering data. We begin with the use of APIs and semi-structured data, such as JSON and XML. These are situations in which data providers typically specify the conditions under they are comfortable providing access. We then turn to web scraping, which we may want to use when there are data available on a website. As these data have typically not been put together for the purposes of being a dataset, it is especially important to have deliberate and definite values for the project. Finally, we consider gathering data from PDFs, and using optical character recognition, especially to obtain text data.
+In this chapter we go through a variety of approaches for gathering data. We begin with the use of APIs and semi-structured data, such as JSON and XML. These are situations in which data providers typically specify the conditions under they are comfortable providing access. We then turn to web scraping, which we may want to use when there are data available on a website. As these data have typically not been put together for the purposes of being a dataset, it is especially important to have deliberate and definite values for the project. Finally, we consider gathering data from PDFs, and using Optical Character Recognition (OCR), especially to obtain text data.
 
 
 ## APIs
 
 In everyday language, and for our purposes, an Application Programming Interface (API) is a situation in which someone has set up specific files on their computer such that we can follow their instructions to get them. For instance, when we use a gif on Slack, Slack asks Giphy's server for the appropriate gif, Giphy's server gives that gif to Slack and then Slack inserts it into chat. The way in which Slack and Giphy interact is determined by Giphy's API. More strictly, an API is just an application that runs on a server that we access using the HTTP protocol. 
 
-Here we focus on using APIs for gathering data. And so, with that focus, an API is a website that is set-up for another computer to be able to access, rather than a person. For instance, we could go to [Google Maps](https://www.google.com/maps). And we could then scroll and click and drag to center the map on, say, Canberra, Australia. Or we could paste [this link](https://www.google.com/maps/@-35.2812958,149.1248113,16z) into the browser. By pasting that link, rather than navigating, with mimicked how we will use an API: provide it with a URL and be given something back; in this case the result should be a map similar to @fig-focuson2020.
+Here we focus on using APIs for gathering data. And so, with that focus, an API is a website that is set-up for another computer to be able to access, rather than a person. For instance, we could go to [Google Maps](https://www.google.com/maps). And we could then scroll and click and drag to center the map on, say, Canberra, Australia. Or we could paste [this link](https://www.google.com/maps/@-35.2812958,149.1248113,16z) into the browser. By pasting that link, rather than navigating, we have mimicked how we will use an API: provide it with a URL and be given something back. In this case the result should be a map similar to @fig-focuson2020.
 
 ![Example of Google Maps, as at 29 January 2022](figures/googlemaps.png){#fig-focuson2020 width=90% fig-align="center"}
 
@@ -149,11 +149,13 @@ NASA_APOD_20190719 <-
 Examining the returned data using `content()`, we can see that we are provided with various fields, such as date, title, explanation, and a URL. And we can provide that URL to `include_graphics()` from `knitr` to display it (@fig-nasaone).
 
 ```{r}
+# APOD December 26, 2021
 content(NASA_APOD_20211226)$date
 content(NASA_APOD_20211226)$title
 content(NASA_APOD_20211226)$explanation
 content(NASA_APOD_20211226)$url
 
+# APOD July 19, 2019
 content(NASA_APOD_20190719)$date
 content(NASA_APOD_20190719)$title
 content(NASA_APOD_20190719)$explanation
@@ -213,9 +215,9 @@ as_tibble(politics_datasets[["data"]][["items"]])
 
 ### Gathering data from Twitter
 
-Twitter is a rich source of text and other data and an extraordinary amount of academic research uses it [@twitterseemsokay] The Twitter API is the way in which Twitter asks that we gather these data. And `rtweet` [@rtweet] is built around this API and allows us to interact with it in ways that are similar to using any other R package. Initially, we can use the Twitter API with just a regular Twitter account. 
+Twitter is a rich source of text and other data and an extraordinary amount of academic research uses it [@twitterseemsokay] The Twitter API is the way in which Twitter asks that we gather these data. `rtweet` [@rtweet] is built around this API and allows us to interact with it in ways that are similar to using any other R package. Initially, we can use the Twitter API with just a regular Twitter account. 
 
-Begin by installing and loading `rtweet` and `tidyverse`. We then need to authorize `rtweet` and we start that process by calling a function from the package, for instance `get_favorites()` which will return a tibble of a user's favorites. This will open a browser, and we then log into a regular Twitter account (@fig-rtweetlogin).
+Begin by installing and loading `rtweet` and `tidyverse`. We then need to authorize `rtweet` and we start that process by calling any function from the package, for instance `get_favorites()` which would normally return a tibble of a user's favorites. When it is executed before authorization, this will open a browser, and we then log into a regular Twitter account (@fig-rtweetlogin).
 
 ```{r}
 #| warning: false
@@ -395,7 +397,7 @@ There is a variety of information available based on songs. We might be interest
 
 ```{r}
 radiohead |> 
-  select(artist_name, track_name, album_name) |> 
+  # select(artist_name, track_name, album_name) |> 
   head()
 ```
 
@@ -417,7 +419,7 @@ radiohead |>
        ) 
 ```
 
-One interesting variable provided by Spotify about each song is 'valence'. The Spotify [documentation](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features) describe this as a measure between 0 and 1 that signals the 'the musical positiveness' of the track with higher values being more positive. We might be interested to compare valence over time between a few artists, for instance, the American rock band The National, and the American singer Taylor Swift.
+One interesting variable provided by Spotify about each song is 'valence'. The Spotify [documentation](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features) describe this as a measure between 0 and 1 that signals the 'the musical positiveness' of the track with higher values being more positive. We might be interested to compare valence over time between a few artists, for instance, Radiohead, the American rock band The National, and the American singer Taylor Swift.
 
 First, we need to gather the data.
 
@@ -515,7 +517,7 @@ How amazing that we live in a world that all that information is available with 
 
 ## Web scraping
 
-Web scraping is a way to get data from websites. Rather than going to a website using a browser, then saving a copy of it, we write code that does it for us. This opens a lot of data to us, but on the other hand, it is not typically data that are being made available for these purposes. This means that it is important to be especially respectful. While generally not illegal, the specifics about the legality of web scraping depend on jurisdictions and what we are doing, and so it is also important to be mindful. While our use would rarely be commercially competitive, of particular concern is the conflict between the need for our work to be reproducible with the need to respect terms of service that may disallow data republishing [@luscombe2021algorithmic]. 
+Web scraping is a way to get data from websites. Rather than going to a website using a browser and then saving a copy of it, we write code that does it for us. This opens a lot of data to us, but on the other hand, it is not typically data that are being made available for these purposes. This means that it is especially important to be respectful. While generally not illegal, the specifics about the legality of web scraping depend on jurisdictions and what we are doing, and so it is also important to be mindful. While our use would rarely be commercially competitive, of particular concern is the conflict between the need for our work to be reproducible with the need to respect terms of service that may disallow data republishing [@luscombe2021algorithmic]. 
 
 Privacy trumps reproducibility. There is also a considerable difference between data being publicly available on a website and being scraped, cleaned, and prepared into a dataset which is then publicly released. For instance, @xiao2021letter detail some of the considerations in the context of a dataset created when @kirkegaard2016okcupid scraped publicly available OKCupid profiles and then made the resulting dataset available [@hackett2016researchers]. 
 
@@ -528,7 +530,7 @@ That all said, web scraping is an invaluable source of data. But they are typica
    - Secondly, consider the timing of when we run our scraper. For instance, if we are scraping a retailer then maybe we should set our script to run from 10pm through to the morning, when fewer customers are likely using the site. Similarly, if it is a government website and they have a big monthly release, then it might be polite to avoid that day.
 4. Take only what is needed. For instance, we do not need to scrape the entire of Wikipedia if all we need is the names of the ten largest cities in Croatia. This reduces the impact on the website, and allows us to more easily justify our actions.
 5. Only scrape once. This means we should save everything as we go so that we do not have to re-collect data. Similarly, once we have the data, we should keep that separate and not modify it. Of course, if we need data over time then we will need to go back, but this is different to needlessly re-scraping a page.
-6. Do not republish the pages that were scraped. (This contrasts with datasets that we create from it.)
+6. Do not republish the pages that were scraped (this contrasts with datasets that we create from it).
 7. Take ownership and ask permission if possible. At a minimum level all scripts should have our contact details in them. Depending on the circumstances, it may be worthwhile asking for permission before you scrape.
 
 Web scraping is possible by taking advantage of the underlying structure of a webpage. We use patterns in the HTML/CSS to get the data that we want. To look at the underlying HTML/CSS we can either: 
@@ -545,7 +547,7 @@ HTML/CSS is a markup language comprised of matching tags. If we want text to be 
 <b>My bold text</b>
 ```
 
-Similarly, if we want a list then we start and end the list, as well as each item. 
+Similarly, if we want a list, then we start and end the list as well as indicating each item. 
 
 ```{css}
 #| eval: false
@@ -554,7 +556,7 @@ Similarly, if we want a list then we start and end the list, as well as each ite
 <ul>
   <li>Learn webscraping</li>
   <li>Do data science</li>
-  <li>Proft</li>
+  <li>Profit</li>
 </ul>
 ```
 
@@ -826,6 +828,8 @@ simulated_dataset <-
   ) |>
   select(prime_minister, birth_year, death_year, years_lived) |>
   arrange(birth_year)
+
+simulated_dataset
 ```
 
 One of the advantages of generating a simulated dataset is that if we are working in groups then one person can start making the graph, using the simulated dataset, while the other person gathers the data. In terms of a graph, we are aiming for something like @fig-pmsgraphexample.
@@ -866,7 +870,7 @@ raw_data <-
 write_html(raw_data, "pms.html")
 ```
 
-As with the earlier case study we are looking for patterns in the HTML that we can use to help us get closer to the data that we want. This is an iterative process and requires a lot of trial and error. Even simple examples will take time. 
+As with the earlier case study, we are looking for patterns in the HTML that we can use to help us get closer to the data that we want. This is an iterative process and requires a lot of trial and error. Even simple examples will take time. 
 
 One tool that may help is the [SelectorGadget](https://rvest.tidyverse.org/articles/articles/selectorgadget.html). This allows us to pick and choose the elements that we want, and then gives us the input for `html_nodes()` (@fig-selectorgadget).
 
@@ -1097,7 +1101,7 @@ visit_download_and_wait <-
   }
 ```
 
-We now apply that function to our list of URLs.
+We now apply that function to our tibble of URLs and save names using the funtion `walk2()`.
 
 ```{r}
 #| eval: false
@@ -1130,7 +1134,7 @@ We will start by walking through several examples and then go through a case stu
 
 ### Jane Eyre
 
-@fig-firstpdfexample is a PDF that consists of just the first sentence from Jane Eyre taken from Project Gutenberg [@janeeyre]. If we assume that it was saved as 'first_example.pdf', then we can use `pdftools` [@pdftools] to get the text from this one-page PDF into R.
+@fig-firstpdfexample is a PDF that consists of just the first sentence from Emily Brontë's novel *Jane Eyre* taken from Project Gutenberg [@janeeyre]. If we assume that it was saved as 'first_example.pdf', then we can use `pdftools` [@pdftools] to get the text from this one-page PDF into R.
 
 ![First sentence of Jane Eyre](inputs/pdfs/first_example.png){#fig-firstpdfexample width=75% fig-align="center"}
 
@@ -1162,7 +1166,7 @@ first_example
 
 We can see that the PDF has been correctly read in, as a character vector.
 
-We will now try a slightly more complicated example that consists of the first few paragraphs of Jane Eyre (@fig-secondpdfexample). Also notice that now we have the chapter heading as well.
+We will now try a slightly more complicated example that consists of the first few paragraphs of *Jane Eyre* (@fig-secondpdfexample). Also notice that now we have the chapter heading as well.
 
 ![First few paragraphs of Jane Eyre](inputs/pdfs/second_example.png){#fig-secondpdfexample width=90% fig-align="center"}
 
@@ -1250,11 +1254,11 @@ For instance, in the case of the year 2000 the table that we are interested in i
 
 ![Example Vital Statistics Report, from 2000](figures/dhs_example.png){#fig-dhsexample width=90% fig-align="center"}
 
-The first step when getting data out of a PDF is to sketch out what we eventually want. A PDF typically contains a lot of information, and so it is handy to be very clear about what you need. This helps keep you focused, and prevents scope creep, but it is also helpful when thinking about data checks. We literally write down on paper what we have in mind. In this case, what is needed is a table with a column for state, year and TFR (@fig-tfrdesired). 
+The first step when getting data out of a PDF is to sketch out what we eventually want. A PDF typically contains a lot of information, and so it is handy to be very clear about what you need. This helps keep you focused, and prevents scope creep, but it is also helpful when thinking about data checks. We literally write down on paper what we have in mind. In this case, what is needed is a table with a column for state, year and total fertility rate (TFR) (@fig-tfrdesired). 
 
 ![Planned dataset of TFR for each year and US state](figures/tfr_dataset_sketch.png){#fig-tfrdesired width=40% fig-align="center"}
 
-There are 19 different PDFs, and we are interested in a particular column in a particular table in each of them. Unfortunately, there is nothing magical about what is coming. This first step requires working out the link for each, and the page and column name that is of interest. In the end, this looks like this.
+There are 19 different PDFs, and we are interested in a particular column in a particular table in each of them. Unfortunately, there is nothing magical about what is coming. This first step requires finding each PDF online, working out the link for each, and manually searching for the page and column name that is of interest. In the end, this looks like this.
 
 ```{r}
 #| eval: true
@@ -1274,7 +1278,7 @@ summary_tfr_dataset |>
   gt()
 ```
 
-The first step is to get some code that works for one of them and we step through the code in a lot more detail than normal because we are going to use these pieces a lot. 
+The first step is to get some code that works for one of them. We step through the code in a lot more detail than normal because we are going to use these pieces a lot. 
 
 We will choose the year 2000. We first download and save the PDF using `download.file()`.
 
@@ -1290,7 +1294,7 @@ download.file(url = summary_tfr_dataset$url[1],
 ```{r}
 #| label: justfirstyear
 #| eval: false
-#| echo: true
+#| include: false
 
 # INTERNAL
 
@@ -1484,7 +1488,7 @@ dhs_2000 <- pdftools::pdf_text("year_2000.pdf")
 dhs_2000 <-
   tibble(raw_data = dhs_2000) |>
   slice(summary_tfr_dataset$page[1]) |>
-  separate_rows(raw_data, sep = "\\n", convert = FALSE) |>
+  separate_rows(raw_data, sep = "\\n", convert = FALSE) |> # ISSUE: needs to be applied to inner tibble, not outer?
   separate(
     col = raw_data,
     into = c("state", "data"),
@@ -1509,11 +1513,9 @@ dhs_2000 <-
   select(state, TFR) |>
   slice(13:69) |>
   mutate(year = 2000)
-
-dhs_2000
 ```
 
-The first thing that we want to iterate is the argument to `pdf_text()`, then the number in in `slice()` will also need to change (that is doing the work to get only the page that we are interested in).
+The first thing that we want to iterate is the argument to `pdf_text()`, then the number in `slice()` will also need to change (that is doing the work to get only the page that we are interested in).
 
 Two aspects are hardcoded, and these may need to be updated. In particular: 
 
@@ -1527,9 +1529,9 @@ We will start by writing a function that will go through all the files, grab the
 ```{r}
 #| message: false
 #| warning: false
+#| echo: true
 
 get_pdf_convert_to_tibble <- function(pdf_name, page, year){
-#| echo: true
   
   dhs_table_of_interest <- 
     tibble(raw_data = pdftools::pdf_text(pdf_name)) |> 
@@ -1559,9 +1561,9 @@ Now we need to clean up the state names and then filter on them.
 ```{r}
 #| message: false
 #| warning: false
+#| echo: true
 
 states <- c("Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", 
-#| echo: true
             "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", 
             "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", 
             "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", 
@@ -1595,9 +1597,9 @@ The next step is to separate the data and get the correct column from it. We are
 ```{r}
 #| message: false
 #| warning: false
+#| echo: true
 
 raw_dhs_data <- 
-#| echo: true
   raw_dhs_data |> 
   mutate(data = str_remove_all(data, "\\*")) |> 
   separate(data, into = c("col_1", "col_2", "col_3", "col_4", "col_5", 
