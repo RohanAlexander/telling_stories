@@ -93,7 +93,7 @@ We will now go through a few case studies of using APIs. In the first we deal di
 
 We use `GET()` from `httr` [@citehttr] to obtain data from an API directly. This will try to get some specific data and the main argument is 'url'. In a way, this is similar to the earlier Google Maps example. In that example, the specific information that we were interested in was a map. 
 
-In this case study we will use an [API provided by arXiv](https://arxiv.org). arXiv is an online repository for academic papers before they go through peer-review, and these are typically referred to as 'pre-prints'. After installing and loading `httr`, we use `GET()` to ask arXiv to obtain some information about the pre-print of @Alexander2020. 
+In this case study we will use an [API provided by arXiv](https://arxiv.org/help/api/). arXiv is an online repository for academic papers before they go through peer-review, and these are typically referred to as 'pre-prints'. After installing and loading `httr`, we use `GET()` to ask arXiv to obtain some information about the pre-print of @Alexander2020. 
 
 ```{r}
 #| message: false
@@ -109,7 +109,7 @@ arxiv <-
 status_code(arxiv)
 ```
 
-We can use `status_code()` to check whether we received an error from the server. And assuming we received something back from the server, we can use `content()` to display the information. In this case we have received XML formatted data. We can read this using `read_xml()` from `xml2` [@xml2]. XML is a semi-formatted structure, and it can be useful to start by having a look at it using `html_structure()`.
+We can use `status_code()` to check whether we received an error from the server. And assuming we received something back from the server, we can use `content()` to display the information. In this case we have received XML formatted data. XML is a markup language where entries are identified by tags, which can be nested within other tags. We can read XML using `read_xml()` from `xml2` [@xml2]. XML is a semi-formatted structure, and it can be useful to start by having a look at it using `html_structure()`.
 
 ```{r}
 content(arxiv) |>
@@ -251,7 +251,9 @@ saveRDS(rohans_favorites, "rohans_favorites.rds")
 ```{r}
 #| label: get_rohan_favsactual
 #| include: false
-#| eval: true
+#| eval: false
+
+# INTERNAL
 
 rohans_favorites <- get_favorites("RohanAlexander")
 
@@ -292,6 +294,8 @@ saveRDS(rstats_tweets, "rstats_tweets.rds")
 #| label: get_rstatsactual
 #| include: false
 #| eval: false
+
+#INTERNAL
 
 rstats_tweets <- search_tweets(
   q = "#rstats",
@@ -605,9 +609,9 @@ first_name <-
 first_name
 ```
 
+If you end up doing a lot of web scraping, then `polite` [@polite] may be helpful to better optimize your workflow.
 
-
-### Web scraping book information
+### Book information
 
 In this case study we will scrape a list of books available [here](https://rohanalexander.com/bookshelf.html). We will then clean the data and look at the distribution of the first letters of author surnames. It is slightly more complicated than the example above, but the underlying approach is the same: download the website, look for the nodes of interest, extract the information, clean it.
 
@@ -791,7 +795,7 @@ all_books |>
 
 
 
-### Web scraping UK Prime Ministers from Wikipedia
+### UK Prime Ministers from Wikipedia
 
 In this case study we are interested in how long UK prime ministers lived, based on the year that they were born. We will scrape data from Wikipedia using `rvest` [@citervest], clean it, and then make a graph. Every time we scrape a website things will change. Each scrape will largely be bespoke, even if we can borrow some code from earlier projects. It is completely normal to feel frustrated at times. It helps to begin with an end in mind. 
 
@@ -1019,6 +1023,7 @@ Our dataset looks similar to the one that we said we wanted at the start (@tbl-c
 #| tbl-cap: "UK Prime Ministers, by how old they were when they died"
 
 cleaned_data |> 
+  head() |> 
   knitr::kable(
     col.names = c("Prime Minister", "Birth year", "Death year", "Age at death"),
     booktabs = TRUE, 
@@ -1117,13 +1122,15 @@ The result is that we have downloaded these four PDFs and saved them to our comp
 
 ## PDFs
 
+PDF files were developed in 1993 by the technology company Adobe and are useful for documents because they are meant to display in a consistent way independent of the environment that created them or the environment in which they are being viewed. A PDF viewed on an iPhone should look the same as on a Android phone, as on a Linux desktop. One feature of PDFs is that they can include a variety of objects, for instance, text, photos, figures, etc. However, this variety can limit the capacity of PDFs to be used directly as data inputs for statistical analysis. The data first needs to be extracted from the PDF.
+
+It is often possible to copy and paste the data from the PDF. This is more likely when the PDF only contains simple text or regular tables. In particular, if the PDF has been created by an application such as Microsoft Word, or another document- or form-creation system, then often the text data can be extracted in this way because they are actually stored as text within the PDF. We begin with that case. But it is not as easy if the text has been stored as an image which is then part of the PDF. This may be the case for PDFs produced through scans or photos of physical documents, and some older document preparation software. We go through that case later.
+
 In contrast to an API, a PDF is usually only produced for human rather than computer consumption. The nice thing about PDFs is that they are static and constant. And it is great that data are available. But the trade-off is that:
 
 - It is not overly useful to do larger-scale statistical analysis.
 - We do not know how the PDF was put together so we do not know whether we can trust it.
 - We cannot manipulate the data to get results that we are interested in.
-
-Indeed, sometimes governments publish data as PDFs because they do not actually want us to be able to analyze it. Being able to get data from PDFs opens a large number of datasets.
 
 There are two important aspects to keep in mind when extracting data from a PDF:
 
@@ -1154,7 +1161,7 @@ class(first_example)
 
 ```{r}
 #| eval: true
-#| include: false
+#| echo: false
 
 library(pdftools)
 library(tidyverse)
@@ -1174,7 +1181,7 @@ We use the same function as before.
 
 ```{r}
 #| eval: false
-#| include: true
+#| echo: true
 
 second_example <- pdftools::pdf_text("second_example.pdf")
 
@@ -1185,7 +1192,7 @@ class(second_example)
 
 ```{r}
 #| eval: true
-#| include: false
+#| echo: false
 
 second_example <- pdftools::pdf_text("inputs/pdfs/second_example.pdf")
 
@@ -1198,7 +1205,7 @@ Again, we have a character vector. The end of each line is signaled by '\\n', bu
 
 ```{r}
 #| eval: false
-#| include: true
+#| echo: true
 
 third_example <- pdftools::pdf_text("third_example.pdf")
 
@@ -1210,7 +1217,7 @@ class(third_example)
 
 ```{r}
 #| eval: true
-#| include: false
+#| echo: false
 
 third_example <- pdftools::pdf_text("inputs/pdfs/third_example.pdf")
 
@@ -1359,6 +1366,14 @@ Now we are searching for patterns that we can use. Let us look at the first ten 
 #| echo: true
 
 dhs_2000[13:22,]
+```
+
+And now at just one line.
+
+```{r}
+#| echo: true
+
+dhs_2000[20,]
 ```
 
 It does not get much better than this:
@@ -1520,9 +1535,9 @@ The first thing that we want to iterate is the argument to `pdf_text()`, then th
 Two aspects are hardcoded, and these may need to be updated. In particular: 
 
 1) `separate()` only works if each of the tables has the same columns in the same order; and 
-2) `slice()` (which restricts the data to just the states) only works in this case. 
+2) `slice()` (which restricts the data to just the states) only works in this one case because it references specific lines, which may differ between years. 
 
-Finally, we add the year only at the end, whereas we would need to bring that up earlier in the process. 
+Finally, we in the code written for the one-year, we add the year only at the end, whereas to do it for multiple years we would need to bring that up earlier in the process. 
 
 We will start by writing a function that will go through all the files, grab the data, get the page of interest, and then expand the rows. We will then use `pmap_dfr()` from `purrr` to apply that function to all of the PDFs and to output a tibble.
 
@@ -1708,7 +1723,9 @@ write_csv(tfr_data, "outputs/monicas_tfr.csv")
 
 ### Optical Character Recognition
 
-All of the above is predicated on having a PDF that is already 'digitized'. But what if it is images? In that case we need to first use Optical Character Recognition (OCR) using `tesseract` [@citetesseract]. This is a R wrapper around the Tesseract open-source OCR engine.
+All of the above is predicated on having a PDF that is already 'digitized'. But what if it is images, such as the result of a scan. Such PDFs often contain unstructured data, meaning that the data are not tagged nor organised in a regular way. Optical character recognition (OCR) is a process that transforms an image of text into actual text. Although there may not be much difference to a human reading a PDF before and after OCR, the PDF is now machine-readable [@Cheriet2007]. OCR has been used to parse images of characters since the 1950s, initially using manual approaches. While manual approaches remain the gold standard, for reasons of cost effectiveness, this has been largely replaced by the use of statistical models. 
+
+In this example we use `tesseract` [@citetesseract] to OCR a document. This is a R wrapper around the Tesseract open-source OCR engine. Tesseract was initially developed at HP in the 1980s, and is now mostly developed by Google.
 
 Let us see an example with a scan from the first page of Jane Eyre (@fig-janescan).
 
@@ -1734,6 +1751,7 @@ text <- tesseract::ocr(here::here("figures/jane_scan.png"), engine = tesseract("
 cat(text)
 ```
 
+In general the result is not too bad. OCR is a useful tool but is not perfect and the resulting data may require extra attention in terms of cleaning. For instance, in the OCR results of @fig-janescan we see irregularities that would need to be fixed. Various options, such as focusing on the particular data of interest and increase the contrast can help. Other popular OCR engines include Amazon Textract, Google Vision API, and ABBYY.
 
 
 
@@ -1743,72 +1761,59 @@ cat(text)
 
 ### Exercises {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: **TBD**. Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+1. *(Plan)* Consider the following scenario: *A group of five undergraduates each read some number of pages from a book each day for 100 days. Two of the undergraduates are a couple and so their number of pages is positively correlated, however all the others are independent.* Please sketch what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation with every variable independent of each other.
-3. *(Acquire)* Please describe three possible sources of such a dataset.
-4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
+3. *(Acquire)* Please describe a possible source of such a dataset.
+4. *(Explore)* Please use `ggplot2` to build the graph that you sketched using the data that you simulated.
 5. *(Communicate)* Please write two paragraphs about what you did.
-6. What are some types of probability sampling, and in what circumstances might you want to implement them (write two or three pages)?
-7. There have been some substantial political polling 'misses' in recent years (Trump and Brexit come to mind). To what extent do you think non-response bias was the cause of this (write a page or two, being sure to ground your writing with citations)?
-8. It seems like a lot of businesses have closed since the pandemic. To investigate this, we walk along some blocks downtown and count the number of businesses that are closed and open. To decide which blocks to walk, we open a map, start at the lake, and then pick every 10th street. This type of sampling is (pick one)?
-    a. Cluster sampling.
-    b.  Systematic sampling.
-    c. Stratified sampling.
-    d. Convenience sampling.
-9. Please name some reasons why you may wish to use cluster sampling (select all)?
-    a. Balance in responses.
-    b. Administrative convenience.
-    c. Efficiency in terms of money.
-    d. Underlying systematic concerns.
-    e. Estimation of sub-populations.
-10. In your own words, what is an API (write a paragraph or two)?
-11. Find two APIs and discuss how you could use them to tell interesting stories (write a paragraph or two for each)?
-12. Find two APIs that have an R packages written around them. How could you use these to tell interesting stories (write a paragraph or two)?
-13. What is the main argument to `httr::GET()` (pick one)?
+6 In your own words, what is an API (write a paragraph or two)?
+7. Find two APIs and discuss how you could use them to tell interesting stories (write a paragraph or two for each)?
+8. Find two APIs that have an R packages written around them. How could you use these to tell interesting stories (write a paragraph or two)?
+9. What is the main argument to `httr::GET()` (pick one)?
     a.  'url'
     b. 'website'
     c. 'domain'
     d. 'location'
-14. What are three reasons why we should be respectful when getting scraping data from websites  (write a paragraph or two)?
-15. What features of a website do we typically take advantage of when we parse the code (pick on)?
+10. What are three reasons why we should be respectful when getting scraping data from websites  (write a paragraph or two)?
+11. What features of a website do we typically take advantage of when we parse the code (pick on)?
     a. HTML/CSS mark-up.
     b. Cookies.
     c. Facebook beacons.
     d. Code comments.
-16. What are three advantages and three disadvantages of scraping compared with using an API (write a paragraph or two)?
-17. What are three delimiters that could be useful when trying to bring order to the PDF that you read in as a character vector (write a paragraph or two)?
-18. Which of the following, used as part of a regular expression, would match a full stop (hint: see the 'strings' cheat sheet) (pick one)? 
+12. What are three advantages and three disadvantages of scraping compared with using an API (write a paragraph or two)?
+13. What are three delimiters that could be useful when trying to bring order to the PDF that you read in as a character vector (write a paragraph or two)?
+14. Which of the following, used as part of a regular expression, would match a full stop (hint: see the 'strings' cheat sheet) (pick one)? 
     a. '.'
     b. '\.'
     c.  '\\.'
     d. '\\\.'
-19. Name three reasons for sketching out what you want before starting to try to extract data from a PDF (write a paragraph or two for each)?
-20. What are three checks that we might like to use for demographic data, such as the number of births in a country in a particular year (write a paragraph or two for check)?
-21. What are three checks that we might like to use for economic data, such as GDP for a particular country in a particular year (write a paragraph or two for check)?
-22. What does the `purrr` package do (select all that apply)?
+15. Name three reasons for sketching out what you want before starting to try to extract data from a PDF (write a paragraph or two for each)?
+16. What are three checks that we might like to use for demographic data, such as the number of births in a country in a particular year (write a paragraph or two for check)?
+17. What are three checks that we might like to use for economic data, such as GDP for a particular country in a particular year (write a paragraph or two for check)?
+18. What does the `purrr` package do (select all that apply)?
     a.  Enhances R's functional programming toolkit.
     b.  Makes loops easier to code and read.
     c. Checks the consistency of datasets.
     d. Identifies issues in data structures and proposes replacements.
-23. Which of these are functions from the `purrr` package (select all that apply)?
+19. Which of these are functions from the `purrr` package (select all that apply)?
     a.  `map()`
     b.  `walk()`
     c. `run()`
     d.  `safely()`
-24. What are some principles to follow when scraping (select all that apply)?
+20. What are some principles to follow when scraping (select all that apply)?
     a. Avoid it if possible
     b. Follow the site’s guidance
     c. Slow down
     d. Use a scalpel not an axe.  
-25. What is a robots.txt file (pick one)?
+21. What is a robots.txt file (pick one)?
     a. The instructions that Frankenstein followed.
     b. Notes that web scrapers should follow when scraping.
-26. What is the HTML tag for an item in list (pick one)?
+22. What is the HTML tag for an item in list (pick one)?
     a. `li`
     b. `body`
     c. `b`
     d. `em`
-27. Which function should we use if we have the following text data: 'rohan_alexander' in a column called 'names' and want to split it into first name and surname based on the underscore (pick one)?
+23. Which function should we use if we have the following text data: 'rohan_alexander' in a column called 'names' and want to split it into first name and surname based on the underscore (pick one)?
     a.  `separate()`
     b. `slice()`
     c. `spacing()`
