@@ -706,17 +706,20 @@ over + plot_annotation(
 )
 ```
 
-The points of a scatterplot sometimes overlap. We can address this situation in one of two ways (@fig-alphajitter): 
+The points of a scatterplot sometimes overlap. We can address this situation in a variety of ways (@fig-alphajitter): 
 
 1) Adding a degree of transparency to our dots with 'alpha' (@fig-alphajitter-1). The value for 'alpha' can vary between 0, which is fully transparent, and 1, which is completely opaque. 
 2) Adding a small amount of noise, which slightly moves the points, using `geom_jitter()` (@fig-alphajitter-2). By default, the movement is uniform in both directions, but we can specify which direction movement occurs with 'width' or 'height'. The decision between these two options turns on the degree to which exact accuracy matters, and the number of points: it is often useful to use `geom_jitter()` when you want to highlight the relative density of points and not necessarily the exact value of individual points.
+3) Using `geom_beeswarm()` from `ggbeeswarm` [@ggbeeswarm] to attempt to add more information about the density than is available from a jittered graph (@fig-alphajitter-3).
 
 ```{r}
 #| fig-cap: "Relationship between inflation and GDP growth for Australia, Ethiopia, India, and the US"
 #| label: fig-alphajitter
 #| warning: false
-#| fig-subcap: ["Changing the alpha setting","Using jitter"]
-#| layout-ncol: 2
+#| fig-subcap: ["Changing the alpha setting","Using jitter", "Using beeswarm"]
+#| layout-ncol: 3
+
+library(ggbeeswarm)
 
 world_bank_data |>
   ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
@@ -730,6 +733,15 @@ world_bank_data |>
 world_bank_data |>
   ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
   geom_jitter() +
+  theme_minimal() +
+  labs(x = "GDP growth",
+       y = "Inflation",
+       color = "Country",
+       caption = "Data source: World Bank.")
+
+world_bank_data |>
+  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
+  geom_beeswarm() +
   theme_minimal() +
   labs(x = "GDP growth",
        y = "Inflation",

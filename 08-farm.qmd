@@ -19,7 +19,6 @@ engine: knitr
 - Why we conduct sampling, and the two approaches: probability and non-probability.
 - Terminology and concepts including: target population, sampling frame, sample, simple random sampling, systematic sampling, stratified sampling, and cluster sampling.
 
-
 **Key packages and functions**
 
 - Base R
@@ -46,7 +45,6 @@ engine: knitr
     - `slice_sample()`
   - `readr` [@citereadr]
     - `read_csv()`
-
 
 
 ## Introduction
@@ -107,6 +105,43 @@ Right-censored data are also often seen in medical studies of survival. For inst
 
 Truncated data is a slightly different situation in which we do not even record those values. For instance, consider a situation in which we were interested in the relationship between a child's age and height. Our first question might be 'what is your age?' and if it turns out you are an adult, then we do not continue to record your height. Truncated data are especially closely related to selection bias. For instance, consider a student who drops a course -- their opinion of a course is never recorded on course evaluations.
 
+To illustrate the difference between these concepts, consider a situation in which the actual distribution of newborn baby weight has a normal distribution, centered around 3.5 kg (CROSS). Imagine, there is some defect with the scale, such that any value less than or equal to 2.75kg is assigned 2.75kg (CROSS). And imagine there is some rule such that any baby who would weigh more than 4.25kg is transferred to a different hospital to be born (CROSS). These three scenarios are illustrated in @fig-babyweights.
+
+```{r}
+#| warning: false
+#| message: false
+#| fig-cap: "Comparison of actual weights with censored and truncated weights"
+#| label: fig-babyweights
+
+library(tidyverse)
+
+set.seed(853)
+newborn_weight <- 
+  tibble(actual_weight = 
+           rnorm(n = 1000, mean = 3.5, sd = 0.5)
+         )
+
+newborn_weight <- 
+  newborn_weight |> 
+  mutate(censored_weight = if_else(actual_weight <= 2.75, 2.75, actual_weight),
+         truncated_weight = if_else(actual_weight >= 4.25, NA_real_, actual_weight)
+         )
+
+new_labels <- c(actual_weight = "Actual weights",
+                censored_weight = "Censored weights", 
+                truncated_weight = "Truncated weights")
+
+newborn_weight |> 
+  pivot_longer(cols = everything(),
+               names_to = 'weight') |> 
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 50) +
+  facet_wrap(vars(weight),
+             labeller = labeller(weight = new_labels)) +
+  theme_minimal() 
+```
+
+
 Regardless of how good our data acquisition process is, there will be missing data. Non-response could be considered a variant of measurement error whereby we observe a null, even though there must be an actual value. But it is usually considered in its own right. And there are different extents of non-response: from refusing to even respond to the survey, through to just missing one question. Non-response is a key issue, especially with non-probability samples, because there is usually good reason to consider that people who do not respond are systematically different to those who do. And this serves to limit the extent to which the survey can be used to speak to more than just survey respondents. For instance, @gelman2016mythical go so far as to say that much of the changes in public opinion that are reported in the lead-up to an election are not people changing their mind, but differential non-response. The use of pre-notification and reminders may help address non-response in some circumstances [@koitsalu2018effects; @frandell2021effects].
 
 In an ideal situation data are missing completely at random. This rarely occurs, but if it does, then the missing data can just be ignored with little concern because the sample should still be reflective of the broader population. It is more likely that data are missing at random and the extent to which we have to worry about that differs. For instance, if we are interested in the effect of gender on political support, then it may be that men are less likely to respond to surveys, but this is not related to who they will support. If that differential response is only due to being a man, and not related to political support, then we may be able to continue, provided we include gender in the regression. That said, the likelihood of this independence holding is low, and it is more likely, as in @gelman2016mythical, that there is a relationship between responding to the survey and political support. In that, more likely, case we have a more significant issue. One approach would be to consider additional explanatory variables. It is tempting to drop incomplete cases, but this may further bias the sample, and requires extensive justification. Data imputation should be considered only as a last resort, and again is likely to further bias the sample. Far better than either option is to rethink, and improve, the data collection process.
@@ -127,14 +162,9 @@ Another source of data deliberately put together to be a dataset include officia
 Censuses of population are critical, but not unimpeachable. @anderson1999counts describe how the history of the US census is one of undercount, and that even George Washington complained about this in the 1790s. The extent of the undercount was able to be estimated due to the selective service registration system used for conscription in World War II. These records were compared with census records, and it was found that there were about half a million more men recorded for conscription purposes than in the census. This was race-specific, with an average undercount of around 3 per cent, but an undercount of Black men of draft age of around 13 per cent [@anderson1999counts, p. 29]. This became a political issue in the 1960s, and race and ethnicity related questions were of special concern in the 1990s. @nobles2002racial [p. 47] discusses how counting by race first requires that race exists, but that this may be biologically difficult to establish. And certainly not something that is 'fixed' and 'objective' but instead due to class, social legal, structural, and political constructs [@nobles2002racial, p. 48], despite it being fundamental to the US census.
 :::
 
-Another, similarly, large and established source of data are from long-running large surveys. These are conducted on a regular basis, and while not usually directly conducted by the government, they are usually funded, one way or another, by the government. For instance, here we often think of electoral surveys, such as the Canadian Election Study, which has run in association with every federal election since 1965, and similarly the British Election Study which has been associated with every general election since 1964. 
-
-<!-- Finally, there has been a large push toward open data in government. While the term has become contentious because of how it has occurred in practice, the underlying principle---that the government should make available the data that is has---is undeniable.  -->
+Another, similarly, large and established source of data are from long-running large surveys. These are conducted on a regular basis, and while not usually directly conducted by the government, they are usually funded, one way or another, by the government. For instance, here we often think of electoral surveys, such as the Canadian Election Study, which has run in association with every federal election since 1965, and similarly the British Election Study which has been associated with every general election since 1964. More recently there has been a large push toward open data in government. The underlying principle---that the government should make available the data that is has---is undeniable. However, the term has become a little contentious because of how it has occurred in practice; the government is only providing data that it wants to provide, and will not make it look bad. One excellent source of data that the government has, but does not necessarily want to provide is that gathered through Freedom of Information (FOI) request [@walby2019freedom].
 
 While farmed datasets have always been useful, they were developed for a time when much analysis was conducted without the use of scripts and programming languages. Many R packages have been developed to make it easier to get these datasets into R. In this chapter we cover a few that are especially useful. 
-
-
-
 
 
 
@@ -469,7 +499,7 @@ Instead, he found that the lists were 'frequently illegible, and generally short
 
 ![Extract of the results that Whitelaw found in 1798](figures/whitelaw.png){#fig-whitelawsresults width=85% fig-align="center"}
 
-One aspect worth noticing is that Whitelaw includes information about class. It is difficult to know how that was determined, but it played a large role in the data collection. Whitelaw describes how the houses of 'the middle and upper classes always contained some individual who was competent to the task [of making a list]'. But that 'among the lower class, which forms the great mass of the population of this city, the case was very different'. It is difficult to know how Whitelaw could have known that the upper and middle classes were not representing their number, while the lower class was. It is also difficult to imagine Whitelaw going into the houses of the upper class and counting their number, as he and his assistants did for the lower classes. As always, the issue of defining the target population is a difficult one, and it seems that there may have been slightly different approaches to each class. 
+One aspect worth noticing is that Whitelaw includes information about class. It is difficult to know how that was determined, but it played a large role in the data collection. Whitelaw describes how the houses of 'the middle and upper classes always contained some individual who was competent to the task [of making a list]'. But that 'among the lower class, which forms the great mass of the population of this city, the case was very different'. It is difficult to know how Whitelaw could have known that the upper and middle classes were not representing their number, while the lower class was. It is also difficult to imagine Whitelaw going into the houses of the upper class and counting their number, as he and his assistants did for the lower classes, so there may have been some data truncation. As always, the issue of defining the target population is a difficult one, and it seems that there may have been slightly different approaches to each class. 
 
 Whitelaw attempted to construct a full sample of the inhabitants of Dublin without using much in the way of statistical machinery to guide his choices. We will now consider a second example, conducted in 1912, where they were able to start to use sampling approaches that we still use today.
 
@@ -679,7 +709,6 @@ In particular, we would typically be interested to estimate a population mean an
 
 We can use the approaches that we have used so far to simulate various types of survey designs. There are also packages that can help, including `DeclareDesign` [@citedeclaredesign] and `survey` [@citesurvey].
 
-
 <!-- ADD estimators of population mean and variances, etc -->
 
 
@@ -706,7 +735,7 @@ illustrative_sampling_long |>
 
 The actual sum of the population is 5,050. We can obtain this using a trick, attributed to Leonhard Euler, the eighteenth-century mathematician, who noticed that the sum of 1 to any number can be quickly obtained by finding the middle number and then multiplying that by one plus the number. So, in this case, we have $50 \times 101$. Alternatively we can use R: `sum(1:100)`.
 
-Our estimate of the population sum, based on the scaling, are especially revealing. The closest is stratified sample, closely followed by systematic sampling. Cluster sampling is a little over 10 per cent off, while simple random sampling is a little further away. To get close, it is important that our sampling method gets as many of the higher values as possible. And so stratified and systematic sampling, both of which ensured that we had unit from the larger numbers did particularly well. The performance of cluster and simple random sampling would depend on the particular clusters, and units, selected. In this case, stratified and systematic sampling ensured that our estimate of the sum of the population, would not be too far away from the actual population sum.
+Our estimate of the population sum, based on the scaling, are especially revealing. The closest is stratified sample, closely followed by systematic sampling. Cluster sampling is a little over 10 per cent off, while simple random sampling is a little further away. To get close, it is important that our sampling method gets as many of the higher values as possible. And so stratified and systematic sampling, both of which ensured that we had unit from the larger numbers did particularly well. The performance of cluster and simple random sampling would depend on the particular clusters, and units, selected. In this case, stratified and systematic sampling ensured that our estimate of the sum of the population, would not be too far away from the actual population sum. Here, we might think of implications for the construction and evaluation of measures, such as GDP and other constructions that are summed, and the effect on the total of the different strata based on their size.
 
 This approach has a long history. For instance, @stigler [p. 163] describes how by 1826 Adolphe Quetelet, the nineteenth century astronomer, had become involved in the statistical bureau, which was planning for a census. Quetelet argued that births and deaths were well known, but migration was not. He proposed an approach based on counts in specific geographies, which could then be scaled up to the whole country. The criticism of the plan focused on the difficulty of selecting appropriate geographies, which we saw also in our example of cluster sampling. The criticism was reasonable, and even today, some two hundred years later, something that we should keep front of mind, [@stigler]:
 
@@ -715,7 +744,6 @@ This approach has a long history. For instance, @stigler [p. 163] describes how 
 We are able to do this scaling up when we know the population total, but if we do not know that, or we have concerns around the precision of that approach then we may use a ratio estimator.
 
 Ratio estimators also have a long history. For instance, in 1802 they were used by Pierre-Simon Laplace to estimate the total population of France, based on the ratio of the number of registered births, which was known throughout the country, to the number of inhabitants, which was only know for certain communes. He calculated this ratio for the three communes, and then scaled it, based on knowing the number of births across the whole country to produce an estimate of the population of France [@lohr].
-
 
 <!-- For instance, Adolphe Quetelet, the nineteenth century astronomer, mathematician, statistician and sociologist describes them [@quetelet2013treatise, p. 11]: -->
 
@@ -760,18 +788,6 @@ $$\hat{B} = \frac{\bar{y}}{\bar{x}} = \frac{4.9}{6.16} \approx 0.8.$$
 
 
 
-
-
-
-
-<!-- # Turn to measurement errors here??? -->
-
-<!-- '... Astronomers had overcome a similar case of intellectual cold feet in the previous century by comparing observations with fact, by comparing prediction with realization. Success had bolstered confidence in the combination of observations. Social scientists were to require massive empirical data gathered under a wide variety of circumstances before they gained the astronomers' confidence that the quantities they measured were of sufficient stability that the uncertainty of the estimates was itself susceptible to measurement. -->
-
-
-
-
-<!-- We now turn to the first of our claims, which is that if we have a perfect frame and no non-response, then our sample results will match that of the population. We would be very worried if that were not the case, but it is nice to have it stated. We establish some type of population mean for the study variable, $\mu_y$, and population means for the auxiliary variables $\mu_x$, which could be things like age, gender, etc. Remembering that when we do this in the real world, we may have many study variables, and indeed, some overlap. If a variable is an indicator then in this set-up all we have to do is to work out the proportion in order to estimate it, which is $P$. And finally, we get a rule of thumb for large samples whereby the variance in this binary and perfect setting becomes $\sigma_y^2 = P/(1-P)$. -->
 
 While acknowledging that it is a spectrum, much of statistics was developed based on probability sampling. But a considerable amount of modern sampling is done using non-probability sampling. A common approach is to use Facebook and other advertisements to recruit a panel of respondents in exchange for compensation. This panel is then the group that is sent various surveys as necessary. But think for a moment about the implications of this. For instance, what type of people are likely to respond to such an advertisement? Is the richest person in the world likely to respond? Are especially young or especially old people likely to respond? In some cases, it is possible to do a census. Nation-states typically do one every five to ten years. But there is a reason that it is only nation states that do them---they are expensive, time-consuming, and surprisingly, they are sometimes not as accurate as we may hope because of how general they need to be.
 
@@ -867,6 +883,7 @@ For instance, we could imagine various countries in which it would be difficult 
     c. Efficiency in terms of money.
     d. Underlying systematic concerns.
     e. Estimation of sub-populations.
+23. Write R code that considers the numbers 1 to 100, and estimates the mean, based on a cluster sample of 20 numbers. Re-run this code one hundred times, noting the estimate of the mean each time, and then plot the histogram. What do you notice about the graph? Add a paragraph of explanation and discussion.
 
 
 ### Tutorial {.unnumbered}

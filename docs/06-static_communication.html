@@ -224,7 +224,7 @@ div.csl-indent {
     <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./05-on_writing.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">On writing</span></a>
+  <a href="./05-on_writing.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Writing research</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -1103,8 +1103,9 @@ Oh, you think we have good data on that!
 </div>
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">WDIsearch</span>(<span class="st">"population, total"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>          indicator                name 
-      "SP.POP.TOTL" "Population, total" </code></pre>
+<pre><code>     indicator        name                                             
+[1,] "JI.POP.URBN.ZS" "Urban population, total (% of total population)"
+[2,] "SP.POP.TOTL"    "Population, total"                              </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">WDIsearch</span>(<span class="st">"Unemployment, total"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -1251,33 +1252,45 @@ Oh, you think we have good data on that!
 </div>
 </div>
 </div>
-<p>The points of a scatterplot sometimes overlap. We can address this situation in one of two ways (<a href="#fig-alphajitter">Figure&nbsp;<span>6.15</span></a>):</p>
+<p>The points of a scatterplot sometimes overlap. We can address this situation in a variety of ways (<a href="#fig-alphajitter">Figure&nbsp;<span>6.15</span></a>):</p>
 <ol type="1">
 <li>Adding a degree of transparency to our dots with ‘alpha’ (<a href="#fig-alphajitter-1">Figure&nbsp;<span>6.15 (a)</span></a>). The value for ‘alpha’ can vary between 0, which is fully transparent, and 1, which is completely opaque.</li>
 <li>Adding a small amount of noise, which slightly moves the points, using <code>geom_jitter()</code> (<a href="#fig-alphajitter-2">Figure&nbsp;<span>6.15 (b)</span></a>). By default, the movement is uniform in both directions, but we can specify which direction movement occurs with ‘width’ or ‘height’. The decision between these two options turns on the degree to which exact accuracy matters, and the number of points: it is often useful to use <code>geom_jitter()</code> when you want to highlight the relative density of points and not necessarily the exact value of individual points.</li>
+<li>Using <code>geom_beeswarm()</code> from <code>ggbeeswarm</code> <span class="citation" data-cites="ggbeeswarm">(<a href="references.html#ref-ggbeeswarm" role="doc-biblioref">Clarke and Sherrill-Mix 2017</a>)</span> to attempt to add more information about the density than is available from a jittered graph (<a href="#fig-alphajitter-3">Figure&nbsp;<span>6.15 (c)</span></a>).</li>
 </ol>
 <div>
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>world_bank_data <span class="sc">|&gt;</span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> gdp_growth, <span class="at">y =</span> inflation, <span class="at">color =</span> country)) <span class="sc">+</span></span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GDP growth"</span>,</span>
-<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Inflation"</span>,</span>
-<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Country"</span>,</span>
-<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"Data source: World Bank."</span>)</span>
-<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>world_bank_data <span class="sc">|&gt;</span></span>
-<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> gdp_growth, <span class="at">y =</span> inflation, <span class="at">color =</span> country)) <span class="sc">+</span></span>
-<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_jitter</span>() <span class="sc">+</span></span>
-<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
-<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GDP growth"</span>,</span>
-<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Inflation"</span>,</span>
-<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Country"</span>,</span>
-<span id="cb40-17"><a href="#cb40-17" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"Data source: World Bank."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggbeeswarm)</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>world_bank_data <span class="sc">|&gt;</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> gdp_growth, <span class="at">y =</span> inflation, <span class="at">color =</span> country)) <span class="sc">+</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GDP growth"</span>,</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Inflation"</span>,</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Country"</span>,</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"Data source: World Bank."</span>)</span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>world_bank_data <span class="sc">|&gt;</span></span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> gdp_growth, <span class="at">y =</span> inflation, <span class="at">color =</span> country)) <span class="sc">+</span></span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_jitter</span>() <span class="sc">+</span></span>
+<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GDP growth"</span>,</span>
+<span id="cb40-17"><a href="#cb40-17" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Inflation"</span>,</span>
+<span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Country"</span>,</span>
+<span id="cb40-19"><a href="#cb40-19" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"Data source: World Bank."</span>)</span>
+<span id="cb40-20"><a href="#cb40-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-21"><a href="#cb40-21" aria-hidden="true" tabindex="-1"></a>world_bank_data <span class="sc">|&gt;</span></span>
+<span id="cb40-22"><a href="#cb40-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> gdp_growth, <span class="at">y =</span> inflation, <span class="at">color =</span> country)) <span class="sc">+</span></span>
+<span id="cb40-23"><a href="#cb40-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_beeswarm</span>() <span class="sc">+</span></span>
+<span id="cb40-24"><a href="#cb40-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb40-25"><a href="#cb40-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GDP growth"</span>,</span>
+<span id="cb40-26"><a href="#cb40-26" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Inflation"</span>,</span>
+<span id="cb40-27"><a href="#cb40-27" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Country"</span>,</span>
+<span id="cb40-28"><a href="#cb40-28" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption =</span> <span class="st">"Data source: World Bank."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell quarto-layout-panel">
 <figure class="figure">
 <div class="quarto-layout-row quarto-layout-valign-top">
-<div class="cell-output-display quarto-layout-cell quarto-layout-cell-subref" style="flex-basis: 50.0%;justify-content: center;">
+<div class="cell-output-display quarto-layout-cell quarto-layout-cell-subref" style="flex-basis: 33.3%;justify-content: center;">
 <div id="fig-alphajitter-1" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="06-static_communication_files/figure-html/fig-alphajitter-1.png" class="img-fluid figure-img" data-ref-parent="fig-alphajitter" width="672"></p>
@@ -1285,11 +1298,19 @@ Oh, you think we have good data on that!
 </figure>
 </div>
 </div>
-<div class="cell-output-display quarto-layout-cell quarto-layout-cell-subref" style="flex-basis: 50.0%;justify-content: center;">
+<div class="cell-output-display quarto-layout-cell quarto-layout-cell-subref" style="flex-basis: 33.3%;justify-content: center;">
 <div id="fig-alphajitter-2" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="06-static_communication_files/figure-html/fig-alphajitter-2.png" class="img-fluid figure-img" data-ref-parent="fig-alphajitter" width="672"></p>
 <p></p><figcaption aria-hidden="true" class="figure-caption">(b) Using jitter</figcaption><p></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display quarto-layout-cell quarto-layout-cell-subref" style="flex-basis: 33.3%;justify-content: center;">
+<div id="fig-alphajitter-3" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="06-static_communication_files/figure-html/fig-alphajitter-3.png" class="img-fluid figure-img" data-ref-parent="fig-alphajitter" width="672"></p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">(c) Using beeswarm</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -2486,6 +2507,8 @@ Oh, you think we have good data on that!
   font-weight: initial;
   padding-top: 4px;
   padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
   border-bottom-color: #FFFFFF;
   border-bottom-width: 0;
 }
@@ -2496,6 +2519,8 @@ Oh, you think we have good data on that!
   font-weight: initial;
   padding-top: 0;
   padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
   border-top-color: #FFFFFF;
   border-top-width: 0;
 }
@@ -2574,7 +2599,10 @@ Oh, you think we have good data on that!
 }
 
 #hocubwlzce .gt_group_heading {
-  padding: 8px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2646,7 +2674,26 @@ Oh, you think we have good data on that!
   border-right-style: solid;
   border-right-width: 2px;
   border-right-color: #D3D3D3;
-  padding-left: 12px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hocubwlzce .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#hocubwlzce .gt_row_group_first td {
+  border-top-width: 2px;
 }
 
 #hocubwlzce .gt_summary_row {
@@ -2660,13 +2707,22 @@ Oh, you think we have good data on that!
 }
 
 #hocubwlzce .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#hocubwlzce .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#hocubwlzce .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
   padding-right: 5px;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
 }
 
 #hocubwlzce .gt_grand_summary_row {
@@ -2719,7 +2775,10 @@ Oh, you think we have good data on that!
 #hocubwlzce .gt_footnote {
   margin: 0px;
   font-size: 90%;
-  padding: 4px;
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 #hocubwlzce .gt_sourcenotes {
@@ -2738,7 +2797,10 @@ Oh, you think we have good data on that!
 
 #hocubwlzce .gt_sourcenote {
   font-size: 90%;
-  padding: 4px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 #hocubwlzce .gt_left {
@@ -2770,10 +2832,43 @@ Oh, you think we have good data on that!
   font-size: 65%;
 }
 
+#hocubwlzce .gt_two_val_uncert {
+  display: inline-block;
+  line-height: 1em;
+  text-align: right;
+  font-size: 60%;
+  vertical-align: -0.25em;
+  margin-left: 0.1em;
+}
+
 #hocubwlzce .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
-  font-size: 65%;
+  font-size: 75%;
+  vertical-align: 0.4em;
+}
+
+#hocubwlzce .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#hocubwlzce .gt_slash_mark {
+  font-size: 0.7em;
+  line-height: 0.7em;
+  vertical-align: 0.15em;
+}
+
+#hocubwlzce .gt_fraction_numerator {
+  font-size: 0.6em;
+  line-height: 0.6em;
+  vertical-align: 0.45em;
+}
+
+#hocubwlzce .gt_fraction_denominator {
+  font-size: 0.6em;
+  line-height: 0.6em;
+  vertical-align: -0.05em;
 }
 </style>
 <table class="gt_table">
@@ -2920,6 +3015,8 @@ Oh, you think we have good data on that!
   font-weight: initial;
   padding-top: 4px;
   padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
   border-bottom-color: #FFFFFF;
   border-bottom-width: 0;
 }
@@ -2930,6 +3027,8 @@ Oh, you think we have good data on that!
   font-weight: initial;
   padding-top: 0;
   padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
   border-top-color: #FFFFFF;
   border-top-width: 0;
 }
@@ -3008,7 +3107,10 @@ Oh, you think we have good data on that!
 }
 
 #pylntqexnj .gt_group_heading {
-  padding: 8px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -3080,7 +3182,26 @@ Oh, you think we have good data on that!
   border-right-style: solid;
   border-right-width: 2px;
   border-right-color: #D3D3D3;
-  padding-left: 12px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#pylntqexnj .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#pylntqexnj .gt_row_group_first td {
+  border-top-width: 2px;
 }
 
 #pylntqexnj .gt_summary_row {
@@ -3094,13 +3215,22 @@ Oh, you think we have good data on that!
 }
 
 #pylntqexnj .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#pylntqexnj .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#pylntqexnj .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
   padding-right: 5px;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
 }
 
 #pylntqexnj .gt_grand_summary_row {
@@ -3153,7 +3283,10 @@ Oh, you think we have good data on that!
 #pylntqexnj .gt_footnote {
   margin: 0px;
   font-size: 90%;
-  padding: 4px;
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 #pylntqexnj .gt_sourcenotes {
@@ -3172,7 +3305,10 @@ Oh, you think we have good data on that!
 
 #pylntqexnj .gt_sourcenote {
   font-size: 90%;
-  padding: 4px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 #pylntqexnj .gt_left {
@@ -3204,10 +3340,43 @@ Oh, you think we have good data on that!
   font-size: 65%;
 }
 
+#pylntqexnj .gt_two_val_uncert {
+  display: inline-block;
+  line-height: 1em;
+  text-align: right;
+  font-size: 60%;
+  vertical-align: -0.25em;
+  margin-left: 0.1em;
+}
+
 #pylntqexnj .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
-  font-size: 65%;
+  font-size: 75%;
+  vertical-align: 0.4em;
+}
+
+#pylntqexnj .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#pylntqexnj .gt_slash_mark {
+  font-size: 0.7em;
+  line-height: 0.7em;
+  vertical-align: 0.15em;
+}
+
+#pylntqexnj .gt_fraction_numerator {
+  font-size: 0.6em;
+  line-height: 0.6em;
+  vertical-align: 0.45em;
+}
+
+#pylntqexnj .gt_fraction_denominator {
+  font-size: 0.6em;
+  line-height: 0.6em;
+  vertical-align: -0.05em;
 }
 </style>
 <table class="gt_table"><caption>Table 6.8:  First ten rows of a dataset of economic indicators for Australia, Ethiopia, India, and the US </caption>
@@ -3334,6 +3503,9 @@ Oh, you think we have good data on that!
       stroke-linejoin: round;
       stroke-miterlimit: 10.00;
     }
+    .svglite text {
+      white-space: pre;
+    }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clippath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
 </g><defs><clippath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clippath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.78" y="3.22" width="3.64" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="5.42" y="4.63" width="3.64" height="7.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.06" y="4.63" width="3.64" height="7.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="12.71" y="4.63" width="3.64" height="7.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="16.35" y="4.63" width="3.64" height="7.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.99" y="4.63" width="3.64" height="7.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="23.64" y="4.63" width="3.64" height="7.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="27.28" y="4.63" width="3.64" height="7.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="30.92" y="4.63" width="3.64" height="7.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.56" y="4.63" width="3.64" height="7.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="38.21" y="4.63" width="3.64" height="7.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="41.85" y="4.63" width="3.64" height="7.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="45.49" y="10.25" width="3.64" height="1.41" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
@@ -3354,6 +3526,9 @@ Oh, you think we have good data on that!
       stroke-linecap: round;
       stroke-linejoin: round;
       stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clippath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
 </g><defs><clippath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clippath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.62" y="11.31" width="4.10" height="0.35" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="5.72" y="11.24" width="4.10" height="0.42" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="9.82" y="3.22" width="4.10" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="13.92" y="7.30" width="4.10" height="4.36" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="18.02" y="9.48" width="4.10" height="2.18" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="22.12" y="11.03" width="4.10" height="0.63" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="26.22" y="11.59" width="4.10" height="0.070" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="30.32" y="11.52" width="4.10" height="0.14" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="34.42" y="11.59" width="4.10" height="0.070" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="38.52" y="11.59" width="4.10" height="0.070" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="42.62" y="11.59" width="4.10" height="0.070" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
@@ -3376,6 +3551,9 @@ Oh, you think we have good data on that!
       stroke-linejoin: round;
       stroke-miterlimit: 10.00;
     }
+    .svglite text {
+      white-space: pre;
+    }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clippath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
 </g><defs><clippath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clippath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="0.26" y="11.54" width="3.56" height="0.12" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="3.81" y="11.54" width="3.56" height="0.12" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="7.37" y="11.42" width="3.56" height="0.24" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="10.92" y="11.54" width="3.56" height="0.12" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.48" y="10.83" width="3.56" height="0.83" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="18.03" y="10.23" width="3.56" height="1.43" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="21.59" y="9.40" width="3.56" height="2.26" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="25.14" y="3.22" width="3.56" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="28.70" y="6.43" width="3.56" height="5.23" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="32.25" y="7.62" width="3.56" height="4.04" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="35.81" y="10.00" width="3.56" height="1.67" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="39.36" y="10.71" width="3.56" height="0.95" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="42.92" y="11.07" width="3.56" height="0.59" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
@@ -3397,6 +3575,9 @@ Oh, you think we have good data on that!
       stroke-linejoin: round;
       stroke-miterlimit: 10.00;
     }
+    .svglite text {
+      white-space: pre;
+    }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clippath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
 </g><defs><clippath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clippath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="1.44" y="3.22" width="6.49" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="7.93" y="8.22" width="6.49" height="3.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.42" y="10.75" width="6.49" height="0.91" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="20.91" y="10.88" width="6.49" height="0.78" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="27.40" y="10.95" width="6.49" height="0.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="33.89" y="10.95" width="6.49" height="0.71" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="40.38" y="10.82" width="6.49" height="0.84" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
 </td>
@@ -3417,6 +3598,9 @@ Oh, you think we have good data on that!
       stroke-linecap: round;
       stroke-linejoin: round;
       stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
     }
   </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw"><rect x="0.00" y="0.00" width="48.00" height="12.00"></rect></clippath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwwLjAwfDEyLjAw)">
 </g><defs><clippath id="cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw"><rect x="0.00" y="2.88" width="48.00" height="9.12"></rect></clippath></defs><g clip-path="url(#cpMC4wMHw0OC4wMHwyLjg4fDEyLjAw)"><rect x="0.86" y="11.43" width="4.60" height="0.23" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="5.45" y="10.02" width="4.60" height="1.64" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="10.05" y="9.55" width="4.60" height="2.11" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="14.65" y="8.14" width="4.60" height="3.52" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="19.24" y="3.22" width="4.60" height="8.44" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="23.84" y="7.21" width="4.60" height="4.46" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="28.44" y="9.08" width="4.60" height="2.58" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="33.03" y="9.08" width="4.60" height="2.58" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="37.63" y="10.02" width="4.60" height="1.64" style="stroke-width: 0.38; fill: #000000;"></rect><rect x="42.22" y="11.19" width="4.60" height="0.47" style="stroke-width: 0.38; fill: #000000;"></rect></g></svg>
@@ -3555,12 +3739,12 @@ Oh, you think we have good data on that!
    <th style="text-align:left;">   </th>
    <th style="text-align:right;"> Mean </th>
    <th style="text-align:right;"> Std. Dev. </th>
-   <th style="text-align:right;"> Mean  </th>
-   <th style="text-align:right;"> Std. Dev.  </th>
-   <th style="text-align:right;"> Mean   </th>
-   <th style="text-align:right;"> Std. Dev.   </th>
-   <th style="text-align:right;"> Mean    </th>
-   <th style="text-align:right;"> Std. Dev.    </th>
+   <th style="text-align:right;"> Mean </th>
+   <th style="text-align:right;"> Std. Dev. </th>
+   <th style="text-align:right;"> Mean </th>
+   <th style="text-align:right;"> Std. Dev. </th>
+   <th style="text-align:right;"> Mean </th>
+   <th style="text-align:right;"> Std. Dev. </th>
   </tr>
  </thead>
 <tbody>
@@ -3683,12 +3867,12 @@ Oh, you think we have good data on that!
    <td style="text-align:center;"> 1205.0 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Log.Lik. </td>
-   <td style="text-align:center;"> −594.421 </td>
-  </tr>
-  <tr>
    <td style="text-align:left;"> F </td>
    <td style="text-align:center;"> 0.003 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> RMSE </td>
+   <td style="text-align:center;"> 3.70 </td>
   </tr>
 </tbody>
 </table>
@@ -3820,16 +4004,16 @@ Oh, you think we have good data on that!
    <td style="text-align:center;"> 1198.0 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Log.Lik. </td>
-   <td style="text-align:center;"> −594.421 </td>
-   <td style="text-align:center;"> −581.715 </td>
-   <td style="text-align:center;"> −580.134 </td>
-  </tr>
-  <tr>
    <td style="text-align:left;"> F </td>
    <td style="text-align:center;"> 0.003 </td>
    <td style="text-align:center;"> 6.585 </td>
-   <td style="text-align:center;"> 5.939 </td>
+   <td style="text-align:center;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> RMSE </td>
+   <td style="text-align:center;"> 3.70 </td>
+   <td style="text-align:center;"> 3.49 </td>
+   <td style="text-align:center;"> 3.46 </td>
   </tr>
 </tbody>
 </table>
@@ -3957,16 +4141,16 @@ Oh, you think we have good data on that!
    <td style="text-align:center;"> 1198.0 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Log.Lik. </td>
-   <td style="text-align:center;"> −594.421 </td>
-   <td style="text-align:center;"> −581.715 </td>
-   <td style="text-align:center;"> −580.134 </td>
-  </tr>
-  <tr>
    <td style="text-align:left;"> F </td>
    <td style="text-align:center;"> 0.003 </td>
    <td style="text-align:center;"> 6.585 </td>
-   <td style="text-align:center;"> 5.939 </td>
+   <td style="text-align:center;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> RMSE </td>
+   <td style="text-align:center;"> 3.70 </td>
+   <td style="text-align:center;"> 3.49 </td>
+   <td style="text-align:center;"> 3.46 </td>
   </tr>
 </tbody>
 </table>
@@ -4042,7 +4226,7 @@ Oh, you think we have good data on that!
 <span id="cb77-14"><a href="#cb77-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Longitude"</span>,</span>
 <span id="cb77-15"><a href="#cb77-15" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Latitude"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="06-static_communication_files/figure-html/unnamed-chunk-86-1.png" class="img-fluid" width="672"></p>
+<p><img src="06-static_communication_files/figure-html/unnamed-chunk-64-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>As is often the case with R, there are many different ways to get started creating static maps. We have seen how they can be built using only <code>ggplot2</code>, but <code>ggmap</code> brings additional functionality <span class="citation" data-cites="KahleWickham2013">(<a href="references.html#ref-KahleWickham2013" role="doc-biblioref">Kahle and Wickham 2013</a>)</span>.</p>
@@ -4067,7 +4251,7 @@ Oh, you think we have good data on that!
 <span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggmap</span>(canberra_stamen_map)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="06-static_communication_files/figure-html/unnamed-chunk-90-1.png" class="img-fluid" width="672"></p>
+<p><img src="06-static_communication_files/figure-html/unnamed-chunk-66-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>Once we have a map then we can use <code>ggmap()</code> to plot it. Now we want to get some data that we plot on top of our tiles. We will just plot the location of the polling places, based on which ‘division’ it is. This is available <a href="https://results.aec.gov.au/20499/Website/Downloads/HouseTppByPollingPlaceDownload-20499.csv">from the Australian Electoral Commission (AEC)</a>. The AEC is the official government agency that is responsible for elections in Australia.</p>
@@ -4128,7 +4312,7 @@ Oh, you think we have good data on that!
 <span id="cb83-17"><a href="#cb83-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid.major =</span> <span class="fu">element_blank</span>(),</span>
 <span id="cb83-18"><a href="#cb83-18" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="06-static_communication_files/figure-html/unnamed-chunk-96-1.png" class="img-fluid" width="672"></p>
+<p><img src="06-static_communication_files/figure-html/unnamed-chunk-69-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>We may like to save the map so that we do not have to draw it every time, and we can do that in the same way as any other graph, using <code>ggsave()</code>.</p>
@@ -4459,6 +4643,9 @@ Bethlehem, R. A. I., J. Seidlitz, S. R. White, J. W. Vogel, K. M. Anderson, C. A
 <div id="ref-citetidygeocoder" class="csl-entry" role="doc-biblioentry">
 Cambon, Jesse, and Christopher Belanger. 2021. <span>“<span class="nocase">tidygeocoder: Geocoding Made Easy</span>.”</span> Zenodo. <a href="https://doi.org/10.5281/zenodo.3981510">https://doi.org/10.5281/zenodo.3981510</a>.
 </div>
+<div id="ref-ggbeeswarm" class="csl-entry" role="doc-biblioentry">
+Clarke, Erik, and Scott Sherrill-Mix. 2017. <em>Ggbeeswarm: Categorical Scatter (Violin Point) Plots</em>. <a href="https://CRAN.R-project.org/package=ggbeeswarm">https://CRAN.R-project.org/package=ggbeeswarm</a>.
+</div>
 <div id="ref-elementsofgraphingdata" class="csl-entry" role="doc-biblioentry">
 Cleveland, William. 1994. <em>The Elements of Graphing Data</em>. 2nd ed. Hobart Press.
 </div>
@@ -4654,7 +4841,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
       <a href="./05-on_writing.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">On writing</span></span>
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Writing research</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

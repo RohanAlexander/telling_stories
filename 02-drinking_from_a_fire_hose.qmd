@@ -17,7 +17,6 @@ engine: knitr
 - The way to learn R is to start with a small project and break down what is required to achieve it into tiny steps, look at other people's code, and draw on that to achieve each step. Complete that project and move onto the next project. Each project you will get a little better. 
 - The key is to start actively working regularly.
 
-
 **Key packages and functions**
 
 - Base R
@@ -47,9 +46,9 @@ engine: knitr
     - `select()`
     - `summarize()`
   - `ggplot2` [@citeggplot]
-    - `ggplot2::geom_bar()`
-    - `ggplot2::geom_point()`
-    - `ggplot2::ggplot()`
+    - `geom_bar()`
+    - `geom_point()`
+    - `ggplot()`
   - `tidyr` [@citetidyr]
     - `separate()`
   - `stringr` [@citestringr]
@@ -60,7 +59,6 @@ engine: knitr
 - `janitor` [@janitor]
   - `clean_names()`
 - `opendatatoronto` [@citeSharla]
-
 
 ## Hello, World!
 
@@ -74,7 +72,7 @@ The only way to learn how to tell stories, is to start telling stories yourself.
 
 You will be guided thoroughly here. Hopefully by experiencing the power of telling stories with data, you will feel empowered to stick with it.
 
-To get started, go to [R Studio Cloud](https://rstudio.cloud/) and create an account. As we are not doing anything too involved the free version will be fine for now. Once you have an account and log in, then it should look something like @fig-02-rstudio_cloud-1.
+To get started, go to [R Studio Cloud](https://rstudio.cloud/) and create an account. As we are not doing anything too involved the free version will be fine for now. We use it here rather than the desktop so that getting started is standardized, but we will shift to desktop later. Once you have an account and log in, then it should look something like @fig-02-rstudio_cloud-1.
 
 ![Opening R Studio Cloud for the first time](figures/02-rstudio_cloud-1.png){#fig-02-rstudio_cloud-1 width=75% fig-align="center"}
 
@@ -89,25 +87,30 @@ We will now go through three worked examples: Australian elections, Toronto home
 
 ## Australian elections
 
-Australia is a parliamentary democracy with 151 seats in the House of Representatives, which is the lower house and that from which government is formed. There are two major parties -- 'Liberal' and 'Labor' -- two minor parties -- 'National' and 'Green' -- and many smaller parties and independents. In this example we will create a graph of the number of seats that each party won in the 2019 Federal Election.
+Australia is a parliamentary democracy with 151 seats in the House of Representatives, which is the lower house and that from which government is formed. There are two major parties -- 'Liberal' and 'Labor' -- two minor parties -- 'National' and 'Green' -- and many smaller parties and independents. In this example we will create a graph of the number of seats that each party won in the 2022 Federal Election.
 
 ### Plan
 
 For this example, we need to plan two aspects. The first is what the dataset that we need will look like, and the second is what the final graph will look like.
 
-The basic requirement for the dataset is that it has the name of the seat (sometimes called a 'division' in Australia) and the party of the person elected. So, a quick sketch of the dataset that we would need could look something like @fig-canadaexampledata.
+The basic requirement for the dataset is that it has the name of the seat (sometimes called a 'division' in Australia) and the party of the person elected. So, a quick sketch of the dataset that we would need could look something like @fig-australiaexample-data.
 
-![Quick sketch of a dataset that could be useful for analyzing Australian elections](figures/number-of-seats.png){#fig-canadaexampledata width=40% fig-align="center"}
+::: {#fig-australiaexample layout-ncol=2}
 
-We also need to plan the graph that we are interested in. Given we want to display the number of seats that each party won, a quick sketch of what we might aim for is @fig-canadaexampletable.
+![Quick sketch of a dataset that could be useful for analyzing Australian elections](figures/number-of-seats.png){#fig-australiaexample-data width=40%}
 
-![Quick sketch of a possible graph of the number of seats won by each party](figures/possible-seats.png){#fig-canadaexampletable width=75% fig-align="center"}
+![Quick sketch of a possible graph of the number of seats won by each party](figures/possible-seats.png){#fig-australiaexample-graph width=40%}
+
+Sketches of a dataset and graph related to the Australian election
+:::
+
+We also need to plan the graph that we are interested in. Given we want to display the number of seats that each party won, a quick sketch of what we might aim for is @fig-australiaexample-graph.
 
 ### Simulate
 
 We now simulate some data, to bring some specificity to our sketches.
 
-To get started, within R Studio Cloud, make a new Quarto document ('File' -> 'New File' -> 'Quarto Document...'). Give it a title, such as 'Exploring the 2019 Australian Election', and add your name as author. Leave the other options as their default, and then click 'Create'. For this example, we will put everything into this one Quarto document. You should save it as 'australian_elections.qmd' ('File' -> 'Save As...').
+To get started, within R Studio Cloud, make a new Quarto document ('File' -> 'New File' -> 'Quarto Document...'). Give it a title, such as 'Exploring the 2022 Australian Election', and add your name as author. Leave the other options as their default, and then click 'Create'. For this example, we will put everything into this one Quarto document. You should save it as 'australian_elections.qmd' ('File' -> 'Save As...').
 
 Remove almost all the default content, and then beneath the heading material create a new R code chunk ('Code' -> 'Insert Chunk') and add preamble documentation that explains:
 
@@ -122,7 +125,7 @@ Remove almost all the default content, and then beneath the heading material cre
 #| echo: true
 
 #### Preamble ####
-# Purpose: Read in data from the 2019 Australian Election and make a
+# Purpose: Read in data from the 2022 Australian Election and make a
 # graph of the number of seats each party won.
 # Author: Rohan Alexander
 # Email: rohan.alexander@utoronto.ca
@@ -179,8 +182,8 @@ To simulate our data, we need to create a dataset with two columns: 'Division' a
 
 simulated_data <-
   tibble(
-    # Use 1 through to 151 to represent each riding
-    'Riding' = 1:151,
+    # Use 1 through to 151 to represent each division
+    'Division' = 1:151,
     # Randomly choose one of five options, with replacement, 151 times
     'Party' = sample(
       x = c(
@@ -198,7 +201,7 @@ simulated_data
 ```
 
 
-At a certain point, your code will not run and you will want to ask others for help. Do not take a screenshot of a small snippet of the code and expect that someone will be able to help based on that. They cannot. Instead, you need to provide them with your whole script in a way that they can run. We will discuss how to do this more completely in @sec-reproducible-workflows, but for now, if you need help, then you should create a GitHub Gist. The first step is to create an account on [GitHub](https://github.com) (@fig-githubone). Thinking about an appropriate username is important because this will become part of your professional profile. So it would make sense to have a username that is professional, independent of any course, and ideally related to your real name.
+At a certain point, your code will not run and you will want to ask others for help. Do not take a screenshot of a small snippet of the code and expect that someone will be able to help based on that. They cannot. Instead, you need to provide them with your whole script in a way that they can run. We will explain what GitHub is more completely in @sec-reproducible-workflows, but for now, if you need help, then you should blindly create a GitHub Gist which will enable you to share your code in a way that is more helpful than taking a screenshot. The first step is to create an account on [GitHub](https://github.com) (@fig-githubone). Thinking about an appropriate username is important because this will become part of your professional profile. So it would make sense to have a username that is professional, independent of any course, and ideally related to your real name.
 
 ![GitHub sign-up screen](figures/github_1.png){#fig-githubone width=85% fig-align="center"}
 
@@ -230,7 +233,7 @@ Now we want to get the actual data. The data we need is from the Australian Elec
 raw_elections_data <- 
   read_csv(
     file =
-      "https://results.aec.gov.au/24310/Website/Downloads/HouseMembersElectedDownload-24310.csv",
+      "https://tallyroom.aec.gov.au/Downloads/HouseMembersElectedDownload-27966.csv",
     show_col_types = FALSE,
     skip = 1
     ) 
@@ -247,10 +250,12 @@ write_csv(
 #| eval: false
 #| echo: false
 
+# INTERNAL
+
 raw_elections_data <- 
   read_csv(
     file =
-      "https://results.aec.gov.au/24310/Website/Downloads/HouseMembersElectedDownload-24310.csv",
+      "https://tallyroom.aec.gov.au/Downloads/HouseMembersElectedDownload-27966.csv",
     show_col_types = FALSE,
     skip = 1
     ) 
@@ -385,7 +390,7 @@ cleaned_elections_data <-
       recode(
         elected_party,
         "Australian Labor Party" = "Labor",
-        "Liberal National Party" = "Liberal",
+        "Liberal National Party of Queensland" = "Liberal",
         "The Nationals" = "Nationals",
         "The Greens" = "Greens",
         "Independent" = "Other",
@@ -397,7 +402,7 @@ cleaned_elections_data <-
 head(cleaned_elections_data)
 ```
 
-Our data now matches our plan (@fig-canadaexampledata) pretty well. For every electoral division we have the party of the person that won it. 
+Our data now matches our plan (@fig-australiaexample-data) pretty well. For every electoral division we have the party of the person that won it. 
 
 Having now nicely cleaned the dataset, we should save it, so that we can start with that cleaned dataset in the next stage. We should make sure to save it under a new file name so we are not replacing the raw data, and so that it is easy to identify the cleaned dataset later.
 
@@ -423,7 +428,7 @@ write_csv(
 
 ### Explore 
 
-At this point we would like to explore the dataset that we created. One way to better understand a dataset is to make a graph. In particular, here we would like to build the graph that we planned in @fig-canadaexampletable.
+At this point we would like to explore the dataset that we created. One way to better understand a dataset is to make a graph. In particular, here we would like to build the graph that we planned in @fig-australiaexample-graph.
 
 First, we read in the dataset that we just created. 
 
@@ -475,20 +480,19 @@ cleaned_elections_data |>
   geom_bar()
 ```
 
-This accomplishes what we set out to do. But we can make it look a bit nicer by modifying the default options (@fig-canadanice).
+This accomplishes what we set out to do. But we can make it look a bit nicer by modifying the default options and improving the labels (@fig-canadanice).
 
 ```{r}
 #| label: fig-canadanice
 #| echo: true
 #| eval: true
 #| warning: false
-#| fig-cap: "Number of seats won, by political party, at the 2019 Australian Federal Election"
+#| fig-cap: "Number of seats won, by political party, at the 2022 Australian Federal Election"
 
 cleaned_elections_data |> 
   ggplot(aes(x = elected_party)) +
   geom_bar() +
   theme_minimal() + # Make the theme neater
-  coord_flip() + # Swap the x and y axis to make parties easier to read
   labs(x = "Party",
        y = "Number of seats") # Make the labels more meaningful
 ```
@@ -498,14 +502,13 @@ cleaned_elections_data |>
 
 To this point we have downloaded some data, cleaned it, and made a graph. We would typically need to communicate what we have done at some length. In this case, we can write a few paragraphs about what we did, why we did it, and what we found to conclude our workflow. An example follows.
 
-> Australia is a parliamentary democracy with 151 seats in the House of Representatives, which is the house that forms government. There are two major parties---'Liberal' and 'Labor'---two minor parties---'Nationals' and 'Greens'---and many smaller parties. The 2019 Federal Election occurred on 18 May, and more than 14 million votes were cast. We were interested in the number of seats that were won by each party.
+> Australia is a parliamentary democracy with 151 seats in the House of Representatives, which is the house that forms government. There are two major parties---'Liberal' and 'Labor'---two minor parties---'Nationals' and 'Greens'---and many smaller parties. The 2022 Federal Election occurred on 21 May, and around 15 million votes were cast. We were interested in the number of seats that were won by each party.
 >
 > We downloaded the results, on a seat-specific basis, from the Australian Electoral Commission website. We cleaned and tidied the dataset using the statistical programming language R [@citeR] including the `tidyverse` [@tidyverse] and `janitor` [@janitor]. We then created a graph of the number of seats that each political party won (@fig-canadanice).
 >
-> We found that the Labor Party won 68 seats, followed by the Liberal Party with 67 seats. The minor parties won the following number of seats: Nationals, 10 seats and the Green Party, 1 seats. Finally, candidates from five other parties were elected.
+> We found that the Labor Party won 77 seats, followed by the Liberal Party with 48 seats. The minor parties won the following number of seats: Nationals, 10 seats and the Green Party, 4 seats. Finally, there were 10 Independents elected as well as candidates from a few other parties.
 >
 > The distribution of seats is skewed toward the two major parties which could reflect relatively stable preferences on the part of Australian voters, or possibly inertia due to the benefits of already being a major party such a national network and funding, or some other reason. A better understanding the reasons for this distribution are of interest in future work. While the dataset consists of everyone who voted, it worth noting that in Australia some are systematically excluded from voting; and it is much difficult for some to vote than others.
-
 
 
 ## Toronto homelessness
@@ -515,13 +518,18 @@ Toronto has a large homeless population [@torontohomeless]. Freezing winters mea
 
 ### Plan
 
-The dataset that we are interested in would need to have date, the shelter, and the number of beds that were occupied that night. A quick sketch of a dataset that would work is @fig-torontohomelessdataplan.
+The dataset that we are interested in would need to have date, the shelter, and the number of beds that were occupied that night. A quick sketch of a dataset that would work is @fig-torontohomeless-data.
 
-![Quick sketch of a dataset that could be useful for understanding shelter usage in Toronto](figures/IMG_1817.png){#fig-torontohomelessdataplan width=50% fig-align="center"}
+::: {#fig-torontohomeless layout-ncol=2}
 
-We are interested in creating a table that has the monthly average number of beds occupied each night. The table would probably look something like @fig-houselessexampletable
+![Quick sketch of a dataset that could be useful for understanding shelter usage in Toronto](figures/IMG_1817.png){#fig-torontohomeless-data width=50%}
 
-![Quick sketch of a table of the average number of beds occupied each month](figures/IMG_1818.png){#fig-houselessexampletable width=50% fig-align="center"}
+![Quick sketch of a table of the average number of beds occupied each month](figures/IMG_1818.png){#fig-torontohomeless-table width=50%}
+
+Sketches of a dataset and table related to the homelessness in Toronto
+:::
+
+We are interested in creating a table that has the monthly average number of beds occupied each night. The table would probably look something like @fig-torontohomeless-table.
 
 
 ### Simulate
@@ -585,7 +593,7 @@ citation() # Get the citation information for R
 citation('tidyverse') # Get the citation information for a particular package
 ```
 
-Turning to the simulation, we need three columns: 'date', 'shelter', and 'occupancy'. This example will build on the earlier one by adding a seed using `set.seed()`. A seed enables us to always generate the same random data whenever we run the same code. Any integer can be used as the seed. In this case the seed will be 853. If you use that as your seed, then you should get the same random numbers as in this example. If you use a different seed, then you should expect different random numbers. Finally, we use `rep()` to repeat something a certain number of times. For instance, we repeat 'Shelter 1', 184 times which accounts for about half a year.
+Turning to the simulation, we need three columns: 'date', 'shelter', and 'occupancy'. This example will build on the earlier one by adding a seed using `set.seed()`. A seed enables us to always generate the same random data whenever we run the same code. Any integer can be used as the seed. In this case the seed will be 853. If you use that as your seed, then you should get the same random numbers as in this example. If you use a different seed, then you should expect different random numbers. Finally, we use `rep()` to repeat something a certain number of times. For instance, we repeat 'Shelter 1', 365 times which accounts for about a year.
 
 ```{r}
 #| echo: true
@@ -598,20 +606,20 @@ set.seed(853)
 
 simulated_occupancy_data <- 
   tibble(
-    date = rep(x = as.Date("2021-07-01") + c(0:183), times = 3), 
+    date = rep(x = as.Date("2021-07-01") + c(0:364), times = 3), 
     # Based on Dirk Eddelbuettel: https://stackoverflow.com/a/21502386
-    shelter = c(rep(x = "Shelter 1", times = 184), 
-                rep(x = "Shelter 2", times = 184),
-                rep(x = "Shelter 3", times = 184)),
+    shelter = c(rep(x = "Shelter 1", times = 365), 
+                rep(x = "Shelter 2", times = 365),
+                rep(x = "Shelter 3", times = 365)),
     number_occupied = 
-      rpois(n = 184*3,
+      rpois(n = 365*3,
             lambda = 30) # Draw 552 times from the Poisson distribution
     )
 
 head(simulated_occupancy_data)
 ```
 
-In this simulation we first create a list of all the dates in 2021. We repeat that list three times. We assume data for three shelters for every day of the year. To simulate the number of beds that are occupied each night, we draw from a Poisson distribution, assuming a mean number of 30 beds occupied per shelter. By way of background, a Poisson distribution is often used when we have count data, and we return to it in @sec-its-just-a-linear-model. 
+In this simulation we first create a list of all the dates in 2021. We repeat that list three times. We assume data for three shelters for every day of the year. To simulate the number of beds that are occupied each night, we draw from a Poisson distribution, assuming a mean number of 30 beds occupied per shelter, although this is just an arbitrary choice. By way of background, a Poisson distribution is often used when we have count data, and we return to it in @sec-its-just-a-linear-model. 
 
 ### Acquire
 
@@ -668,13 +676,12 @@ toronto_shelters <-
 head(toronto_shelters)
 ```
 
-Not much needs to be done to this to make it similar to the dataset that we were interested in (@fig-torontohomelessdataplan). We need to change the names to make them easier to type using `clean_names()`, reduce the columns to only those that are relevant using `select()`, and only keep the second half of the year using `filter()`. 
+Not much needs to be done to this to make it similar to the dataset that we were interested in (@fig-torontohomeless-data). We need to change the names to make them easier to type using `clean_names()`, and reduce the columns to only those that are relevant using `select()`. 
 
 ```{r}
 toronto_shelters_clean <- 
   clean_names(toronto_shelters) |> 
-  select(occupancy_date, id, occupied_beds) |> 
-  filter(occupancy_date >= as_date("2021-07-01"))
+  select(occupancy_date, id, occupied_beds) 
 
 head(toronto_shelters_clean)
 ```
@@ -730,10 +737,9 @@ toronto_shelters_clean <-
     )
 ```
 
-The dataset contains records on a daily basis for each shelter. We are interested in understanding average usage for each month. To do this, we need to and add a month column, which we do using `month()` from `lubridate` [@GrolemundWickham2011]. By default, `month()` provides the number of the month, and so we include two arguments 'label' and 'abbr' to get the full name of the month. We remove rows that do not have any data for the number of beds using `drop_na()` from `tidyr`. And we then create a summary statistic on the basis of monthly groups, using `summarize()` from `dplyr` [@citedplyr]. We use `kable()` from `knitr` [@citeknitr] to create a table.
+The dataset contains records on a daily basis for each shelter. We are interested in understanding average usage for each month. To do this, we need to and add a month column, which we do using `month()` from `lubridate` [@GrolemundWickham2011]. By default, `month()` provides the number of the month, and so we include two arguments 'label' and 'abbr' to get the full name of the month. We remove rows that do not have any data for the number of beds using `drop_na()` from `tidyr`. We will do this here unthinkingly just because our focus is on getting started, but this is an important decision that we talk more about in @sec-farm-data and would normally require extensive justification. And we then create a summary statistic on the basis of monthly groups, using `summarize()` from `dplyr` [@citedplyr]. We use `kable()` from `knitr` [@citeknitr] to create a table.
 
 ```{r}
-# Based on code from Florence Vallée-Dubois and Lisa Lendway
 toronto_shelters_clean |>
   mutate(occupancy_month = month(occupancy_date, 
                                  label = TRUE, 
@@ -782,19 +788,24 @@ Although this example is only a few paragraphs, it could be reduced to form an a
 
 ## Neonatal mortality
 
-Neonatal mortality refers to a death that occurs within the first month of life, and in particular, the neonatal mortality rate (NMR) is the number of neonatal deaths per 1,000 live births [@unigme]. Reducing it is part of the third Sustainable Development Goal [@hug2019national]. In this example we will create a graph of the estimated NMR for the past fifty years for: Argentina, Australia, Canada, and Kenya.
+Neonatal mortality refers to a death that occurs within the first month of life, and in particular, the neonatal mortality rate (NMR) is the number of neonatal deaths per 1,000 live births [@unigme]. The Third Sustainable Development Goal calls for a reduction in NMR to 12. In this example we will create a graph of the estimated NMR for the past fifty years for: Argentina, Australia, Canada, and Kenya.
 
 ### Plan
 
 For this example, we need to think about what our dataset should look like, and what the graph should look like.
 
-The dataset needs to have columns that specify the country, and the year. It also needs to have a column with the NMR estimate for that year for that country. Roughly, it should look like @fig-nmrexampledata.
+The dataset needs to have columns that specify the country, and the year. It also needs to have a column with the NMR estimate for that year for that country. Roughly, it should look like @fig-nmrexample-data.
 
-![Quick sketch of a potentially useful NMR dataset](figures/IMG_1812.png){#fig-nmrexampledata width=40% fig-align="center"}
+::: {#fig-nmrexample layout-ncol=2}
 
-We are interested to make a graph with year on the x-axis and estimated NMR on the y-axis. Each country should have its own series similar to @fig-nmrexamplegraph
+![Quick sketch of a potentially useful NMR dataset](figures/IMG_1812.png){#fig-nmrexample-data width=40%}
 
-![Quick sketch of a graph of NMR by country over time](figures/IMG_1813.png){#fig-nmrexamplegraph width=75% fig-align="center"}
+![Quick sketch of a graph of NMR by country over time](figures/IMG_1813.png){#fig-nmrexample-graph width=50%}
+
+Sketches of a dataset and graph related to the neonatal mortality rate (NMR)
+:::
+
+We are interested to make a graph with year on the x-axis and estimated NMR on the y-axis. Each country should have its own series similar to @fig-nmrexample-graph.
 
 ### Simulate
 
@@ -1123,13 +1134,13 @@ cleaned_igme_data |>
 
 To this point we downloaded some data, cleaned it, wrote some tests, and made a graph. We would typically need to communicate what we have done at some length. In this case, we will write a few paragraphs about what we did, why we did it, and what we found. 
 
-> Neonatal mortality refers to a death that occurs within the first month of life. In particular, the neonatal mortality rate (NMR) is the number of neonatal deaths per 1,000 live births [@alexander2018global]. We obtain estimates for NMR for four countries---Argentina, Australia, Canada, China, and Kenya---over the past fifty years.
+> Neonatal mortality refers to a death that occurs within the first month of life. In particular, the neonatal mortality rate (NMR) is the number of neonatal deaths per 1,000 live births. We obtain estimates for NMR for four countries---Argentina, Australia, Canada, China, and Kenya---over the past fifty years.
 > 
 > The UN Inter-agency Group for Child Mortality Estimation (IGME) provides estimates of the NMR at the website: https://childmortality.org/. We downloaded their estimates then cleaned and tidied the dataset using the statistical programming language R [@citeR].
 > 
 > We found considerable change in the estimated NMR over time and between the four countries of interest (@fig-nmrgraph). We found that the 1970s tended to be associated with reductions in the estimated NMR. Australia and Canada were estimated to have a low NMR at that point and remained there through 2020, with slight improvements. The estimates for Argentina and Kenya continued to have substantial reductions through 2020.
 > 
-> Our results suggest considerable improvements in estimated NMR over time. But it is worth emphasizing that estimates of the NMR are based on a statistical model and underlying data. The paradox of data availability is that often high-quality data are less easily available for countries with worse outcomes. For instance, @alexander2018global say '[t]here is large variability in the availability of data on neonatal mortality'. Our conclusions are subject to the model that underpins the estimates, and the quality of the underlying data and we did not independently verify either of these. 
+> Our results suggest considerable improvements in estimated NMR over time. But it is worth emphasizing that estimates of the NMR are based on a statistical model and underlying data. The paradox of data availability is that often high-quality data are less easily available for countries with worse outcomes. Our conclusions are subject to the model that underpins the estimates, and the quality of the underlying data and we did not independently verify either of these. 
 
 
 
@@ -1138,9 +1149,6 @@ To this point we downloaded some data, cleaned it, wrote some tests, and made a 
 We have covered a lot of ground in this chapter, and it is normal to have not followed it all if you are new to R. The best way to proceed would be to go through each of the three case-studies in your own time. Type all the code out yourself, rather than copy-pasting, and run it bit by bit, even if you do not entirely understand what it is doing. Then try to add your own comments to it.
 
 It is also the case that it is not necessary to fully understand everything in this chapter at this point. Some students find it best to continue going through the next few chapters of this book, and returning to this one from time to time.
-
-It is normal to feel a little overwhelmed, but the important thing is to stick with it and actively work at learning.
-
 
 
 
@@ -1154,8 +1162,8 @@ It is normal to feel a little overwhelmed, but the important thing is to stick w
     b.  `runif(n = 365, min = 1, max = 4) |> floor()`
     c.  `sample(x = 1:3, size = 365, replace = TRUE)`
     d. `sample(x = 1:3, size = 365, replace = FALSE)`
-3. *(Acquire)* Please identify one possible source of actual data about the amount of donations in a country that you are interested in.
-4. *(Explore)* Assume that `ggplot2` is loaded and the dataset 'donations' has the column 'amount'. Which of the following would result in a bar chart?
+3. *(Acquire)* Please identify one possible source of actual data about the amount of money that is donated to charity in a country that you are interested in.
+4. *(Explore)* Assume that `ggplot2` is loaded and the dataset 'donations' has the column 'amount'. Which of the following would result in a bar chart (pick one)?
     a.  `donations |> geom_bar(aes(x = amount)) + ggplot()`
     b. `amount |> geom_bar(aes(x = donations)) + ggplot()`
     c. `donations |> ggplot(aes(x = amount)) + geom_bar()`
@@ -1193,38 +1201,43 @@ It is normal to feel a little overwhelmed, but the important thing is to stick w
     b. `rnorm()` and `rbinomial()`
     c. `rnormal()` and `rbinomial()`
     d.  `rnorm()` and `rbinom()`
-14. What is the result of `sample(x = letters, size = 2)` when the seed is set to '853'? What about when the seed is set to '1234' (pick one)?
+14. We used `rpois()` and `runif()` to draw from the Poisson and Uniform distributions, respectively. Which of the following can be used to draw from the Exponential and Cauchy distributions (select all that apply)?
+    a. `rexp()` and `rcau()`
+    b. `rexpon()` and `rcauchy()`
+    c.  `rexp()` and `rcauchy()`
+    d. `rexpon()` and `rcau()`
+15. What is the result of `sample(x = letters, size = 2)` when the seed is set to '853'? What about when the seed is set to '1234' (pick one)?
     a.  '"i" "q"' and '"p" "v"'
     b. '"e" "l"' and '"e" "r"'
     c. '"i" "q"' and '"e" "r"'
     d. '"e" "l"' and '"p" "v"'
-15. Which function provides the recommended citation to cite R (pick one)? 
+16. Which function provides the recommended citation to cite R (pick one)? 
     a. `cite('R')`. 
     b. `cite()`.
     c. `citation('R')`.
     d. `citation()`.
-16. How do we get the citation information for `opendatatoronto` (pick one)?
+17. How do we get the citation information for `opendatatoronto` (pick one)?
     a. cite()
     b. citation()
     c. cite('opendatatoronto')
     d. citation('opendatatoronto')
-17. Which argument needs to be changed to change the headings in `kable()` from `knitr` [@citeknitr] (pick one)?
+18. Which argument needs to be changed to change the headings in `kable()` from `knitr` [@citeknitr] (pick one)?
     a. 'booktabs'
     b. 'col.names'
     c. 'digits'
     d. 'linesep'
     e. 'caption'
-18. Which function is used to update packages (pick one)? 
+19. Which function is used to update packages (pick one)? 
     a. `update.packages()`
     b. `upgrade.packages()`
     c. `revise.packages()`
     d. `renovate.packages()`
-19. What are some features that we might typically expect of a column that claimed to be a year (select all that apply)? 
+20. What are some features that we might typically expect of a column that claimed to be a year (select all that apply)? 
     a. The class is 'character'.
     b. There are no negative numbers.
     c. There are letters in the column.
     d. Each entry has four digits.
-20. Please consider the following code, add a small mistake to it, and then create a GitHub Gist that contains all of the code, and submit the URL.
+21. Please consider the following code, add a small mistake to it, and then create a GitHub Gist that contains all of the code, and submit the URL.
 
 ```{r}
 #| eval: false
@@ -1245,7 +1258,7 @@ midwest |>
 
 The purpose of this tutorial is to provide an opportunity to do a small self-contained project. We will redo the Australian Elections worked example, but for Canada.
 
-Canada is a parliamentary democracy with 338 seats in the House of Commons, which is the lower house and that from which government is formed. There are two major parties -- 'Liberal' and 'Conservative' -- three minor parties -- 'Bloc Québécois', 'New Democratic', and 'Green' -- and many smaller parties and independents. In this example we will create a graph of the number of seats that each party won in the 2019 Federal Election.
+Canada is a parliamentary democracy with 338 seats in the House of Commons, which is the lower house and that from which government is formed. There are two major parties -- 'Liberal' and 'Conservative' -- three minor parties -- 'Bloc Québécois', 'New Democratic', and 'Green' -- and many smaller parties and independents. In this example we will create a graph of the number of seats that each party won in the 2021 Federal Election.
 
 Begin by planning what the dataset that we need will look like, and what the final graph will look like. The basic requirement for the dataset is that it has the name of the seat (sometimes called a 'riding' in Canada) and the party of the person elected. 
 
@@ -1253,11 +1266,11 @@ Please do a quick sketch of the dataset that we would need. And then do a quick 
 
 Then put together a Quarto Document that simulates some data. Add preamble documentation, then load the packages that are needed: `tidyverse`, `janitor`, and `tidyr`. Add numbers for the riding, then use `sample()` to randomly choose one of six options, with replacement, 338 times.
 
-Next we need to get the actual data, from Elections Canada, and the file that we need to download is: "https://www.elections.ca/res/rep/off/ovr2019app/51/data_donnees/table_tableau11.csv".
+Next we need to get the actual data, from Elections Canada, and the file that we need to download is: "https://www.elections.ca/res/rep/off/ovr2021app/53/data_donnees/table_tableau11.csv".
 
 Clean the names, and then select the two columns that are of interest: 'electoral_district_name_nom_de_circonscription', and 'elected_candidate_candidat_elu'. Finally, rename the columns to remove the French and simplify the names.
 
-The column that we need is about the elected canadidates. That has the surname of the elected candidate, followed by a comma, followed by their first name, followed by a space, followed by the name of the party in both English and French, separated by a slash. Break-up this column into its pieces using `separate()` from `tidyr` [@citetidyr].
+The column that we need is about the elected canadidates. That has the surname of the elected candidate, followed by a comma, followed by their first name, followed by a space, followed by the name of the party in both English and French, separated by a slash. Break-up this column into its pieces using `separate()` from `tidyr` [@citetidyr] and then use `select()` to just keep party information.
 
 ```{r}
 #| eval: false
