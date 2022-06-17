@@ -1,0 +1,215 @@
+---
+engine: knitr
+---
+
+# R Markdown {#sec-rmarkdown}
+
+Quarto is the successor to R Markdown, however it is relatively new and many people still use R Markdown. For the most part, the aspects covered in @sec-reproducible-workflows are very similar in both Quarto and R Markdown. However, in this appendix we provide an equivalent for R Markdown, for the guidance provided for Quarto.
+
+
+## Getting started
+
+R Markdown integrates code and natural language in a way that is called 'literate programming' [@Knuth1984]. R Markdown is a mark-up language similar to HyperText Markup Language (HTML) or LaTeX, in comparison to a 'What You See Is What You Get' (WYSIWYG) language, such as Microsoft Word. This means that all the aspects are consistent, for instance, all top-level heading will look the same. But, it means that we must use symbols to designate how we would like certain aspects to appear. And it is only when we build the mark-up that we get to see what it looks like.
+
+R Markdown is a variant of Markdown that is specifically designed to allow R code chunks to be included. One advantage is that we can get a 'live' document in which code executes and then forms part of the document. Another advantage of R Markdown is that very similar code can compile into a variety of documents, including html pages and PDFs. R Markdown also has default options set up for including a title, author, and date sections. One disadvantage is that it can take a while for a document to compile because all the code needs to run. @rmarkdownforscientists is especially useful for instructions on how to achieve specific outcomes with R Markdown.
+
+We can create a new R Markdown document within R Studio ('File' -> 'New File' -> 'R Markdown Document').
+
+## Essential commands
+
+Essential markdown commands include those for emphasis, headers, lists, links, and images. A reminder of these is included in R Studio ('Help' -> 'Markdown Quick Reference'). 
+
+- Emphasis: ```*italic*```, ```**bold**```
+- Headers (these go on their own line with a blank line before and after): ```# First level header```, ```## Second level header```, ```## Third level header```
+- Unordered list, with sub-lists:
+```
+* Item 1
+* Item 2
+    + Item 2a
+    + Item 2b
+```
+- Ordered list, with sub-lists:
+```
+1. Item 1
+2. Item 2
+3. Item 3
+    + Item 3a
+    + Item 3b
+```
+- URLs can be added by including an address because it will auto-link: https://www.tellingstorieswithdata.com, or by linking some text ```[the address of this book](https://www.tellingstorieswithdata.com)``` results in [the address of this book](https://www.tellingstorieswithdata.com).
+- A paragraph is created by leaving a blank line.
+```
+A paragraph about some idea, nicely spaced from the following paragraph.
+
+Another paragraph about another idea, nicely spaced from the earlier paragraph.
+```
+
+Once we have added some aspects, then we may want to see the actual document. To build the document click 'Knit'.
+
+
+## R chunks
+
+We can include code for R and many other languages in code chunks within an R Markdown document. Then when we knit the document, the code will run and be included in the document.
+
+To create an R chunk, we start with three backticks and then within curly braces we tell R Markdown that this is an R chunk. Anything inside this chunk will be considered R code and run as such. For instance, we could load the `tidyverse` and `AER` and make a graph of the number of times a survey respondent visited the doctor in the past two weeks.
+
+```{r, echo = FALSE, comment = ""}
+cat(readr::read_file("inputs/rmarkdown_example.Rmd"))
+```
+
+The output of that code is Figure \@ref(fig:doctervisits). 
+
+```{r doctervisits, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, fig.cap = "Number of illnesses in the past two weeks, based on the 1977--1978 Australian Health Survey"}
+library(tidyverse)
+library(AER)
+
+data("DoctorVisits", package = "AER")
+
+DoctorVisits |>
+  ggplot(aes(x = illness)) +
+  geom_histogram(stat = "count")
+```
+
+There are various evaluation options that are available in chunks. We include these by putting a comma after ```r``` and then specifying any options before the closing curly brace. Helpful options include: 
+
+- ```echo = FALSE```: run the code and include the output, but do not print the code in the document.
+- ```include = FALSE```: run the code but do not output anything and do not print the code in the document.
+- ```eval = FALSE```: do not run the code, and hence do not include the outputs, but do print the code in the document.
+- ```warning = FALSE```: do not display warnings.
+- ```message = FALSE```: do not display messages.
+
+For instance, we could include the output, but not the code, and suppress any warnings.
+
+```{r, echo = FALSE, comment = ""}
+cat(readr::read_file("inputs/rmarkdown_example_with_options.Rmd"))
+```
+
+It is important to leave a blank line on either side of an R chunk, otherwise it may not run properly.
+
+```{r, echo = FALSE, comment = ""}
+cat(readr::read_file("inputs/rmarkdown_example_with_blankline.Rmd"))
+```
+
+It is also important that the R Markdown document itself loads any datasets that are needed. It is not enough that they are in the environment. This is because the R Markdown document evaluates the code in the document when it is built, not necessarily the environment.
+
+
+## Abstracts and PDF outputs
+
+An abstract is a short summary of the paper. In the default preamble, we can add a section for an abstract. Similarly, we can change the output from ```html_document``` to ```pdf_document``` to produce a PDF. This uses LaTeX in the background and may require the installation of supporting packages. 
+```
+---
+title: My document
+author: Rohan Alexander
+date: 1 January 2022
+output: pdf_document
+abstract: "This is my abstract."
+---
+```
+
+## References 
+
+We can include references by specifying a BibTeX file in the preamble and then calling it within the text, as needed.
+```
+---
+title: My document
+author: Rohan Alexander
+date: 1 January 2022
+output: pdf_document
+abstract: "This is my abstract."
+bibliography: bibliography.bib
+---
+```
+
+We would need to make a separate file called 'bibliography.bib' and save it next to the R Markdown file. In the BibTeX file we need an entry for the item that is to be referenced. For instance, the citation for R can be obtained with `citation()` and this can be added to the 'bibliography.bib' file. Similarly, the citation for a package can be found by including the package name, for instance `citation('tidyverse')`. It can be helpful to use Google Scholar, or doi2bib, to get citations for books or articles.
+
+```
+@Manual{,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2021},
+    url = {https://www.R-project.org/},
+  }
+@Article{,
+    title = {Welcome to the {tidyverse}},
+    author = {Hadley Wickham and Mara Averick and Jennifer Bryan and Winston Chang and Lucy D'Agostino McGowan and Romain François and Garrett Grolemund and Alex Hayes and Lionel Henry and Jim Hester and Max Kuhn and Thomas Lin Pedersen and Evan Miller and Stephan Milton Bache and Kirill Müller and Jeroen Ooms and David Robinson and Dana Paige Seidel and Vitalie Spinu and Kohske Takahashi and Davis Vaughan and Claus Wilke and Kara Woo and Hiroaki Yutani},
+    year = {2019},
+    journal = {Journal of Open Source Software},
+    volume = {4},
+    number = {43},
+    pages = {1686},
+    doi = {10.21105/joss.01686},
+  }
+```
+
+We need to create a unique key that we use to refer to this item in the text. This can be anything, provided it is unique, but meaningful ones can be easier to remember, for instance 'citeR'.
+
+```
+@Manual{citeR,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2021},
+    url = {https://www.R-project.org/},
+  }
+@Article{citetidyverse,
+    title = {Welcome to the {tidyverse}},
+    author = {Hadley Wickham and Mara Averick and Jennifer Bryan and Winston Chang and Lucy D'Agostino McGowan and Romain François and Garrett Grolemund and Alex Hayes and Lionel Henry and Jim Hester and Max Kuhn and Thomas Lin Pedersen and Evan Miller and Stephan Milton Bache and Kirill Müller and Jeroen Ooms and David Robinson and Dana Paige Seidel and Vitalie Spinu and Kohske Takahashi and Davis Vaughan and Claus Wilke and Kara Woo and Hiroaki Yutani},
+    year = {2019},
+    journal = {Journal of Open Source Software},
+    volume = {4},
+    number = {43},
+    pages = {1686},
+    doi = {10.21105/joss.01686},
+  }
+```
+
+To cite R in the R Markdown document we include `@citeR`, which would put the brackets around the year, like this: @citeR or `[@citeR]`, which would put the brackets around the whole thing, like this: [@citetidyverse]. 
+
+The reference list at the end of the paper is automatically built based on calling the BibTeX file and including the references in the paper. At the end of the R Markdown document, including a heading '# References' and the actual citations will be included after that. When the R Markdown file is built, R Markdown sees these in the content, goes to BibTeX to get the reference details that it needs, builds the reference list, and then adds it to the end of the output.
+
+## Cross-references
+
+It can be useful to cross-reference figures, tables, and equations. This makes it easier to refer to them in the text. To do this for a figure we refer to the name of the R chunk that creates or contains the figure. For instance, `(Figure \@ref(fig:uniquename))` will produce: (Figure \@ref(fig:uniquename)) as the name of the R chunk is `uniquename`. We also need to add 'fig' in front of the chunk name so that R Markdown knows that this is a figure. We then include a 'fig.cap' in the R chunk that specifies a caption.
+
+````markdown
+`r ''````{r uniquename, fig.cap = "Number of illnesses in the past two weeks, based on the 1977--1978 Australian Health Survey", echo = TRUE}
+````
+
+
+```{r uniquename, fig.cap = "Number of illnesses in the past two weeks, based on the 1977--1978 Australian Health Survey", echo = TRUE, warning = FALSE}
+library(tidyverse)
+library(AER)
+
+data("DoctorVisits", package = "AER")
+
+DoctorVisits |>
+  ggplot(aes(x = illness)) +
+  geom_histogram(stat = "count")
+```
+
+We can take a similar, but slightly different, approach to cross-reference tables. For instance, `(Table \@ref(tab:docvisittable))` will produce: (Table \@ref(tab:docvisittable)). In this case we specify 'tab' before the unique reference to the table, so that R Markdown knows that it is a table. For tables we need to include the caption in the main content, as a 'caption', rather than in a 'fig.cap' chunk option as is the case for figures.
+
+```{r docvisittable, echo = TRUE}
+DoctorVisits |> 
+  count(visits) |> 
+  knitr::kable(caption = "Number of visits to the doctor in the past two weeks, based on the 1977--1978 Australian Health Survey")
+```
+
+Finally, we can also cross-reference equations. To that we need to add a tag `(\#eq:macroidentity)` which we then reference. For instance, use `Equation \@ref(eq:macroidentity).` to produce Equation \@ref(eq:macroidentity).
+
+```
+\begin{equation}
+Y = C + I + G + (X - M) (\#eq:macroidentity)
+\end{equation}
+```
+
+\begin{equation}
+Y = C + I + G + (X - M) (\#eq:macroidentity)
+\end{equation}
+
+When using cross-references, it is important that the R chunks have simple labels. In general, try to keep the names simple but unique, and if possible, avoid punctuation and stick to letters. Do not use underbars in the labels because that will cause an error.
+
+

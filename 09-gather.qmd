@@ -10,17 +10,11 @@ engine: knitr
 - Read *Two Regimes of Prison Data Collection*, [@Johnson2021Two]
 - Read *Atlas of AI*, Chapter 3 'Data', [@crawford]
 
-<!-- - D'Agostino McGowan, Lucy, 2020 'Harnessing the Power of the Web via R Clients for Web APIs', talk at ASA Joint Statistical Meeting 2018, https://www.lucymcgowan.com/talk/asa_joint_statistical_meeting_2018/. -->
-
-
 **Key concepts and skills**
 
-- Initial usage of APIs, both directly, including dealing with semi-structured data, and indirectly through R Packages. 
-- Use R environments to manage keys.
-- Web scraping, especially reasonable use and ethical concerns.
-- Cleaning data from unstructured data to structured, tidy, data.
-- Extracting data from PDFs, both those that can be parsed and those that are an image and require OCR.
-
+- Sometimes data are available, but they are not necessarily put together for the purposes of being a dataset. We have to go and gather such data. 
+- It can be cumbersome and annoying to have to clean and prepare the datasets that come from these unstructured sources, however, the resulting structured, tidy, data are often especially exciting and useful.
+- We can gather data from a variety of sources, including APIs, both directly, including dealing with semi-structured data, and indirectly through R Packages. We can also gather data through web scraping, although it is important to consider reasonable use and ethical concerns. Finally, we may wish to gather data from PDFs, possibly even needing to OCR them.
 
 **Key packages and functions**
 
@@ -613,7 +607,7 @@ If you end up doing a lot of web scraping, then `polite` [@polite] may be helpfu
 
 ### Book information
 
-In this case study we will scrape a list of books available [here](https://rohanalexander.com/bookshelf.html). We will then clean the data and look at the distribution of the first letters of author surnames. It is slightly more complicated than the example above, but the underlying approach is the same: download the website, look for the nodes of interest, extract the information, clean it.
+In this case study we will scrape a list of books available [here](https://rohansbooks.com). We will then clean the data and look at the distribution of the first letters of author surnames. It is slightly more complicated than the example above, but the underlying approach is the same: download the website, look for the nodes of interest, extract the information, clean it.
 
 We use `rvest` [@citervest] to download a website, and to then navigate the HTML to find the aspects that we are interested in. And we use `tidyverse` to clean the dataset. We first need to go to the website and then save a local copy.
 
@@ -628,7 +622,7 @@ library(rvest)
 library(tidyverse)
 library(xml2)
 
-books_data <- read_html("https://rohanalexander.com/bookshelf.html")
+books_data <- read_html("https://rohansbooks.com")
 
 write_html(books_data, "inputs/my_website/raw_data.html") 
 ```
@@ -642,7 +636,7 @@ library(rvest)
 library(tidyverse)
 library(xml2)
 
-books_data <- read_html("https://rohanalexander.com/bookshelf.html")
+books_data <- read_html("https://rohansbooks.com")
 
 write_html(books_data, "raw_data.html") 
 ```
@@ -669,13 +663,17 @@ books_data <- read_html("inputs/my_website/raw_data.html")
 books_data
 ```
 
-To get the data into a tibble we first need to use HTML tags to identify the data that we are interested in. If we look at the website then we need to focus on list items (@fig-rohansbooks). And we can look at the source, focusing particularly on looking for a list (@fig-rohanssourceone).
+To get the data into a tibble we first need to use HTML tags to identify the data that we are interested in. If we look at the website then we need to focus on list items (@fig-rohansbooks-display). And we can look at the source, focusing particularly on looking for a list (@fig-rohansbooks-html).
 
-![Books website as displayed](figures/rohansbooks.png){#fig-rohansbooks width=75% fig-align="center"}
+::: {#fig-rohansbooks layout-ncol=2}
 
-![HTML for the top of the books website and the list of books](figures/sourcetop.png){#fig-rohanssourceone width=90% fig-align="center"}
+![Books website as displayed](figures/books_display.png){#fig-rohansbooks-display width=50%}
 
-![](figures/sourcelist.png){#fig-d width=90% fig-align="center"}
+![HTML for the top of the books website and the list of books](figures/books_source.png){#fig-rohansbooks-html width=50%}
+
+Screen captures from the books website as at 16 June 2022
+:::
+
 
 The tag for a list item is 'li', so we can use that to focus on the list.
 
@@ -695,7 +693,7 @@ all_books <-
 head(all_books)
 ```
 
-We now need to clean the data. First we want to separate the title and the author using `separate()` and then clean up the author and title columns.
+We now need to clean the data. First we want to separate the title and the author using `separate()` and then clean up the author and title columns. We can take advantage of the fact that the year is present and separate based on that.
 
 ```{r}
 #| eval: true
@@ -706,72 +704,13 @@ We now need to clean the data. First we want to separate the title and the autho
 
 all_books <-
   all_books |>
-  slice(7:nrow(all_books)) |>
-  separate(books, into = c("author", "title"), sep = ", ‘")
+  mutate(books = str_squish(books)) |> 
+  separate(books, into = c("author", "title"), sep = "\\, [[:digit:]]{4}\\, ")
 
-all_books <-
-  all_books |>
-  separate(title, into = c("title", "debris"), sep = "’.") |>
-  select(-debris) |>
-  mutate(author = str_remove_all(author, "^, "),
-         author = str_squish(author),
-         title = str_remove(title, "“"),
-         title = str_remove(title, "^-")
-         )
-
-head(all_books)
+all_books
 ```
 
-<!-- Finally, some specific cleaning is needed. -->
-
-<!-- ```{r
-#|  include: true
-#| eval: true
-
-<!-- all_books <- -->
-<!-- #| echo: true -->
-<!--   all_books |> -->
-<!--   mutate(author = str_replace_all(author, -->
-<!--                               c("J. K. Rowling." = "J K Rowling.", -->
-<!--                                 "M. Mitchell Waldrop." = "M Mitchell Waldrop.", -->
-<!--                                 "David A. Price" = "David A Price") -->
-<!--                               ) -->
-<!--          ) |> -->
-<!--   separate(author, into = c("author_correct", "throw_away"), sep = "\\.", extra = "drop") |> -->
-<!--   select(-throw_away) |> -->
-<!--   rename(author = author_correct) -->
-
-<!-- # One has multiple authors: -->
-<!-- # "Daniela Witten, Gareth James, Robert Tibshirani, and Trevor Hastie" -->
-<!-- all_books <- -->
-<!--   all_books |> -->
-<!--   mutate(author = str_replace(author, -->
-<!--                               "Daniela Witten, Gareth James, Robert Tibshirani, and Trevor Hastie", -->
-<!--                               "Daniela Witten and Gareth James and Robert Tibshirani and Trevor Hastie")) |> -->
-<!--   separate(author, into = c("author_first", "author_second", "author_third", "author_fourth"), sep = " and ", fill = "right") |> -->
-<!--   pivot_longer(cols = starts_with("author_"), -->
-<!--                names_to = "author_position", -->
-<!--                values_to = "author") |> -->
-<!--   select(-author_position) |> -->
-<!--   filter(!is.na(author)) -->
-
-<!-- head(all_books) -->
-<!-- ``` -->
-
-There are some at the end that we need to get rid of because they are from a 'best of'. 
-
-```{r}
-#| eval: true
-#| include: true
-#| echo: true
-
-all_books <- 
-  all_books |> 
-  slice(1:142) |>
-  filter(author != "‘150 Years of Stats Canada!’.")
-```
-
-Finally, we could make a table of the distribution of the first letter of the names (@tbl-lettersofbooks).
+Finally, we could make, say, a table of the distribution of the first letter of the names (@tbl-lettersofbooks).
 
 ```{r}
 #| label: tbl-lettersofbooks
@@ -791,7 +730,6 @@ all_books |>
     linesep = ""
     )
 ```
-
 
 
 

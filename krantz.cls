@@ -453,7 +453,7 @@
 \def\pdfon{\@pdftrue}
 \def\pdfoff{\@pdffalse}
 \if@pdf
-  \def\@cip{{\fontsize{6\p@}{8\p@}\selectfont\copyright 2001 by CRC Press LLC}}
+  \def\@cip{{\fontsize{6\p@}{8\p@}\selectfont\textcopyright 2001 by CRC Press LLC}}
 \else
   \newsavebox\@cipboxa
   \newsavebox\@cipboxb
@@ -468,7 +468,7 @@
 \else
   \AtBeginDocument{%
     \@cip{\rule{0pt}{9pt}0-8493-0052-5/00/\$0.00+\$.50}%
-      {\copyright\ \ 2001 by CRC Press LLC}}%
+      {\textcopyright\ \ 2001 by CRC Press LLC}}%
 \fi
   \if@titlepage
   \newcommand\maketitle{\begin{titlepage}%
