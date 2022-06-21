@@ -194,7 +194,7 @@ politics_datasets <-
   fromJSON("https://demo.dataverse.org/api/search?q=politics")
 ```
 
-We can also look at the dataset using `View(politics_datasets)`, which allows us to expand the tree based on what we are interested in and even get the code that we need to focus on different aspects by hovering on the item and then clicking the icon with the green arrow (@fig-jsonfirst).
+We can also look at the dataset using `View(politics_datasets)`, which allows us to expand the tree based on what we are interested in. We can even get the code that we need to focus on different aspects by hovering on the item and then clicking the icon with the green arrow (@fig-jsonfirst).
 
 ![Example of hovering over an JSON element, 'items', where the icon with a green arrow can be clicked on to get the code that would focus on that element](figures/jsonlite.png){#fig-jsonfirst width=90% fig-align="center"}
 
@@ -395,8 +395,7 @@ There is a variety of information available based on songs. We might be interest
 
 ```{r}
 radiohead |> 
-  # select(artist_name, track_name, album_name) |> 
-  head()
+  select(artist_name, track_name, album_name)
 ```
 
 ```{r}
@@ -410,14 +409,14 @@ library(lubridate)
 radiohead |> 
   mutate(album_release_date = ymd(album_release_date)) |> 
   ggplot(aes(x = album_release_date, y = duration_ms)) +
-  geom_point() +
+  geom_point(alpha = 0.5) +
   theme_minimal() +
   labs(x = "Album release date",
        y = "Duration of song (ms)"
        ) 
 ```
 
-One interesting variable provided by Spotify about each song is 'valence'. The Spotify [documentation](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features) describe this as a measure between 0 and 1 that signals the 'the musical positiveness' of the track with higher values being more positive. We might be interested to compare valence over time between a few artists, for instance, Radiohead, the American rock band The National, and the American singer Taylor Swift.
+One interesting variable provided by Spotify about each song is 'valence'. The Spotify [documentation](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features) describe this as a measure between 0 and 1 that signals the 'the musical positiveness' of the track with higher values being more positive. We might be interested to compare valence over time between a few artists, for instance, Radiohead, The National who are an American rock band, and the American singer Taylor Swift.
 
 First, we need to gather the data.
 
@@ -473,7 +472,7 @@ three_artists |>
   ggplot(aes(x = album_release_date,
              y = valence,
              color = artist_name)) +
-  geom_point(alpha = 0.5) +
+  geom_point(alpha = 0.3) +
   geom_smooth() +
   theme_minimal() +
   labs(x = "Album release date",
@@ -482,7 +481,7 @@ three_artists |>
   scale_color_brewer(palette = "Set1")
 ```
 
-How amazing that we live in a world that all that information is available with very little effort or cost! And having gathered the data, there is a lot that could be done. For instance, @kaylinpavlik uses an expanded dataset to classify musical genres and @theeconomistonspotify looks at how language is associated with music streaming on Spotify. Our ability to gather such data enables us to answer questions that had to be considered experimentally in the past, for instance @salganik2006experimental had to use experimental data rather than the real data we are able to access. But at the same time, it is worth thinking about what valence is purporting to represent. Little information is available in the Spotify documentation about how this is being created. And it is doubtful that one number can completely represent how positive a song is. 
+How amazing that we live in a world that all that information is available with very little effort or cost! And having gathered the data, there is a lot that could be done. For instance, @kaylinpavlik uses an expanded dataset to classify musical genres and @theeconomistonspotify looks at how language is associated with music streaming on Spotify. Our ability to gather such data enables us to answer questions that had to be considered experimentally in the past. For instance @salganik2006experimental had to use experimental data rather than the real data we are able to access. But at the same time, it is worth thinking about what valence is purporting to measure. Little information is available in the Spotify documentation about how this is being created. And it is doubtful that one number can completely represent how positive a song is. And what about the songs from these artists that are not on Spotify, or even publicly released? A nice example of how measurement and sampling pervade all aspects.
 
 
 <!-- ## NBA statistics -->
@@ -798,7 +797,10 @@ library(tidyverse)
 
 # INTERNAL
 
-raw_data <- read_html("https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom")
+raw_data <- 
+  read_html(
+    "https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom"
+    )
 write_html(raw_data, "inputs/wiki/pms.html") # Note that we save the file as a HTML file.
 ```
 
@@ -808,7 +810,9 @@ write_html(raw_data, "inputs/wiki/pms.html") # Note that we save the file as a H
 #| include: true
 
 raw_data <-
-  read_html("https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom")
+  read_html(
+    "https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom"
+    )
 write_html(raw_data, "pms.html")
 ```
 
@@ -816,7 +820,7 @@ As with the earlier case study, we are looking for patterns in the HTML that we 
 
 One tool that may help is the [SelectorGadget](https://rvest.tidyverse.org/articles/articles/selectorgadget.html). This allows us to pick and choose the elements that we want, and then gives us the input for `html_nodes()` (@fig-selectorgadget).
 
-![Using the Selector Gadget to identify the tag, as at 13 March 2020.](figures/uk_pms.png){#fig-selectorgadget width=75% fig-align="center"}
+![Using the Selector Gadget to identify the tag, as at 13 March 2022.](figures/uk_pms.png){#fig-selectorgadget width=75% fig-align="center"}
 
 
 ```{r}
@@ -1055,7 +1059,8 @@ walk2(statements_of_interest$address,
       ~visit_download_and_wait(.x, .y))
 ```
 
-The result is that we have downloaded these four PDFs and saved them to our computer. In the next section we will build on this to discuss getting information from these PDFs.
+The result is that we have downloaded these four PDFs and saved them to our computer. An alternative to writing these functions ourselves would be use `heapsofpapers` [@heapsofpapers], which includes various helpful options for downloading lists of files, especially PDF, CSV, and txt files. For instance, @collinsalexander use this to obtain thousands of PDFs and estimate the extent to which COVID-19 research was reproducible.
+In the next section we will build on this to discuss getting information from these PDFs.
 
 
 ## PDFs

@@ -15,7 +15,7 @@ engine: knitr
 **Key concepts and skills**
 
 - We must show the reader the actual observations in the dataset, or as close as is possible, through graphs and tables. This is because it is only through visualization that we can get a true sense of our data. This means that we need to develop a comfort with a variety of graph options, including: bar charts, scatterplots, line plots, and histograms. We can even consider a map to be a type of graph, especially after geocoding our data.
-- That said, we also must know when to summarize data, for instance using tables. Typical use cases fro this include showing part of a dataset, summary statistics, and regression results. 
+- That said, we also must know when to summarize data, for instance using tables. Typical use cases for this include showing part of a dataset, summary statistics, and regression results. 
 
 **Key packages and functions**
 
@@ -92,13 +92,14 @@ Finally, we cover maps as a variant of graphs that are used to show a particular
 
 ## Graphs
 
-> Data visualization is a communciation skill
+> Data visualization is a communication skill
 > 
 > John Burn-Murdoch
 
 Graphs are a critical aspect of compelling stories told with data. They allow us to see both broad patterns and detail [@elementsofgraphingdata, p. 5]. Graphs provide us with a familiarity with our data that no other method allows. Every variable of interest should be graphed. 
 
-In a way, the graphing of data is an information coding process where we use purposeful marks to convey information to our audience. The audience must decode these marks. The success of our graph turns on how much information is lost in this process. It is the decoding that is the critical aspect [@elementsofgraphingdata, p. 221]. Which means that we must focus on creating not just graphs, but effective graphs, for the audience. If nothing else is possible, the most important objective is to convey as much of the actual data, and its context, as possible. Data do not exist in a vacuum and it is important that we recognize the 'social, cultural, and political contexts' in which they exist [@Klein2022What].
+In a way, the graphing of data is an information coding process where we use purposeful marks to convey information to our audience. The audience must decode these marks. The success of our graph turns on how much information is lost in this process. It is the decoding that is the critical aspect [@elementsofgraphingdata, p. 221]. Which means that we must focus on creating effective graphs for the audience. If nothing else is possible, the most important objective is to convey as much of the actual data, and its context, as possible. 
+<!-- Data do not exist in a vacuum and it is important that we recognize the 'social, cultural, and political contexts' in which they exist [@Klein2022What]. -->
 
 To see why this is important we begin by using a dataset from `datasauRus` [@citedatasauRus]. After installing and loading the necessary packages, we can take a quick look at the dataset.
 
@@ -224,6 +225,7 @@ tidy_anscombe |>
 tidy_anscombe |> 
   ggplot(aes(x = x, y = y, colour = set)) +
   geom_point() +
+  geom_smooth(method = lm, se = FALSE) +
   theme_minimal() +
   facet_wrap(vars(set), nrow = 2, ncol = 2) +
   labs(colour = "Dataset")
@@ -353,25 +355,25 @@ library(patchwork)
 
 theme_bw <- 
   beps |> 
-  ggplot(mapping = aes(x = age_group, fill = vote)) +
+  ggplot(mapping = aes(x = age_group)) +
   geom_bar(position = "dodge") +
   theme_bw()
 
 theme_classic <- 
   beps |> 
-  ggplot(mapping = aes(x = age_group, fill = vote)) +
+  ggplot(mapping = aes(x = age_group)) +
   geom_bar(position = "dodge") +
   theme_classic()
 
 theme_dark <- 
   beps |> 
-  ggplot(mapping = aes(x = age_group, fill = vote)) +
+  ggplot(mapping = aes(x = age_group)) +
   geom_bar(position = "dodge") +
   theme_dark()
 
 theme_minimal <- 
   beps |> 
-  ggplot(mapping = aes(x = age_group, fill = vote)) +
+  ggplot(mapping = aes(x = age_group)) +
   geom_bar(position = "dodge") +
   theme_minimal()
 
@@ -420,12 +422,12 @@ beps |>
   facet_wrap(vars(gender))
 ```
 
-We could change `facet_wrap()` to wrap vertically instead of horizontally with `dir = "v"`. Alternatively, we could specify a number of rows, say `nrow = 2`, or a number of columns, say `ncol = 2`. By default, both facets will have the same scale. We could enable both facets to have different scales, `scales = "free"`, or just the x-axis `scales = "free_x"`, or just the y-axis `scales = "free_y"` (@fig-facetsfancy). 
+We could change `facet_wrap()` to wrap vertically instead of horizontally with `dir = "v"`. Alternatively, we could specify a number of rows, say `nrow = 2`, or a number of columns, say `ncol = 2`. By default, both facets will have the same scale. We could enable both facets to have different scales, `scales = "free"`, or just the x-axis `scales = "free_x"`, or just the y-axis `scales = "free_y"` (@fig-facetsfancy). Here we will also change the position of the legend with `theme(legend.position="bottom")`.
 
 ```{r}
 #| echo: true
 #| eval: true
-#| fig-cap: "Distribution of age-group by political knowledge, and vote preference, in the 1997-2001 British Election Panel Study"
+#| fig-cap: "Distribution of age-group by gender, and vote preference, in the 1997-2001 British Election Panel Study"
 #| label: fig-facetsfancy
 #| warning: false
 
@@ -436,9 +438,10 @@ beps |>
   labs(x = "Age-group of respondent",
        y = "Number of respondents",
        fill = "Voted for") +
-  facet_wrap(vars(political.knowledge),
+  facet_wrap(vars(gender),
              dir = "v",
-             scales = "free")
+             scales = "free") +
+  theme(legend.position = "bottom")
 ```
 
 Finally, we can change the labels of the facets using `labeller()` (@fig-facetsfancylabels). 
@@ -446,11 +449,14 @@ Finally, we can change the labels of the facets using `labeller()` (@fig-facetsf
 ```{r}
 #| echo: true
 #| eval: true
-#| fig-cap: "Distribution of age-group by gender, and vote preference, in the 1997-2001 British Election Panel Study"
+#| fig-cap: "Distribution of age-group by political knowledge, and vote preference, in the 1997-2001 British Election Panel Study"
 #| label: fig-facetsfancylabels
 #| warning: false
 
-new_labels <- c(female = "Female", male = "Male")
+new_labels <- c("0" = "No knowledge", 
+                "1" = "Low knowledge",
+                "2" = "Moderate knowledge",
+                "3" = "High knowledge")
 
 beps |> 
   ggplot(mapping = aes(x = age_group, fill = vote)) +
@@ -459,15 +465,16 @@ beps |>
   labs(x = "Age-group of respondent",
        y = "Number of respondents",
        fill = "Voted for") +
-  facet_wrap(vars(gender),
+  facet_wrap(vars(political.knowledge),
              dir = "v",
              scales = "free",
-             labeller = labeller(gender = new_labels))
+             labeller = labeller(political.knowledge = new_labels)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 This means that we now have three ways to have multiple graphs: sub-figures, facets, and `patchwork`. They are useful in different circumstances. For instance, we would often want to use sub-figures (covered in @sec-reproducible-workflows) when we are considering different variables, facets when considering different values of a categorical variable, and `patchwork` when interested in bringing together entirely different graphs.
 
-There are a variety of different ways to change the colours, and many palettes are available from `RColorBrewer` [@RColorBrewer], which we specify with `scale_fill_brewer()`, and `viridis` [@viridis], which we specify with `scale_fill_viridis()` and is particularly focused on color-blind palettes (@fig-usecolor). 
+There are a variety of different ways to change the colors, and many palettes are available from `RColorBrewer` [@RColorBrewer], which we specify with `scale_fill_brewer()`, and `viridis` [@viridis], which we specify with `scale_fill_viridis()` and is particularly focused on color-blind palettes (@fig-usecolor). 
 
 ```{r}
 #| echo: true
@@ -485,8 +492,8 @@ RColorBrewerBrBG <-
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
   theme_minimal() +
-  labs(x = "Age-group of respondent",
-       y = "Number of respondents",
+  labs(x = "Age-group",
+       y = "Number",
        fill = "Voted for") + 
   scale_fill_brewer(palette = "Blues")
 
@@ -495,8 +502,8 @@ RColorBrewerSet2 <-
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
   theme_minimal() +
-  labs(x = "Age-group of respondent",
-       y = "Number of respondents",
+  labs(x = "Age-group",
+       y = "Number",
        fill = "Voted for") +
   scale_fill_brewer(palette = "Set1")
 
@@ -505,8 +512,8 @@ viridis <-
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
   theme_minimal() +
-  labs(x = "Age-group of respondent",
-       y = "Number of respondents",
+  labs(x = "Age-group",
+       y = "Number",
        fill = "Voted for") + 
   scale_fill_viridis(discrete = TRUE)
 
@@ -515,7 +522,7 @@ viridismagma <-
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
   theme_minimal() +
-  labs(x = "Age-group of respondent",
+  labs(x = "Age-group",
        y = "Number",
        fill = "Voted for") +
    scale_fill_viridis(discrete = TRUE, 
@@ -530,7 +537,7 @@ Many palettes are available through `RColorBrewer` and `viridis`. We can also bu
 
 ### Scatterplots
 
-We are often interested in the relationship between two variables. We can use scatterplots to show this. Unless there is a good reason to move to a different option, a scatterplot is almost always the best choice [@weissgerber2015beyond]. Some consider it the most versatile and useful graph option [@historyofdataviz, p. 121] To illustrate scatterplots, we use `WDI` [@WDI] to download some economic indicators from the World Bank, and in particular `WDIsearch()` to find the unique key that we need to pass to `WDI()` to facilitate the download.
+We are often interested in the relationship between two numeric or continuous variables. We can use scatterplots to show this. Unless there is a good reason to move to a different option, a scatterplot is almost always the best choice [@weissgerber2015beyond]. Some consider it the most versatile and useful graph option [@historyofdataviz, p. 121] To illustrate scatterplots, we use `WDI` [@WDI] to download some economic indicators from the World Bank, and in particular `WDIsearch()` to find the unique key that we need to pass to `WDI()` to facilitate the download.
 
 :::{.callout-note}
 ## Oh, you think we have good data on that!
@@ -654,7 +661,7 @@ Here we use 'color' instead of 'fill' because we are using dots rather than bars
 
 library(patchwork)
 
-RColorBrewerBrBG <-
+basis <-
   world_bank_data |>
   ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
   geom_point() +
@@ -662,36 +669,22 @@ RColorBrewerBrBG <-
   labs(x = "GDP growth",
        y = "Inflation",
        color = "Country") +
+  theme(legend.position="bottom")
+
+RColorBrewerBrBG <-
+  basis +
   scale_color_brewer(palette = "Blues")
 
 RColorBrewerSet2 <- 
-  world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
-  geom_point() +
-  theme_minimal() +
-  labs(x = "GDP growth",
-       y = "Inflation",
-       color = "Country") +
+  basis +
   scale_color_brewer(palette = "Set1")
 
 viridis <- 
-  world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
-  geom_point() +
-  theme_minimal() +
-  labs(x = "GDP growth",
-       y = "Inflation",
-       color = "Country") +
+  basis +
   scale_colour_viridis_d()
 
 viridismagma <- 
-  world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
-  geom_point() +
-  theme_minimal() +
-  labs(x = "GDP growth",
-       y = "Inflation",
-       color = "Country") +
+  basis +
   scale_colour_viridis_d(option = "magma")
 
 over <- RColorBrewerBrBG / 
@@ -747,7 +740,7 @@ world_bank_data |>
        caption = "Data source: World Bank.")
 ```
 
-A common use case for a scatterplot is to illustrate a relationship between two variables. It can be useful to add a line of best fit using `geom_smooth()` (@fig-scattorplottwo). By default, `geom_smooth()` will use locally estimated scatterplot smoothing (LOESS) for datasets with less than 1,000 observations, but we can specify the relationship using 'method', change the color with 'color' and add or remove standard errors with 'se'. A commonly used 'method' is `lm`, which computes and plots a simple linear regression line similar to using the `lm()` function [@citeR]. Using `geom_smooth()` adds a layer to the graph, and so it inherits aesthetics from `ggplot()`. For instance, that is why we initially have one line for each country in @fig-scattorplottwo. We could overwrite that by specifying a particular color, which we do in the third graph of @fig-scattorplottwo.
+A common use case for a scatterplot is to illustrate a relationship between two continuous variables. It can be useful to add a line of best fit using `geom_smooth()` (@fig-scattorplottwo). By default, `geom_smooth()` will use locally estimated scatterplot smoothing (LOESS) for datasets with less than 1,000 observations, but we can specify the relationship using 'method', change the color with 'color' and add or remove standard errors with 'se'. A commonly used 'method' is `lm`, which computes and plots a simple linear regression line similar to using the `lm()` function [@citeR]. Using `geom_smooth()` adds a layer to the graph, and so it inherits aesthetics from `ggplot()`. For instance, that is why we initially have one line for each country in @fig-scattorplottwo. We could overwrite that by specifying a particular color, which we do in the third graph of @fig-scattorplottwo.
 
 ```{r}
 #| fig-cap: "Relationship between inflation and GDP growth for Australia, Ethiopia, India, and the US"
@@ -909,25 +902,12 @@ world_bank_data |>
 
 ### Histograms
 
-A histogram is useful to show the shape of a continuous variable. They construct counts of the number of observations in different subsets of the support, called 'bins'. In @fig-hisogramone we examine the distribution of GDP in Ethiopia.
+A histogram is useful to show the shape of the distribution of a continuous variable. They construct counts of the number of observations in different subsets of the support, called 'bins'. In @fig-hisogramone we examine the distribution of GDP in Ethiopia, and again we can add a theme and labels.
 
 ```{r}
 #| fig-cap: "Distribution of GDP growth in Ethiopia (1960-2020)"
 #| label: fig-hisogramone
 #| message: false
-#| warning: false
-
-world_bank_data |> 
-  filter(country == "Ethiopia") |> 
-  ggplot(mapping = aes(x = gdp_growth)) +
-  geom_histogram()
-```
-
-And again we can add a theme and labels (@fig-hisogramtwo).
-
-```{r}
-#| fig-cap: "Distribution of GDP growth in Ethiopia (1960-2020)"
-#| label: fig-hisogramtwo
 #| warning: false
 
 world_bank_data |> 
@@ -1366,7 +1346,7 @@ modelsummary(list(first_model, second_model, third_model))
 ```
 
 
-We can adjust the number of significant digits (@tbl-twomodelstwo). This is a critical aspect of establishing credibility. It is certainly not the case that we should just blindly add as many significant digits as possible [@howes2022representing]. Instead we should think carefully about the data generating process that we have access to and adjust our significant digits appropriately.
+We can adjust the number of significant digits (@tbl-twomodelstwo). This is a critical aspect of establishing credibility. It is certainly not the case that we should just blindly add as many significant digits as possible [@howes2022representing]. Instead, we should think carefully about the data generating process that we have access to and adjust our significant digits appropriately.
 
 ```{r}
 #| label: tbl-twomodelstwo
@@ -1448,7 +1428,7 @@ ggplot() +
 ```
 
 
-As is often the case with R, there are many different ways to get started creating static maps. We have seen how they can be built using only `ggplot2`, but `ggmap` brings additional functionality [@KahleWickham2013].
+As is often the case with R, there are many ways to get started creating static maps. We have seen how they can be built using only `ggplot2`, but `ggmap` brings additional functionality [@KahleWickham2013].
 
 There are two essential components to a map: 
 
@@ -1473,7 +1453,7 @@ library(ggmap)
 bbox <- c(left = 148.95, bottom = -35.5, right = 149.3, top = -35.1)
 ```
 
-Once you have defined the bounding box, then the function `get_stamenmap()` will get the tiles in that area. The number of tiles that it needs to get depends on the zoom, and the type of tiles that it gets depends on the maptype. We have used a black-and-white type of map but the helpfile specifies others. At this point we can pass the tiles to `ggmap()` and it will plot the tiles. `get_stamenmap()` will be actively downloading these tiles, and so it needs an internet connection.
+Once you have defined the bounding box, then the function `get_stamenmap()` will get the tiles in that area. The number of tiles that it needs to get depends on the zoom, and the type of tiles that it gets depends on the type of map. We have used a black-and-white type of map but the helpfile specifies others. At this point we can pass the tiles to `ggmap()` and it will plot the tiles. `get_stamenmap()` will be actively downloading these tiles, and so it needs an internet connection.
 
 ```{r}
 #| warning: false
@@ -1501,7 +1481,7 @@ booths <-
 head(booths)
 ```
 
-This dataset is for the whole of Australia, but as we are just going to plot the area around Canberra we filter to that and only to booths that are geographic (the AEC has various options for people who are in hospital, or not able to get to a booth, etc, and these are still 'booths' in this dataset).
+This dataset is for the whole of Australia, but as we are just going to plot the area around Canberra, we filter to that and only to booths that are geographic (the AEC has various options for people who are in hospital, or not able to get to a booth, etc, and these are still 'booths' in this dataset).
 
 ```{r}
 #| warning: false
@@ -1749,7 +1729,7 @@ ggplot() +
 
 1. *(Plan)* Consider the following scenario: *Five friends - Ash, Jacki, Matt, Mike, and Rol - each measure the height of 20 of their friends. Each of the five use a slightly different approach to measurement and so make slightly different errors.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation with every variable independent of each other.
-3. *(Acquire)* Please describe a possible sources of such a dataset.
+3. *(Acquire)* Please describe a possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched using the data that you simulated.
 5. *(Communicate)* Please write two paragraphs about what you did.
 6. Assume `tidyverse` and `datasauRus` are installed and loaded. What would be the outcome of the following code?
@@ -1822,4 +1802,4 @@ Using Quarto, please create a graph using `ggplot2` and a map using `ggmap` and 
 
 Then, with regard the graph you created, please reflect on @vanderplas2020testing and add a few paragraphs about the different options that you considered that the graph more effective. (If you have not now got at least two pages about your graph you have likely written too little.)
 
-And finally, with regard to the map that you created, please reflect on the following quote from Heather Krause: 'maps only show people who aren't invisible to the makers' as well as Chapter 3 from @datafeminism2020 and add a few paragraphs related to this. (Again, if you have not now got at least two pages about your map you have likely written too little.)
+And finally, with regard to the map that you created, please reflect on the following quote from Heather Krause, founder of [We All Count](https://weallcount.com): 'maps only show people who aren't invisible to the makers' as well as Chapter 3 from @datafeminism2020 and add a few paragraphs related to this. (Again, if you have not now got at least two pages about your map you have likely written too little.)
