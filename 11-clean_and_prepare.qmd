@@ -61,13 +61,13 @@ In this chapter we put in place more-formal approaches for data cleaning and pre
 2. internal consistency; and
 3. external consistency.
 
-Coherence means that the values in the dataset are not obviously wrong. For instance, currencies should likely not have alphabetical values in them; names should likely not have numbers; and velocities should not be faster than the speed of light. Internal consistency means that we ensure the dataset is consistent with itself. For instance, if American spelling is being used in a book, then we would expect that American spelling is used throughout. External consistency means that the dataset is consistent with external sources. For instance, if our dataset purports to be about populations of cities in a country, then we would expect that they are consistent, at least roughly, with, say, those available relevant censuses.
+Coherence means that the values in the dataset are not obviously wrong. For instance, currencies should likely not have alphabetical values in them; names should likely not have numbers; and velocities should not be faster than the speed of light. Internal consistency means that we ensure the dataset is consistent with itself. For instance, if American spelling is being used in a book, then we would expect that American spelling is used throughout. In the context of a dataset, that might mean that constituent columns actually sum up to the total column. External consistency means that the dataset is consistent with outside sources. For instance, if our dataset purports to be about populations of cities in a country, then we would expect that they are consistent, at least roughly, with, say, those available relevant censuses.
 
-SpaceX controls their rockets using a cycle of either 10 or 50 Hertz (equivalent to 0.1 and 0.02 seconds, respectively). Each cycle inputs from sensors, such as temperatures and pressures, are read, processed, and used to write outputs, such as 'open or close a valve' [@martinpopper]. This cyclical process of small adjustments is what we use in data cleaning cleaning and preparation as well. Rather than trying to make everything perfect from the start, we get started, and make adjustments on an iterative basis in a way that reflects a Kaizen process, or one of continuous improvement.
+SpaceX, the US rocket company, controls their rockets using cycles of 10 or 50 Hertz (equivalent to 0.1 and 0.02 seconds, respectively). Each cycle inputs from sensors, such as temperatures and pressures, are read, processed, and used to write outputs, such as 'open or close a valve' [@martinpopper]. We use a similar iterative process of small adjustments when data cleaning and preparation as well. Rather than trying to make everything perfect from the start, we get started, and adjust on an iterative basis, making continuous improvements.
 
-To a large extent, the role of data cleaning and preparation is so great that the only people that we can trust understand their data, are those that who have cleaned it. And, paradoxically, often those that do the cleaning and preparation are often those that trust it the least. At some point in every data science workflow, those doing the modelling should get their hands dirty with data cleaning. To clean and prepare data is to make many decisions, some of which may have important effects on our results.
+To a large extent, the role of data cleaning and preparation is so great that the only people that we can trust understand their data, are those that who have cleaned it. And, paradoxically, often those that do the cleaning and preparation are often those that trust it the least. At some point in every data science workflow, those doing the modelling should get their hands dirty with data cleaning. To clean and prepare data is to make many decisions, some of which may have important effects on our results. For instance, @labelsiswrongs find the test sets of popular datasets in computer science contain, on average, around 3 per cent labelling errors and that this has the potential to result in incorrect model selection.
 
-For a long time, data cleaning and preparation was largely overlooked. We now realize that was a mistake. It has been difficult to trust results in disciplines that apply statistics. The reproducibility crisis, which started in psychology but has now extended to many other fields in the physical and social sciences, has brought to light issues such as p-value 'hacking', researcher degrees of freedom, file-drawer issues, and even data and results fabrication [@gelman2013garden]. Steps are now being put in place to address these. But, there has been relatively little focus on the data gathering, cleaning, and preparation aspects of applied statistics, despite evidence that decisions made during these steps greatly affect statistical results [@huntington2021influence]. In this chapter we focus on these issues.
+For a long time, data cleaning and preparation was largely overlooked. We now realize that was a mistake. It has been difficult to trust results in disciplines that apply statistics. The reproducibility crisis, which started in psychology but has now extended to many other fields in the physical and social sciences, has brought to light issues such as p-value 'hacking', researcher degrees of freedom, file-drawer issues, and even data and results fabrication [@gelman2013garden]. Steps are now being put in place to address these. But there has been relatively little focus on the data gathering, cleaning, and preparation aspects of applied statistics, despite evidence that decisions made during these steps greatly affect statistical results [@huntington2021influence]. In this chapter we focus on these issues.
 
 While the statistical practices that underpin data science are themselves correct and robust when applied to simulated datasets, data science is typically not conducted with these types of datasets. For instance, data scientists are interested in 'messy, unfiltered, and possibly unclean data---tainted by heteroskedasticity, complex dependence and missingness patterns---that until recently were avoided in polite conversations between more traditional statisticians' [@craiu2019hiring]. Big data does not resolve this issue, and may even exacerbate it, for instance 'without taking data quality into account, population inferences with Big Data are subject to a Big Data Paradox: the more the data, the surer we fool ourselves' [@meng2018statistical]. It is important to note that the issues that are found in much applied statistics research are not necessarily associated with researcher quality, or their biases [@silberzahn2018many]. Instead, they are a result of the environment within which data science is conducted. This chapter provides an approach and tools to explicitly think about this work.
 
@@ -131,25 +131,13 @@ simulated_tfr
 
 Our purpose, during data cleaning and preparation, is to then bring our raw data close to that plan. Ideally, we would plan so that the desired end-state of our dataset is 'tidy data', which was introduced in @sec-r-essentials. 
 
-
-<!-- 1. Each variable is a column. -->
-<!-- 2. Each observation is a row. -->
-<!-- 3. Each observational unit is a table. -->
-
-<!-- The following is a reminder of data in a tidy format. -->
-
-<!-- ```{r} -->
-<!-- tibble( -->
-<!--   name = c("Alfred", "Ben", "Chris", "Daniela", "Emma"), -->
-<!--   age_group = c("0-9", "10-19", "0-9", "0-9", "10-19"), -->
-<!--   response_time = c(0, 9, 3, 3, 8), -->
-<!--   ) -->
+At this stage it is important to begin to think about coherence and internal consistency. What are some of the features that we know these data should have?
 
 
 
 ### Start small
 
-Having thoroughly planned we can turn to the raw data that we are dealing with. Usually, regardless of what the raw data look like, we want to manipulate them into a rectangular dataset as quickly as possible. This allows us to use our family `dplyr` verbs and `tidyverse` approaches. For instance, let us assume that we are starting with some `.txt` file.
+Having thoroughly planned we can turn to the raw data that we are dealing with. Usually, regardless of what the raw data look like, we want to manipulate them into a rectangular dataset as quickly as possible. This allows us to use our familiar `dplyr` verbs and `tidyverse` approaches. For instance, let us assume that we are starting with some `.txt` file.
 
 The first step is to look for regularities in the dataset. We are wanting to end up with tabular data, which means that we need some type of delimiter to distinguish different columns. Ideally this might be features such as a comma, a semicolon, a tab, a double space, or a line break. 
 
@@ -217,7 +205,10 @@ Before changing the class and before going onto more bespoke issues, we should d
 
 - Commas and other punctuation, such as denomination signs in columns that should be numeric.
 - Inconsistent formatting of dates, such as 'December' and 'Dec' and '12'.
-- Unexpected characters, especially in unicode, which may not display consistently.
+- Unexpected characters, especially in Unicode, which may not display consistently. 
+
+Character encoding is needed for computers, which are based on strings of 0s and 1s, to be able to consider symbols such as alphabets. One source of particularly annoying data cleaning issues is different character encodings, particularly when dealing with foreign languages or odd characters. In general we want to use UTF-8, and you find the encoding of a character vector using `Encoding()`.
+
 
 Typically, we want to fix anything immediately obvious. For instance, remove commas that have been used to group digits in currencies. However, the situation will typically quickly become dire. What we need to do is to look at the membership of each group, and then triage what we will fix. We should probably make the decision of how to triage based on what is likely to have the largest impact. That usually means starting with the counts, sorting in descending order, and then dealing with each as they come.
 
@@ -322,6 +313,11 @@ expect_equal(unique(cleaned_data$names), "Patricia")
 ```
 
 If the tests pass then nothing happens, and if the tests fail then the script will stop.
+
+What do we test? It is a difficult problem. The engineers working on the software for the Apollo program initially considered writing tests to be 'busy work' [@digitalapollo]. But it is critical. Start with tests for coherence. These will typically be aspects such as the class of the variables, and then their content, for instance, if we were using a contemporary dataset then columns that are years could be tested to ensure that all elements have four digits and start with a '2'. @peterbaumgartnertesting describes this as tests on the schema. After that turn to checks of internal consistency. For instance, if you have a column for different responses, then check that the sum of those is equal to a total column. Finally, turn to tests for external consistency. Here we want to use external information to inform our tests. For instance, if we had a column of, say, NMR for Germany (this concept was introduced in @sec-fire-hose), then we could look at the estimates from, say, the WHO, and ensure our column is consist with that.
+
+We write tests throughout our scripts, rather than only right at the end. For instance, @peterbaumgartnertesting recommends using `stopifnot()` statements on as many intermediate steps as possible. For instance, when merging two datasets we could check that the column names in the datasets are unique, apart from the column/s to be used as the key. Or that the number of observations of each type is being carried through appropriately. And even that the dimensions of the dataset are not being unexpectedly changed.
+
 
 ### Iterate, generalize and update
 
@@ -1027,7 +1023,7 @@ Names give places meaning, and by ignoring existing names, we ignore what has co
 1) they need to be machine readable, and 
 2) they need to be human readable.
 
-Machine readable names is an easier standard to meet, but usually means avoiding spaces and special characters. A space can be replaced with a underscore. Usually, special characters should be removed because they can be inconsistent between different computers and languages. This is especially the case with slash and backslash, asterisk, and single and double quotation marks, none of which should, almost, ever be used in names. Names should also be unique within a dataset, and unique within a collection of datasets unless that particular column is being deliberately used as a key to join different datasets. This usually means that the domain is critical for effective names, and when working as part of a team this all gets much much difficult [@hermans2017peter].
+Machine readable names is an easier standard to meet, but usually means avoiding spaces and special characters. A space can be replaced with an underscore. Usually, special characters should be removed because they can be inconsistent between different computers and languages. This is especially the case with slash and backslash, asterisk, and single and double quotation marks, none of which should, almost, ever be used in names. Names should also be unique within a dataset, and unique within a collection of datasets unless that particular column is being deliberately used as a key to join different datasets. This usually means that the domain is critical for effective names, and when working as part of a team this all gets much difficult [@hermans2017peter].
 
 An especially useful function to use to get closer to machine readable names is `clean_names()` from `janitor` [@janitor]. This deals with those issues mentioned above as well as a few others.
 
