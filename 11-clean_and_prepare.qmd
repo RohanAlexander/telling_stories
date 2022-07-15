@@ -61,15 +61,15 @@ In this chapter we put in place more-formal approaches for data cleaning and pre
 2. internal consistency\index{internal consistency}; and
 3. external consistency\index{external consistency}.
 
-Plausibility\index{plausibility} means that the values in the dataset are not obviously wrong. For instance, with few exceptions, currencies should not have alphabetical values in them, names should not have numbers, and velocities should not be faster than the speed of light. Internal consistency\index{internal consistency} means the dataset does not contradict itself. For instance, that might mean that constituent columns actually do add up to be the same as a total column. External consistency\index{external consistency} means that the dataset does not, in general, contradict outside sources, and is deliberate when it does. For instance, if our dataset purports to be about populations of cities in a country, then we would expect that they are the same as, to a rough approximation, say, those available from relevant censuses on Wikipedia.
+Plausibility\index{plausibility} means that the values in the dataset are not obviously wrong. For instance, with few exceptions, currencies should not have alphabetical values in them, names should not have numbers, and velocities should not be faster than the speed of light. Internal consistency\index{internal consistency} means the dataset does not contradict itself. For instance, that might mean that constituent columns actually do add up to be the same as a total column. External consistency\index{external consistency} means that the dataset does not, in general, contradict outside sources, and is deliberate when it does. For instance, if our dataset purports to be about the population of cities, then we would expect that they are the same as, to a rough approximation, say, those available from relevant censuses on Wikipedia.
 
-SpaceX\index{SpaceX}, the US rocket company, uses cycles of 10 or 50 Hertz (equivalent to 0.1 and 0.02 seconds, respectively) to control their rockets. Each cycle, the inputs from sensors, such as temperature and pressure, are read, processed, and used to make a decision, such as whether to open a valve [@martinpopper]. We use a similar iterative approach of small adjustments for data cleaning and preparation\index{data cleaning and preparation}. Rather than trying to make everything perfect from the start, we get started, and adjust on an iterative basis---a process of small, continuous, improvements.
+SpaceX\index{SpaceX}, the US rocket company, uses cycles of 10 or 50 Hertz (equivalent to 0.1 and 0.02 seconds, respectively) to control their rockets. Each cycle, the inputs from sensors, such as temperature and pressure, are read, processed, and used to make a decision, such as whether to adjust some setting [@martinpopper]. We use a similar iterative approach of small adjustments for data cleaning and preparation\index{data cleaning and preparation}. Rather than trying to make everything perfect from the start, we get started, and iterate using a process of small, continuous, improvements.
 
-To a large extent, the role of data cleaning and preparation\index{data cleaning and preparation} is so great that the only people that understand a dataset, are those that who have cleaned it. Yet, the paradox of data cleaning is that often those that do the cleaning and preparation are those that have the least trust in the resulting dataset. At some point in every data science workflow, those doing the modelling should get their hands dirty with data cleaning. Even though few want to do it [@Sambasivan2021], it is a far more influential stage than modelling. To clean and prepare data is to make many decisions, some of which may have important effects on our results. For instance, @labelsiswrongs find the test sets of popular datasets in computer science contain, on average, labels that are wrong in around three per cent of cases. This has the potential to result in incorrect conclusions.
+To a large extent, the role of data cleaning and preparation\index{data cleaning and preparation} is so great that the only people that understand a dataset, are those that who have cleaned it. Yet, the paradox of data cleaning is that often those that do the cleaning and preparation are those that have the least trust in the resulting dataset. At some point in every data science workflow, those doing the modelling should get their hands dirty with data cleaning. Even though few want to do it [@Sambasivan2021], it is a far more influential stage than modelling. To clean and prepare data is to make many decisions, some of which may have important effects on our results. For instance, @labelsiswrongs find the test sets of some popular datasets in computer science contain, on average, labels that are wrong in around three per cent of cases. This has the potential to result in incorrect conclusions.
 
 For a long time, data cleaning and preparation\index{data cleaning and preparation} was largely overlooked. We now realize that was a mistake. It has been difficult to trust results in disciplines that apply statistics for some time. The reproducibility crisis, which started in psychology but has now extended to many other fields in the physical and social sciences, brought to light issues such as p-value 'hacking', researcher degrees of freedom, file-drawer issues, and even data and results fabrication [@gelman2013garden]. Steps are now being put in place to address these. But there has been relatively little focus on the data gathering, cleaning, and preparation aspects of applied statistics, despite evidence that decisions made during these steps greatly affect statistical results [@huntington2021influence]. In this chapter we focus on these issues.
 
-While the statistical practices that underpin data science are themselves correct and robust when applied to simulated datasets, data science is not typically conducted with these types of datasets. For instance, data scientists are interested in 'messy, unfiltered, and possibly unclean data---tainted by heteroskedasticity, complex dependence and missingness patterns---that until recently were avoided in polite conversations between more traditional statisticians' [@craiu2019hiring]. Big data does not resolve this issue, and may even exacerbate it. For instance, population inference based on larger amounts of poor-quality data will just lead to more confidently wrong conclusions [@meng2018statistical]. The problems that are found in much of applied statistics research are not necessarily associated with researcher quality, or their biases [@silberzahn2018many]. Instead, they are a result of the environment within which data science is conducted. This chapter provides an approach and tools to explicitly think about this work.
+While the statistical practices that underpin data science are themselves correct and robust when applied to simulated datasets, data science is not typically conducted with these types of datasets. For instance, data scientists are interested in 'messy, unfiltered, and possibly unclean data---tainted by heteroskedasticity, complex dependence and missingness patterns---that until recently were avoided in polite conversations between more traditional statisticians' [@craiu2019hiring]. Big data does not resolve this issue and may even exacerbate it. For instance, population inference based on larger amounts of poor-quality data will just lead to more confidently wrong conclusions [@meng2018statistical]. The problems that are found in much of applied statistics research are not necessarily associated with researcher quality, or their biases [@silberzahn2018many]. Instead, they are a result of the environment within which data science is conducted. This chapter provides an approach and tools to explicitly think about this work.
 
 @gelman2020most writing about the most important statistical ideas of the past 50 years say that each of them enabled new ways of thinking about data analysis and they brought into the tent of statistics, approaches that 'had been considered more a matter of taste or philosophy'. The focus on data cleaning and preparation in this chapter is analogous, insofar, as it represents a codification, or bringing inside the tent, of aspects that are typically, incorrectly, considered those of taste rather than core statistical concerns.
 
@@ -83,9 +83,9 @@ The workflow\index{workflow} for data cleaning and preparation\index{data cleani
 6. Generalize the execution.
 7. Update tests and documentation.
 
-We will need a variety of skills to be effective, but this is the very stuff of statistics. The approach needed is some combination of dogged and sensible. Perfect is very much the enemy of good enough when it comes to data cleaning. And to be specific, it is better to have 90 per cent of the data cleaned and prepared, and to start exploring that, before deciding whether it is worth the effort to clean and prepare the remaining 10 per cent. Because that remainder will likely take an awful lot of time and effort.
+We will need a variety of skills to be effective, but this is the very stuff of data science. The approach needed is some combination of dogged and sensible. Perfect is very much the enemy of good enough when it comes to data cleaning. And to be specific, it is better to have 90 per cent of the data cleaned and prepared, and to start exploring that, before deciding whether it is worth the effort to clean and prepare the remaining 10 per cent. Because that remainder will likely take an awful lot of time and effort.
 
-All data regardless of whether they were obtained from farming, gathering, or hunting, will have issues. It is critical that we have approaches that can deal with a variety of concerns, and more importantly, understand how it might affect our modelling [@van2005data]. To clean data is to analyze data. This is because the process forces us to make choices about what we value in our results [@thatrandyauperson].
+All data regardless of whether they were obtained from farming, gathering, or hunting, will have issues. It is critical that we have approaches that can deal with a variety of concerns, and more importantly, understand how they might affect our modelling [@van2005data]. To clean data is to analyze data. This is because the process forces us to make choices about what we value in our results [@thatrandyauperson].
 
 
 
@@ -102,15 +102,15 @@ Having locally saved the raw data we must maintain a copy of it in that state, a
 
 ### Begin with an end in mind
 
-Planning the endpoint forces us to begin with an end in mind, and is important for a variety of reasons. As with scraping data, introduced in @sec-gather-data, it helps us to be proactive about scope-creep. But with data cleaning it additionally forces us to really think about what we want the final dataset to look like. 
+Planning the endpoint forces us to begin with an end in mind and is important for a variety of reasons. As with scraping data, introduced in @sec-gather-data, it helps us to be proactive about scope-creep. But with data cleaning it additionally forces us to really think about what we want the final dataset to look like. 
 
-The first step is to sketch the dataset that we are interested in. The key features of the sketch will be aspects such as the names of the columns, their class, and the possible range of values. For instance, we might be interested in the populations of US states. So our sketch might look like @fig-sketchdataplan.
+The first step is to sketch the dataset that we are interested in. The key features of the sketch will be aspects such as the names of the columns, their class, and the possible range of values. For instance, we might be interested in the populations of US states. So, our sketch might look like @fig-sketchdataplan.
 
 ![Planned dataset of US states and their populations](figures/state_population_sketch.png){#fig-sketchdataplan width=40% fig-align="center"}
 
-In this case, the sketch forces us to decide that we want full names rather than abbreviations for the state names, and the population to be measured in millions. The process of sketching this endpoint has forced us to make decisions early on, and be clear about our desired endpoint.
+In this case, the sketch forces us to decide that we want full names rather than abbreviations for the state names, and the population to be measured in millions. The process of sketching this endpoint has forced us to make decisions early on and be clear about our desired endpoint.
 
-We then implement that using code to simulate data. Again, this process forces us to think about what reasonable values look like in our dataset because we are literally forced to decide which functions to use. We need to think carefully about the unique values of each variable. For instance, if the variable is meant to be 'gender' then values such as 'male', 'female', 'other', and 'unknown' may be expected, but a number such as '1,000' would likely be wrong. It also forces us to be explicit about names because we must assign the output of those functions to a variable. For instance, we could simulate some population data. 
+We then implement that using code to simulate data. Again, this process forces us to think about what reasonable values look like in our dataset because we are literally forced to decide which functions to use. We need to think carefully about the unique values of each variable. For instance, if the variable is meant to be 'gender' then unique values such as 'male', 'female', 'other', and 'unknown' may be expected, but a number such as '1,000' would likely be wrong. It also forces us to be explicit about names because we must assign the output of those functions to a variable. For instance, we could simulate some population data for the US states.
 
 ```{r}
 #| message: false
@@ -130,21 +130,21 @@ simulated_population <-
 simulated_population
 ```
 
-Our purpose, during data cleaning and preparation\index{data cleaning and preparation}, is to then bring our raw data close to that plan. Ideally, we would plan so that the desired endpoint of our dataset is 'tidy data'\index{tidy data}. This was introduced in @sec-r-essentials, but briefly, it means that:
+Our purpose, during data cleaning and preparation\index{data cleaning and preparation}, is to then bring our raw data close to that plan. Ideally, we would plan so that the desired endpoint of our dataset is 'tidy data'\index{tidy data}. This was introduced in @sec-r-essentials, but briefly, it means that [@r4ds; @wickham2014tidy, p. 4]:
 
-1. Each variable is in its own column. 
-2. Each observation is in its own row.
-3. Each value is in its own cell.
+1. each variable is in its own column;
+2. each observation is in its own row; and
+3. each value is in its own cell.
 
-At this stage it is important to begin to think about plausibility and internal consistency\index{internal consistency}. What are some of the features that we know these data should have? Note these down as you got through the process of simulating the dataset.
+At this stage it is important to begin to think about plausibility and internal consistency\index{internal consistency}. What are some of the features that we know these data should have? Note these down as you got through the process of simulating the dataset because we will draw on them to write tests.
 
 
 
 ### Start small
 
-Having thoroughly planned we can turn to the raw data that we are dealing with. Usually, regardless of what the raw data look like, we want to manipulate them into a rectangular dataset as quickly as possible. This allows us to use our familiar `tidyverse` approaches. For instance, let us assume that we are starting with a `.txt` file.
+Having thoroughly planned we can turn to the raw data that we are dealing with. Usually, regardless of what the raw data look like, we want to manipulate them into a rectangular dataset as quickly as possible. This allows us to use familiar `tidyverse` approaches. For instance, let us assume that we are starting with a `.txt` file.
 
-The first step is to look for regularities in the dataset. We want to end up with tabular data, which means that we need some type of delimiter to distinguish different columns. Ideally this might be features such as a comma, a semicolon, a tab, a double space, or a line break. For instance, here we would take advantage of the comma.
+The first step is to look for regularities in the dataset. We want to end up with tabular data, which means that we need some type of delimiter to distinguish different columns. Ideally this might be features such as a comma, a semicolon, a tab, a double space, or a line break. For instance, in the following case we would take advantage of the comma.
 
 ```
 Alabama, 5
@@ -154,7 +154,7 @@ Arkansas, 3
 California, 40
 ```
 
-In more challenging cases there may be some regular feature of the dataset that we can take advantage of. For instance, sometimes various text is repeated, as here with 'State is' and 'and population is'.
+In more challenging cases there may be some regular feature of the dataset that we can take advantage of. For instance, sometimes various text is repeated, as in the following case with 'State is' and 'and population is'.
 
 ```
 State is Alabama and population is 5 million.
@@ -164,15 +164,15 @@ State is Arkansas and population is 3 million.
 State is California and population is 40 million.
 ```
 
-In this case, although we do not have a traditional delimiter, we can use the regularity of 'State is' and 'and population is ' to get what we need. A more difficult case is when we do not have line breaks.
+In this case, although we do not have a traditional delimiter, we can use the regularity of 'State is' and 'and population is ' to get what we need. A more difficult case is when we do not have line breaks. This final case is illustrative of that.
 
 ```
 Alabama 5 Alaska 0.7 Arizona 7 Arkansas 3 California 40
 ```
 
-One way to approach this is to take advantage of the different classes and values that we are looking for. For instance, in this case, we know that we are after US states, so there are only 50 possible options, and we could use the presence of these as a delimiter. We could also use the fact that population is a number here, and so split based on a space followed by a number.
+One way to approach this is to take advantage of the different classes and values that we are looking for. For instance, in this case, we know that we are after US states, so there are only 50 possible options (setting D.C. to one side for the time being), and we could use the presence of these as a delimiter. We could also use the fact that population is a number, and so split based on a space followed by a number.
 
-We will now convert this last example into tidy data using `tidyr` [@citetidyr].
+We will now convert this final case into tidy data using `tidyr` [@citetidyr].
 
 ```{r}
 raw_data <-
@@ -209,7 +209,7 @@ Before changing the class and before going onto more bespoke issues, we should d
 - Unexpected character encoding, especially in Unicode, which may not display consistently. By way of background, character encoding is needed for computers, which are based on strings of 0s and 1s, to be able to consider symbols such as alphabets. One source of particularly annoying data cleaning issues is different character encoding, particularly when dealing with foreign languages or odd characters. In general, we use UTF-8. The encoding of a character vector can be found using `Encoding()`.
 
 
-Typically, we want to fix anything immediately obvious. For instance, remove commas that have been used to group digits in currencies. However, the situation will typically quickly become dire. What we need to do is to look at the unique values in each variable, and then triage what we will fix. We make the decision of how to triage based on what is likely to have the largest impact. That usually means starting with the counts, sorting in descending order, and then dealing with each as they come.
+Typically, we want to fix anything immediately obvious. For instance, we should remove commas that have been used to group digits in currencies. However, the situation will typically quickly become dire and feel overwhelming. What we need to do is to look at the unique values in each variable, and then triage what we will fix. We make the decision of how to triage based on what is likely to have the largest impact. That usually means starting with counts of the observations, sorting them in descending order, and then dealing with each as they come.
 
 When the tests of membership are passed, then finally we can change the class, and run all the tests again. We have adapted this idea from the software development approach of unit testing. Tests are crucial because they enable us to understand whether software (or in this case data) is fit for purpose [@buildingsoftwaretogether].
 
@@ -243,7 +243,7 @@ messy_dataset |>
   count(names, sort = TRUE)
 ```
 
-The most common unique observation is the correct one. The next one---'PatricIa'---looks like the 'i' has been incorrectly capitalized, and the one after that---'8atricia'---is distinguished by an '8' instead of a 'P'. Let us quickly fix these issues and then redo the count.
+The most common unique observation is the correct one. The next one---'PatricIa'---looks like the 'i' has been incorrectly capitalized, and the one after that---'8atricia'---is distinguished by an '8' instead of a 'P'. We can fix these issues with `str_replace_all()` and then redo the count.
 
 ```{r}
 messy_dataset_fix_I_8 <- 
@@ -256,7 +256,7 @@ messy_dataset_fix_I_8 |>
   count(names, sort = TRUE)
 ```
 
-Already this is much better and 60 per cent of the values are correct, compared with earlier where it was 30 per cent. There are two more obvious errors---'Ptricia' and 'Patncia'---with the first missing an 'a' and the second having an 'n' where the 'ri' should be. Again, we can quickly update and fix those.
+Already this is much better and 60 per cent of the values are correct, compared with earlier where it was 30 per cent. There are two more obvious errors---'Ptricia' and 'Patncia'---with the first missing an 'a' and the second having an 'n' where the 'ri' should be. Again, we can fix those.
 
 ```{r}
 messy_dataset_fix_a_n <- 
@@ -269,7 +269,7 @@ messy_dataset_fix_a_n |>
   count(names, sort = TRUE)
 ```
 
-We have achieved an 80 per cent fix with not too much effort. The two remaining issues are more subtle. The first has occurred because the 'i' has been incorrectly coded as a '1'. In some fonts this will show up, but in others it will be more difficult to see. This is a common issue, especially with OCR, and something to be aware of. The second is similarly subtle and occurs because of a trailing space. Trailing and leading spaces are another common issue and we can address them with `str_trim()`. After we fix these two remaining issues then we will have all entries corrected.
+We have achieved an 80 per cent outcome with not too much effort. The two remaining issues are more subtle. The first has occurred because the 'i' has been incorrectly coded as a '1'. In some fonts this will show up, but in others it will be more difficult to see. This is a common issue, especially with OCR, and something to be aware of. The second is similarly subtle and occurs because of a trailing space. Trailing and leading spaces are another common issue and we can address them with `str_trim()`. After we fix these two remaining issues then we will have all entries corrected.
 
 ```{r}
 cleaned_data <- 
@@ -277,8 +277,6 @@ cleaned_data <-
   mutate(names = str_replace_all(names, 'Patric1a', 'Patricia'),
          names = str_trim(names, side = c("right"))
          )
-
-rm(messy_dataset, messy_dataset_fix_I_8, messy_dataset_fix_a_n)
 
 cleaned_data |> 
   count(names, sort = TRUE)
@@ -317,11 +315,11 @@ expect_equal(class(cleaned_data$names), "character")
 expect_equal(unique(cleaned_data$names), "Patricia")
 ```
 
-If the tests pass then nothing happens, and if the tests fail then the script will stop.
+If the tests pass then nothing happens, but if the tests fail then the script will stop.
 
-What do we test? It is a difficult problem, and we detail a range of more-specific tests in the next section. But it is critical to test what we can. The engineers working on the software for the Apollo\index{Apollo} program in the 1960s initially considered writing tests to be 'busy work' [@digitalapollo, p. 170]. But they eventually came to realize that NASA would not have faith that software could be used to send men to the moon unless it was accompanied by a comprehensive suite of tests. And it is the same for data science. 
+What do we test? It is a difficult problem, and we detail a range of more-specific tests in the next section. But broadly we test what we have, against what we expect. The engineers working on the software for the Apollo\index{Apollo} program in the 1960s initially considered writing tests to be 'busy work' [@digitalapollo, p. 170]. But they eventually came to realize that NASA would not have faith that software could be used to send men to the moon unless it was accompanied by a comprehensive suite of tests.  And it is the same for data science. 
 
-Start with tests for plausibility\index{plausibility}. These will typically be aspects such as the class of the variables, and then their unique values. For instance, if we were using a recent dataset then columns that are years could be tested to ensure that all elements have four digits and start with a '2'. @peterbaumgartnertesting describes this as tests on the schema. After that turn to checks of internal consistency\index{internal consistency}. For instance, if you have a column for different responses, then check that the sum of those is equal to a total column. Finally, turn to tests for external consistency\index{external consistency}. Here we want to use external information to inform our tests. For instance, if we had a column of, say, NMR for Germany (this concept was introduced in @sec-fire-hose), then we could look at the estimates from, say, the WHO, and ensure our column is consist with that.
+Start with tests for plausibility\index{plausibility}. These will typically be aspects such as the class of the variables, and then their unique values. For instance, if we were using a recent dataset then columns that are years could be tested to ensure that all elements have four digits and start with a '2'. @peterbaumgartnertesting describes this as tests on the schema. After that turn to checks of internal consistency\index{internal consistency}. For instance, if there is a column for different responses, then check that the sum of those is equal to the total column. Finally, turn to tests for external consistency\index{external consistency}. Here we want to use outside information to inform our tests. For instance, if we had a column of, say, NMR for Germany (this concept was introduced in @sec-fire-hose), then we could look at the estimates from, say, the WHO, and ensure our NMR column is consist with these. Experienced analysts do this all in their head. This is great, but the issue is that it does not scale, can be faulty and inconsistent, and overloads reputation. We return to this issue in @sec-its-just-a-linear-model in the context of modelling. 
 
 We write tests throughout our code, rather than only right at the end. In particular using `stopifnot()` statements on as many intermediate steps as possible ensures that the dataset is being cleaned in a way that we expect. For instance, when merging two datasets we could check that the column names in the datasets are unique, apart from the column/s to be used as the key. Or that the number of observations of each type is being carried through appropriately. And even that the dimensions of the dataset are not being unexpectedly changed.
 
@@ -335,16 +333,14 @@ We could now iterate the plan. In this most recent case, we started with 10 entr
 
 ## Checking and testing
 
-Robert Caro\index{Robert Caro}, the biographer of Lyndon Johnson\index{Lyndon Johnson}, spent years tracking down everyone connected to the 36th President of the United States. Caro and his wife went so far as to live in Texas Hill Country for three years so that they could better understand where Johnson was from. When Caro heard that Johnson, as a senator, would run to the Senate from where he stayed in DC, he ran that route multiple times himself to try to understand why Johnson was running. Caro eventually understood it only when he ran the route as the sun was rising---just as Johnson had done; it turns out that the sun hits the Senate Rotunda in a particularly inspiring way [@caroonworking, p. 156]. This background work enabled him to uncover aspects that no one else knew. For instance, Johnson almost surely stole his first election win [@caroonworking, p. 116]. We need to understand our data to this same extent. We must turn every page, and go to every extreme.
+Robert Caro\index{Robert Caro}, the biographer of Lyndon Johnson\index{Lyndon Johnson} introduced in @sec-on-writing, spent years tracking down everyone connected to the 36th President of the United States. Caro and his wife went so far as to live in Texas Hill Country for three years so that they could better understand where Johnson was from. When Caro heard that Johnson, as a senator, would run to the Senate from where he stayed in D.C., he ran that route multiple times himself to try to understand why Johnson was running. Caro eventually understood it only when he ran the route as the sun was rising---just as Johnson had done; it turns out that the sun hits the Senate Rotunda in a particularly inspiring way [@caroonworking, p. 156]. This background work enabled him to uncover aspects that no one else knew. For instance, Johnson almost surely stole his first election win [@caroonworking, p. 116]. We need to understand our data to this same extent. We must turn every page, and go to every extreme.
 
 
 The idea of negative space is well established in design. It refers to that which surrounds the subject. Sometimes negative space is used as an effect, for instance the logo of FedEx, an American logistics company, has negative space between the E and x that creates an arrow. In a similar way, we want to be cognizant of the data that we have, and the data that we do not have [@citemyboy]. We are worried that the data that we do not have somehow has meaning, potentially even to the extent of changing our conclusions. When we are cleaning data, we are looking for anomalies. We are interested in values that are in there that should not be, but also the opposite situation---values that are missing that should not be. There are three tools that we use to identify these situations: graphs, counts, and tests.
 
 ### Graphs
 
-Graphs are an invaluable tool when cleaning data, because they show each point in the dataset, in relation to the other points. They are especially useful for identifying when a value does not belong. For instance, if a value is expected to be numerical, but it is still a character then it will not plot and a warning will be displayed.
-
-Graphs will be especially useful for numerical data, but are still useful for text and categorical data. Let us pretend that we have a situation where we are interested in a person's age, for some youth survey. We have the following data:
+Graphs are an invaluable tool when cleaning data, because they show each observation in the dataset, in relation to the other observations. They are especially useful for identifying when a value does not belong. For instance, if a value is expected to be numerical, but it is still a character then it will not plot and a warning will be displayed. Graphs will be especially useful for numerical data, but are still useful for text and categorical data. Let us pretend that we have a situation where we are interested in a person's age, for some youth survey. We have the following data:
 
 ```{r}
 #| label: fig-youth-survey
@@ -357,16 +353,19 @@ youth_survey_data <-
 
 youth_survey_data |> 
   ggplot(aes(y = ages, x = 0)) +
-  geom_point()
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Position",
+       y = "Simulated ages")
 ```
 
-@fig-youth-survey shows the unexpected value of 150. The most likely explanation is that the data were incorrectly entered, missing the decimal place, and should be 15.0. We can fix that, document it, and then redo the graph, so as to see that everything seems more reasonable now.
+@fig-youth-survey shows the unexpected value of 150. The most likely explanation is that the data were incorrectly entered, missing the decimal place, and should be 15.0. We could fix that, document it, and then redo the graph, which would show that everything seemed more plausible.
 
 ### Counts
 
-We want to focus on getting most of the data right. So we are interested in the counts of unique values. Hopefully a majority of the data are concentrated in the most common counts. But it can also be useful to invert it, and see what is especially uncommon. The extent to which we want to deal with these depends on what we need. Ultimately, each time we fix one we are getting very few additional observations, potentially even just one! Counts are especially useful with text or categorical data, but can be helpful with numerical data as well.
+We want to focus on getting most of the data right. So we are interested in the counts of unique values. Hopefully a majority of the data are concentrated in the most common counts. But it can also be useful to invert it, and see what is especially uncommon. The extent to which we want to deal with these depends on what we need. Ultimately, each time we fix one we are getting very few additional observations, potentially even just one. Counts are especially useful with text or categorical data, but can be helpful with numerical data as well.
 
-Let us see an example.
+Let us see an example of text data, each of which is meant to be 'Australia'.
 
 ```{r}
 australian_names_data <-
@@ -382,15 +381,13 @@ australian_names_data |>
   count(country, sort = TRUE)
 ```
 
-The use of this count clearly identifies where we should spend our time: changing 'Australie' to 'Australia' would almost double our amount of usable data.
+The use of this count clearly identifies where we should spend our time: changing 'Australie' to 'Australia' would almost double the amount of usable data.
 
 ### Tests
 
-Some things are so important that we require that the cleaned dataset have them. These are conditions that we should check. They would typically come out of experience, expert knowledge, or the planning and simulation stages. An example may be that there should be no negative numbers in an age column, and no ages above 140.
+Some things are so important that we require that the cleaned dataset have them. These are conditions that we should check. They would typically come out of experience, expert knowledge, or the planning and simulation stages. For instance, there should be no negative numbers in an age variable, and no ages above 140. For these we could specifically require that the condition is met. Another example is when doing cross-country analysis, then a list of country names that we know should be in our dataset would be useful. Our test would then be that there were: 1) values not in that list that were in our dataset, or, vice versa; 2) countries that we expected to be in there that were not.
 
-For these we could specifically require that the condition is met. Another example is when doing cross-country analysis, then a list of country names that we know should be in our dataset would be useful. Our test would then be that there were: 1) values not in that list that were in our dataset, or, vice versa; 2) countries that we expected to be in there that were not.
-
-To have a concrete example, let us consider if we were doing some analysis about the five largest counties in Kenya\index{Kenya}: 'Nairobi', 'Kiambu', 'Nakuru', 'Kakamega', 'Bungoma'. Let us create that array first.
+To have a concrete example, let us consider if we were doing some analysis about the five largest counties in Kenya\index{Kenya}. From talking with experts we find these are: 'Nairobi', 'Kiambu', 'Nakuru', 'Kakamega', and 'Bungoma'. Let us create that variable first.
 
 ```{r}
 correct_kenya_counties <- 
@@ -401,8 +398,7 @@ correct_kenya_counties <-
     'Bungoma')
 ```
 
-
-We begin with the following dataset.
+We have the following dataset, which contains errors.
 
 ```{r}
 top_five_kenya <- 
@@ -415,7 +411,7 @@ top_five_kenya |>
   count(county, sort = TRUE)
 ```
 
-Based on the count we know that we have to fix some of them. There are two with numbers that are obvious fixes.
+Based on the count we know that we have to fix some of them. There are two with numbers in the names.
 
 ```{r}
 top_five_kenya_fixed_1_8 <- 
@@ -428,29 +424,32 @@ top_five_kenya_fixed_1_8 |>
   count(county, sort = TRUE)
 ```
 
-At this point we can compare this with our known use our check conditions to decide whether we are finished or not.
+At this point we can compare this with our known correct variable. We check both ways i.e. is there anything in the correct variable not in our dataset, and is there anything in the dataset not in our correct variable. We use our check conditions to decide whether we are finished or not.
 
 ```{r}
 top_five_kenya_fixed_1_8$county |> unique()
 
-if(all(top_five_kenya_fixed_1_8$county |> unique() %in% correct_kenya_counties)) {
+if(all(top_five_kenya_fixed_1_8$county |> 
+       unique() %in% correct_kenya_counties)) {
   "The cleaned counties match the expected countries"
 } else {
   "Not all of the counties have been cleaned completely"
 }
-if(all(correct_kenya_counties %in% top_five_kenya_fixed_1_8$county |> unique()) ) {
+if(all(correct_kenya_counties %in% top_five_kenya_fixed_1_8$county |> 
+       unique()) ) {
   "The expected countries are in the cleaned counties"
 } else {
   "Not all the expected countries are in the cleaned counties"
 }
 ```
 
-And so it is clear that we still have cleaning to do because not all the counties match what we were expecting. We may also find similar conditions from experts and those with experience in the particular field.
+And so it is clear that we still have cleaning to do because not all the counties match what we were expecting.
 
 We will talk about explicit tests for class and dates, given their outsized importance, and how common it is for them to go wrong. But other aspects to explicitly consider testing include:
 
-- Variables of monetary values should be tested for reasonable bounds given the situation. In some cases negative values will not be possible, whereas in other some top bound can be placed. They should be numeric. They should not have commas or other separators. They should not contain symbols such as a currency sign.
-- Variables of population values should likely not be negative. Populations of cities should likely be somewhere between 100,000 and 50,000,000.
+- Variables of monetary values should be tested for reasonable bounds given the situation. In some cases negative values will not be possible. Sometimes a top bound can be identified. Monetary variables should be numeric. They should not have commas or other separators. They should not contain symbols such as a currency signs or semicolons.
+- Variables of population values should likely not be negative. Populations of cities should likely be somewhere between 100,000 and 50,000,000. They again should be numeric, and contain only numbers, no symbols.
+- Names should be character variables. They likely do not contain numbers. They may contain some limited set of symbols and this would be context specific. 
 
 More generally, work with experts and draw on prior knowledge to work out some reasonable features for the variables of interest and then implement these.
 
@@ -469,10 +468,10 @@ More generally, work with experts and draw on prior knowledge to work out some r
 
 ### Class
 
-It is sometimes said that Americans are obsessed with money, while the English are obsessed with class. In the case of data cleaning and preparation we need to be British. We introduced class in @sec-r-essentials and here we focus on 'numeric', 'character', and 'factor'. Explicit checks of the class of variables are essential. Accidentally assigning the wrong class to a variable can have a large effect on subsequent analysis. In particular:
+It is sometimes said that Americans are obsessed with money, while the English are obsessed with class. In the case of data cleaning and preparation we need to be English. We introduced class in @sec-r-essentials and here we focus on 'numeric', 'character', and 'factor'. Explicit checks of the class of variables are essential. Accidentally assigning the wrong class to a variable can have a large effect on subsequent analysis. In particular:
 
 - check whether some value should be a number or a factor; and 
-- check that values are actually numbers not characters
+- check that values are numbers not characters.
 
 To understand why it is important to be clear about whether a value is a number or a factor, consider the following situation:
 
@@ -485,7 +484,7 @@ simulated_class_data <-
          )
 ```
 
-Let us start with 'group' as an integer and look at a logistic regression, without worrying too much about the details which we cover in @sec-its-just-a-linear-model. We can then try it as a factor. The results are contained in @tbl-effect-of-class. The interpretation of the variable is completely different.
+Let us start with 'group' as an integer and use logistic regression, which we cover in more detail in @sec-its-just-a-linear-model. We can then try it as a factor. @tbl-effect-of-class clearly shows how different the results are and highlights the absolute necessity of getting the class of variables used in regression right. The interpretation of the variable is completely different.
 
 ```{r}
 #| label: tbl-effect-of-class
@@ -494,8 +493,10 @@ Let us start with 'group' as an integer and look at a logistic regression, witho
 library(modelsummary)
 
 models <- list(
-  "Group as integer"= lm(response~group_as_integer, data = simulated_class_data),
-  "Group as factor"= lm(response~group_as_factor, data = simulated_class_data)
+  "Group as integer"= lm(response~group_as_integer, 
+                         data = simulated_class_data),
+  "Group as factor"= lm(response~group_as_factor, 
+                        data = simulated_class_data)
 )
 
 modelsummary(models)
@@ -505,9 +506,9 @@ modelsummary(models)
 
 ### Dates
 
-A shibboleth for whether someone has worked with dates before is their reaction when you tell them you are going to be working with dates. If they immediately involuntarily shudder and then share a horror story, then they have worked with dates before, and any other reaction means they have not. 
+A shibboleth for whether someone has worked with dates before is their reaction when you tell them you are going to be working with dates. If they immediately involuntarily shudder and share a horror story, then they have worked with dates before, and any other reaction means they have not. 
 
-Extensive checking of dates is critical. Ideally, we would like dates to be in the following format: YYYY-MM-DD. There are differences of opinion as to what is an appropriate date format in the broader world, and reasonable people can differ on whether 1 July 2022 or July 1, 2022, is better, but YYYY-MM-DD is the format that is generally most appropriate for data.
+Extensive checking of dates is critical. Ideally, we would like dates to be in the following format: YYYY-MM-DD. There are differences of opinion as to what is an appropriate date format in the broader world, and reasonable people can differ on whether 1 July 2022 or July 1, 2022, is better, but YYYY-MM-DD is the only acceptable format for datasets.
 
 A few tests that could be useful include:
 
@@ -516,7 +517,7 @@ A few tests that could be useful include:
 - Check whether the dates are in order in the dataset.
 - Check that the years are complete and appropriate to the analysis period.
 
-In @sec-fire-hose we introduced a dataset on homeless shelter usage in Toronto in 2021 using `opendatatoronto` [@citeSharla]. Here we use that same dataset from earlier years to illustrate one process for checking dates. We first need to download the data.^[If this does not work, then the City of Toronto government may have moved the datasets. Instead use: `earlier_toronto_shelters <- read_csv('https://www.tellingstorieswithdata.com/inputs/data/earlier_toronto_shelters.csv', show_col_types = FALSE)`.]
+In @sec-fire-hose we introduced a dataset of homeless shelter usage in Toronto in 2021 using `opendatatoronto` [@citeSharla]. Here we use that same dataset, but for 2017 to 2020, to illustrate one process for checking dates. We first need to download the data.^[If this does not work, then the City of Toronto government may have moved the datasets. Instead use: `earlier_toronto_shelters <- read_csv('https://www.tellingstorieswithdata.com/inputs/data/earlier_toronto_shelters.csv', show_col_types = FALSE)`.]
 
 ```{r}
 #| eval: false
@@ -525,7 +526,6 @@ In @sec-fire-hose we introduced a dataset on homeless shelter usage in Toronto i
 library(opendatatoronto)
 library(tidyverse)
 
-# Get the data
 earlier_toronto_shelters <-
   search_packages("Daily Shelter Occupancy") |>
   list_package_resources() |>
@@ -594,7 +594,7 @@ earlier_toronto_shelters_clean_years <-
          -program_name, -shelter_address, -shelter_city)
 ```
 
-The main issue with the dataset will be the dates. For 2017-2019 (inclusive) they appear to be year-month-day, but for 2020 they seem to be month-day-year. The separator is also inconsistent, changing from '-' to '/'. We first fix that, check our guesses, and then get to the main issue. When working with dates, we draw heavily on `lubridate` [@GrolemundWickham2011].
+The main issue with this dataset will be the dates. For 2017-2019 (inclusive) we will find appear to be year-month-day, but for 2020 they seem to be month-day-year. The separator is also inconsistent, changing from '-' to '/'. We first fix that, check our guesses, and then get to a more pernicious and subtle issue. When working with dates, we draw heavily on `lubridate` [@GrolemundWickham2011].
 
 ```{r}
 #| warning: false
@@ -614,8 +614,8 @@ earlier_toronto_shelters_test_date <-
   ) |>
   # Parsing differs between 2017-2019 and 2020.
   mutate(date = case_when(
-    file == "2020" ~ mdy(occupancy_date, quiet = TRUE),
-    file %in% c("2017", "2018", "2019") ~ ymd(occupancy_date, quiet = TRUE),
+    file == 2020 ~ mdy(occupancy_date, quiet = TRUE),
+    file %in% c(2017, 2018, 2019) ~ ymd(occupancy_date, quiet = TRUE),
     TRUE ~ NA_Date_
   )) |>
   rename(year_from_file = file) |>
@@ -693,7 +693,7 @@ earlier_toronto_shelters_test_date |>
              ncol = 2)
 ```
 
-It is increasingly clear that our guess that the order was swapped around for 2020 seems right. We would be especially concerned if the distribution of the days was not roughly uniform, or if we have values other than [1-12] in the month.
+It is increasingly clear that our guess that the order was swapped around for 2020 seems right. We would be especially concerned if the distribution of the days was not roughly uniform, or if we had values other than [1-12] in the month.
 
 ```{r}
 #| eval: true
@@ -736,7 +736,7 @@ toronto_shelters_by_day <-
             usage = occupancy / capacity, .groups = 'drop')
 ```
 
-We are interested in availability of shelter spots in Toronto for each day (@fig-plotoccupancy-1). And we can focus on 2017, as that is where the biggest issue is and facet by month (@fig-plotoccupancy-2).
+We are interested in the availability of shelter spots in Toronto for each day (@fig-plotoccupancy-1). And we can focus on 2017, as that is where the biggest issue is and facet by month (@fig-plotoccupancy-2).
 
 ```{r}
 #| label: fig-plotoccupancy
@@ -819,7 +819,7 @@ toronto_shelters_by_day |>
 <!--   theme_minimal() -->
 <!-- ``` -->
 
-It is clear there is an issue with the first twelve days of the month. We noted that when we look at the data it is a bit odd in that it is not in order. We can take another look at that by going back to the data as it was given to us (as opposed to the data by day that we have been using). Although there is no rule that says the dataset must be in order of the date, if it were, then all the points would lie on the diagonal line. We have a lot of deviation from that. To get a sense of what we are expecting let us look at all four years (@fig-sheltersdatebyrow).
+It is clear there is an issue with the first twelve days of the month. We noted that when we look at the data it is a bit odd that it is not in order. We can take another look at that by going back to the data as it was given to us (as opposed to the counts by day that we have been using). Although there is no rule that says the dataset must be in order of the date, if it were, then all the points would lie on the diagonal line. We have a lot of deviation from that. To get a sense of what we are expecting let us look at all four years (@fig-sheltersdatebyrow).
 
 ```{r}
 #| label: fig-sheltersdatebyrow
@@ -934,21 +934,21 @@ earlier_toronto_shelters_2017_flipped |>
 
 Names matter. The land on which much of this book was written is today named Canada, but for a long time was known as Turtle Island. Similarly, there is a big rock in the center of Australia. For a long time, it was called Uluru, then it was known as Ayers Rock. Today it has a dual name that combines both. And in parts of the US South, including signage surrounding the South Carolina State House, the US Civil War is referred to as the War of Northern Aggression. In these examples, the name that is used conveys information, not only about the user, but about the circumstances. Even the British Royal Family recognize the power of names. In 1917 they changed from the House of Saxe-Coburg and Gotha to the House of Windsor. It was felt that the former was too Germanic given World War I was ongoing. Names matter in everyday life. And they matter in our code too.
 
-Names impart meaning [@kimmerer2013 p. 34]. By ignoring existing names, we ignore what has come before us. The importance of names, and of how existing relationships were ignored by re-naming, was clear in those cases mentioned above, but we see it in data science as well. We need to be careful when we name our datasets, variables, and functions. @tukey1962future essentially defined what we today call data science, but it was popularized by folks in computer science in the late 2000s who ignored, either deliberately or through ignorance, what came before them. With that came the renaming of concepts that were well-established in the fields that computer science had expanded into. For instance, the use of binary variables in regression, sometimes called 'dummy variables', is often called one-hot encoding in computer science. The social sciences went through a similar experience, starting in the 1980s, with economics expanding in a similarly (and self-described) imperialistic way [@lazear2000economic]. The social sciences now recognize the cost of this, and data science should try to avoid it. No area of study is ever actually without existing claims. And recognizing, adopting, and using existing names and practices is important.
+Names impart meaning [@kimmerer2013 p. 34]. By ignoring existing names, we ignore what has come before us. The importance of names, and of how existing relationships were ignored by re-naming, was clear in those cases mentioned above, but we see it in data science as well. We need to be careful when we name our datasets, variables, and functions, even our statistical methods! @tukey1962future essentially defined what we today call data science, but it was popularized by folks in computer science in the late 2000s who ignored, either deliberately or through ignorance, what came before them. With that came the renaming of concepts that were well-established in the fields that computer science had expanded into. For instance, the use of binary variables in regression, sometimes called 'dummy variables', is often called one-hot encoding in computer science. The social sciences went through a similar experience, starting in the 1980s, with economics expanding in a similarly (and self-described) imperialistic way [@lazear2000economic]. The social sciences now recognize the cost of this, and data science should try to avoid it. No area of study is ever actually without existing claims. And recognizing, adopting, and using existing names and practices is important.
 
-Names are critical and worthy of special attention because:
+Names are critical and worthy of special attention because [@hermans2021programmer]:
 
 1) they help document our code as they are, by definition, contained in the code; 
 2) they make-up a large proportion of any script; 
 3) they are referred to a lot by others; and 
-4) they help the reader understand what is happening in the code [@hermans2021programmer]. 
+4) they help the reader understand what is happening in the code.
 
 In addition to respecting the nature of the data, names need to satisfy two additional considerations: 
 
 1) they need to be machine readable, and 
 2) they need to be human readable.
 
-Machine readable names is an easier standard to meet, but usually means avoiding spaces and special characters. A space can be replaced with an underscore. For instance, we prefer 'my_data' to 'my data'. Avoid spaces enables tab-completion which makes us more efficient. It also helps with reproducibility because spaces are considered differently by different operating systems.
+Machine readable names is an easier standard to meet, but usually means avoiding spaces and special characters. A space can be replaced with an underscore. For instance, we prefer 'my_data' to 'my data'. Avoiding spaces enables tab-completion which makes us more efficient. It also helps with reproducibility because spaces are considered differently by different operating systems.
 
 Usually, special characters should be removed because they can be inconsistent between different computers and languages. This is especially the case with slash and backslash, asterisk, and single and double quotation marks, none of which should, almost, ever be used in names. 
 
@@ -976,7 +976,7 @@ some_bad_names
 bad_names_made_better
 ```
 
-Human readable names require an additional layer. For instance, following @jsfcodingstandards [p. 25], we should avoid names that only differ by the use of the letter 'O', instead of the number '0' or the letter 'D'. Similarly, 'S' with '5'.  We need to consider other cultures and how they may interpret some of the names that we are using. We also need to consider different experience levels that subsequent users of the dataset may have. This is both in terms of experience with data science, but also experience with similar datasets. For instance, a column called 'flag' is often used to signal that a column contains data that needs to be followed up with or treated carefully in some way. An experienced analyst will know this, but a beginner will not. Try to use meaningful names wherever possible [@lin2020ten]. It has been found that shorter names may take longer to comprehend [@shorternamestakelonger], and so it is often useful to avoid uncommon abbreviations where possible.
+'Programs must be written for people to read, and only incidentally for machines to execute' [@abelson1996structure]. In the same way that we emphasized in @sec-on-writing that we write papers for the reader, here we emphasize that we write code for the reader. Human readable names require an additional layer, and extensively more consideration than machine readable ones. For instance, following @jsfcodingstandards [p. 25], we should avoid names that only differ by the use of the letter 'O', instead of the number '0' or the letter 'D'. Similarly, 'S' with '5'.  We need to consider other cultures and how they may interpret some of the names that we are using. We also need to consider different experience levels that subsequent users of the dataset may have. This is both in terms of experience with data science, but also experience with similar datasets. For instance, a column called 'flag' is often used to signal that a column contains data that needs to be followed up with or treated carefully in some way. An experienced analyst will know this, but a beginner will not. Try to use meaningful names wherever possible [@lin2020ten]. It has been found that shorter names may take longer to comprehend [@shorternamestakelonger], and so it is often useful to avoid uncommon abbreviations where possible.
 
 @jennybryanonnames additionally recommends that file names, in particular, should consider the default ordering that a file manager will impose. This might mean adding prefixes such as '00-', '01-', etc to filenames, which might involve left-padding with zeros depending on the number of files. Critically it means using ISO 8601 for dates, which means that 2 December 2022 would be written '2022-12-02'. The reason for using such file names is to provide information to other people about the order of the files.
 
@@ -995,7 +995,9 @@ never_use_partial_matching$my
 
 This behavior is not possible within the `tidyverse`, for instance if `data.frame` were replaced with `tibble` in the above code. Partial matching should almost never be used. It makes it more difficult to understand code after a break, and for others to come to it fresh.
 
-R, Python, and many of the other languages that are commonly used for data science are dynamically typed, as opposed to static typed. This means that class can be defined independently of declaring a variable. One interesting area of research is going partially toward that by including class in the name. Best practice is an area of open research, but @columnnamesascontracts advises using column names as contracts, through establishing a controlled vocabulary for column names. In this way, we would define a set of words that we can use in column names. In the controlled vocabulary of @columnnamesascontracts a column could start with an abbreviation for its class, then something specific to what it pertains to, and then various details. 
+R, Python, and many of the other languages that are commonly used for data science are dynamically typed, as opposed to static typed. This means that class can be defined independently of declaring a variable. One interesting area of research is going partially toward that by including class in the name. In computer science, a variant of this is known as Hungarian notation and extensively used at Microsoft for Word and Excel [@hermans2021programmer, p. 74]. While Hungarian notation fell out of favor in computer science, in data science it may bring considerable benefits, and best practice is an area of open research
+
+@columnnamesascontracts advises using column names as contracts, through establishing a controlled vocabulary for column names. In this way, we would define a set of words that we can use in column names. In the controlled vocabulary of @columnnamesascontracts a column could start with an abbreviation for its class, then something specific to what it pertains to, and then various details. 
 
 For instance, we could consider column names of 'age' and 'sex'. Following @columnnamesascontracts we may change these to be more informative of the class and other information.
 
@@ -1022,7 +1024,7 @@ riederer_names
 
 ## 1996 Tanzanian DHS
 
-As introduced in  @sec-gather-data, the Demographic and Health Surveys play an important role in gathering data in areas where we may not have other datasets. Here we will clean and prepare a DHS table about household populations in Tanzania in 1996.
+As introduced in @sec-gather-data, the Demographic and Health Surveys play an important role in gathering data in areas where we may not have other datasets. Here we will clean and prepare a DHS table about household populations in Tanzania in 1996.
 
 We begin by downloading the data.^[If the DHS link breaks then replace their URL with: https://www.tellingstorieswithdata.com/inputs/pdfs/1996_Tanzania_DHS.pdf.] 
 
@@ -1031,9 +1033,9 @@ We begin by downloading the data.^[If the DHS link breaks then replace their URL
 #| include: true
 
 download.file(
-  "https://dhsprogram.com/pubs/pdf/FR83/FR83.pdf", 
-  "1996_Tanzania_DHS.pdf",
-  mode="wb")
+  url = "https://dhsprogram.com/pubs/pdf/FR83/FR83.pdf", 
+  destfile = "1996_Tanzania_DHS.pdf",
+  mode = "wb")
 ```
 
 When we have a PDF and want to read the content into R, then `pdf_text()` from `pdftools` [@pdftools] is useful. It works well for many recently produced PDFs because the content is text which it can extract. But if the PDF is an image, then `pdf_text()` will not work. Instead, the PDF will first need to go through OCR, which was introduced in @sec-gather-data.
@@ -1066,6 +1068,7 @@ We use `stri_split_lines()` from `stringi` [@stringi] to focus on that particula
 ```{r}
 library(stringi)
 
+# Based on Bob Rudis: https://stackoverflow.com/a/47793617
 tanzania_dhs_page_33 <- stri_split_lines(tanzania_dhs[[33]])[[1]] 
 ```
 
@@ -1081,13 +1084,13 @@ tanzania_dhs_raw <- tibble(all = tanzania_dhs_page_33_only_data)
 tanzania_dhs_raw
 ```
 
-All the columns have been collapsed into one, so we need to separate them. We will separate them based on the existence of a space, which means we first need to change 'Age group' to 'Age-group'.
+All the columns have been collapsed into one, so we need to separate them. We will do this based on the existence of a space, which means we first need to change 'Age group' to 'Age-group' because we do not want that separated.
 
 ```{r}
 # Separate columns
 tanzania_dhs_separated <-
   tanzania_dhs_raw |>
-  mutate(all = str_squish(all)) |> # Any space more than two spaces is reduced
+  mutate(all = str_squish(all)) |>
   mutate(all = str_replace(all, "Age group", "Age-group")) |>
   separate(
     col = all,
@@ -1112,7 +1115,7 @@ tanzania_dhs_separated <-
 tanzania_dhs_separated
 ```
 
-Now we need to clean-up the rows and columns. One helpful approach to work out what we need to remove, is to initially get rid of everything that we know we want. Whatever is left is then a candidate for being removed. In this case we know that we want the columns to contain numbers.
+Now we need to clean-up the rows and columns. One helpful approach to work out what we need to remove, is to look at what is left if we temporarily remove everything that we know we want. Whatever is left is then a candidate for actually being removed. In this case we know that we want the columns to contain numbers.
 
 ```{r}
 tanzania_dhs_separated |>
@@ -1127,8 +1130,8 @@ tanzania_dhs_cleaned <-
   tanzania_dhs_separated |>
   slice(6:22, 24, 25) |>
   mutate(
-    across(everything(), ~ str_replace_all(., ",", ".")),
-    across(everything(), ~ str_replace_all(., ";", "."))
+    across(everything(), ~str_replace_all(., ",", ".")),
+    across(everything(), ~str_replace_all(., ";", "."))
     ) |>
   mutate(
     age_group = str_replace(age_group, "20-~", "20-24"),
@@ -1148,11 +1151,11 @@ tanzania_dhs_cleaned
 
 
 
-## 2019 Kenyan census
+## 2019 Kenyan Census
 
 ### Gather and clean data
 
-To make this all clearer, let us gather, clean, and prepare some data from the 2019 Kenyan\index{Kenya} census. The distribution of population by age, sex, and administrative unit from the 2019 Kenyan census can be downloaded [here](https://www.knbs.or.ke/?wpdmpro=2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units). While this format as a PDF makes it easy to look up a particular result, it is not overly useful if we want to model the data. In order to be able to do that, we need to convert a PDF of Kenyan census results of counts, by age and sex, by county and sub-county, into a tidy dataset that can be analyzed. We use `janitor` [@janitor], `pdftools` [@pdftools], `tidyverse` [@tidyverse], and `stringi` [@stringi].
+Finally, let us consider an extensive example and gather, clean, and prepare some data from the 2019 Kenyan\index{Kenya} census. The distribution of population by age, sex, and administrative unit from the 2019 Kenyan census can be downloaded [here](https://www.knbs.or.ke/?wpdmpro=2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units). While this format as a PDF makes it easy to look up a particular result, it is not overly useful if we want to model the data. In order to be able to do that, we need to convert a PDF of Kenyan census results of counts, by age and sex, by county and sub-county, into a tidy dataset that can be analyzed. We use `janitor` [@janitor], `pdftools` [@pdftools], `purrr` [@citepurrr], `tidyverse` [@tidyverse], and `stringi` [@stringi].
 
 ```{r}
 #| message: false
@@ -1171,13 +1174,19 @@ We first need to download and read in the PDF of the 2019 Kenyan census.^[If the
 #| eval: false
 #| include: true
 
+census_url <- 
+  paste0(
+    "https://www.knbs.or.ke/download/2019-kenya-population-and-housing",
+    "-census-volume-iii-distribution-of-population-by-age-sex-and-",
+    "administrative-units/?wpdmdl=5729&refresh=620561f1ce3ad1644519921")
+
 download.file(
-  "https://www.knbs.or.ke/download/2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units/?wpdmdl=5729&refresh=620561f1ce3ad1644519921", 
-  "2019_Kenya_census.pdf",
-  mode="wb")
+  url = census_url, 
+  destfile = "2019_Kenya_census.pdf",
+  mode = "wb")
 ```
 
-When we have a PDF and want to read the content into R, then `pdf_text()` from `pdftools` [@pdftools] is useful. It works well for many recently produced PDFs because the content is text which it can extract. But if the PDF is an image, then `pdf_text()` will not work. Instead, the PDF will first need to go through OCR, which was introduced in @sec-gather-data.
+We can use `pdf_text()` from `pdftools` [@pdftools] again here.
 
 ```{r}
 #| eval: false
@@ -1195,49 +1204,49 @@ kenya_census <- pdf_text("2019_Kenya_census.pdf")
 kenya_census <- pdf_text("inputs/pdfs/2019_Kenya_census.pdf")
 ```
 
-We can see an example page of the PDF of the 2019 Kenyan census (@fig-examplekenyancensuspage).
+In this example we will need to parse many pages, but we can see an example page of the PDF of the 2019 Kenyan census (@fig-examplekenyancensuspage).
 
 ![Example page from the 2019 Kenyan census](figures/2020-04-10-screenshot-of-census.png){#fig-examplekenyancensuspage width=95% fig-align="center"}
 
 #### Make rectangular
 
-The first challenge is to get the dataset into a format that we can more easily manipulate. We will consider each page of the PDF and extract the relevant parts. To do this, we first write a function, and then apply it to each page. 
+In the Tanzanian example, we were interested in only one page, so we made our modifications directly to that page. Here we want to consider many pages, so we instead write a function, as introduced in @sec-r-essentials, and then apply it to many pages. The first challenge is to get the dataset into a format that we can more easily manipulate. We will consider each page of the PDF and extract the relevant parts. To do this, we first write a function, and then apply it to each page. 
 
 ```{r}
-# The function is going to take an input of a page
+# The function is going to take an input of a page number
 get_data <- function(i){
-  # Just look at the page of interest
-  # Based on Bob Rudis: https://stackoverflow.com/a/47793617
+  # Focus on the page of interest
   just_page_i <- stri_split_lines(kenya_census[[i]])[[1]] 
   
+  # Remove blank lines
   just_page_i <- just_page_i[just_page_i != ""]
   
-  # Grab the name of the location
+  # Get and format the location
   area <- just_page_i[3] |> str_squish()
   area <- str_to_title(area)
   
-  # Grab the type of table
+  # Get the type of table
   type_of_table <- just_page_i[2] |> str_squish()
   
-  # Manually get rid of the top matter for now
+  # Remove titles, headings and other content at the top of the page
   just_page_i_no_header <- just_page_i[5:length(just_page_i)] 
   
-  # Manually get rid of the bottom matter for now
+  # Remove page numbers and other content at the bottom of the page
   just_page_i_no_header_no_footer <- just_page_i_no_header[1:62] 
   
   # Convert into a tibble
   demography_data <- tibble(all = just_page_i_no_header_no_footer)
   
-  # Split columns
+  # Separate columns
   demography_data <-
     demography_data |>
-    mutate(all = str_squish(all)) |> # Any space more than two spaces is reduced
-    mutate(all = str_replace(all, "10 -14", "10-14")) |> # One specific issue
-    mutate(all = str_replace(all, "Not Stated", "NotStated")) |> # And another
+    mutate(all = str_squish(all)) |> 
+    mutate(all = str_replace(all, "10 -14", "10-14")) |>
+    mutate(all = str_replace(all, "Not Stated", "NotStated")) |>
     separate(col = all,
              into = c("age", "male", "female", "total", "age_2", 
                       "male_2", "female_2", "total_2"),
-             sep = " ", # Works fine because the tables are nicely laid out
+             sep = " ",
              remove = TRUE,
              fill = "right",
              extra = "drop"
@@ -1257,7 +1266,7 @@ get_data <- function(i){
     demography_data_long |> 
     remove_empty(which = c("rows"))
   
-  # Add the area and the page
+  # Add the area and the page as variables
   demography_data_long$area <- area
   demography_data_long$table <- type_of_table
   demography_data_long$page <- i
@@ -1274,10 +1283,9 @@ get_data <- function(i){
 }
 ```
 
-We now have a function that does what we need to each page of the PDF. We will use `map_dfr()` from `purrr` [@citepurrr] to apply that function to each page, and then combine all the outputs into one tibble.
+We now have a function that does what we need to each page of the PDF. We use `map_dfr()` from `purrr` [@citepurrr] to apply that function to each page, and then combine all the outputs into one tibble.
 
 ```{r}
-# Run through each relevant page and get the data
 pages <- c(30:513)
 all_tables <- map_dfr(pages, get_data)
 rm(pages, get_data)
@@ -1294,20 +1302,25 @@ Having got it into a rectangular format, we now need to clean the dataset to mak
 To attain plausibility\index{plausibility} requires a number of steps. The first step is to make the numbers into actual numbers, rather than characters. Before we can convert the type, we need to remove anything that is not a number otherwise that cell will be converted into an NA. We first identify any values that are not numbers so that we can remove them, and `distinct()` is especially useful. 
 
 ```{r}
-# Need to convert male, female, and total to integers
-# First find the characters that should not be in there
 all_tables |> 
   select(male, female, total) |>
   mutate_all(~str_remove_all(., "[:digit:]")) |> 
   distinct()
 ```
 
-We clearly need to remove ',', '_', and '-'. While we could use `janitor` here, it is worthwhile at least first looking at what is going on because sometimes there is odd stuff that `janitor` (and other packages) will deal with, but not in a way that we want. We also have an odd situation with some months in what should be a numerical variable. In this case, the Kenyan government used Excel or similar, and this has converted two entries into dates. If we just took the numbers from the variable then we would have 23 and 15 here, but by inspecting the column we can use Excel to reverse the process and enter the correct values of 4,923 and 4,611, respectively.
+We clearly need to remove commas, underbars, and hyphens. While we could use `janitor` here, it is worthwhile at least first looking at what is going on because sometimes there is odd stuff that `janitor` (and other packages) will not deal with issues in a way that we want. 
+
+We also have an odd situation with some months in what should be a numerical variable. If we look at these issues, which are on page 185, then we see that in this case it seems like the Kenyan government likely used Excel or similar, and this has converted two entries into dates. If we just took the numbers from the variable then we would have 23 and 15 here, but by inspecting the column we can use Excel to reverse the process and enter the correct values of 4,923 and 4,611, respectively.
 
 ```{r}
-# This also highlights a few issues on p. 185 that need to be manually adjusted
-all_tables$male[all_tables$male == "23-Jun"] <- 4923
-all_tables$male[all_tables$male == "15-Aug"] <- 4611
+all_tables <-
+  all_tables |>
+  mutate(
+    male = if_else(male == "23-Jun", "4923", male),
+    male = if_else(male == "15-Aug", "4611", male)
+    )
+
+all_tables
 ```
 
 Having identified everything that needs to be removed, we can do the actual removal and convert our character column of numbers to integers.
@@ -1317,10 +1330,10 @@ Having identified everything that needs to be removed, we can do the actual remo
 
 all_tables <-
   all_tables |>
-  mutate_at(vars(male, female, total), ~str_remove_all(., ",")) |>
-  mutate_at(vars(male, female, total), ~str_replace(., "_", "0")) |>
-  mutate_at(vars(male, female, total), ~str_replace(., "-", "0")) |>
-  mutate_at(vars(male, female, total), ~as.integer(.))
+  mutate(across(c(male, female, total), ~str_remove_all(., ","))) |>
+  mutate(across(c(male, female, total), ~str_replace(., "_", "0"))) |>
+  mutate(across(c(male, female, total), ~str_replace(., "-", "0"))) |>
+  mutate(across(c(male, female, total), ~as.integer(.)))
 
 all_tables
 ```
@@ -1329,36 +1342,31 @@ all_tables
 
 \index{internal consistency}
 
-##### Areas
-
 The next thing to clean is the areas. We know that there are 47 counties in Kenya, and a large number of sub-counties. The Kenyan government purports to provide a list on pages 19 to 22 of the PDF (document pages 7 to 10). But this list is not complete, and there are a few minor issues that we will deal with later. In any case, we first need to fix a few inconsistencies.
 
 ```{r}
 # Fix some area names
-all_tables$area[all_tables$area == "Taita/ Taveta"] <- "Taita/Taveta"
-all_tables$area[all_tables$area == "Elgeyo/ Marakwet"] <- "Elgeyo/Marakwet"
-all_tables$area[all_tables$area == "Nairobi City"] <- "Nairobi"
+all_tables <- 
+  all_tables |> 
+  mutate(area = if_else(area == "Taita/ Taveta", "Taita/Taveta", area),
+         area = if_else(area == "Elgeyo/ Marakwet", "Elgeyo/Marakwet", area),
+         area = if_else(area == "Nairobi City", "Nairobi", area),
+         )
 ```
 
 Kenya has 47 counties, each of which has sub-counties. The PDF has them arranged as the county data then the sub-counties, without designating which is which. We can use the names, to a certain extent, but in a handful of cases, there is a sub-county that has the same name as a county, so we need to first fix that.
 
-The PDF is made-up of three tables. So we can first get the names of the counties based on those final two tables and then reconcile them to get a list of the counties.
-
-```{r}
-#| echo: true
-
-all_tables$table |> 
-  table()
-```
+The PDF is made-up of three long tables. So we can first get the names of the counties based on those final two tables and then reconcile them to get a list of the counties.
 
 ```{r}
 #| echo: true
 
 list_counties <- 
   all_tables |> 
-  filter(table %in% c("Table 2.4a: Distribution of Rural Population by Age, Sex* and County",
-                      "Table 2.4b: Distribution of Urban Population by Age, Sex* and County")
-         ) |> 
+  filter(table %in% c(
+    "Table 2.4a: Distribution of Rural Population by Age, Sex* and County",
+    "Table 2.4b: Distribution of Urban Population by Age, Sex* and County")
+    ) |> 
   select(area) |> 
   distinct()
 
@@ -1371,7 +1379,8 @@ As we hoped, there are 47 of them. But before we can add a flag based on those n
 #| echo: true
 
 all_tables |> 
-  filter(table == "Table 2.3: Distribution of Population by Age, Sex*, County and Sub- County") |> 
+  filter(table == 
+"Table 2.3: Distribution of Population by Age, Sex*, County and Sub- County") |> 
   filter(area %in% c("Busia",
                      "Garissa",
                      "Homa Bay",
@@ -1425,37 +1434,42 @@ rm(list_counties)
 all_tables
 ```
 
-##### Ages
-
 Having dealt with the areas, we can deal with the ages. First, we need to fix some clear errors.
 
 ```{r}
 table(all_tables$age) |> head()
 unique(all_tables$age) |> head()
 
-# Looks like there should be 484, so need to follow up on some:
-all_tables$age[all_tables$age == "NotStated"] <- "Not Stated"
-all_tables$age[all_tables$age == "43594"] <- "5-9"
-all_tables$age[all_tables$age == "43752"] <- "10-14"
-all_tables$age[all_tables$age == "9-14"] <- "5-9"
-all_tables$age[all_tables$age == "10-19"] <- "10-14"
+all_tables <-
+  all_tables |>
+  mutate(
+    age = if_else(age == "NotStated", "Not Stated", age),
+    age = if_else(age == "43594", "5-9", age),
+    age = if_else(age == "43752", "10-14", age),
+    age = if_else(age == "9-14", "5-9", age),
+    age = if_else(age == "10-19", "10-14", age),
+  )
 ```
 
-The census has done some of the work of putting together age-groups for us, but we want to make it easy to just focus on the counts by single-year-age. As such we will add a flag as to the type of age it is: an age group, such as "ages 0 to 5", or a single age, such as "1".
+The census has done some of the work of putting together age-groups for us, but we want to make it easy to just focus on the counts by single-year-age. As such we will add a flag as to the type of age it is: an age group, such as 'ages 0 to 5', or a single age, such as '1'.
 
 ```{r}
-all_tables$age_type <-
-  if_else(str_detect(all_tables$age, c("-")), "age-group", "single-year")
-all_tables$age_type <-
-  if_else(str_detect(all_tables$age, c("Total")),
-          "age-group",
-          all_tables$age_type)
+all_tables <-
+  all_tables |>
+  mutate(
+    age_type = if_else(str_detect(age, "-"), "age-group", "single-year"),
+    age_type = if_else(str_detect(age, "Total"), "age-group", age_type)
+  )
 ```
 
 At the moment, age is a character variable. We have a decision to make here. We do not want it to be a character variable (because it will not graph properly), but we do not want it to be numeric, because there is `total` and `100+` in there. For now, we will just make it into a factor, and at least that will be able to be nicely graphed.
 
 ```{r}
-all_tables$age <- as_factor(all_tables$age)
+all_tables <-
+  all_tables |>
+  mutate(
+    age = as_factor(age)
+    )
 ```
 
 
@@ -1466,9 +1480,7 @@ Having gathered and cleaned the data, we would like to run a few checks. Given t
 
 ```{r}
 #| echo: true
-
-follow_up <- 
-  all_tables |> 
+all_tables |> 
   mutate(check_sum = male + female,
          totals_match = if_else(total == check_sum, 1, 0)
          ) |> 
@@ -1480,10 +1492,11 @@ And we can adjust the one that looks to be wrong.
 ```{r}
 #| echo: true
 
-# There is just one that looks wrong
-all_tables$male[all_tables$age == "10" & all_tables$page == 187] <- as.integer(1)
-
-rm(follow_up)
+all_tables <-
+  all_tables |>
+  mutate(
+    male = if_else(age == "10" & page == 187, as.integer(1), male)
+    )
 ```
 
 The Kenyan census provides different tables for the total of each county and sub-county; and then within each county, for the number in an urban area in that county, and the number in a urban area in that county. Some counties only have an urban count, but we would like to make sure that the sum of rural and urban counts equals the total count. This requires pivoting the data from long to wide.
@@ -1495,11 +1508,14 @@ First, we construct different tables for each of the three.
 
 # Table 2.3
 table_2_3 <- all_tables |> 
-  filter(table == "Table 2.3: Distribution of Population by Age, Sex*, County and Sub- County")
+  filter(table == 
+"Table 2.3: Distribution of Population by Age, Sex*, County and Sub- County")
 table_2_4a <- all_tables |> 
-  filter(table == "Table 2.4a: Distribution of Rural Population by Age, Sex* and County")
+  filter(table == 
+"Table 2.4a: Distribution of Rural Population by Age, Sex* and County")
 table_2_4b <- all_tables |> 
-  filter(table == "Table 2.4b: Distribution of Urban Population by Age, Sex* and County")
+  filter(table == 
+"Table 2.4b: Distribution of Urban Population by Age, Sex* and County")
 ```
 
 Then having constructed the constituent parts, we can join them based on age, area, and whether it is a county.
@@ -1550,7 +1566,8 @@ We can now check that the sum of rural and urban is the same as the total.
 follow_up <- 
   all |> 
   mutate(total_from_bits = total_rural + total_urban,
-         check_total_is_rural_plus_urban = if_else(total == total_from_bits, 1, 0),
+         check_total_is_rural_plus_urban = 
+           if_else(total == total_from_bits, 1, 0),
          total_from_bits - total) |> 
   filter(check_total_is_rural_plus_urban == 0)
 
@@ -1567,28 +1584,29 @@ Finally, we want to check that the single age counts sum to the age-groups.
 
 follow_up <- 
   all |> 
-  mutate(groups = case_when(age %in% c("0", "1", "2", "3", "4", "0-4") ~ "0-4",
-                            age %in% c("5", "6", "7", "8", "9", "5-9") ~ "5-9",
-                            age %in% c("10", "11", "12", "13", "14", "10-14") ~ "10-14",
-                            age %in% c("15", "16", "17", "18", "19", "15-19") ~ "15-19",
-                            age %in% c("20", "21", "22", "23", "24", "20-24") ~ "20-24",
-                            age %in% c("25", "26", "27", "28", "29", "25-29") ~ "25-29",
-                            age %in% c("30", "31", "32", "33", "34", "30-34") ~ "30-34",
-                            age %in% c("35", "36", "37", "38", "39", "35-39") ~ "35-39",
-                            age %in% c("40", "41", "42", "43", "44", "40-44") ~ "40-44",
-                            age %in% c("45", "46", "47", "48", "49", "45-49") ~ "45-49",
-                            age %in% c("50", "51", "52", "53", "54", "50-54") ~ "50-54",
-                            age %in% c("55", "56", "57", "58", "59", "55-59") ~ "55-59",
-                            age %in% c("60", "61", "62", "63", "64", "60-64") ~ "60-64",
-                            age %in% c("65", "66", "67", "68", "69", "65-69") ~ "65-69",
-                            age %in% c("70", "71", "72", "73", "74", "70-74") ~ "70-74",
-                            age %in% c("75", "76", "77", "78", "79", "75-79") ~ "75-79",
-                            age %in% c("80", "81", "82", "83", "84", "80-84") ~ "80-84",
-                            age %in% c("85", "86", "87", "88", "89", "85-89") ~ "85-89",
-                            age %in% c("90", "91", "92", "93", "94", "90-94") ~ "90-94",
-                            age %in% c("95", "96", "97", "98", "99", "95-99") ~ "95-99",
-                            TRUE ~ "Other")
-         ) |> 
+  mutate(groups = case_when(
+    age %in% c("0", "1", "2", "3", "4", "0-4") ~ "0-4",
+    age %in% c("5", "6", "7", "8", "9", "5-9") ~ "5-9",
+    age %in% c("10", "11", "12", "13", "14", "10-14") ~ "10-14",
+    age %in% c("15", "16", "17", "18", "19", "15-19") ~ "15-19",
+    age %in% c("20", "21", "22", "23", "24", "20-24") ~ "20-24",
+    age %in% c("25", "26", "27", "28", "29", "25-29") ~ "25-29",
+    age %in% c("30", "31", "32", "33", "34", "30-34") ~ "30-34",
+    age %in% c("35", "36", "37", "38", "39", "35-39") ~ "35-39",
+    age %in% c("40", "41", "42", "43", "44", "40-44") ~ "40-44",
+    age %in% c("45", "46", "47", "48", "49", "45-49") ~ "45-49",
+    age %in% c("50", "51", "52", "53", "54", "50-54") ~ "50-54",
+    age %in% c("55", "56", "57", "58", "59", "55-59") ~ "55-59",
+    age %in% c("60", "61", "62", "63", "64", "60-64") ~ "60-64",
+    age %in% c("65", "66", "67", "68", "69", "65-69") ~ "65-69",
+    age %in% c("70", "71", "72", "73", "74", "70-74") ~ "70-74",
+    age %in% c("75", "76", "77", "78", "79", "75-79") ~ "75-79",
+    age %in% c("80", "81", "82", "83", "84", "80-84") ~ "80-84",
+    age %in% c("85", "86", "87", "88", "89", "85-89") ~ "85-89",
+    age %in% c("90", "91", "92", "93", "94", "90-94") ~ "90-94",
+    age %in% c("95", "96", "97", "98", "99", "95-99") ~ "95-99",
+    TRUE ~ "Other")
+    ) |> 
   group_by(area_type, area, groups) |> 
   mutate(group_sum = sum(total, na.rm = FALSE),
          group_sum = group_sum / 2,
@@ -1647,27 +1665,18 @@ write_csv(all, file = "outputs/data/cleaned_kenya_2019_census.csv")
 ```
 
 
-The original purpose of cleaning this dataset was to make a table for @alexander2021bayesian. Just to bring this all together, we could make a graph of single-year counts, by gender, for Nairobi (@fig-monicasnairobigraph)).
-
-```{r}
-#| echo: true
-
-monicas_dataset <- 
-  all |> 
-  filter(area_type == "county") |> 
-  filter(part_of_area == "total") |>
-  filter(age_type == "single-year") |> 
-  select(area, age, gender, number)
-
-head(monicas_dataset)
-```
+The original purpose of cleaning this dataset was to make a table that is used by @alexander2021bayesian. Just to bring this all together, we could make a graph of single-year counts, by gender, for Nairobi (@fig-monicasnairobigraph).
 
 ```{r}
 #| label: fig-monicasnairobigraph
 #| echo: true
 #| fig-cap: "Distribution of age and gender in Nairobi in 2019, based on Kenyan census"
 
-monicas_dataset |>
+all |> 
+  filter(area_type == "county") |> 
+  filter(part_of_area == "total") |>
+  filter(age_type == "single-year") |> 
+  select(area, age, gender, number) |> 
   filter(area == "Nairobi") |>
   filter(gender != "total") |>
   ggplot(aes(x = age, y = number, fill = gender)) +
@@ -1689,7 +1698,11 @@ Finally, we may wish to use more informative names. For instance, in the Kenyan 
 
 ```{r}
 column_names_as_contracts <- 
-  monicas_dataset |> 
+  all |> 
+  filter(area_type == "county") |> 
+  filter(part_of_area == "total") |>
+  filter(age_type == "single-year") |> 
+  select(area, age, gender, number) |> 
   rename(
     "chr_area" = "area",
     "fctr_group_age" = "age",
