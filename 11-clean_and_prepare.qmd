@@ -61,7 +61,7 @@ In this chapter we put in place more-formal approaches for data cleaning and pre
 2. internal consistency\index{internal consistency}; and
 3. external consistency\index{external consistency}.
 
-Plausibility\index{plausibility} means that the values in the dataset are not obviously wrong. For instance, with few exceptions, currencies should not have alphabetical values in them, names should not have numbers, and velocities should not be faster than the speed of light. Internal consistency\index{internal consistency} means the dataset does not contradict itself. For instance, that might mean that constituent columns actually do add up to be the same as a total column. External consistency\index{external consistency} means that the dataset does not, in general, contradict outside sources, and is deliberate when it does. For instance, if our dataset purports to be about the population of cities, then we would expect that they are the same as, to a rough approximation, say, those available from relevant censuses on Wikipedia.
+Plausibility\index{plausibility} means that the values in the dataset are not obviously wrong. For instance, with few exceptions, currencies should not have letters in them, names should not have numbers, and velocities should not be faster than the speed of light. Internal consistency\index{internal consistency} means the dataset does not contradict itself. For instance, that might mean that constituent columns actually do add up to be the same as a total column. External consistency\index{external consistency} means that the dataset does not, in general, contradict outside sources, and is deliberate when it does. For instance, if our dataset purports to be about the population of cities, then we would expect that they are the same as, to a rough approximation, say, those available from relevant censuses on Wikipedia.
 
 SpaceX\index{SpaceX}, the US rocket company, uses cycles of 10 or 50 Hertz (equivalent to 0.1 and 0.02 seconds, respectively) to control their rockets. Each cycle, the inputs from sensors, such as temperature and pressure, are read, processed, and used to make a decision, such as whether to adjust some setting [@martinpopper]. We use a similar iterative approach of small adjustments for data cleaning and preparation\index{data cleaning and preparation}. Rather than trying to make everything perfect from the start, we get started, and iterate using a process of small, continuous, improvements.
 
@@ -77,8 +77,8 @@ The workflow\index{workflow} for data cleaning and preparation\index{data cleani
 
 1. Save the raw data.
 2. Begin with an end in mind.
-3. Execute that plan on a small sample.
-4. Write tests and documentation. 
+3. Write tests and documentation. 
+4. Execute the plan on a small sample.
 5. Iterate the plan.
 6. Generalize the execution.
 7. Update tests and documentation.
@@ -216,14 +216,11 @@ When the tests of membership are passed, then finally we can change the class, a
 Let us run through an example with a collection of strings, some of which are slightly wrong. This type of output is typical of OCR, which often gets most of the way there, but not quite.
 
 ```{r}
-messy_string_1 <-
-  c('Patricia, Ptricia, PatricIa, Patncia, PatricIa')
-messy_string_2 <-
-  c('Patricia, Patricia, Patric1a, Patricia , 8atricia')
-
-messy_string <- paste(messy_string_1, messy_string_2, sep = ", ")
-
-rm(messy_string_1, messy_string_2)
+messy_string <- paste(
+  c('Patricia, Ptricia, PatricIa, Patncia, PatricIa'),
+  c('Patricia, Patricia, Patric1a, Patricia , 8atricia'),
+  sep = ", "
+)
 ```
 
 As before, we first want to get this into a rectangular dataset.
@@ -727,9 +724,7 @@ library(tidyr)
 # Based on code by Lisa Lendway
 toronto_shelters_by_day <- 
   earlier_toronto_shelters |> 
-  # We only want rows with both occupancy and capacity  
   drop_na(occupancy, capacity) |> 
-  # We want to know the occupancy by date and sector
   group_by(date) |> 
   summarize(occupancy = sum(occupancy),
             capacity = sum(capacity),
@@ -995,7 +990,7 @@ never_use_partial_matching$my
 
 This behavior is not possible within the `tidyverse`, for instance if `data.frame` were replaced with `tibble` in the above code. Partial matching should almost never be used. It makes it more difficult to understand code after a break, and for others to come to it fresh.
 
-R, Python, and many of the other languages that are commonly used for data science are dynamically typed, as opposed to static typed. This means that class can be defined independently of declaring a variable. One interesting area of research is going partially toward that by including class in the name. In computer science, a variant of this is known as Hungarian notation and extensively used at Microsoft for Word and Excel [@hermans2021programmer, p. 74]. While Hungarian notation fell out of favor in computer science, in data science it may bring considerable benefits, and best practice is an area of open research
+R, Python, and many of the other languages that are commonly used for data science are dynamically typed, as opposed to static typed. This means that class can be defined independently of declaring a variable. One interesting area of research is going partially toward that by including class in the name. In computer science, a variant of this is known as Hungarian notation and used at Microsoft for Word and Excel [@hermans2021programmer, p. 74]. While Hungarian notation fell out of favor in computer science, in data science it may bring considerable benefits, and best practice is an area of open research
 
 @columnnamesascontracts advises using column names as contracts, through establishing a controlled vocabulary for column names. In this way, we would define a set of words that we can use in column names. In the controlled vocabulary of @columnnamesascontracts a column could start with an abbreviation for its class, then something specific to what it pertains to, and then various details. 
 
@@ -1026,6 +1021,41 @@ riederer_names
 
 As introduced in @sec-gather-data, the Demographic and Health Surveys play an important role in gathering data in areas where we may not have other datasets. Here we will clean and prepare a DHS table about household populations in Tanzania in 1996.
 
+We are interested in the distribution of age-groups, gender, and urban/rural. A quick sketch might look like Figure @fig-tanzaniasketch.
+
+![Quick sketch of a datasest that we might be interested in](figures/tanzania_sketch.png){#fig-tanzaniasketch width=70% fig-align="center"}
+
+
+We can then simulate a dataset. 
+
+```{r}
+library(tidyverse)
+simulated_tanzania_dataset <- 
+  tibble(
+    age_group = rep(x = c("0-4", "5-9")),
+    urban_male = rnorm(n = 2, mean = 10, sd = 1) |> round(digits = 0),
+    urban_female = rnorm(n = 2, mean = 10, sd = 1) |> round(digits = 0),
+    urban_total = urban_male + urban_female,
+    rural_male = rnorm(n = 2, mean = 10, sd = 1) |> round(digits = 0),
+    rural_female = rnorm(n = 2, mean = 10, sd = 1) |> round(digits = 0),
+    rural_total = rural_male + rural_female,
+    total_male = rnorm(n = 2, mean = 10, sd = 1) |> round(digits = 0),
+    total_female = rnorm(n = 2, mean = 10, sd = 1) |> round(digits = 0),
+    total_total = total_male + total_female,
+  )
+simulated_tanzania_dataset <- 
+  rbind(simulated_tanzania_dataset,
+        c("Total", 100, 100, 100, 100, 100, 100, 100, 100, 100, 100),
+        c("Number", 5000, 5500, 10500, 4000, 4500, 8500, 9000, 10000, 19000))
+simulated_tanzania_dataset
+```
+
+Based on this simulation we are interested to test: 
+
+a) Whether there are only numbers
+b) Whether the sum of urban and rural match the total column.
+c) Whether the sum of the age-groups match the total.
+
 We begin by downloading the data.^[If the DHS link breaks then replace their URL with: https://www.tellingstorieswithdata.com/inputs/pdfs/1996_Tanzania_DHS.pdf.] 
 
 ```{r}
@@ -1046,7 +1076,10 @@ When we have a PDF and want to read the content into R, then `pdf_text()` from `
 
 library(pdftools)
 
-tanzania_dhs <- pdf_text("1996_Tanzania_DHS.pdf")
+tanzania_dhs <- 
+  pdf_text(
+    pdf = "1996_Tanzania_DHS.pdf"
+    )
 ```
 
 ```{r}
@@ -1095,16 +1128,10 @@ tanzania_dhs_separated <-
   separate(
     col = all,
     into = c(
-      "age_group",
-      "male_urban",
-      "female_urban",
-      "total_urban",
-      "male_rural",
-      "female_rural",
-      "total_rural",
-      "male_total",
-      "female_total",
-      "total_total"
+      "age_group", 
+      "male_urban", "female_urban", "total_urban",
+      "male_rural", "female_rural", "total_rural",
+      "male_total", "female_total", "total_total"
     ),
     sep = " ",
     remove = TRUE,
@@ -1155,7 +1182,7 @@ tanzania_dhs_cleaned
 
 ### Gather and clean data
 
-Finally, let us consider an extensive example and gather, clean, and prepare some data from the 2019 Kenyan\index{Kenya} census. The distribution of population by age, sex, and administrative unit from the 2019 Kenyan census can be downloaded [here](https://www.knbs.or.ke/?wpdmpro=2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units). While this format as a PDF makes it easy to look up a particular result, it is not overly useful if we want to model the data. In order to be able to do that, we need to convert a PDF of Kenyan census results of counts, by age and sex, by county and sub-county, into a tidy dataset that can be analyzed. We use `janitor` [@janitor], `pdftools` [@pdftools], `purrr` [@citepurrr], `tidyverse` [@tidyverse], and `stringi` [@stringi].
+Finally, let us consider an more extensive example and gather, clean, and prepare some data from the 2019 Kenyan\index{Kenya} census. The distribution of population by age, sex, and administrative unit from the 2019 Kenyan census can be downloaded [here](https://www.knbs.or.ke/?wpdmpro=2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units). While this format as a PDF makes it easy to look up a particular result, it is not overly useful if we want to model the data. In order to be able to do that, we need to convert a PDF of Kenyan census results of counts, by age and sex, by county and sub-county, into a tidy dataset that can be analyzed. We use `janitor` [@janitor], `pdftools` [@pdftools], `purrr` [@citepurrr], `tidyverse` [@tidyverse], and `stringi` [@stringi].
 
 ```{r}
 #| message: false
@@ -1192,7 +1219,10 @@ We can use `pdf_text()` from `pdftools` [@pdftools] again here.
 #| eval: false
 #| include: true
 
-kenya_census <- pdf_text("2019_Kenya_census.pdf")
+kenya_census <- 
+  pdf_text(
+    pdf = "2019_Kenya_census.pdf"
+    )
 ```
 
 ```{r}
@@ -1740,25 +1770,51 @@ agent
 
 ### Exercises {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: **TBD**. Please sketch what that dataset could look like and then sketch a graph that you could build to show all observations.
-2. *(Simulate)* Please further consider the scenario described and simulate the situation with every variable independent of each other.
+1. *(Plan)* Consider the following scenario: *You manage a bar and are interested in modelling the efficiency of your bartenders. The bar opens at 8pm and closes at 2am. The efficiency of the bartenders is mildly correlated and defined by the number of drinks that they prepare. Please consider only two bartenders. Be clear about whether you assume a negative or positive correlation.* Please sketch what that dataset could look like and then sketch a graph that you could build to show all observations.
+2. *(Simulate)* Please further consider the scenario described and simulate the situation.
 3. *(Acquire)* Please describe a possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
 5. *(Communicate)* Please write two paragraphs about what you did.
-6. Is the following an example of tidy data? 
+6. Where would you save a copy of the raw data?
+    a.  'inputs'
+    b. 'outputs'
+    c. 'scripts'
+7. Which of the following provides a random sample of 10 U.S. states?
+    a. `sample(x = states, size = 10)`
+    b. `sample(x = us.state.name, size = 10)`
+    c.  `sample(x = state.name, size = 10)`
+    d. `sample(x = us.state, size = 10)`
+8. If we had a character variable 'some_words' with one observation `'You know what'` within a dataset called 'sayings', then which of the following would split it into its constituent words?
+    a.  `separate(data = sayings, col = some_words, into = c("one", "two", "three"), sep = " ")`
+    b. `split(data = sayings, col = some_words, into = c("one", "two", "three"), sep = " ")`
+    c. `divide(data = sayings, col = some_words, into = c("one", "two", "three"), sep = " ")`
+    d. `part(data = sayings, col = some_words, into = c("one", "two", "three"), sep = " ")`
+    e. `unattach(data = sayings, col = some_words, into = c("one", "two", "three"), sep = " ")`
+9. Is the following an example of tidy data? 
 
 ```{r}
 tibble(name = c('Anne', 'Bethany', 'Stephen', 'William'),
        age_group = c('18-29', '30-44', '45-60', '60+'),
        )
 ```
-
-7. If I am dealing with ages then what is the most likely class for the variable (select all that apply)?
+10. Which function would change 'lemons' into 'lemonade'?
+    a. `str_replace(string = 'lemons', pattern = 'lemons', replacement = 'lemonade')`
+    b. `chr_replace(string = 'lemons', pattern = 'lemons', replacement = 'lemonade')`
+    c. `str_change(string = 'lemons', pattern = 'lemons', replacement = 'lemonade')`
+    d. `chr_change(string = 'lemons', pattern = 'lemons', replacement = 'lemonade')`
+11. When dealing with ages what is the most likely class for the variable (select all that apply)?
     a. integer
     b. matrix
     c. numeric
     d. factor
-8. With regard to 'AV Rule 48' from @jsfcodingstandards [p. 25] which of the following are not allowed to differ identifiers (select all that apply)?
+12. Please consider the cities in Germany. Use `testthat` to define three tests that could apply.
+13. Which is the only acceptable format for dates in data science?
+    a. YYYY-DD-MM
+    b.  YYYY-MM-DD
+    c. DD-MM-YYYY
+    d. MM-MM-YYYY
+14. Which of the following does not belong? `c(15.9, 14.9, 16.6, 15.8, 16.7, 17.9, I2.6, 11.5, 16.2, 19.5, 15.0)`
+15. With regard to 'AV Rule 48' from @jsfcodingstandards [p. 25] which of the following are not allowed to differ identifiers (select all that apply)?
     a.  Only a mixture of case
     b.  The presence/absence of the underscore character
     c.  The interchange of the letter 'O', with the number '0' or the letter 'D'
