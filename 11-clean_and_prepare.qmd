@@ -20,15 +20,31 @@ engine: knitr
 
 **Key packages and functions**
 
+- Base R [@citeR]
+  - `Encoding()`
+  - `stopifnot()`
 - Core `tidyverse` [@tidyverse]
   - `dplyr` [@citedplyr]
+    - `across()`
     - `count()`
+    - `distinct()`
+    - `everything()`
+    - `if_else()`
     - `mutate()`
     - `select()`
   - `stringr` [@citestringr]
-    - `str_trim()`
+    - `str_detect()`
+    - `str_remove()`
+    - `str_remove_all()`
+    - `str_replace()`
     - `str_replace_all()`
+    - `str_replace_all()`
+    - `str_squish()`
+    - `str_to_title()`
+    - `str_trim()`
+    - `str_trim()`
   - `tidyr` [@citetidyr]
+    - `drop_na()`
     - `pivot_longer()`
     - `separate()`
     - `separate_rows()`
@@ -40,14 +56,23 @@ engine: knitr
 - `janitor` [@janitor]
   - `clean_names()`
 - `pointblank` [@pointblank]
-  - `create_agent()`
   - `col_is_character()`
   - `col_is_factor()`
   - `col_is_integer()`
   - `col_vals_in_set()`
+  - `create_agent()`
   - `interrogate()`
+- `modelsummary` [@citemodelsummary]
+  - `modelsummary()`
+- `pdftools` [@pdftools]
+  - `pdf_text()`
 - `purrr` [@citepurrr]
   - `map_dfr()`
+- `stringi` [@stringi]
+  - `stri_split_lines()`
+- `testthat` [@testthat]
+  - `expect_equal()`
+  - `expect_length()`
 
 ## Introduction
 
@@ -360,7 +385,7 @@ youth_survey_data |>
 
 ### Counts
 
-We want to focus on getting most of the data right. So we are interested in the counts of unique values. Hopefully a majority of the data are concentrated in the most common counts. But it can also be useful to invert it, and see what is especially uncommon. The extent to which we want to deal with these depends on what we need. Ultimately, each time we fix one we are getting very few additional observations, potentially even just one. Counts are especially useful with text or categorical data, but can be helpful with numerical data as well.
+We want to focus on getting most of the data right. So, we are interested in the counts of unique values. Hopefully most of the data are concentrated in the most common counts. But it can also be useful to invert it and see what is especially uncommon. The extent to which we want to deal with these depends on what we need. Ultimately, each time we fix one we are getting very few additional observations, potentially even just one. Counts are especially useful with text or categorical data but can be helpful with numerical data as well.
 
 Let us see an example of text data, each of which is meant to be 'Australia'.
 
@@ -384,7 +409,7 @@ The use of this count clearly identifies where we should spend our time: changin
 
 Some things are so important that we require that the cleaned dataset have them. These are conditions that we should check. They would typically come out of experience, expert knowledge, or the planning and simulation stages. For instance, there should be no negative numbers in an age variable, and no ages above 140. For these we could specifically require that the condition is met. Another example is when doing cross-country analysis, then a list of country names that we know should be in our dataset would be useful. Our test would then be that there were: 1) values not in that list that were in our dataset, or, vice versa; 2) countries that we expected to be in there that were not.
 
-To have a concrete example, let us consider if we were doing some analysis about the five largest counties in Kenya\index{Kenya}. From talking with experts we find these are: 'Nairobi', 'Kiambu', 'Nakuru', 'Kakamega', and 'Bungoma'. Let us create that variable first.
+To have a concrete example, let us consider if we were doing some analysis about the five largest counties in Kenya\index{Kenya}. From talking with experts, we find these are: 'Nairobi', 'Kiambu', 'Nakuru', 'Kakamega', and 'Bungoma'. Let us create that variable first.
 
 ```{r}
 correct_kenya_counties <- 
@@ -831,7 +856,7 @@ earlier_toronto_shelters |>
   theme_minimal()
 ```
 
-It looks like 2020 is roughly as we would expect, although with some potential weirdness at the start. 2019 has a few odd situations, but not too many. 2018 has a small cluster early in the dataset and then possibly something systematic toward the middle. But it is clear that 2017 has a large number of systematic issues. These affect a lot of observations, so we prioritize and focus our attention here.
+It looks like 2020 is roughly as we would expect, although with some potential weirdness at the start. 2019 has a few odd situations, but not too many. 2018 has a small cluster early in the dataset and then possibly something systematic toward the middle. But 2017 has a large number of systematic issues. These affect a lot of observations, so we prioritize and focus our attention here.
 
 In general, it seems that it might be the case that in 2017 the first 12 days are the wrong way around, i.e. we think it is year-month-day, but it is actually year-day-month, but there are exceptions. As a first pass, we can flip those first 12 days of each month and see if that helps. It will be fairly blunt, but hopefully gets us somewhere.
 
@@ -1021,9 +1046,9 @@ riederer_names
 
 As introduced in @sec-gather-data, the Demographic and Health Surveys play an important role in gathering data in areas where we may not have other datasets. Here we will clean and prepare a DHS table about household populations in Tanzania in 1996.
 
-We are interested in the distribution of age-groups, gender, and urban/rural. A quick sketch might look like Figure @fig-tanzaniasketch.
+We are interested in the distribution of age-groups, gender, and urban/rural. A quick sketch might look like @fig-tanzaniasketch.
 
-![Quick sketch of a datasest that we might be interested in](figures/tanzania_sketch.png){#fig-tanzaniasketch width=70% fig-align="center"}
+![Quick sketch of a dataset that we might be interested in](figures/tanzania_sketch.png){#fig-tanzaniasketch width=70% fig-align="center"}
 
 
 We can then simulate a dataset. 
@@ -1142,7 +1167,7 @@ tanzania_dhs_separated <-
 tanzania_dhs_separated
 ```
 
-Now we need to clean-up the rows and columns. One helpful approach to work out what we need to remove, is to look at what is left if we temporarily remove everything that we know we want. Whatever is left is then a candidate for actually being removed. In this case we know that we want the columns to contain numbers.
+Now we need to clean-up the rows and columns. One helpful approach to work out what we need to remove, is to look at what is left if we temporarily remove everything that we know we want. Whatever is left is then a candidate for being removed. In this case we know that we want the columns to contain numbers.
 
 ```{r}
 tanzania_dhs_separated |>
@@ -1182,7 +1207,7 @@ tanzania_dhs_cleaned
 
 ### Gather and clean data
 
-Finally, let us consider an more extensive example and gather, clean, and prepare some data from the 2019 Kenyan\index{Kenya} census. The distribution of population by age, sex, and administrative unit from the 2019 Kenyan census can be downloaded [here](https://www.knbs.or.ke/?wpdmpro=2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units). While this format as a PDF makes it easy to look up a particular result, it is not overly useful if we want to model the data. In order to be able to do that, we need to convert a PDF of Kenyan census results of counts, by age and sex, by county and sub-county, into a tidy dataset that can be analyzed. We use `janitor` [@janitor], `pdftools` [@pdftools], `purrr` [@citepurrr], `tidyverse` [@tidyverse], and `stringi` [@stringi].
+Finally, let us consider a more extensive example and gather, clean, and prepare some data from the 2019 Kenyan\index{Kenya} census. The distribution of population by age, sex, and administrative unit from the 2019 Kenyan census can be downloaded [here](https://www.knbs.or.ke/?wpdmpro=2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units). While this format as a PDF makes it easy to look up a particular result, it is not overly useful if we want to model the data. In order to be able to do that, we need to convert a PDF of Kenyan census results of counts, by age and sex, by county and sub-county, into a tidy dataset that can be analyzed. We use `janitor` [@janitor], `pdftools` [@pdftools], `purrr` [@citepurrr], `tidyverse` [@tidyverse], and `stringi` [@stringi].
 
 ```{r}
 #| message: false
@@ -1334,7 +1359,7 @@ To attain plausibility\index{plausibility} requires a number of steps. The first
 ```{r}
 all_tables |> 
   select(male, female, total) |>
-  mutate_all(~str_remove_all(., "[:digit:]")) |> 
+  mutate(across(everything(), ~str_remove_all(., "[:digit:]"))) |> 
   distinct()
 ```
 
@@ -1386,7 +1411,7 @@ all_tables <-
 
 Kenya has 47 counties, each of which has sub-counties. The PDF has them arranged as the county data then the sub-counties, without designating which is which. We can use the names, to a certain extent, but in a handful of cases, there is a sub-county that has the same name as a county, so we need to first fix that.
 
-The PDF is made-up of three long tables. So we can first get the names of the counties based on those final two tables and then reconcile them to get a list of the counties.
+The PDF is made-up of three long tables. So, we can first get the names of the counties based on those final two tables and then reconcile them to get a list of the counties.
 
 ```{r}
 #| echo: true

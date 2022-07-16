@@ -19,8 +19,8 @@ engine: knitr
 - Understanding what is personally identifying information, and how this depends on context.
 - Implementing data simulation to share data.
 - Know what differential privacy is and some of its likely effect on data science.
-- Refactoring code
-- Developing an appreciation for SQL
+- Refactoring code.
+- Developing an appreciation for SQL.
 
 **Key packages and functions**
 
@@ -36,7 +36,7 @@ engine: knitr
 
 ## Introduction
 
-After we have put together a dataset, an important part of being responsible is storing it appropriately and enabling easy retrieval. @Wicherts2011 found that a reluctance to share data was associated with weaker evidence and more potential errors. While it is certainly possible to be especially concerned about this, and entire careers are based on the storage and retrieval of data, to a certain extent, the baseline is not onerous. If we can get our dataset off our own computer, then we are much of the way there. Further confirming that someone else can retrieve it and use it, puts us much further than most. Indeed doing this for data, models, and code represents the bronze standard according to @heil2021reproducibility.
+After we have put together a dataset it is important to store it appropriately, and enable easy retrieval both for ourselves and others. Indeed, @Wicherts2011 found that a reluctance to share data was associated with weaker evidence and more potential errors in research papers. While it is certainly possible to be especially concerned about this, and entire careers are based on the storage and retrieval of data, to a certain extent, the baseline is not onerous. If we can get our dataset off our own computer, then we are much of the way there. Further confirming that someone else can retrieve it and use it, ideally without our involvement, puts us much further than most. Just achieving that for our data, models, and code means achieving the 'bronze' standard of @heil2021reproducibility.
 
 The FAIR principles are useful when we come to think more formally about data sharing and management. This imply that datasets should be [@wilkinson2016fair]:
 
@@ -47,17 +47,17 @@ The FAIR principles are useful when we come to think more formally about data sh
 
 It is important to recognize that just because a dataset is FAIR, it is not necessarily an unbiased representation of the world. Further, it is not necessarily fair in the everyday way that word is used i.e. impartial and honest [@deLima2022]. FAIR reflects whether a dataset is appropriately available, not whether it is appropriate.
 
-One reason for the rise of data science is that humans are at the heart of it. And often the data that we are interested in directly concern humans. This means there is a tension between sharing the data to facilitate reproducibility and maintaining privacy. Medicine has developed approaches to this over a long time. And out of that we have seen Health Insurance Portability and Accountability Act (HIPAA) in the US, and the related General Data Protection Regulation (GDPR) in Europe. Our concerns in data science tend to be about personally identifying information (PII). We have a variety of ways to protect especially private information in our datasets, such as emails, including hashing. And sometimes we simulate data and distribute that instead of sharing the actual dataset. More recently, differential privacy is being implemented. But this is usually an inappropriate choice, for anything other than the most massive of datasets and ensures a level of privacy, only at the expense of population minorities.
+One reason for the rise of data science is that humans are at the heart of it. And often the data that we are interested in directly concern humans. This means there is a tension between sharing the data to facilitate reproducibility and maintaining privacy. Medicine has developed approaches to this over a long time. And out of that we have seen Health Insurance Portability and Accountability Act (HIPAA) in the US, and the related General Data Protection Regulation (GDPR) in Europe. Our concerns in data science tend to be about personally identifying information (PII). We have a variety of ways to protect especially private information in our datasets, such as emails, including hashing. And sometimes we simulate data and distribute that instead of sharing the actual dataset. More recently, differential privacy approaches are being implemented. But outside of massive technology companies this is often an inappropriate choice, and will provides privacy only at the expense of population minorities.
 
 In this chapter we will consider how we plan and organize our datasets to meet essential requirements. To a large extent we put these in place to make our own life easier when we come back to use our dataset later. We then go through putting our dataset on GitHub, building R packages for data, and finally depositing it in various archives. Then we consider documentation, and in particular focus on datasheets.
 
 ## Plan
 
-The storage and retrieval of information has a long history. This is especially connected with libraries which have existed since antiquity and have established protocols for deciding what information to store and what to discard, as well as its retrieval. One of the defining aspects of libraries is that deliberate curation and organization. The cataloging system ensures that books on similar topics are located close to each other, and there are typically also deliberate plans for ensuring the collection is up-to-date.
+The storage and retrieval of information has a long history. This is especially connected with libraries which have existed since antiquity and have well-established protocols for deciding what information to store and what to discard, as well as its retrieval. One of the defining aspects of libraries is deliberate curation and organization. The cataloging system ensures that books on similar topics are located close to each other, and there are typically also deliberate plans for ensuring the collection is up-to-date.
 
 Vannevar Bush defined a 'memex' in 1945 as a device used to store books, records, and communications, in a way that supplements memory [@vannevarbush]. And the key is the indexing, or linking together of items. We can see this concept echoed in Tim Berners-Lee proposal for hypertext [@berners1989information], which led to the World Wide Web. This is the way that resources are identified. They are then transported over the internet, using HTTP.
 
-At its most fundamental, this is about storing and retrieving data. For instance, we make various files on our computer available to others. The internet is famously brittle, but when we are considering the storage and retrieval of our datasets we want to consider especially, for how long it is important that the data are stored and for whom [@michener2015ten]. For instance, if we want some data to be available for a decade and widely available then it becomes important to store data in open and persistent formats, such as CSVs [@hart2016ten]. But if we are just using some data as part of an intermediate step, we have the raw data, and the scripts to create it, then it might be fine to not worry too much about such considerations.
+At its most fundamental, this is about storing and retrieving data. For instance, we make various files on our computer available to others. The internet is famously brittle, but this is due to economics not the fundamental design, which is robust. And when we are thinking about the storage and retrieval of our datasets we want to consider especially, for how long it is important that the data are stored and for whom [@michener2015ten]. For instance, if we want some data to be available for a decade and widely available then it becomes important to store data in open and persistent formats, such as CSVs [@hart2016ten]. But if we are just using some data as part of an intermediate step, we have the raw data, and the scripts to create it, then it might be fine to not worry too much about such considerations.
 
 Storing raw data is important and there are many cases where raw data have revealed or hinted at fraud [@simonsohn2013just]. Shared data also enhances the credibility of our work, by enabling others to verify it, and can lead to the generation of new knowledge as others use it to answer different questions [@christensen2019transparent]. Finally, research that shares its data may be more highly cited [@christensen2019study].
 
@@ -141,19 +141,24 @@ Then create an R file 'data.R' in the 'R' folder. This R file will only contain 
 
 #' Favorite color of various people data
 #'
-#' @description \code{favcolordata} returns a dataframe of the favorite color of various people.
+#' @description \code{favcolordata} returns a dataframe 
+#' of the favorite color of various people.
 #' 
-#' @return Returns a dataframe of the favorite color of various people.
+#' @return Returns a dataframe of the favorite color 
+#' of various people.
 #' 
 #' @docType data
 #'
 #' @usage data(color_data)
 #'
-#' @format An dataframe of individual-level observations with the following variables: 
+#' @format An dataframe of individual-level observations 
+#' with the following variables: 
 #'
 #' \describe{
-#' \item{\code{name}}{A character vector of individual names.}
-#' \item{\code{fav_color}}{A character vector of one of: black, white, rainbow.}
+#' \item{\code{name}}{A character vector of individual 
+#' names.}
+#' \item{\code{fav_color}}{A character vector of one 
+#' of: black, white, rainbow.}
 #' }
 #'
 #' @keywords datasets
@@ -180,6 +185,8 @@ color_data
 ```
 
 This has addressed many of the issues that we faced earlier. For instance, we have included a README and a data dictionary of sorts in terms of the descriptions that we added. But if we were to try to put this package onto CRAN, then we might face some issues. For instance, the maximum size of a package is 5MB and we would quickly come up against that. We have also largely forced users to use R, and while there are considerable benefits of that, we may like to be more language agnostic [@tierney2020realistic].
+
+The definitive guide to including data in R packages is @rpackages [Chapter 8].
 
 ### Depositing data
 
@@ -474,15 +481,23 @@ Katherine Wallman was Chief Statistician of the United States from 1992 to 2017.
 
 For much of this book we have, and will continue to be, largely concerned with just getting something done. Not necessarily getting it done in the best or most efficient way. And to a large extent, being worried about getting something done in the best or most efficient way is almost always a waste of time. Until it is not. Eventually inefficient ways of storing data, ugly or slow code, and an insistence on using R do have an effect. And it is at that point that we need to be open to new approaches to ensure efficiency.
 
-We now briefly cover ways to be more efficient with data, by using SQL and parquet. We then discuss code efficiency, particularly, the need to measure and refactor code. 
+We now briefly cover ways to be more efficient with data, by using SQL and parquet. We then discuss code efficiency, particularly code linting, parallel processing, and code refactoring.
 
 ### Code efficiency
 
-By and large, worrying about performance is a waste of time. For the most part we are better off just pushing things into the cloud, letting them run for a reasonable time, and using that time to worry about other aspects of the pipeline. But, eventually this becomes unfeasible. For instance, if something takes more than a day, then it becomes a pain because of the need to completely switch tasks and then return to it. There is rarely a most common area for obvious performance gains. Instead it is important to develop the ability to measure and then refactor code.
+By and large, worrying about performance is a waste of time. For the most part we are better off just pushing things into the cloud, letting them run for a reasonable time, and using that time to worry about other aspects of the pipeline. But, eventually this becomes unfeasible. For instance, if something takes more than a day, then it becomes a pain because of the need to completely switch tasks and then return to it. There is rarely a most common area for obvious performance gains. Instead it is important to develop the ability to
+
+measure and then refactor code.
 
 Being fast is valuable but it is mostly about being able to iterate fast not necessarily that the code runs fast. The first thing we should do if we find that the speed at which code is running is becoming a bottle neck is to shard. Then we should throw more machines at it. But eventually we should go back and refactor the code.
 
-Parallel processing.
+
+#### Code linting
+
+In general the best efficiency gain that we can make is to make it easier for others to read our code (even if this is just ourselves returning to the code after a break).
+
+
+#### Parallel processing.
 
 To refactor code means to re-write it so that the new code achieves the same outcome as the old code, it is just that the new code does it better. We can use `tic()` and `toc()` from `tictoc` [@Izrailev2014] to time various aspects of our code and find where the largest delays are.
 
@@ -918,7 +933,7 @@ Please identify a dataset you consider interesting and important, that does not 
 
 ### Paper {.unnumbered}
 
-At about this point, Paper Four in [Appendix -@sec-papers] would be appropriate.
+At about this point, Paper Four in -@sec-papers would be appropriate.
 
 
 
