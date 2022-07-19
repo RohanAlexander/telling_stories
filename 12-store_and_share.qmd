@@ -222,9 +222,11 @@ We include an example of a datasheet for @citeaustralianpoliticians in Appendix 
 
 ## Personally identifying information
 
-Personally identifying information (PII) is that which enables us to link a row in our dataset with an actual person. For instance, email addresses are often PII, as are names and addresses. Interestingly, sometimes the combination of several variables, none of which are PII in and of themselves, can be PII. For instance, age is unlikely PII by itself, but age combined with city, education, and a few other variables could be. One concern is that this re-identification can occur across datasets. Another interesting aspect is that again while some variable may not be PII for almost everyone in the dataset, it can become PII in the extreme. For instance, if we have age, then there are many people of most ages, but there are fewer people in ages over 100 and it likely becomes PII. The same scenario happens with both income and wealth. One response to this is for data to be censored. For instance, we may record age between 0 and 90, and then group everyone over that into '91+'.
+Personally identifying information (PII) is that which enables us to link a row in our dataset with an actual person. For instance, email addresses are often PII, as are names and addresses. One interesting aspect is that while some variable may not be PII for almost everyone in the dataset, it can become PII in the extreme. For instance, if we have age, then there are many people of most ages, but there are fewer people in ages over 100 and it likely becomes PII. The same scenario happens with both income and wealth. One response to this is for data to be censored, which was discussed in @sec-farm-data. For instance, we may record age between 0 and 90, and then group everyone over that into '91+'. 
 
-@zook2017ten recommend considering whether data even need to be gathered in the first place. For instance, if a phone number is not absolutely required then it might be better to not gather it in the first place, rather than need to worry about protecting it before data dissemination.
+Our primary concern should be with ensuring that our dataset is appropriate, given the expectations of the reasonable person, and this depends on weighing costs and benefits. From @christensen2019transparent [p. 180] a dataset is confidential if the researchers know who is associated with each observation, but the public version of the dataset removes this association. A dataset is anonymous if even the researchers do not know. Randomized response [@randomizedresponse] is a clever way that anonymity can be ensured without much overhead. In this research design, each respondent, metaphorically, flips a coin before they answer a question and does not show the researcher. The respondent is instructed to respond truthfully to the question if the coin lands on heads, but to always give some particular (still plausible) response if tails. The results to the other options can then be re-weighted to provide an estimate without a researcher ever knowing the truth about any particular respondent. This is especially used in association with snowball sampling, discussed in @sec-farm-data. One issue is that the data can be only used to answer specific questions, which must be planned ahead of time, and is of less general value. Another interesting aspect is that expectations of what is should be public, confidential, or anonymous, differ by context. For instance, in Ontario, Canada, public sector employees who earn more than \$100,000 a year have their salary published on a publicly available website. As many universities in Ontario are public, this includes professors, and we could see that say, in 2021, the author of this book was paid \$131,186.08. Outside this context, we would normally expect such information would be confidential.
+
+@zook2017ten recommend considering whether data even need to be gathered in the first place. For instance, if a phone number is not absolutely required then it might be better to not gather it in the first place, rather than need to worry about protecting it before data dissemination. 
 
 GDPR and HIPAA are two legal structures that govern data in Europe and the US, respectively. Due to the influence of these regions, they have a significant effect outside those regions also. GDPR concerns data generally, while HIPAA is focused on healthcare. GDPR applies to all personal data, which is defined as:
 
@@ -234,7 +236,7 @@ GDPR and HIPAA are two legal structures that govern data in Europe and the US, r
 
 HIPAA refers to the privacy of medical records in the US and codify the idea that the patient should have access to their medical records, and that only the patient should be able to authorize access to their medical records [@annas2003hipaa]. While it only applies to covered entities, it sets a standard that informs practice, yet is piecemeal given the variety of applications. For instance, a person's social media posts about their health is generally not subject to it, nor is knowledge about a person's location and how active they are, even though based on that information we may be able to get some idea of their health [@Cohen2018]. Such data are hugely valuable [@ibmdataset].
 
-There are a variety of ways of protecting PII, while sharing data, that we will now go through.
+There are a variety of ways of protecting PII, while sharing data, that we will now go through. We focus here initially on what we can do when the dataset is considered by itself, which is the main concern. Interestingly, sometimes the combination of several variables, none of which are PII in and of themselves, can be PII. For instance, age is unlikely PII by itself, but age combined with city, education, and a few other variables could be. One concern is that this re-identification can occur by combining datasets. And we will address one approach to that at the end.
 
 ### Hashing and salting
 
@@ -324,31 +326,40 @@ The approach is to understand the critical features of the dataset and the appro
 
 For more nuanced situations, @koenecke2020synthetic recommend using the synthetic data vault [@patki2016synthetic] and then the use of Generative Adversarial Networks, such as implemented by @athey2021using.
 
-
-
 ### Differential privacy
 
-<!-- - Add the definitions from p44 -->
-
-<!-- - Synthetic data can only be evaluated based on what is considered. And as the government is the one creating it this is policy dependent. One can imagine that in the 1970s it would have been rare to evaluate whether the proportion of gay people was accurate. And given recent policy changes one can imagine that soon abortion will be similarly overlooked in much of the US.  -->
-
-
-Differential privacy invokes a mathematical definition of privacy. The main issue it solves is that there are a lot of datasets available, and there is always the possibility that some combination of them could be combined to identify respondents even if their PII were removed from each of these individual datasets. Rather than needing to anticipate how various datasets could be combined to re-identify individuals and adjust variables to remove this possibility, a dataset that is created using a differentially private approach provides assurances that privacy will be maintained. 
-<!-- It establishes various conditions. Then any approach that satisfies those conditions is differentially private.  -->
-
-To motivate the definition, consider a dataset that only has one person in it. De-identification of that dataset would perfectly identify them. At the other end of the scale, consider a dataset that does not contain a particular person. De-identification of that dataset could never be linked to them. Differential privacy, then, is about the inclusion or exclusion of particular individuals in a dataset. If we consider the person most at risk, then an output is differentially private if their inclusion or exclusion in that has at most some given factor of an effect on the probability of some output [@Oberski2020Differential].
-
-A dataset is differentially private to different levels, based on how much it changes when one person's results are included or excluded. This is the key parameter, because at the same time as deciding how much of an individual's information we are prepared to give up, or 'leak', we are deciding how much random noise to add. The choice of this level is a nuanced one and should involve extensive consideration of the costs of undesired disclosures, compared with the benefits of additional research. For public data that will be released under differential privacy, this *ratio decidendi* must be public because of the costs that are being imposed. Indeed, @differentialprivacyatapple argue that even in the case of private companies, such as Apple, users should have a choice about the level of privacy loss. One concern is that advocates of differential privacy have fallen victim to the precautionary principle. This would result in an approach that is too conservative and cause considerable potential lose in terms of innovation that will not happen.
-
-A variant of differential privacy has recently been implemented by the US census. This has been shown to not universally protect respondent privacy, and yet it is expected to have a significant effect on redistricting [@kenny2021impact] even though redistricting is considered a high priority use case [@Hawes2020Implementing]. @Suriyakumar2021 found that such model will be disproportionately affected by large demographic groups. The implementation of differential privacy is expected to result in some publicly available data that are unusable in the social sciences [@ruggles2019differential]. And even the ACS, introduced in @sec-farm-data may be replaced with synthetic content. The issue with this approach is that it is fine for what is of interest and known now, but cannot account for the unknowable answers to questions that we do not even think to ask. 
-
-The implementation of differential privacy is a costs and benefits issue. Stronger privacy protection fundamentally must mean less information [@clairemckaybowen, p. 39]. The costs of this have been convincingly shown, while the benefits have not.
+Differential privacy is a mathematical definition of privacy [@Dwork2013, p. 6]. It is important to be clear that it is not an algorithm. The main issue it solves is that there are a lot of datasets available, and there is always the possibility that some combination of them could be combined to identify respondents even if PII were removed from each of these individual datasets. Rather than needing to anticipate how various datasets could be combined to re-identify individuals and adjust variables to remove this possibility, a dataset that is created using a differentially private approach provides assurances that privacy will be maintained. 
 
 :::{.callout-note}
 ## Shoulders of giants
 
-Katherine Wallman was Chief Statistician of the United States from 1992 to 2017. After majoring in sociology as an undergraduate at Wellesley, she began at New England Bell telephone company, and then began working for the US government [@Citro2015]. She served as President of the American Statistical Association in 1992. 
+Cynthia Dwork is Gordon McKay Professor of Computer Science, Harvard University. After taking a PhD in Computer Science from Cornell University, she was a Post-Doctoral Research Fellow at MIT and then worked at IBM, Compaq, and Microsoft Research where she is a Distinguished Scientist. She joined Harvard in 2017. One of her major contributions is differential privacy [@dwork2006calibrating], which has been widely adapted.
 :::
+
+To motivate the definition, consider a dataset of responses and PII that only has one person in it. The release of that dataset, as is, would perfectly identify them. At the other end of the scale, consider a dataset that does not contain a particular person. The release of that dataset could never be linked to them because they are not in it. Differential privacy, then, is about the inclusion or exclusion of particular individuals in a dataset. An algorithm is differentially private if the inclusion or exclusion of any particular person in a dataset has at most some given factor of an effect on the probability of some output [@Oberski2020Differential].
+
+More specifically, from @Asquith2022Assessing, consider @eq-macroidentity:
+
+$$
+\frac{\Pr [M(d)\in S]}{\Pr [M(d')\in S]}\leq e^{\epsilon} 
+$$ {#eq-macroidentity}
+
+In @eq-macroidentity, from @Asquith2022Assessing, '$M$ is a differentially private algorithm, $d$ and $d'$ are datasets that differ only in terms of one row, $S$ is a set of output from the algorithm' and $\epsilon$ controls the amount of privacy that is provided to respondents. The fundamental problem of data privacy is that we cannot have completely anonymized data that remains useful [@Dwork2013, p. 6]. Instead, we must trade-off utility and privacy.
+
+A dataset is differentially private to different levels of privacy, based on how much it changes when one person's results are included or excluded. This is the key parameter, because at the same time as deciding how much of an individual's information we are prepared to give up, or 'leak', we are deciding how much random noise to add. The choice of this level is a nuanced one and should involve extensive consideration of the costs of undesired disclosures, compared with the benefits of additional research. For public data that will be released under differential privacy, this *ratio decidendi* must be public because of the costs that are being imposed. Indeed, @differentialprivacyatapple argue that even in the case of private companies, such as Apple, users should have a choice about the level of privacy loss. One concern is that advocates of differential privacy have fallen victim to the precautionary principle. This would result in an approach that is too conservative and cause considerable potential loss in terms of innovation that will not happen.
+
+A variant of differential privacy has recently been implemented by the US census. This has been shown to not universally protect respondent privacy, and yet it is expected to have a significant effect on redistricting [@kenny2021impact] even though redistricting is considered a high priority use case [@Hawes2020Implementing]. @Suriyakumar2021 found that such model will be disproportionately affected by large demographic groups. The implementation of differential privacy is expected to result in some publicly available data that are unusable in the social sciences [@ruggles2019differential]. And even the ACS, introduced in @sec-farm-data may be replaced with synthetic content. The issue with this approach is that it is fine for what is of interest and known now but cannot account for the unknowable answers to questions that we do not even think to ask. 
+
+The implementation of differential privacy is a costs and benefits issue. Stronger privacy protection fundamentally must mean less information [@clairemckaybowen, p. 39]. The costs of this have been convincingly shown, while the benefits have not. As always in data science, it is important to consider who this benefits. For instance, one can imagine that in the 1970s it would have been rare to evaluate whether the proportion of gay people was accurate. And given recent policy changes one can imagine that soon abortion will be similarly overlooked in much of the US.
+
+
+<!-- :::{.callout-note} -->
+<!-- ## Shoulders of giants -->
+
+<!-- Katherine Wallman was Chief Statistician of the United States from 1992 to 2017. After majoring in sociology as an undergraduate at Wellesley, she began at New England Bell telephone company, and then began working for the US government [@Citro2015]. She served as President of the American Statistical Association in 1992.  -->
+<!-- ::: -->
+
+
 
 ## Efficiency
 
