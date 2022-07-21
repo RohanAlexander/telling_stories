@@ -46,7 +46,7 @@ One reason for the rise of data science is that humans are at the heart of it. A
 
 As datasets and code bases get larger it becomes more difficult to deal with them, especially if we want them to be shared. We come to concerns around efficiency, not for its own sake, but to enable us to tell stories that could not otherwise be told. 
 
-In particular, we are concerned with more efficient code. This means making it easier for others to read, and contribute to, it by linting. It also means making it faster to run by actively timing how long aspects take to run, evaluating aspects in parallel, and refactoring. We are also concerned with more efficient data. This might mean moving beyond CSV files to formats with other properties, or even using databases such as SQL.
+In particular, we are concerned with more efficient code. This means making it easier for others to read, and contribute to, it by linting and reviewing. It also means making it faster to run by actively timing how long aspects take to run, evaluating aspects in parallel, and refactoring. We are also concerned with more efficient data. This might mean moving beyond CSV files to formats with other properties, or even using databases such as SQL.
 
 <!-- In this chapter we will consider how we plan and organize our datasets to meet essential requirements. To a large extent we put these in place to make our own life easier when we come back to use our dataset later. We then go through putting our dataset on GitHub, building R packages for data, and finally depositing it in various archives. Then we consider documentation, and in particular focus on datasheets. -->
 
@@ -334,7 +334,7 @@ In @eq-macroidentity, from @Asquith2022Assessing, '$M$ is a differentially priva
 A dataset is differentially private to different levels of privacy, based on how much it changes when one person's results are included or excluded. This is the key parameter, because at the same time as deciding how much of an individual's information we are prepared to give up, or 'leak', we are deciding how much random noise to add. The choice of this level is a nuanced one and should involve extensive consideration of the costs of undesired disclosures, compared with the benefits of additional research. For public data that will be released under differential privacy, this *ratio decidendi* must be public because of the costs that are being imposed. Indeed, @differentialprivacyatapple argue that even in the case of private companies, such as Apple, users should have a choice about the level of privacy loss. 
 A variant of differential privacy has recently been implemented by the US census. This has been shown to not universally protect respondent privacy, and yet it is expected to have a significant effect on redistricting [@kenny2021impact] even though redistricting is considered a high priority use case [@Hawes2020Implementing]. @Suriyakumar2021 found that such model will be disproportionately affected by large demographic groups. The implementation of differential privacy is expected to result in some publicly available data that are unusable in the social sciences [@ruggles2019differential]. And even the ACS, introduced in @sec-farm-data may be replaced with synthetic content. The issue with this approach is that it is fine for what is of interest and known now but cannot account for the unknowable answers to questions that we do not even think to ask. 
 
-The implementation of differential privacy is a costs and benefits issue. Stronger privacy protection fundamentally must mean less information [@clairemckaybowen, p. 39]. The costs of this have been convincingly shown, while the benefits have not. As always in data science, it is important to consider who this benefits. For instance, one can imagine that in the 1970s it would have been rare to evaluate whether the proportion of gay people was accurate. And given recent policy changes one can imagine that soon abortion will be similarly overlooked in much of the US. At issue, with all privacy enhancing approaches, but especially differential privacy given how much it changes the data, is concerns around out ability to answer questions, that we cannot even think to ask today.
+The implementation of differential privacy is a costs and benefits issue. Stronger privacy protection fundamentally must mean less information [@clairemckaybowen, p. 39]. The costs of this have been convincingly shown, while the benefits have not. As always in data science, it is important to consider who this benefits. For instance, one can imagine that in the 1970s it would have been rare to evaluate whether the proportion of gay people was accurate. And given recent policy changes one can imagine that soon abortion will be similarly overlooked in much of the US. At issue, with all privacy enhancing approaches, but especially differential privacy given how much it changes the data, is concerns around our ability to answer questions, that we cannot even think to ask today.
 
 
 <!-- :::{.callout-note} -->
@@ -349,7 +349,7 @@ The implementation of differential privacy is a costs and benefits issue. Strong
 
 In general we are, and will continue to be, largely concerned with just getting something done. Not necessarily getting it done in the best or most efficient way. And to a large extent, being worried about getting something done in the best or most efficient way is almost always a waste of time. Until it is not. Eventually inefficient ways of storing data, ugly or slow code, and dogmatic insistence on a particular way of doing things, have an effect. And it is at that point that we need to be open to new approaches to ensure efficiency.
 
-We firstly discuss code efficiency. We start with code linting, which was mentioned in dispatches in  @sec-reproducible-workflows. This does not speed up our code, per se, but we will instead use linters to make out code easier to read, which makes it more efficient when another person comes to it, or we revisit it. We then turn to measurement of run time, and introduce parallel processing, where we allow our computer to run code multiple processes at the same time. Finally we consider code refactoring, which is where we re-write code to make it better, while not changing what it does. After this we turn to ways to be more efficient with data, by using SQL and parquet.
+We firstly discuss code efficiency. We start with code linting, which was mentioned in dispatches in  @sec-reproducible-workflows, and enables code review. This does not speed up our code, per se, but we will instead use linters to make out code easier to read, which makes it more efficient when another person comes to it, or we revisit it. We then turn to measurement of run time, and introduce parallel processing, where we allow our computer to run code multiple processes at the same time. Finally we consider code refactoring, which is where we re-write code to make it better, while not changing what it does. After this we turn to ways to be more efficient with data, by using SQL and parquet.
 
 ### Code efficiency
 
@@ -357,7 +357,7 @@ By and large, worrying about performance is a waste of time. For the most part w
 
 The first thing we should do is clean up our code. If we then find that the speed at which code is running is becoming a bottle neck then we should shard. Then we should throw more machines at it. But eventually we should go back and refactor the code.
 
-#### Code linting
+#### Code linting and review
 
 Being fast is valuable but it is mostly about being able to iterate fast, not necessarily having code that runs fast. For almost all applications we will work in teams. @oldlanguages [p. 26] describes how even in 1954 a programmer cost at least as much as a computer, and these days compute is usually much cheaper than a programmer. Hence, it is important to use other people's time efficiently. 
 
@@ -373,8 +373,8 @@ We use `lint()` from `lintr` [@lintr] to lint our code. For instance, consider t
 
 SIMULATED_DATA <-
   tibble(
-        Division = c(1:150,151),
-         Party = sample(
+        division = c(1:150,151),
+         party = sample(
            x = c('Liberal'),
            size = 151,
            replace = T
@@ -400,14 +400,17 @@ Making the recommended changes would result in code that is more readable.
 
 simulated_data <-
   tibble(
-        Division = c(1:150, 151),
-         Party = sample(
+        division = c(1:150, 151),
+         party = sample(
            x = c("Liberal"),
            size = 151,
            replace = TRUE
          ))
 
 ```
+
+Code review
+
 
 #### Parallel processing
 
@@ -813,6 +816,11 @@ file.remove("some_data.csv")
 ```
 
 
+Reading in only certain columns `col_select = `
+
+Separate into different datasets.
+
+Then reading them all in. (purrr map)
 
 
 <!-- Reproducibilty -->

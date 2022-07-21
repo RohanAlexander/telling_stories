@@ -10,4 +10,7 @@ Check for consistency on next full read-through:
 - 'the tidyverse'
 - Check about installing tidyverse packages unnecessarily. And similarly, loading core tidyverse unnecessarily.
 
-References: Sometimes people's first names are being included and other times not. Weird situation.
+
+### 21 July 2022: 
+
+- Have default linted up to and including chapter 6. Have also fixed all '' to "" for same.
