@@ -1283,6 +1283,50 @@ people_as_tibble
 class(people_as_tibble)
 ```
 
+Finally, it is surprisingly common to need to read in multiple files and combine them into the one tibble. For instance, it may be that the data for a year, are saved into individual CSV files for each month. We can use `purrr` [@citepurrr] and `fs` [@fs] to do this painlessly.
+
+One of the interesting aspects of real world data is that it is exponential more often than we may expect. So we may simulate some exponential data.
+
+```{r}
+#| eval: false
+
+library(tidyverse)
+library(fs)
+
+dir_create(path = "inputs/data/user_data")
+
+set.seed(853)
+
+user_comments <-
+  tibble(
+    user = rep(x = 1:1000, times = 12) |> sort(),
+    month = rep(x = month.name, times = 1000),
+    comments = rexp(n = 12000, rate = 0.3) |> round()
+  )
+
+user_comments |>
+  filter(month == "January") |>
+  write_csv(file = "inputs/data/user_data/January.csv")
+
+user_comments |>
+  filter(month == "February") |>
+  write_csv(file = "inputs/data/user_data/February.csv")
+```
+
+The first step is to get a list of the files. Assuming that some particular folder contains all, and only, the CSVs that we are interested in, we can return a list of all the CSVs in a folder with `dir_ls()`.
+
+```{r}
+library(fs)
+library(purrr)
+
+all_files <- dir_ls(path = "inputs/data/user_data")
+
+all_data <-
+  all_files |>
+  map_dfr(read_csv, .id = "file")
+```
+
+
 
 ### Dataset manipulation with joins and pivots
 

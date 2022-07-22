@@ -2146,18 +2146,72 @@ $binomial_observations
 <pre><code>[1] "tbl_df"     "tbl"        "data.frame"</code></pre>
 </div>
 </div>
+<p>Finally, it is surprisingly common to need to read in multiple files and combine them into the one tibble. For instance, it may be that the data for a year, are saved into individual CSV files for each month. We can use <code>purrr</code> <span class="citation" data-cites="citepurrr">(<a href="99-references.html#ref-citepurrr" role="doc-biblioref">Henry and Wickham 2020</a>)</span> and <code>fs</code> <span class="citation" data-cites="fs">(<a href="99-references.html#ref-fs" role="doc-biblioref">Hester, Wickham, and Csárdi 2021</a>)</span> to do this painlessly.</p>
+<p>One of the interesting aspects of real world data is that it is exponential more often than we may expect. So we may simulate some exponential data.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb183"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb183-1"><a href="#cb183-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb183-2"><a href="#cb183-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span>
+<span id="cb183-3"><a href="#cb183-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb183-4"><a href="#cb183-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dir_create</span>(<span class="at">path =</span> <span class="st">"inputs/data/user_data"</span>)</span>
+<span id="cb183-5"><a href="#cb183-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb183-6"><a href="#cb183-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
+<span id="cb183-7"><a href="#cb183-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb183-8"><a href="#cb183-8" aria-hidden="true" tabindex="-1"></a>user_comments <span class="ot">&lt;-</span></span>
+<span id="cb183-9"><a href="#cb183-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb183-10"><a href="#cb183-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">user =</span> <span class="fu">rep</span>(<span class="at">x =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">1000</span>, <span class="at">times =</span> <span class="dv">12</span>) <span class="sc">|&gt;</span> <span class="fu">sort</span>(),</span>
+<span id="cb183-11"><a href="#cb183-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">month =</span> <span class="fu">rep</span>(<span class="at">x =</span> month.name, <span class="at">times =</span> <span class="dv">1000</span>),</span>
+<span id="cb183-12"><a href="#cb183-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">comments =</span> <span class="fu">rexp</span>(<span class="at">n =</span> <span class="dv">12000</span>, <span class="at">rate =</span> <span class="fl">0.3</span>) <span class="sc">|&gt;</span> <span class="fu">round</span>()</span>
+<span id="cb183-13"><a href="#cb183-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb183-14"><a href="#cb183-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb183-15"><a href="#cb183-15" aria-hidden="true" tabindex="-1"></a>user_comments <span class="sc">|&gt;</span></span>
+<span id="cb183-16"><a href="#cb183-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(month <span class="sc">==</span> <span class="st">"January"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb183-17"><a href="#cb183-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="at">file =</span> <span class="st">"inputs/data/user_data/January.csv"</span>)</span>
+<span id="cb183-18"><a href="#cb183-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb183-19"><a href="#cb183-19" aria-hidden="true" tabindex="-1"></a>user_comments <span class="sc">|&gt;</span></span>
+<span id="cb183-20"><a href="#cb183-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(month <span class="sc">==</span> <span class="st">"February"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb183-21"><a href="#cb183-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="at">file =</span> <span class="st">"inputs/data/user_data/February.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The first step is to get a list of the files. Assuming that some particular folder contains all, and only, the CSVs that we are interested in, we can return a list of all the CSVs in a folder with <code>dir_ls()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb184"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb184-1"><a href="#cb184-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span>
+<span id="cb184-2"><a href="#cb184-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb184-3"><a href="#cb184-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb184-4"><a href="#cb184-4" aria-hidden="true" tabindex="-1"></a>all_files <span class="ot">&lt;-</span> <span class="fu">dir_ls</span>(<span class="at">path =</span> <span class="st">"inputs/data/user_data"</span>)</span>
+<span id="cb184-5"><a href="#cb184-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb184-6"><a href="#cb184-6" aria-hidden="true" tabindex="-1"></a>all_data <span class="ot">&lt;-</span></span>
+<span id="cb184-7"><a href="#cb184-7" aria-hidden="true" tabindex="-1"></a>  all_files <span class="sc">|&gt;</span></span>
+<span id="cb184-8"><a href="#cb184-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dfr</span>(read_csv, <span class="at">.id =</span> <span class="st">"file"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 1000 Columns: 3
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (1): month
+dbl (2): user, comments
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+Rows: 1000 Columns: 3
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (1): month
+dbl (2): user, comments
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
 </section>
 <section id="dataset-manipulation-with-joins-and-pivots" class="level3" data-number="3.8.2">
 <h3 data-number="3.8.2" class="anchored" data-anchor-id="dataset-manipulation-with-joins-and-pivots"><span class="header-section-number">3.8.2</span> Dataset manipulation with joins and pivots</h3>
 <p>There are two dataset manipulations that are often needed: joins and pivots.</p>
 <p>We often have a situation where we have two, or more, datasets and we are interested in combining them. We can join datasets together in a variety of ways. A common way is to use <code>left_join()</code> from <code>dplyr</code> <span class="citation" data-cites="citedplyr">(<a href="99-references.html#ref-citedplyr" role="doc-biblioref">Wickham et al. 2022</a>)</span>. This is most useful where there is one main dataset that we are using and there is another dataset with some useful variables that we want to add to that. The critical aspect is that we have a column or columns that we can use to link the two datasets. Here we will create two tibbles and then join them on the basis of names.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb183"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb183-1"><a href="#cb183-1" aria-hidden="true" tabindex="-1"></a>main_dataset <span class="ot">&lt;-</span></span>
-<span id="cb183-2"><a href="#cb183-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb183-3"><a href="#cb183-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">c</span>(<span class="st">"rohan"</span>, <span class="st">"monica"</span>, <span class="st">"edward"</span>, <span class="st">"hugo"</span>),</span>
-<span id="cb183-4"><a href="#cb183-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">status =</span> <span class="fu">c</span>(<span class="st">"adult"</span>, <span class="st">"adult"</span>, <span class="st">"child"</span>, <span class="st">"infant"</span>)</span>
-<span id="cb183-5"><a href="#cb183-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb183-6"><a href="#cb183-6" aria-hidden="true" tabindex="-1"></a>main_dataset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb186"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb186-1"><a href="#cb186-1" aria-hidden="true" tabindex="-1"></a>main_dataset <span class="ot">&lt;-</span></span>
+<span id="cb186-2"><a href="#cb186-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb186-3"><a href="#cb186-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">c</span>(<span class="st">"rohan"</span>, <span class="st">"monica"</span>, <span class="st">"edward"</span>, <span class="st">"hugo"</span>),</span>
+<span id="cb186-4"><a href="#cb186-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">status =</span> <span class="fu">c</span>(<span class="st">"adult"</span>, <span class="st">"adult"</span>, <span class="st">"child"</span>, <span class="st">"infant"</span>)</span>
+<span id="cb186-5"><a href="#cb186-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb186-6"><a href="#cb186-6" aria-hidden="true" tabindex="-1"></a>main_dataset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 2
   names  status
@@ -2167,12 +2221,12 @@ $binomial_observations
 3 edward child 
 4 hugo   infant</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb185"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb185-1"><a href="#cb185-1" aria-hidden="true" tabindex="-1"></a>supplementary_dataset <span class="ot">&lt;-</span></span>
-<span id="cb185-2"><a href="#cb185-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb185-3"><a href="#cb185-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">c</span>(<span class="st">"rohan"</span>, <span class="st">"monica"</span>, <span class="st">"edward"</span>, <span class="st">"hugo"</span>),</span>
-<span id="cb185-4"><a href="#cb185-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">favorite_food =</span> <span class="fu">c</span>(<span class="st">"pasta"</span>, <span class="st">"salmon"</span>, <span class="st">"pizza"</span>, <span class="st">"milk"</span>)</span>
-<span id="cb185-5"><a href="#cb185-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb185-6"><a href="#cb185-6" aria-hidden="true" tabindex="-1"></a>supplementary_dataset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb188"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb188-1"><a href="#cb188-1" aria-hidden="true" tabindex="-1"></a>supplementary_dataset <span class="ot">&lt;-</span></span>
+<span id="cb188-2"><a href="#cb188-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb188-3"><a href="#cb188-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">c</span>(<span class="st">"rohan"</span>, <span class="st">"monica"</span>, <span class="st">"edward"</span>, <span class="st">"hugo"</span>),</span>
+<span id="cb188-4"><a href="#cb188-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">favorite_food =</span> <span class="fu">c</span>(<span class="st">"pasta"</span>, <span class="st">"salmon"</span>, <span class="st">"pizza"</span>, <span class="st">"milk"</span>)</span>
+<span id="cb188-5"><a href="#cb188-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb188-6"><a href="#cb188-6" aria-hidden="true" tabindex="-1"></a>supplementary_dataset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 2
   names  favorite_food
@@ -2182,11 +2236,11 @@ $binomial_observations
 3 edward pizza        
 4 hugo   milk         </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb187"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb187-1"><a href="#cb187-1" aria-hidden="true" tabindex="-1"></a>main_dataset <span class="ot">&lt;-</span></span>
-<span id="cb187-2"><a href="#cb187-2" aria-hidden="true" tabindex="-1"></a>  main_dataset <span class="sc">|&gt;</span></span>
-<span id="cb187-3"><a href="#cb187-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(supplementary_dataset, <span class="at">by =</span> <span class="st">"names"</span>)</span>
-<span id="cb187-4"><a href="#cb187-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb187-5"><a href="#cb187-5" aria-hidden="true" tabindex="-1"></a>main_dataset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb190"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb190-1"><a href="#cb190-1" aria-hidden="true" tabindex="-1"></a>main_dataset <span class="ot">&lt;-</span></span>
+<span id="cb190-2"><a href="#cb190-2" aria-hidden="true" tabindex="-1"></a>  main_dataset <span class="sc">|&gt;</span></span>
+<span id="cb190-3"><a href="#cb190-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(supplementary_dataset, <span class="at">by =</span> <span class="st">"names"</span>)</span>
+<span id="cb190-4"><a href="#cb190-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb190-5"><a href="#cb190-5" aria-hidden="true" tabindex="-1"></a>main_dataset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 3
   names  status favorite_food
@@ -2200,7 +2254,7 @@ $binomial_observations
 <p>There are a variety of other options to join datasets, including <code>inner_join()</code>, <code>right_join()</code>, and <code>full_join()</code>.</p>
 <p>Another common dataset manipulation task is pivoting them. Datasets tend to be either long or wide. Long data means that each variable is on a row, and so possibly there is repetition, whereas with wide data each variable is a column and so there is typically little repetition <span class="citation" data-cites="Wickham2009">(<a href="99-references.html#ref-Wickham2009" role="doc-biblioref">Wickham 2009</a>)</span>. For instance, “anscombe” is wide, and “anscombe_long” is long.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb189"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb189-1"><a href="#cb189-1" aria-hidden="true" tabindex="-1"></a>anscombe</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb192"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb192-1"><a href="#cb192-1" aria-hidden="true" tabindex="-1"></a>anscombe</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   x1 x2 x3 x4    y1   y2    y3    y4
 1  10 10 10  8  8.04 9.14  7.46  6.58
@@ -2217,7 +2271,7 @@ $binomial_observations
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb191"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb191-1"><a href="#cb191-1" aria-hidden="true" tabindex="-1"></a>anscombe_long</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb194"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb194-1"><a href="#cb194-1" aria-hidden="true" tabindex="-1"></a>anscombe_long</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 44 × 3
    set       x     y
@@ -2238,12 +2292,12 @@ $binomial_observations
 <p>Generally, in the <code>tidyverse</code>, and certainly for <code>ggplot2</code>, we need long data. To go from one to the other we use <code>pivot_longer()</code> and <code>pivot_wider()</code> from <code>tidyr</code> <span class="citation" data-cites="citetidyr">(<a href="99-references.html#ref-citetidyr" role="doc-biblioref">Wickham 2021</a>)</span>.</p>
 <p>We will create some wide data on whether “mark” or “lauren” won a running race in each of three years.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb193"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb193-1"><a href="#cb193-1" aria-hidden="true" tabindex="-1"></a>pivot_example_data <span class="ot">&lt;-</span></span>
-<span id="cb193-2"><a href="#cb193-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">year =</span> <span class="fu">c</span>(<span class="dv">2019</span>, <span class="dv">2020</span>, <span class="dv">2021</span>),</span>
-<span id="cb193-3"><a href="#cb193-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">mark =</span> <span class="fu">c</span>(<span class="st">"first"</span>, <span class="st">"second"</span>, <span class="st">"first"</span>),</span>
-<span id="cb193-4"><a href="#cb193-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">lauren =</span> <span class="fu">c</span>(<span class="st">"second"</span>, <span class="st">"first"</span>, <span class="st">"second"</span>))</span>
-<span id="cb193-5"><a href="#cb193-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb193-6"><a href="#cb193-6" aria-hidden="true" tabindex="-1"></a>pivot_example_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb196"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb196-1"><a href="#cb196-1" aria-hidden="true" tabindex="-1"></a>pivot_example_data <span class="ot">&lt;-</span></span>
+<span id="cb196-2"><a href="#cb196-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">year =</span> <span class="fu">c</span>(<span class="dv">2019</span>, <span class="dv">2020</span>, <span class="dv">2021</span>),</span>
+<span id="cb196-3"><a href="#cb196-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">mark =</span> <span class="fu">c</span>(<span class="st">"first"</span>, <span class="st">"second"</span>, <span class="st">"first"</span>),</span>
+<span id="cb196-4"><a href="#cb196-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">lauren =</span> <span class="fu">c</span>(<span class="st">"second"</span>, <span class="st">"first"</span>, <span class="st">"second"</span>))</span>
+<span id="cb196-5"><a href="#cb196-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb196-6"><a href="#cb196-6" aria-hidden="true" tabindex="-1"></a>pivot_example_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 3
    year mark   lauren
@@ -2255,13 +2309,13 @@ $binomial_observations
 </div>
 <p>This dataset is in wide format at the moment. To get it into long format, we need a column that specifies the person, and another that specifies the result. We use <code>pivot_longer()</code> to achieve this.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb195"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb195-1"><a href="#cb195-1" aria-hidden="true" tabindex="-1"></a>data_pivoted_longer <span class="ot">&lt;-</span></span>
-<span id="cb195-2"><a href="#cb195-2" aria-hidden="true" tabindex="-1"></a>  pivot_example_data <span class="sc">|&gt;</span></span>
-<span id="cb195-3"><a href="#cb195-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(<span class="st">"mark"</span>, <span class="st">"lauren"</span>),</span>
-<span id="cb195-4"><a href="#cb195-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">names_to =</span> <span class="st">"person"</span>,</span>
-<span id="cb195-5"><a href="#cb195-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"position"</span>)</span>
-<span id="cb195-6"><a href="#cb195-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb195-7"><a href="#cb195-7" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(data_pivoted_longer)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb198"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb198-1"><a href="#cb198-1" aria-hidden="true" tabindex="-1"></a>data_pivoted_longer <span class="ot">&lt;-</span></span>
+<span id="cb198-2"><a href="#cb198-2" aria-hidden="true" tabindex="-1"></a>  pivot_example_data <span class="sc">|&gt;</span></span>
+<span id="cb198-3"><a href="#cb198-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(<span class="st">"mark"</span>, <span class="st">"lauren"</span>),</span>
+<span id="cb198-4"><a href="#cb198-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">names_to =</span> <span class="st">"person"</span>,</span>
+<span id="cb198-5"><a href="#cb198-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"position"</span>)</span>
+<span id="cb198-6"><a href="#cb198-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb198-7"><a href="#cb198-7" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(data_pivoted_longer)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 3
    year person position
@@ -2276,12 +2330,12 @@ $binomial_observations
 </div>
 <p>Occasionally, we need to go from long data to wide data. We use <code>pivot_wider()</code> to do this.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb197"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb197-1"><a href="#cb197-1" aria-hidden="true" tabindex="-1"></a>data_pivoted_wider <span class="ot">&lt;-</span></span>
-<span id="cb197-2"><a href="#cb197-2" aria-hidden="true" tabindex="-1"></a>  data_pivoted_longer <span class="sc">|&gt;</span></span>
-<span id="cb197-3"><a href="#cb197-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="st">"person"</span>,</span>
-<span id="cb197-4"><a href="#cb197-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">values_from =</span> <span class="st">"position"</span>)</span>
-<span id="cb197-5"><a href="#cb197-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb197-6"><a href="#cb197-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(data_pivoted_wider)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb200"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb200-1"><a href="#cb200-1" aria-hidden="true" tabindex="-1"></a>data_pivoted_wider <span class="ot">&lt;-</span></span>
+<span id="cb200-2"><a href="#cb200-2" aria-hidden="true" tabindex="-1"></a>  data_pivoted_longer <span class="sc">|&gt;</span></span>
+<span id="cb200-3"><a href="#cb200-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="st">"person"</span>,</span>
+<span id="cb200-4"><a href="#cb200-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">values_from =</span> <span class="st">"position"</span>)</span>
+<span id="cb200-5"><a href="#cb200-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb200-6"><a href="#cb200-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(data_pivoted_wider)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 3
    year mark   lauren
@@ -2297,19 +2351,19 @@ $binomial_observations
 <p>In R we often create a string with double quotes, although using single quotes works too. For instance <code>c("a", "b")</code> consists of two strings “a” and “b”, that are contained in a character vector. There are a variety of ways to manipulate strings in R and we focus on <code>stringr</code> <span class="citation" data-cites="citestringr">(<a href="99-references.html#ref-citestringr" role="doc-biblioref">Wickham 2019b</a>)</span>. This is automatically loaded when we load the <code>tidyverse</code>.</p>
 <p>If we want to look for whether a string contains certain content, then we can use <code>str_detect()</code>. And if we want to remove or change some particular content then we can use <code>str_remove()</code> or <code>str_replace()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb199"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb199-1"><a href="#cb199-1" aria-hidden="true" tabindex="-1"></a>dataset_of_strings <span class="ot">&lt;-</span></span>
-<span id="cb199-2"><a href="#cb199-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb199-3"><a href="#cb199-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">c</span>(<span class="st">"rohan alexander"</span>,</span>
-<span id="cb199-4"><a href="#cb199-4" aria-hidden="true" tabindex="-1"></a>              <span class="st">"monica alexander"</span>,</span>
-<span id="cb199-5"><a href="#cb199-5" aria-hidden="true" tabindex="-1"></a>              <span class="st">"edward alexander"</span>,</span>
-<span id="cb199-6"><a href="#cb199-6" aria-hidden="true" tabindex="-1"></a>              <span class="st">"hugo alexander"</span>)</span>
-<span id="cb199-7"><a href="#cb199-7" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb199-8"><a href="#cb199-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb199-9"><a href="#cb199-9" aria-hidden="true" tabindex="-1"></a>dataset_of_strings <span class="sc">|&gt;</span></span>
-<span id="cb199-10"><a href="#cb199-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">is_rohan =</span> <span class="fu">str_detect</span>(names, <span class="st">"rohan"</span>),</span>
-<span id="cb199-11"><a href="#cb199-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">make_howlett =</span> <span class="fu">str_replace</span>(names, <span class="st">"alexander"</span>, <span class="st">"howlett"</span>),</span>
-<span id="cb199-12"><a href="#cb199-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">remove_rohan =</span> <span class="fu">str_remove</span>(names, <span class="st">"rohan"</span>)</span>
-<span id="cb199-13"><a href="#cb199-13" aria-hidden="true" tabindex="-1"></a>         )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb202"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb202-1"><a href="#cb202-1" aria-hidden="true" tabindex="-1"></a>dataset_of_strings <span class="ot">&lt;-</span></span>
+<span id="cb202-2"><a href="#cb202-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb202-3"><a href="#cb202-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">c</span>(<span class="st">"rohan alexander"</span>,</span>
+<span id="cb202-4"><a href="#cb202-4" aria-hidden="true" tabindex="-1"></a>              <span class="st">"monica alexander"</span>,</span>
+<span id="cb202-5"><a href="#cb202-5" aria-hidden="true" tabindex="-1"></a>              <span class="st">"edward alexander"</span>,</span>
+<span id="cb202-6"><a href="#cb202-6" aria-hidden="true" tabindex="-1"></a>              <span class="st">"hugo alexander"</span>)</span>
+<span id="cb202-7"><a href="#cb202-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb202-8"><a href="#cb202-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb202-9"><a href="#cb202-9" aria-hidden="true" tabindex="-1"></a>dataset_of_strings <span class="sc">|&gt;</span></span>
+<span id="cb202-10"><a href="#cb202-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">is_rohan =</span> <span class="fu">str_detect</span>(names, <span class="st">"rohan"</span>),</span>
+<span id="cb202-11"><a href="#cb202-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">make_howlett =</span> <span class="fu">str_replace</span>(names, <span class="st">"alexander"</span>, <span class="st">"howlett"</span>),</span>
+<span id="cb202-12"><a href="#cb202-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">remove_rohan =</span> <span class="fu">str_remove</span>(names, <span class="st">"rohan"</span>)</span>
+<span id="cb202-13"><a href="#cb202-13" aria-hidden="true" tabindex="-1"></a>         )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 4
   names            is_rohan make_howlett   remove_rohan      
@@ -2322,10 +2376,10 @@ $binomial_observations
 </div>
 <p>There are a variety of other functions that are often especially useful in data cleaning. For instance, we can use <code>str_length()</code> to find out how long a string is, and <code>str_c()</code> to bring strings together.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb201"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb201-1"><a href="#cb201-1" aria-hidden="true" tabindex="-1"></a>dataset_of_strings <span class="sc">|&gt;</span></span>
-<span id="cb201-2"><a href="#cb201-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">length_is =</span> <span class="fu">str_length</span>(<span class="at">string =</span> names),</span>
-<span id="cb201-3"><a href="#cb201-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">name_and_length =</span> <span class="fu">str_c</span>(names, length_is, <span class="at">sep =</span> <span class="st">" - "</span>)</span>
-<span id="cb201-4"><a href="#cb201-4" aria-hidden="true" tabindex="-1"></a>         )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb204"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb204-1"><a href="#cb204-1" aria-hidden="true" tabindex="-1"></a>dataset_of_strings <span class="sc">|&gt;</span></span>
+<span id="cb204-2"><a href="#cb204-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">length_is =</span> <span class="fu">str_length</span>(<span class="at">string =</span> names),</span>
+<span id="cb204-3"><a href="#cb204-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">name_and_length =</span> <span class="fu">str_c</span>(names, length_is, <span class="at">sep =</span> <span class="st">" - "</span>)</span>
+<span id="cb204-4"><a href="#cb204-4" aria-hidden="true" tabindex="-1"></a>         )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 3
   names            length_is name_and_length      
@@ -2338,11 +2392,11 @@ $binomial_observations
 </div>
 <p>Finally, <code>separate()</code> from <code>tidyr</code>, although not part of <code>stringr</code>, is indispensable for string manipulation. It turns one character column into many.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb203"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb203-1"><a href="#cb203-1" aria-hidden="true" tabindex="-1"></a>dataset_of_strings <span class="sc">|&gt;</span></span>
-<span id="cb203-2"><a href="#cb203-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(<span class="at">col =</span> names,</span>
-<span id="cb203-3"><a href="#cb203-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"first"</span>, <span class="st">"last"</span>),</span>
-<span id="cb203-4"><a href="#cb203-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">sep =</span> <span class="st">" "</span>,</span>
-<span id="cb203-5"><a href="#cb203-5" aria-hidden="true" tabindex="-1"></a>           <span class="at">remove =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb206"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb206-1"><a href="#cb206-1" aria-hidden="true" tabindex="-1"></a>dataset_of_strings <span class="sc">|&gt;</span></span>
+<span id="cb206-2"><a href="#cb206-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(<span class="at">col =</span> names,</span>
+<span id="cb206-3"><a href="#cb206-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"first"</span>, <span class="st">"last"</span>),</span>
+<span id="cb206-4"><a href="#cb206-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">sep =</span> <span class="st">" "</span>,</span>
+<span id="cb206-5"><a href="#cb206-5" aria-hidden="true" tabindex="-1"></a>           <span class="at">remove =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 3
   names            first  last     
@@ -2360,53 +2414,53 @@ $binomial_observations
 <p>Sometimes we have a character vector, and we will want it ordered in a particular way. The default is that a character vector is ordered alphabetically, but we may not want that. For instance, the days of the week would look strange on a graph if they were alphabetically ordered: Friday, Monday, Saturday, Sunday, Thursday, Tuesday, and Wednesday!</p>
 <p>The way to change the ordering is to change the variable from a character to a factor. We can use <code>fct_relevel()</code> from <code>forcats</code> <span class="citation" data-cites="citeforcats">(<a href="99-references.html#ref-citeforcats" role="doc-biblioref">Wickham 2020a</a>)</span> to specify an ordering.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb205"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb205-1"><a href="#cb205-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb205-2"><a href="#cb205-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb205-3"><a href="#cb205-3" aria-hidden="true" tabindex="-1"></a>days_data <span class="ot">&lt;-</span></span>
-<span id="cb205-4"><a href="#cb205-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb205-5"><a href="#cb205-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">days =</span></span>
-<span id="cb205-6"><a href="#cb205-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">c</span>(</span>
-<span id="cb205-7"><a href="#cb205-7" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Monday"</span>,</span>
-<span id="cb205-8"><a href="#cb205-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Tuesday"</span>,</span>
-<span id="cb205-9"><a href="#cb205-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Wednesday"</span>,</span>
-<span id="cb205-10"><a href="#cb205-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Thursday"</span>,</span>
-<span id="cb205-11"><a href="#cb205-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Friday"</span>,</span>
-<span id="cb205-12"><a href="#cb205-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Saturday"</span>,</span>
-<span id="cb205-13"><a href="#cb205-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Sunday"</span></span>
-<span id="cb205-14"><a href="#cb205-14" aria-hidden="true" tabindex="-1"></a>      ),</span>
-<span id="cb205-15"><a href="#cb205-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">some_value =</span> <span class="fu">c</span>(<span class="fu">sample.int</span>(<span class="dv">100</span>, <span class="dv">7</span>))</span>
-<span id="cb205-16"><a href="#cb205-16" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb205-17"><a href="#cb205-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb205-18"><a href="#cb205-18" aria-hidden="true" tabindex="-1"></a>days_data <span class="ot">&lt;-</span></span>
-<span id="cb205-19"><a href="#cb205-19" aria-hidden="true" tabindex="-1"></a>  days_data <span class="sc">|&gt;</span></span>
-<span id="cb205-20"><a href="#cb205-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb205-21"><a href="#cb205-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">days_as_factor =</span> <span class="fu">factor</span>(days),</span>
-<span id="cb205-22"><a href="#cb205-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">days_as_factor =</span> <span class="fu">fct_relevel</span>(</span>
-<span id="cb205-23"><a href="#cb205-23" aria-hidden="true" tabindex="-1"></a>      days,</span>
-<span id="cb205-24"><a href="#cb205-24" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Monday"</span>,</span>
-<span id="cb205-25"><a href="#cb205-25" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Tuesday"</span>,</span>
-<span id="cb205-26"><a href="#cb205-26" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Wednesday"</span>,</span>
-<span id="cb205-27"><a href="#cb205-27" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Thursday"</span>,</span>
-<span id="cb205-28"><a href="#cb205-28" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Friday"</span>,</span>
-<span id="cb205-29"><a href="#cb205-29" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Saturday"</span>,</span>
-<span id="cb205-30"><a href="#cb205-30" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Sunday"</span></span>
-<span id="cb205-31"><a href="#cb205-31" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb205-32"><a href="#cb205-32" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb208"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb208-1"><a href="#cb208-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
+<span id="cb208-2"><a href="#cb208-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb208-3"><a href="#cb208-3" aria-hidden="true" tabindex="-1"></a>days_data <span class="ot">&lt;-</span></span>
+<span id="cb208-4"><a href="#cb208-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb208-5"><a href="#cb208-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">days =</span></span>
+<span id="cb208-6"><a href="#cb208-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">c</span>(</span>
+<span id="cb208-7"><a href="#cb208-7" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Monday"</span>,</span>
+<span id="cb208-8"><a href="#cb208-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Tuesday"</span>,</span>
+<span id="cb208-9"><a href="#cb208-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Wednesday"</span>,</span>
+<span id="cb208-10"><a href="#cb208-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Thursday"</span>,</span>
+<span id="cb208-11"><a href="#cb208-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Friday"</span>,</span>
+<span id="cb208-12"><a href="#cb208-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Saturday"</span>,</span>
+<span id="cb208-13"><a href="#cb208-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Sunday"</span></span>
+<span id="cb208-14"><a href="#cb208-14" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb208-15"><a href="#cb208-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">some_value =</span> <span class="fu">c</span>(<span class="fu">sample.int</span>(<span class="dv">100</span>, <span class="dv">7</span>))</span>
+<span id="cb208-16"><a href="#cb208-16" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb208-17"><a href="#cb208-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb208-18"><a href="#cb208-18" aria-hidden="true" tabindex="-1"></a>days_data <span class="ot">&lt;-</span></span>
+<span id="cb208-19"><a href="#cb208-19" aria-hidden="true" tabindex="-1"></a>  days_data <span class="sc">|&gt;</span></span>
+<span id="cb208-20"><a href="#cb208-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb208-21"><a href="#cb208-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">days_as_factor =</span> <span class="fu">factor</span>(days),</span>
+<span id="cb208-22"><a href="#cb208-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">days_as_factor =</span> <span class="fu">fct_relevel</span>(</span>
+<span id="cb208-23"><a href="#cb208-23" aria-hidden="true" tabindex="-1"></a>      days,</span>
+<span id="cb208-24"><a href="#cb208-24" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Monday"</span>,</span>
+<span id="cb208-25"><a href="#cb208-25" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Tuesday"</span>,</span>
+<span id="cb208-26"><a href="#cb208-26" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Wednesday"</span>,</span>
+<span id="cb208-27"><a href="#cb208-27" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Thursday"</span>,</span>
+<span id="cb208-28"><a href="#cb208-28" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Friday"</span>,</span>
+<span id="cb208-29"><a href="#cb208-29" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Saturday"</span>,</span>
+<span id="cb208-30"><a href="#cb208-30" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Sunday"</span></span>
+<span id="cb208-31"><a href="#cb208-31" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb208-32"><a href="#cb208-32" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>And we can compare the results by graphing first with the original character vector on the x-axis, and then another graph with the factor vector on the x-axis.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb206"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb206-1"><a href="#cb206-1" aria-hidden="true" tabindex="-1"></a>days_data <span class="sc">|&gt;</span></span>
-<span id="cb206-2"><a href="#cb206-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> days, <span class="at">y =</span> some_value)) <span class="sc">+</span></span>
-<span id="cb206-3"><a href="#cb206-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()</span>
-<span id="cb206-4"><a href="#cb206-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb206-5"><a href="#cb206-5" aria-hidden="true" tabindex="-1"></a>days_data <span class="sc">|&gt;</span></span>
-<span id="cb206-6"><a href="#cb206-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> days_as_factor, <span class="at">y =</span> some_value)) <span class="sc">+</span></span>
-<span id="cb206-7"><a href="#cb206-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb209"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb209-1"><a href="#cb209-1" aria-hidden="true" tabindex="-1"></a>days_data <span class="sc">|&gt;</span></span>
+<span id="cb209-2"><a href="#cb209-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> days, <span class="at">y =</span> some_value)) <span class="sc">+</span></span>
+<span id="cb209-3"><a href="#cb209-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()</span>
+<span id="cb209-4"><a href="#cb209-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb209-5"><a href="#cb209-5" aria-hidden="true" tabindex="-1"></a>days_data <span class="sc">|&gt;</span></span>
+<span id="cb209-6"><a href="#cb209-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> days_as_factor, <span class="at">y =</span> some_value)) <span class="sc">+</span></span>
+<span id="cb209-7"><a href="#cb209-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="03-r_essentials_files/figure-html/unnamed-chunk-84-1.png" class="img-fluid" style="width:50.0%"></p>
+<p><img src="03-r_essentials_files/figure-html/unnamed-chunk-86-1.png" class="img-fluid" style="width:50.0%"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="03-r_essentials_files/figure-html/unnamed-chunk-84-2.png" class="img-fluid" style="width:50.0%"></p>
+<p><img src="03-r_essentials_files/figure-html/unnamed-chunk-86-2.png" class="img-fluid" style="width:50.0%"></p>
 </div>
 </div>
 </section>
@@ -2595,6 +2649,12 @@ Hangartner, Dominik, Daniel Kopp, and Michael Siegenthaler. 2021. <span>“Monit
 </div>
 <div id="ref-kieranskitchen" class="csl-entry" role="doc-biblioentry">
 Healy, Kieran. 2020. <span>“The Kitchen Counter Observatory,”</span> May. <a href="https://kieranhealy.org/blog/archives/2020/05/21/the-kitchen-counter-observatory/">https://kieranhealy.org/blog/archives/2020/05/21/the-kitchen-counter-observatory/</a>.
+</div>
+<div id="ref-citepurrr" class="csl-entry" role="doc-biblioentry">
+Henry, Lionel, and Hadley Wickham. 2020. <em><span class="nocase">purrr: Functional Programming Tools</span></em>. <a href="https://CRAN.R-project.org/package=purrr">https://CRAN.R-project.org/package=purrr</a>.
+</div>
+<div id="ref-fs" class="csl-entry" role="doc-biblioentry">
+Hester, Jim, Hadley Wickham, and Gábor Csárdi. 2021. <em>Fs: Cross-Platform File System Operations Based on ’Libuv’</em>. <a href="https://CRAN.R-project.org/package=fs">https://CRAN.R-project.org/package=fs</a>.
 </div>
 <div id="ref-keyes2019" class="csl-entry" role="doc-biblioentry">
 Keyes, Os. 2019. <span>“Counting the Countless.”</span> <em>Real Life</em>. <a href="https://reallifemag.com/counting-the-countless/">https://reallifemag.com/counting-the-countless/</a>.
