@@ -11,6 +11,6 @@ Check for consistency on next full read-through:
 - Check about installing tidyverse packages unnecessarily. And similarly, loading core tidyverse unnecessarily.
 
 
-### 21 July 2022: 
+### 25 July 2022: 
 
-- Have default linted up to and including chapter 6. Have also fixed all '' to "" for same.
+- Have default linted up to and including Chapter 8. Have also fixed all '' to "" for same.
