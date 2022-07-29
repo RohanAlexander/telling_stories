@@ -14,3 +14,17 @@ Check for consistency on next full read-through:
 ### 25 July 2022: 
 
 - Have default linted up to and including Chapter 8. Have also fixed all '' to "" for same.
+
+
+### Phrases
+
+Remove:
+
+- it is clear that
+
+Change:
+
+- one particular -> one
+- and also -> and
+- a large number of -> many
+- take advantage of -> use
