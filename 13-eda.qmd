@@ -7,71 +7,14 @@ engine: knitr
 **Required material**
 
 - Read *The Future of Data Analysis*, Part 1 "General Considerations", [@tukey1962future]
+- Read *R for Data Science*, Chapter 10 "Exploratory Data Analysis", [@r4ds]
 
 **Key concepts and skills**
 
-- Quickly coming to terms with a new dataset by constructing graphs and tables.
-- Understanding the issues and features of the dataset and how this may affect analysis decisions.
-- Thinking about missing values and outliers.
+- Exploratory data analysis is the process of quickly coming to terms with a new dataset by constructing graphs and tables. In particular we want to explore and understand three critical aspects: 1) individual variables; 2) individual and multiple relationships between variables; 3) considering what is not there.
+- During the EDA process we want to come to understand the issues and features of the dataset and how this may affect analysis decisions. We are especially concerned about missing values and outliers.
 
 **Key packages and functions**
-
-- `broom`
-- `ggrepel`
-- `here`
-- `janitor`
-- `lubridate`
-- `opendatatoronto`
-- `tidymodels`
-- `tidyverse`
-- `visdat`
-
-
-**Key functions**
-
-- `augment()`
-- `clean_names()`
-- `coord_flip()`
-- `count()`
-- `distinct()`
-- `facet_grid()`
-- `facet_wrap()`
-- `geom_bar()`
-- `geom_col()`
-- `geom_density()`
-- `geom_histogram()`
-- `geom_line()`
-- `geom_point()`
-- `geom_smooth()`
-- `geom_text_repel()`
-- `get_dupes()`
-- `glance()`
-- `if_else()`
-- `ifelse()`
-- `initial_split()`
-- `left_join()`
-- `mutate()`
-- `mutate_all()`
-- `names()`
-- `ncol()`
-- `nrow()`
-- `pivot_wider()`
-- `scale_color_brewer()`
-- `scale_fill_brewer()`
-- `scale_x_log10()`
-- `scale_y_log10()`
-- `str_detect()`
-- `str_extract()`
-- `str_remove()`
-- `str_split()`
-- `str_starts()`
-- `summarise()`
-- `summarise_all()`
-- `theme_classic()`
-- `theme_minimal()`
-- `vis_dat()`
-- `vis_miss()`
-
 
 
 
@@ -84,37 +27,23 @@ engine: knitr
 
 Exploratory data analysis is never finished, you just die. It is the active process of exploring and becoming familiar with our data. Like a farmer with their hands in the earth, we need to know every contour and aspect of our data. We need to know how it changes, what it shows, hides, and what are its limits. Exploratory data analysis (EDA) is the unstructured process of doing this.
 
-EDA is a means to an end. While it will inform the entire paper, especially the data section, it is not typically something that ends up in the final paper. 
-The way to proceed is to make a separate R Markdown file, and add code as well as brief notes on-the-go. Do not delete previous code, just add to it. By the end of it we will have created a useful notebook that captures our exploration of the dataset. This is a document that will guide the subsequent analysis and modelling.
+EDA is a means to an end. While it will inform the entire paper, especially the data section, it is not typically something that ends up in the final paper. The way to proceed is to make a separate Quarto document, and add code as well as brief notes on-the-go. Do not delete previous code, just add to it. By the end of it we will have created a useful notebook that captures our exploration of the dataset. This is a document that will guide the subsequent analysis and modelling.
 
 EDA draws on a variety of skills and there are a lot of options for EDA [@staniak2019landscape]. Every tool should be considered. Look at the data and scroll through it. Make tables, plots, summary statistics, even some models. The key is to iterate, move quickly rather than perfectly, and come to a thorough understanding of the data.
 
-In this chapter we will go through various examples of EDA including TTC subway delays, and Airbnb.
-<!-- , and something else? -->
+We are interested in coming to thoroughly understand the data that we have, which will help us understand what we do not have. In particular, we are interested in the following process:
 
+- Understand distribution and properties of individual variables.
+- Understand relationships between variables.
+- Consider what is not there.
+
+In this chapter we will go through various examples of EDA including TTC subway delays, and Airbnb.
 
 ## TTC subway delays 
 
-We can use `opendatatoronto` [@citeSharla] and `tidyverse` [@tidyverse] to obtain data about the Toronto subway system, and especially the delays that have occurred. The idea for this case study comes from Monica Alexander.
+As a first example of EDA we use `opendatatoronto` [@citeSharla], introduced in @sec-fire-hose, and the `tidyverse` [@tidyverse] to obtain and explore data about the Toronto subway system. We are especially interested in getting a sense of the delays that have occurred.
 
-
-<!-- We will provides an interface to all data available on the [Open Data Portal](https://open.toronto.ca/) provided by the City of Toronto. We are going to use that to take a quick lo ok at the subway delays. We're additionally going to especially draw on the , as well as the `ggrepel` [@citeggrepel], `janitor` [@janitor], `lubridate` [@GrolemundWickham2011], and `visdat` [@citevisdat] packages. -->
-
-<!-- ```{r} -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-
-<!-- library(opendatatoronto) -->
-<!-- #| echo: true -->
-<!-- library(tidyverse) -->
-<!-- library(ggrepel) -->
-<!-- library(janitor) -->
-<!-- library(lubridate) -->
-<!-- library(visdat) -->
-<!-- ``` -->
-
-To begin, we download the data on Toronto Transit Commission (TTC) subway delays in 2020. The data are available as a separate dataset for each month. We are interested in 2020, so we create a column that of the year, and then filter the resources to just those months that were in 2020. We download them using `get_resource()`, iterating through each month using `map_dfr` from `purrr` [@citepurrr] which brings each of the twelve datasets together, and then save them.
-then save them. 
+To begin, we download the data on Toronto Transit Commission (TTC) subway delays in 2021. The data are available as a separate dataset for each month. We are interested in 2021, so we create a column that of the year, and then filter the resources to just those months that were in 2021. We download them using `get_resource()`, iterating through each month using `map_dfr` from `purrr` [@citepurrr] which brings each of the twelve datasets together, and then save them.
 
 ```{r}
 #| eval: false
@@ -124,20 +53,19 @@ library(janitor)
 library(opendatatoronto)
 library(tidyverse)
 
-# We know this unique key by looking the 'id' of the interest.
-ttc_resources <- 
-  list_package_resources("996cfe8d-fb35-40ce-b569-698d51fc683b") |>
-  mutate(year = str_extract(name, "20..?")) |>  
-  filter(year == 2020)
+all_2021_ttc_data <-
+  list_package_resources(
+    "996cfe8d-fb35-40ce-b569-698d51fc683b"
 
-all_2020_ttc_data <- 
-  map_dfr(ttc_resources$id, get_resource)
+    ) |>
+  filter(name == "ttc-subway-delay-data-2021") |>
+  get_resource() |>
+  bind_rows() |>
+  clean_names()
 
-all_2020_ttc_data <- clean_names(all_2020_ttc_data)
+write_csv(all_2021_ttc_data, "all_2021_ttc_data.csv")
 
-write_csv(all_2020_ttc_data, "all_2020_ttc_data.csv")
-
-all_2020_ttc_data
+all_2021_ttc_data
 ```
 
 ```{r}
@@ -146,7 +74,7 @@ all_2020_ttc_data
 
 # INTERNAL - Run above and then run this to save it in the appropriate place.
 
-write_csv(all_2020_ttc_data, "inputs/data/all_2020_ttc_data.csv")
+write_csv(all_2021_ttc_data, "inputs/data/all_2021_ttc_data.csv")
 ```
 
 ```{r}
@@ -157,25 +85,35 @@ library(janitor)
 library(opendatatoronto)
 library(tidyverse)
 
-all_2020_ttc_data <- read_csv("inputs/data/all_2020_ttc_data.csv")
+all_2021_ttc_data <- read_csv("inputs/data/all_2021_ttc_data.csv")
 
-all_2020_ttc_data
+all_2021_ttc_data
 ```
 
-The dataset has a variety of columns, and we can find out more about each of them by downloading the codebook. The reason for the delay is coded, and so we can also download the explanations. One particular variable of interest appears to be 'min_delay', which gives the extent of the delay in minutes. 
+The dataset has a variety of columns, and we can find out more about each of them by downloading the codebook. The reason for the delay is coded, and so we can also download the explanations. One particular variable of interest appears to be "min_delay", which gives the extent of the delay in minutes. 
 
 ```{r}
 #| eval: false
 #| include: true
 
 # Data codebook
-delay_data_codebook <- get_resource("54247e39-5a7d-40db-a137-82b2a9ab0708")
-delay_data_codebook <- clean_names(delay_data_codebook)
-write_csv(delay_data_codebook, "delay_data_codebook.csv")
+delay_codebook <-
+  list_package_resources(
+    "996cfe8d-fb35-40ce-b569-698d51fc683b") |>
+  filter(name == "ttc-subway-delay-data-readme") |>
+  get_resource() |> 
+  clean_names()
+
+write_csv(delay_codebook, "delay_codebook.csv")
 
 # Explanation for delay codes
-delay_codes <- get_resource("fece136b-224a-412a-b191-8d31eb00491e")
-delay_codes <- clean_names(delay_codes)
+delay_codes <-
+  list_package_resources(
+    "996cfe8d-fb35-40ce-b569-698d51fc683b") |>
+  filter(name == "ttc-subway-delay-codes") |>
+  get_resource() |> 
+  clean_names()
+
 write_csv(delay_codes, "delay_codes.csv")
 ```
 
@@ -184,7 +122,8 @@ write_csv(delay_codes, "delay_codes.csv")
 #| eval: false
 
 # INTERNAL - Run above and then run this to save it in the appropriate place.
-write_csv(delay_data_codebook, "inputs/data/delay_data_codebook.csv")
+
+write_csv(delay_codebook, "inputs/data/delay_codebook.csv")
 write_csv(delay_codes, "inputs/data/delay_codes.csv")
 ```
 
@@ -192,8 +131,8 @@ write_csv(delay_codes, "inputs/data/delay_codes.csv")
 #| eval: true
 #| include: false
 
-delay_data_codebook <- read_csv("inputs/data/delay_data_codebook.csv")
-delay_data_codebook
+delay_codebook <- read_csv("inputs/data/delay_codebook.csv")
+delay_codebook
 
 delay_codes <- read_csv("inputs/data/delay_codes.csv")
 delay_codes
@@ -207,31 +146,32 @@ There is no one way to explore a dataset while conducting EDA, but we are usuall
 
 It is important to document all aspects as we go through and make note of anything surprising. We are looking to create a record of the steps and assumptions that we made as we were going because these will be important when we come to modelling. 
 
+### Distribution and properties of individual variables
 
-### Checking data
+#### Checking data
 
-We should check that the variables are what they say they are. If they are not, then we need to work out what to do, for instance, should we recode them, or even remove them? It is also important to ensure that the class of the variables is as we expect, for instance variables that should be a factor are a factor and those that should be a character are a character. And also that we do not accidentally have, say, factors as numbers, or vice versa. One way to do this is to use `unique()`, and another is to use `table()`.
+We should check that the variables are what they say they are. If they are not, then we need to work out what to do, for instance, should we change them, or even remove them? It is also important to ensure that the class of the variables is as we expect, for instance variables that should be a factor are a factor and those that should be a character are a character. And also that we do not accidentally have, say, factors as numbers, or vice versa. One way to do this is to use `unique()`, and another is to use `table()`.
 
 ```{r}
-unique(all_2020_ttc_data$day)
+unique(all_2021_ttc_data$day)
 
-unique(all_2020_ttc_data$line)
+unique(all_2021_ttc_data$line)
 
-table(all_2020_ttc_data$day)
+table(all_2021_ttc_data$day)
 
-table(all_2020_ttc_data$line)
+table(all_2021_ttc_data$line)
 ```
 
-It is clear that we have likely issues in terms of the lines. Some of them have a clear re-code, but not all. One option would be to drop them, but we would need to think about whether these errors might be correlated with something that is of interest, because if they were then we may be dropping important information. There is usually no one right answer, because it will usually depend on what we are using the data for. We would note the issue, as we continued with EDA and then decide later about what to do. For now, we will remove all the lines that are not the ones that we know to be correct.
+It is clear that we have likely issues in terms of the lines. Some of them have a clear change, but not all. One option would be to drop them, but we would need to think about whether these errors might be correlated with something that is of interest, because if they were then we may be dropping important information. There is usually no one right answer, because it will usually depend on what we are using the data for. We would note the issue, as we continued with EDA and then decide later about what to do. For now, we will remove all the lines that are not the ones that we know to be correct.
 
 ```{r}
-all_2020_ttc_data <- 
-  all_2020_ttc_data |> 
+all_2021_ttc_data_filtered_lines <-
+  all_2021_ttc_data |> 
   filter(line %in% c("BD", "YU", "SHP", "SRT"))
 ```
 
 
-Exploring missing data could be a course in itself, but the presence, or lack, of missing values can haunt an analysis. To get started we could look at known-unknowns, which are the NAs for each variable. And `vis_dat()` and `vis_miss()` from `visdat` [@citevisdat] can be useful to get a feel for how the missing values are distributed.
+Exploring missing data could be a course in itself, but the presence, or lack, of missing values can haunt an analysis. To get started we could look at known-unknowns, which are the NAs for each variable. It can be useful to use `vis_dat()` from `visdat` [@citevisdat] to get a feel for how the missing values are distributed across variables.
 
 ```{r}
 #| eval: true
@@ -241,25 +181,19 @@ Exploring missing data could be a course in itself, but the presence, or lack, o
 
 library(visdat)
 
-all_2020_ttc_data |>
-  summarise_all(list( ~ sum(is.na(.))))
-
-vis_dat(x = all_2020_ttc_data,
-         palette = "cb_safe"
-         )
-
-vis_miss(all_2020_ttc_data)
+vis_dat(x = all_2021_ttc_data,
+        palette = "cb_safe")
 ```
 
-In this case we have many missing values in 'bound' and two in 'line'. For these known-unknowns, we are interested in whether the they are missing at random. We want to, ideally, show that data happened to just drop out. This is unlikely, and so we are usually trying to look at what is systematic about how our data are missing.
+In this case we have many missing values in "bound" and two in "line". For these known-unknowns, as discussed in @sec-farm-data, we are interested in whether the they are missing at random. We want to, ideally, show that data happened to just drop out. This is unlikely, and so we are usually trying to look at what is systematic about how our data are missing.
 
-Sometime data happen to be duplicated. If we did not notice this then our analysis would be wrong in ways that we'd not be able to consistently expect. There are a variety of ways to look for duplicated rows, but `get_dupes()` from `janitor` [@janitor] is especially useful.
+Sometime data happen to be duplicated. If we did not notice this then our analysis would be wrong in ways that we would not be able to consistently expect. There are a variety of ways to look for duplicated rows, but `get_dupes()` from `janitor` [@janitor] is especially useful.
 
 ```{r}
 #| eval: true
 #| include: true
 
-get_dupes(all_2020_ttc_data)
+get_dupes(all_2021_ttc_data)
 ```
 
 This dataset has many duplicates. Again, we are interested in whether there is something systematic going on. Remembering that during EDA we are trying to quickly come to terms with a dataset, one way forward is to flag this as an issue to come back to and explore later, and to just remove duplicates for now using `distinct()`.
@@ -268,35 +202,35 @@ This dataset has many duplicates. Again, we are interested in whether there is s
 #| eval: true
 #| include: true
 
-all_2020_ttc_data <- 
-  all_2020_ttc_data |> 
+all_2021_ttc_data <-
+  all_2021_ttc_data |> 
   distinct()
 ```
 
-The station names are a mess. We could try to quickly bring a little order to the chaos by just taking just the first word (or, the first two if it starts with 'ST').
+The station names are a mess. We could try to quickly bring a little order to the chaos by just taking just the first word (or, the first two if it starts with "ST").
 
 ```{r}
 #| eval: true
 #| include: true
 
-all_2020_ttc_data <-
-  all_2020_ttc_data |>
-  mutate(station_clean = if_else(str_starts(station, "ST"), 
-                                 word(station, 1, 2), 
+all_2021_ttc_data <-
+  all_2021_ttc_data |>
+  mutate(station_clean = if_else(str_starts(station, "ST"),
+                                 word(station, 1, 2),
                                  word(station, 1)))
 ```
 
 
 
-### Visualizing data
+#### Visualizing data
 
-We need to see the data in its original state to understand it and we use bar charts, scatterplots, line plots and histograms extensively for this. During EDA we are not as concerned with whether the graph is aesthetically pleasing, but are instead trying to acquire a sense of the data as quickly as possible. We can start by looking at the distribution of 'min_delay', which is one outcome of interest.
+We need to see the data in its original state to understand it and we use bar charts, scatterplots, line plots and histograms extensively for this. During EDA we are not as concerned with whether the graph is aesthetically pleasing, but are instead trying to acquire a sense of the data as quickly as possible. We can start by looking at the distribution of "min_delay", which is one outcome of interest.
 
 ```{r}
 #| eval: true
 #| include: true
 
-all_2020_ttc_data |>
+all_2021_ttc_data |>
   ggplot(aes(x = min_delay)) + 
   geom_bar()
 ```
@@ -309,20 +243,20 @@ The largely empty graph suggests the presence of outliers. There are a variety o
 #| message: false
 #| warning: false
 
-all_2020_ttc_data |>
+all_2021_ttc_data |>
   ggplot(aes(x = min_delay)) + 
   geom_bar() +
   scale_x_log10()
 ```
 
-This initial exploration further hints at an issue that we might like to explore further. We will join this dataset with 'delay_codes' to understand what is going on. 
+This initial exploration further hints at an issue that we might like to explore further. We will join this dataset with "delay_codes" to understand what is going on. 
 
 ```{r}
 #| eval: true
 #| include: true
 
-all_2020_ttc_data <-
-  all_2020_ttc_data |>
+all_2021_ttc_data <-
+  all_2021_ttc_data |>
   left_join(
     delay_codes |>
       rename(code = sub_rmenu_code, 
@@ -331,8 +265,8 @@ all_2020_ttc_data <-
     by = "code"
   )
 
-all_2020_ttc_data <-
-  all_2020_ttc_data |>
+all_2021_ttc_data <-
+  all_2021_ttc_data |>
   mutate(code_srt = ifelse(line == "SRT", code, "NA")) |>
   left_join(
     delay_codes |>
@@ -347,13 +281,13 @@ all_2020_ttc_data <-
   select(-code_srt,-code_desc_srt)
 ```
 
-And so we can see that the 450 minute delay was due to 'Transit Control Related Problems', the 446 minute delay was due to 'Miscellaneous Other', they seem to be outliers, even among the outliers.
+And so we can see that the 450 minute delay was due to "Transit Control Related Problems", the 446 minute delay was due to "Miscellaneous Other", they seem to be outliers, even among the outliers.
 
 ```{r}
 #| eval: true
 #| include: true
 
-all_2020_ttc_data |> 
+all_2021_ttc_data |> 
   left_join(delay_codes |> 
               rename(code = sub_rmenu_code, code_desc = code_description_3) |>
               select(code, code_desc)) |> 
@@ -361,9 +295,9 @@ all_2020_ttc_data |>
   select(date, time, station, line, min_delay, code, code_desc)
 ```
 
-### Groups of small counts
+#### Groups of small counts
 
-Another thing that we are looking for is various groupings of the data, especially where sub-groups may end up with only a small numbers of observations in them. This is because any analysis could be especially influenced by them. One quick way to do this is to group the data by a variable that is of interest, for instance 'line', using color.
+Another thing that we are looking for is various groupings of the data, especially where sub-groups may end up with only a small numbers of observations in them. This is because any analysis could be especially influenced by them. One quick way to do this is to group the data by a variable that is of interest, for instance "line", using color.
 
 ```{r}
 #| eval: true
@@ -373,14 +307,14 @@ Another thing that we are looking for is various groupings of the data, especial
 #| message: false
 #| warning: false
 
-ggplot(data = all_2020_ttc_data) + 
+ggplot(data = all_2021_ttc_data) + 
   geom_histogram(aes(x = min_delay, y = ..density.., fill = line), 
-                 position = 'dodge', 
+                 position = "dodge", 
                  bins = 10) + 
   scale_x_log10()
 ```
 
-@fig-delaydensity uses density so that we can look at the the distributions more comparably, but we should also be aware of differences in frequency (@fig-delayfreq)). In this case, we will see that 'SHP' and 'SRT' have much smaller counts.
+@fig-delaydensity uses density so that we can look at the the distributions more comparably, but we should also be aware of differences in frequency (@fig-delayfreq)). In this case, we will see that "SHP" and "SRT" have much smaller counts.
 
 ```{r}
 #| eval: true
@@ -390,9 +324,9 @@ ggplot(data = all_2020_ttc_data) +
 #| message: false
 #| warning: false
 
-ggplot(data = all_2020_ttc_data) + 
+ggplot(data = all_2021_ttc_data) + 
   geom_histogram(aes(x = min_delay, fill = line), 
-                 position = 'dodge', 
+                 position = "dodge", 
                  bins = 10) + 
   scale_x_log10()
 ```
@@ -407,7 +341,7 @@ To group by another variable we can add facets (@fig-delayfreqfacet).
 #| message: false
 #| warning: false
 
-ggplot(data = all_2020_ttc_data) + 
+ggplot(data = all_2021_ttc_data) + 
   geom_density(aes(x = min_delay, color = line), 
                bw = .08) + 
   scale_x_log10() + 
@@ -421,7 +355,7 @@ We can now plot the top five stations by mean delay.
 #| eval: true
 #| include: true
 
-all_2020_ttc_data |> 
+all_2021_ttc_data |> 
   group_by(line, station_clean) |> 
   summarise(mean_delay = mean(min_delay), n_obs = n()) |> 
   filter(n_obs>1) |> 
@@ -434,7 +368,7 @@ all_2020_ttc_data |>
                scales = "free_y")
 ```
 
-### Dates
+#### Dates
 
 Dates are often difficult to work with because they are so prone to having issues. For this reason, it is especially important to consider them during EDA. We could create a graph by week, to see if there is any seasonality. When using dates, `lubridate` [@GrolemundWickham2011] is especially useful. For instance, we can look at the average delay, of those that were delayed, by week drawing on `week()` to construct the weeks (@fig-delaybyweek).
 
@@ -448,7 +382,7 @@ Dates are often difficult to work with because they are so prone to having issue
 
 library(lubridate)
 
-all_2020_ttc_data |>
+all_2021_ttc_data |>
   filter(min_delay > 0) |>
   mutate(week = week(date)) |>
   group_by(week, line) |>
@@ -471,7 +405,7 @@ Now let us look at the proportion of delays that were greater than 10 minutes (@
 #| message: false
 #| warning: false
 
-all_2020_ttc_data |> 
+all_2021_ttc_data |> 
   mutate(week = week(date)) |> 
   group_by(week, line) |> 
   summarise(prop_delay = sum(min_delay>10)/n()) |> 
@@ -485,7 +419,8 @@ all_2020_ttc_data |>
 
 These figures, tables, and analysis have no place in a final paper. Instead, they allow us to become comfortable with the data. We note aspects about each that stand out, as well as the warnings and any implications or aspects to return to.
 
-### Relationships
+### Relationships between variables
+
 
 We are also interested in looking at the relationship between two variables. Scatter plots are especially useful here for continuous variables, and are a good precursor to modeling. For instance, we may be interested in the relationship between the delay and the gap (@fig-delayvsgap).
 
@@ -497,7 +432,7 @@ We are also interested in looking at the relationship between two variables. Sca
 #| message: false
 #| warning: false
 
-all_2020_ttc_data |>
+all_2021_ttc_data |>
   ggplot(aes(x = min_delay, y = min_gap)) +
   geom_point() +
   scale_x_log10() +
@@ -514,7 +449,7 @@ The relationship between categorical variables takes more work, but we could als
 #| message: false
 #| warning: false
 
-all_2020_ttc_data |>
+all_2021_ttc_data |>
   group_by(line, code_desc) |>
   summarise(mean_delay = mean(min_delay)) |>
   arrange(-mean_delay) |>
@@ -527,85 +462,6 @@ all_2020_ttc_data |>
              nrow = 4) +
   coord_flip()
 ```
-
-Principal components analysis (PCA) is another powerful exploratory tool. It allows us to pick up potential clusters and outliers that can help to inform modeling. To see this, we can look at the types of delay by station. The delay categories are messy and there a lot of them, but as we are trying to come to terms with the dataset, we will just take the first word.
-
-```{r}
-#| eval: true
-#| include: true
-
-all_2020_ttc_data <-
-  all_2020_ttc_data |>
-  mutate(code_red = case_when(
-    str_starts(code_desc, "No") ~ word(code_desc, 1, 2),
-    str_starts(code_desc, "Operator") ~ word(code_desc, 1, 2),
-    TRUE ~ word(code_desc, 1)
-  ))
-```
-
-Let us also just restrict the analysis to causes that happen at least 50 times over 2019. To do the PCA, the dataframe also needs to be switched to wide format.
-
-```{r}
-#| eval: true
-#| include: true
-
-dwide <-
-  all_2020_ttc_data |>
-  group_by(line, station_clean) |>
-  mutate(n_obs = n()) |>
-  filter(n_obs > 1) |>
-  group_by(code_red) |>
-  mutate(tot_delay = n()) |>
-  arrange(tot_delay) |>
-  filter(tot_delay > 50) |>
-  group_by(line, station_clean, code_red) |>
-  summarise(n_delay = n()) |>
-  pivot_wider(names_from = code_red, values_from = n_delay) |>
-  mutate_all(.funs = funs(ifelse(is.na(.), 0, .)))
-```
-
-Now we can quickly do some PCA.
-
-```{r}
-#| eval: true
-#| include: true
-
-delay_pca <- prcomp(dwide[,3:ncol(dwide)])
-
-df_out <- as_tibble(delay_pca$x)
-df_out <- bind_cols(dwide |> select(line, station_clean), df_out)
-head(df_out)
-```
-
-
-We can plot the first two principal components, and add labels to some of the outlying stations.
-
-```{r}
-#| eval: true
-#| include: true
-
-library(ggrepel)
-ggplot(df_out,aes(x=PC1,y=PC2,color=line )) + 
-  geom_point() + 
-  geom_text_repel(data = df_out |> filter(PC2>100|PC1<100*-1), 
-                  aes(label = station_clean)
-                  )
-```
-
-We could also plot the factor loadings. We see some evidence that perhaps one is to do with the public, compared with another to do with the operator.
-
-```{r}
-#| eval: true
-#| include: true
-
-df_out_r <- as_tibble(delay_pca$rotation)
-df_out_r$feature <- colnames(dwide[,3:ncol(dwide)])
-
-df_out_r
-
-ggplot(df_out_r,aes(x=PC1,y=PC2,label=feature )) + geom_text_repel()
-```
-
 
 
 
@@ -755,11 +611,9 @@ ggplot(df_out_r,aes(x=PC1,y=PC2,label=feature )) + geom_text_repel()
 
 
 
-## Airbnb listing in Toronto
+## Airbnb listings in London
 
-<!-- - Kommenda, Niko, Helen Pidd and Libby Brooks, 2020, 'Revealed: the areas in the UK with one Airbnb for every four homes', *The Guardian*, 20 February, https://www.theguardian.com/technology/2020/feb/20/revealed-the-areas-in-the-uk-with-one-airbnb-for-every-four-homes. -->
-
-In this case study we look at Airbnb listings in Toronto. The dataset is from Inside Airbnb [@airbnbdata] and we will read it from their website, and then save a local copy. We can give `read_csv()` a link to where the dataset is and it will download it. This helps with reproducibility because the source is clear. But, as that link could change at any time, longer-term reproducibility, as well as wanting to minimize the effect on the Inside Airbnb servers, suggest that we should also save a local copy of the data and then use that. As the original data is not ours, we should not make that public without first getting written permission. The 'guess_max' option in read_csv helps us avoid having to specify the column types. Usually `read_csv()` takes a best guess at the column types based on the first few rows. But sometimes those first ones are misleading and so 'guess_max' forces it to look at a larger number of rows to try to work out what is going on.
+In this case study we look at Airbnb listings in London in X 2022. The dataset is from Inside Airbnb [@airbnbdata] and we will read it from their website, and then save a local copy. We can give `read_csv()` a link to where the dataset is and it will download it. This helps with reproducibility because the source is clear. But, as that link could change at any time, longer-term reproducibility, as well as wanting to minimize the effect on the Inside Airbnb servers, suggest that we should also save a local copy of the data and then use that. As the original data is not ours, we should not make that public without first getting written permission. The "guess_max" option in read_csv helps us avoid having to specify the column types. Usually `read_csv()` takes a best guess at the column types based on the first few rows. But sometimes those first ones are misleading and so "guess_max" forces it to look at a larger number of rows to try to work out what is going on.
 
 ```{r}
 #| include: true
@@ -769,7 +623,7 @@ In this case study we look at Airbnb listings in Toronto. The dataset is from In
 
 library(tidyverse)
 
-airbnb_data <- 
+airbnb_data <-
   read_csv("http://data.insideairbnb.com/canada/on/toronto/2021-01-02/data/listings.csv.gz", 
            guess_max = 20000)
 
@@ -785,14 +639,15 @@ airbnb_data
 #| message: false
 
 library(tidyverse)
-airbnb_data <- 
+airbnb_data <-
   read_csv(here::here("dont_push/airbnb_toronto_2021_january-listings.csv"), 
            guess_max = 20000)
 
 airbnb_data
 ```
 
-### Explore individual variables
+### Distribution and properties of individual variables
+
 
 There are a large number of columns, so we will just select a few.
 
@@ -803,7 +658,7 @@ There are a large number of columns, so we will just select a few.
 names(airbnb_data) |> 
   length()
 
-airbnb_data_selected <- 
+airbnb_data_selected <-
   airbnb_data |> 
   select(host_id, 
          host_since, 
@@ -832,7 +687,7 @@ airbnb_data_selected <-
 airbnb_data_selected
 ```
 
-First we might be interested in price. It is a character at the moment and so we need to convert it to a numeric. This is a common problem, and we need to be a little careful that it does not all just convert to NAs. In our case if we just force the price data to be a numeric then it will go to NA because there are a lot of characters where it is unclear what the numeric equivalent is, such as '$'. So we need to remove those characters first.
+First we might be interested in price. It is a character at the moment and so we need to convert it to a numeric. This is a common problem, and we need to be a little careful that it does not all just convert to NAs. In our case if we just force the price data to be a numeric then it will go to NA because there are a lot of characters where it is unclear what the numeric equivalent is, such as "$". So we need to remove those characters first.
 
 ```{r}
 #| eval: true
@@ -846,7 +701,7 @@ airbnb_data_selected |>
   select(price) |> 
   filter(str_detect(price, ","))
 
-airbnb_data_selected <- 
+airbnb_data_selected <-
   airbnb_data_selected |> 
   mutate(price = str_remove(price, "\\$"),
          price = str_remove(price, ","),
@@ -929,7 +784,7 @@ For now, we will just remove all prices that are more than $999.
 #| eval: true
 #| include: true
 
-airbnb_data_selected <- 
+airbnb_data_selected <-
   airbnb_data_selected |> 
   filter(price < 1000)
 ```
@@ -950,7 +805,7 @@ We will also want to create a binary variable from this. It is true/false at the
 #| eval: true
 #| include: true
 
-airbnb_data_selected <- 
+airbnb_data_selected <-
   airbnb_data_selected |>
   filter(!is.na(host_is_superhost)) |>
   mutate(host_is_superhost_binary = if_else(
@@ -976,7 +831,7 @@ airbnb_data_selected |>
        y = "Number of properties")
 ```
 
-We would like to deal with the NAs in 'review_scores_rating', but this is more complicated as there are a lot of them. It may be that this is just because they do not have any reviews.
+We would like to deal with the NAs in "review_scores_rating", but this is more complicated as there are a lot of them. It may be that this is just because they do not have any reviews.
 
 ```{r}
 #| eval: true
@@ -1037,7 +892,7 @@ For now, we will remove anyone with an NA in their main review score, even thoug
 #| eval: true
 #| include: true
 
-airbnb_data_selected <- 
+airbnb_data_selected <-
   airbnb_data_selected |>
   filter(!is.na(review_scores_rating)) |>
   filter(review_scores_rating >= 70)
@@ -1053,13 +908,13 @@ airbnb_data_selected |>
   count(host_response_time)
 ```
 
-It is unclear a host could have a response time of NA. It may be that they are related to some other variable. Interestingly it seems like what looks like 'NAs' in 'host_response_time' variable are not coded as proper NAs, but are instead being treated as another category. We will recode them to be actual NAs and also change the variable to be a factor.
+It is unclear a host could have a response time of NA. It may be that they are related to some other variable. Interestingly it seems like what looks like "NAs" in "host_response_time" variable are not coded as proper NAs, but are instead being treated as another category. We will recode them to be actual NAs and also change the variable to be a factor.
 
 ```{r}
 #| eval: true
 #| include: true
 
-airbnb_data_selected <- 
+airbnb_data_selected <-
   airbnb_data_selected |>
   mutate(host_response_time = if_else(host_response_time == "N/A", NA_character_, host_response_time),
          host_response_time = factor(host_response_time)
@@ -1091,7 +946,7 @@ For now, we will remove anyone with a NA in their response time. This will again
 #| eval: true
 #| include: true
 
-airbnb_data_selected <- 
+airbnb_data_selected <-
   airbnb_data_selected |> 
   filter(!is.na(host_response_time))
 ```
@@ -1117,7 +972,7 @@ As there are no differences in this dataset, we can just remove one variable for
 #| message: false
 #| warning: false
 
-airbnb_data_selected <- 
+airbnb_data_selected <-
   airbnb_data_selected |> 
   select(-host_listings_count)
 
@@ -1144,7 +999,7 @@ There is nothing that immediately jumps out as odd about the people with zero li
 #| eval: true
 #| include: true
 
-airbnb_data_selected <- 
+airbnb_data_selected <-
   airbnb_data_selected |> 
   add_count(host_id) |> 
   filter(n == 1) |> 
@@ -1153,7 +1008,8 @@ airbnb_data_selected <-
 
 
 
-### Explore relationships between variables
+### Relationships between variables
+
 
 We might like to make some graphs to see if there are any relationships that become clear. Some aspects that come to mind is looking at prices and reviews and super hosts, and number of properties and neighborhood. 
 
@@ -1230,9 +1086,6 @@ airbnb_data_selected |>
   head()
 ```
 
-
-
-### Explore multiple relationships with a model
 
 We will now run some models on our dataset. We will cover modeling in more detail in Chapter \@ref(ijalm), but we can use models during EDA to help get a better sense of relationships that may exist between multiple variables in a dataset. For instance, we may like to see whether we can forecast whether someone is a super host, and the factors that go into explaining that. As the dependent variable is binary, this is a good opportunity to use logistic regression. We expect that better reviews will be associated with faster responses and higher reviews. Specifically, the model that we estimate is:
 
@@ -1316,7 +1169,7 @@ modelsummary(logistic_reg_superhost_response_review)
 <!--   scale_color_brewer(palette = "Set1") -->
 <!-- ``` -->
 
-<!-- This nice thing about this graph is that it illustrates nicely the effect of a host having an average response time of, say, 'within an hour' compared with 'within a few hours'.  -->
+<!-- This nice thing about this graph is that it illustrates nicely the effect of a host having an average response time of, say, "within an hour" compared with "within a few hours".  -->
 
 <!-- We can focus on how the model does in terms of raw classification using `confusionMatrix` from the caret package (Kuhn, 2020). This also gives a bunch of diagnostics (the help file explains what they are). In general, they suggest this isn't the best model that's ever existed. -->
 
@@ -1415,7 +1268,7 @@ modelsummary(logistic_reg_superhost_response_review)
 1. In your own words what is exploratory data analysis (this will be difficult, but please write only one nuanced paragraph)?
 2. In Tukey's words, what is exploratory data analysis (please write one paragraph)?
 3. Who was Tukey (please write a paragraph or two)? 
-6. If you have a dataset called 'my_data', which has two columns: 'first_col' and 'second_col', then could you please write some rough R code that would generate a graph (the type of graph does not matter).
+6. If you have a dataset called "my_data", which has two columns: "first_col" and "second_col", then could you please write some rough R code that would generate a graph (the type of graph does not matter).
 7. Consider a dataset that has 500 rows and 3 columns, so there are 1,500 cells. If 100 of the cells are missing data for at least one of the columns, then would you remove the whole row your dataset or try to run your analysis on the data as is, or some other procedure? What if your dataset had 10,000 rows instead, but the same number of missing cells?
 8. Please note three ways of identifying unusual values.
 9. What is the difference between a categorical and continuous variable?
