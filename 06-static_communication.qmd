@@ -6,7 +6,7 @@ engine: knitr
 
 **Required material**
 
-- Read *R for Data Science*, Chapter 28 "Graphics for communication", [@r4ds]
+- Read *R for Data Science*, Chapter 33 "Graphics for communication", [@r4ds]
 - Read *Data Visualization: A Practical Introduction*, Chapter 3 "Make a plot", [@healyviz]
 - Watch *The Glamour of Graphics*, [@chase2020]
 - Read *Testing Statistical Charts: What Makes a Good Graph?*, [@vanderplas2020testing]
@@ -688,10 +688,8 @@ viridismagma <-
   basis +
   scale_colour_viridis_d(option = "magma")
 
-over <- RColorBrewerBrBG /
-  RColorBrewerSet2 /
-  viridis /
-  viridismagma
+over <- RColorBrewerBrBG + RColorBrewerSet2 /
+  viridis + viridismagma
 
 over + plot_annotation(
   caption = "Data source: World Bank."
@@ -714,7 +712,9 @@ The points of a scatterplot sometimes overlap. We can address this situation in 
 library(ggbeeswarm)
 
 world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
+  ggplot(mapping = aes(x = gdp_growth, 
+                       y = inflation, 
+                       color = country)) +
   geom_point(alpha = 0.5) +
   theme_minimal() +
   labs(x = "GDP growth",
@@ -723,7 +723,9 @@ world_bank_data |>
        caption = "Data source: World Bank.")
 
 world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
+  ggplot(mapping = aes(x = gdp_growth, 
+                       y = inflation, 
+                       color = country)) +
   geom_jitter() +
   theme_minimal() +
   labs(x = "GDP growth",
@@ -732,7 +734,9 @@ world_bank_data |>
        caption = "Data source: World Bank.")
 
 world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
+  ggplot(mapping = aes(x = gdp_growth, 
+                       y = inflation, 
+                       color = country)) +
   geom_beeswarm() +
   theme_minimal() +
   labs(x = "GDP growth",
@@ -751,7 +755,9 @@ A common use case for a scatterplot is to illustrate a relationship between two 
 
 defaults <-
   world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
+  ggplot(mapping = aes(x = gdp_growth, 
+                       y = inflation, 
+                       color = country)) +
   geom_jitter() +
   geom_smooth() +
   theme_minimal() +
@@ -761,7 +767,9 @@ defaults <-
 
 straightline <-
   world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
+  ggplot(mapping = aes(x = gdp_growth, 
+                       y = inflation, 
+                       color = country)) +
   geom_jitter() +
   geom_smooth(method = lm, se = FALSE) +
   theme_minimal() +
@@ -771,7 +779,9 @@ straightline <-
 
 onestraightline <-
   world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
+  ggplot(mapping = aes(x = gdp_growth, 
+                       y = inflation, 
+                       color = country)) +
   geom_jitter() +
   geom_smooth(method = lm, color = "black", se = FALSE) +
   theme_minimal() +
@@ -1042,50 +1052,45 @@ world_bank_data |>
 
 ### Boxplots
 
-One reason for using graphs is that they help us understand and embrace how complex our data are, rather than trying to hide and smooth it away [@armstrongembracecomplexity]. As such, boxplots are almost never an appropriate choice because they hide the distribution of data, rather than show it. Unless we need to compare the summary statistics of many variables at once, then they should almost never be used (an example of this exception is @Bethlehem2022). This is because the same boxplot can apply to very different distributions. To see this, consider some simulated data from the beta distribution of two types. One type of data contains draws from two beta distributions: one that is right skewed and another that is left skewed. The other type of data contains draws from a beta distribution with no skew.
+One reason for using graphs is that they help us understand and embrace how complex our data are, rather than trying to hide and smooth it away [@armstrongembracecomplexity]. As such, boxplots are almost never an appropriate choice because they hide the distribution of data, rather than show it. Unless we need to compare the summary statistics of many variables at once, then they should almost never be used (an example of this exception is @Bethlehem2022). This is because the same boxplot can apply to very different distributions. To see this, consider some simulated data from the beta distribution of two types. One type of data contains draws from two beta distributions: one that is right skewed and another that is left skewed. The other type of data contains draws from a beta distribution with no skew, noting that $\mbox{Beta}(1, 1)$ is equivalent to $\mbox{Uniform}(1, 1)$.
 
 ```{r}
 set.seed(853)
 
+number_of_draws <- 10000
+
 both_left_and_right_skew <-
   c(
-    rbeta(500, 5, 2),
-    rbeta(500, 2, 5)
+    rbeta(number_of_draws / 2, 5, 2),
+    rbeta(number_of_draws / 2, 2, 5)
     )
 
 no_skew <-
-  rbeta(1000, 1, 1)
+  rbeta(number_of_draws, 1, 1)
 
 beta_distributions <-
   tibble(
     observation = c(both_left_and_right_skew, no_skew),
-    source = c(rep("Left and right skew", 1000),
-               rep("No skew", 1000)
+    source = c(rep("Left and right skew", number_of_draws),
+               rep("No skew", number_of_draws)
                )
   )
 ```
 
-We can first compare the boxplots of the two series (@fig-boxplotfirst).
+We can first compare the boxplots of the two series (@fig-boxplotfirst-1). But if we plot the actual data then we can see how different they are (@fig-boxplotfirst-2).
 
 ```{r}
-#| fig-cap: "Data drawn from beta distributions with different parameters"
 #| label: fig-boxplotfirst
 #| message: false
 #| warning: false
+#| layout-ncol: 2
+#| fig-cap: "Data drawn from beta distributions with different parameters"
+#| fig-subcap: ["Illustrated with a boxplot","Actual data"]
 
 beta_distributions |>
   ggplot(aes(x = source, y = observation)) +
   geom_boxplot() +
   theme_classic()
-```
-
-But if we plot the actual data then we can see how different they are (@fig-freqpolyofdistributions).
-
-```{r}
-#| fig-cap: "Data drawn from beta distributions with different parameters"
-#| label: fig-freqpolyofdistributions
-#| message: false
-#| warning: false
 
 beta_distributions |>
   ggplot(aes(x = observation, color = source)) +
@@ -1093,7 +1098,7 @@ beta_distributions |>
   theme_classic()
 ```
 
-One way forward, if a boxplot must be included, is to include the actual data as a layer on top of the boxplot. For instance, in @fig-bloxplotandoverlay we show the distribution of inflation across the four countries.
+One way forward, if a boxplot must be included, is to include the actual data as a layer on top of the boxplot. For instance, in @fig-bloxplotandoverlay we show the distribution of inflation across the four countries. The reason that this works well is that it shows the data in greater fidelity. In general better alternatives would be those that we covered earlier in this chapter, including bar charts, scatterplots, line plots and histograms.
 
 ```{r}
 #| fig-cap: "Distribution of unemployment data for four countries (1960-2020)"
@@ -1732,7 +1737,7 @@ ggplot() +
 
 ### Exercises {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: *Five friends - Ash, Jacki, Matt, Mike, and Rol - each measure the height of 20 of their friends. Each of the five use a slightly different approach to measurement and so make slightly different errors.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+1. *(Plan)* Consider the following scenario: *Five friends---Ash, Jacki, Matt, Mike, and Rol---each measure the height of 20 of their friends. Each of the five use a slightly different approach to measurement and so make slightly different errors.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation with every variable independent of each other.
 3. *(Acquire)* Please describe a possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched using the data that you simulated.
