@@ -76,11 +76,58 @@ We are interested in coming to thoroughly understand the data that we have, whic
 - Understand relationships between variables.
 - Consider what is not there.
 
-In this chapter we will go through various examples of EDA including TTC subway delays, and Airbnb.
+In this chapter we will go through various examples of EDA including US state populations, subway delays in Toronto, and Airbnb listings in London.
+
+## US state populations
+
+As a first example we consider US state populations at at 1975. This dataset is built into R with `state.x77`
+
+```{r}
+library(tidyverse)
+library(janitor)
+
+us_populations <-
+  state.x77 |>
+  as_tibble() |> 
+  clean_names() |> 
+  mutate(state = rownames(state.x77)) |> 
+  select(state, population)
+```
+
+### Distribution and properties of individual variables
+
+We want to get a quick sense of the data. The first step is to have a look at the top and bottom of it with `head()` and `tail()`, and to focus on the variables and their class with `glimpse()`.
+
+```{r}
+us_populations |> 
+  head()
+
+us_populations |> 
+  tail()
+
+us_populations |> 
+  glimpse()
+```
+
+We are then interested in understanding key statistics, such as the minimum, median, and maximum values for numeric variables with `summary()` from base. We can use `skim` from `skimr` [@skimr] for simular purposes, the advantage being that it provides more information about character variables.
+
+```{r}
+library(skimr)
+
+us_populations |> 
+  summary()
+
+us_populations |> 
+  skim()
+```
+
+Finally, it is especially important to understand the behavior of these key summary statistics at the limits. In particular, one approach is to randomly remove some observations and compare what happens to them.
+
+
 
 ## TTC subway delays 
 
-As a first example of EDA we use `opendatatoronto` [@citeSharla], introduced in @sec-fire-hose, and the `tidyverse` [@tidyverse] to obtain and explore data about the Toronto subway system. We are especially interested in getting a sense of the delays that have occurred.
+As a second, and much more involved, example of EDA we use `opendatatoronto` [@citeSharla], introduced in @sec-fire-hose, and the `tidyverse` [@tidyverse] to obtain and explore data about the Toronto subway system. We are especially interested in getting a sense of the delays that have occurred.
 
 To begin, we download the data on Toronto Transit Commission (TTC) subway delays in 2021. The data are available as a separate dataset for each month. We are interested in 2021, so we create a column that of the year, and then filter the resources to just those months that were in 2021. We download them using `get_resource()`, iterating through each month using `map_dfr` from `purrr` [@citepurrr] which brings each of the twelve datasets together, and then save them.
 
