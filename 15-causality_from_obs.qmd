@@ -282,13 +282,17 @@ both_departments
 both_departments |>
   ggplot(aes(x = undergrad, y = grad)) +
   geom_point(aes(color = type), alpha = 0.1) +
-  geom_smooth(aes(color = type), method = 'lm', formula = 'y ~ x') +
-  geom_smooth(method = 'lm',
-              formula = 'y ~ x',
-              color = 'black') +
-  labs(x = "Undergraduate results",
-       y = "Graduate results",
-       color = "Department") +
+  geom_smooth(aes(color = type), method = "lm", formula = "y ~ x") +
+  geom_smooth(
+    method = "lm",
+    formula = "y ~ x",
+    color = "black"
+  ) +
+  labs(
+    x = "Undergraduate results",
+    y = "Graduate results",
+    color = "Department"
+  ) +
   theme_minimal() +
   scale_color_brewer(palette = "Set1")
 ```
@@ -305,16 +309,20 @@ Simpson's paradox is often illustrated using real-world data from University of 
 
 library(palmerpenguins)
 
-penguins |> 
+penguins |>
   ggplot(aes(x = body_mass_g, y = bill_depth_mm)) +
   geom_point(aes(color = species), alpha = 0.1) +
-  geom_smooth(aes(color = species), method = 'lm', formula = 'y ~ x') +
-  geom_smooth(method = 'lm',
-              formula = 'y ~ x',
-              color = 'black') +
-  labs(x = "Body mass (grams)",
-       y = "Bill depth (millimeters)",
-       color = "Species") +
+  geom_smooth(aes(color = species), method = "lm", formula = "y ~ x") +
+  geom_smooth(
+    method = "lm",
+    formula = "y ~ x",
+    color = "black"
+  ) +
+  labs(
+    x = "Body mass (grams)",
+    y = "Bill depth (millimeters)",
+    color = "Species"
+  ) +
   theme_minimal() +
   scale_color_brewer(palette = "Set1")
 ```
@@ -351,7 +359,7 @@ general_public <-
   ) |>
   select(-noise)
 
-professionals_and_public = rbind(professionals, general_public)
+professionals_and_public <- rbind(professionals, general_public)
 
 professionals_and_public
 ```
@@ -365,14 +373,16 @@ professionals_and_public
 #| message: false
 #| warning: false
 
-professionals_and_public |> 
+professionals_and_public |>
   ggplot(aes(x = VO2, y = chance_of_winning)) +
   geom_point(aes(color = type), alpha = 0.1) +
-  geom_smooth(aes(color = type), method = 'lm', formula = 'y ~ x') +
-  geom_smooth(method = 'lm', formula = 'y ~ x', color = 'black') +
-  labs(x = "VO2 max",
-       y = "Chance of winning a bike race",
-       color = "Type") +
+  geom_smooth(aes(color = type), method = "lm", formula = "y ~ x") +
+  geom_smooth(method = "lm", formula = "y ~ x", color = "black") +
+  labs(
+    x = "VO2 max",
+    y = "Chance of winning a bike race",
+    color = "Type"
+  ) +
   theme_minimal() +
   scale_color_brewer(palette = "Set1")
 ```
@@ -423,13 +433,15 @@ simulated_difference_in_differences <-
     treatment_group = rep(
       sample(
         x = 0:1,
-        size  = 1000,
+        size = 1000,
         replace = TRUE
-        ), 
-      times = 2)
-    ) |>
-  mutate(treatment_group = as.factor(treatment_group),
-         time = as.factor(time)
+      ),
+      times = 2
+    )
+  ) |>
+  mutate(
+    treatment_group = as.factor(treatment_group),
+    time = as.factor(time)
   )
 
 
@@ -457,15 +469,19 @@ simulated_difference_in_differences
 #| warning: false
 
 simulated_difference_in_differences |>
-  ggplot(aes(x = time,
-             y = serve_speed,
-             color = treatment_group)) +
+  ggplot(aes(
+    x = time,
+    y = serve_speed,
+    color = treatment_group
+  )) +
   geom_point(alpha = 0.2) +
   geom_line(aes(group = person), alpha = 0.1) +
   theme_minimal() +
-  labs(x = "Time period",
-       y = "Serve speed",
-       color = "Person got a new racket") +
+  labs(
+    x = "Time period",
+    y = "Serve speed",
+    color = "Person got a new racket"
+  ) +
   scale_color_brewer(palette = "Set1")
 ```
 
@@ -477,9 +493,11 @@ As it is a straight-forward example, we can obtain our estimate manually, by loo
 
 average_differences <-
   simulated_difference_in_differences |>
-  pivot_wider(names_from = time,
-              values_from = serve_speed,
-              names_prefix = "time_") |>
+  pivot_wider(
+    names_from = time,
+    values_from = serve_speed,
+    names_prefix = "time_"
+  ) |>
   mutate(difference = time_1 - time_0) |>
   group_by(treatment_group) |>
   summarize(average_difference = mean(difference))
@@ -496,9 +514,11 @@ While we should include the separate aspects as well, it is the estimate of the 
 #| eval: true
 #| include: true
 
-diff_in_diff_example_regression <- 
-  lm(serve_speed ~ treatment_group*time, 
-     data = simulated_difference_in_differences)
+diff_in_diff_example_regression <-
+  lm(
+    serve_speed ~ treatment_group * time,
+    data = simulated_difference_in_differences
+  )
 
 summary(diff_in_diff_example_regression)
 ```
@@ -565,13 +585,25 @@ We focus just on the headline difference in differences result and construct sum
 #| eval: true
 #| include: true
 
-newspapers <- 
-  newspapers |> 
-  select(year, id_news, after_national, local, national, # Diff in diff variables
-         ra_cst, ads_p4_cst, ads_s, # Advertising side dependents
-         ps_cst, po_cst, qtotal, qs_s, rs_cst) |> # Reader side dependents
+newspapers <-
+  newspapers |>
+  select(
+    year,
+    id_news,
+    after_national,
+    local,
+    national, # Diff in diff variables
+    ra_cst,
+    ads_p4_cst,
+    ads_s, # Advertising side dependents
+    ps_cst,
+    po_cst,
+    qtotal,
+    qs_s,
+    rs_cst
+  ) |> # Reader side dependents
   mutate(ra_cst_div_qtotal = ra_cst / qtotal) |> # An advertising side dependent needs to be built
-  mutate(across(c(id_news, after_national, local, national), as.factor)) |> 
+  mutate(across(c(id_news, after_national, local, national), as.factor)) |>
   mutate(year = as.integer(year))
 
 newspapers
@@ -599,15 +631,19 @@ We are interested in what happened from 1967 onward, especially in terms of adve
 #| warning: false
 
 library(scales)
-newspapers |> 
-  mutate(type = if_else(local == 1, "Local", "National")) |> 
+newspapers |>
+  mutate(type = if_else(local == 1, "Local", "National")) |>
   ggplot(aes(x = year, y = ra_cst)) +
   geom_point(alpha = 0.5) +
-  scale_y_continuous(labels = dollar_format(prefix="$", suffix = "M", scale = 0.000001)) +
-  labs(x = "Year",
-       y = "Advertising revenue") +
-  facet_wrap(vars(type),
-               nrow = 2) +
+  scale_y_continuous(labels = dollar_format(prefix = "$", suffix = "M", scale = 0.000001)) +
+  labs(
+    x = "Year",
+    y = "Advertising revenue"
+  ) +
+  facet_wrap(
+    vars(type),
+    nrow = 2
+  ) +
   theme_minimal() +
   geom_vline(xintercept = 1966.5, linetype = "dashed")
 ```
@@ -652,9 +688,11 @@ Looking at the advertising-side variables (@tbl-frenchnewspapersadvertising) we 
 #| label: tbl-frenchnewspapersadvertising
 #| tbl-cap: "Effect of changed television advertising laws on revenue of French newspapers (1960-1974)"
 
-selected_variables <- 
-  c("year" = "Year",
-  "after_national1" = "Is after advertising change")
+selected_variables <-
+  c(
+    "year" = "Year",
+    "after_national1" = "Is after advertising change"
+  )
 
 advertising_models <- list(
   "Ad revenue" = ad_revenue,
@@ -775,9 +813,11 @@ sample_size <- 10000
 purchase_data <-
   tibble(
     unique_person_id = c(1:sample_size),
-    age = runif(n = sample_size,
-                min = 18,
-                max = 100),
+    age = runif(
+      n = sample_size,
+      min = 18,
+      max = 100
+    ),
     city = sample(
       x = c("Toronto", "Montreal", "Calgary"),
       size = sample_size,
@@ -789,9 +829,11 @@ purchase_data <-
       replace = TRUE,
       prob = c(0.49, 0.47, 0.02)
     ),
-    income = rlnorm(n = sample_size,
-                    meanlog = 0.5,
-                    sdlog = 1)
+    income = rlnorm(
+      n = sample_size,
+      meanlog = 0.5,
+      sdlog = 1
+    )
   )
 ```
 
@@ -803,10 +845,12 @@ Then we need to add some probability of being treated with free shipping. We wil
 purchase_data <-
   purchase_data |>
   mutate(
-    age_num = case_when(age < 30 ~ 3,
-                        age < 50 ~ 2,
-                        age < 70 ~ 1,
-                        TRUE ~ 0),
+    age_num = case_when(
+      age < 30 ~ 3,
+      age < 50 ~ 2,
+      age < 70 ~ 1,
+      TRUE ~ 0
+    ),
     city_num = case_when(
       city == "Toronto" ~ 3,
       city == "Montreal" ~ 2,
@@ -819,10 +863,12 @@ purchase_data <-
       gender == "Other/decline" ~ 1,
       TRUE ~ 0
     ),
-    income_num = case_when(income > 3 ~ 3,
-                           income > 2 ~ 2,
-                           income > 1 ~ 1,
-                           TRUE ~ 0)
+    income_num = case_when(
+      income > 3 ~ 3,
+      income > 2 ~ 2,
+      income > 1 ~ 1,
+      TRUE ~ 0
+    )
   ) |>
   rowwise() |>
   mutate(
@@ -839,7 +885,7 @@ purchase_data <-
 
 purchase_data <-
   purchase_data |>
-  select(-age_num,-city_num,-gender_num,-income_num,-sum_num,-softmax_prob)
+  select(-age_num, -city_num, -gender_num, -income_num, -sum_num, -softmax_prob)
 ```
 
 Finally, we need to have some measure of a person's average spend. We want those with free shipping to be slightly higher than those without.
@@ -864,9 +910,12 @@ We use `matchit()` from `MatchIt` [@MatchIt] to implement logistic regression an
 ```{r}
 library(MatchIt)
 
-matched_groups <- matchit(free_shipping ~ age + city + gender + income, 
-                  data = purchase_data,
-                  method = "nearest", distance = "glm")
+matched_groups <- matchit(
+  free_shipping ~ age + city + gender + income,
+  data = purchase_data,
+  method = "nearest",
+  distance = "glm"
+)
 
 matched_groups
 
@@ -878,8 +927,10 @@ matched_dataset
 Finally, we can estimate the effect of being treated on average spend using linear regression. We are particularly interested in the coefficient associated with the treatment variable, in this case free shipping.
 
 ```{r}
-propensity_score_regression <- lm(average_spend ~ age + city + gender + income + free_shipping, 
-                                  data = matched_dataset)
+propensity_score_regression <- lm(
+  average_spend ~ age + city + gender + income + free_shipping,
+  data = matched_dataset
+)
 
 propensity_score_regression
 ```
@@ -945,31 +996,39 @@ rdd_example_data
 #| message: false
 #| warning: false
 
-rdd_example_data |> 
-  ggplot(aes(x = mark,
-             y = income)) +
+rdd_example_data |>
+  ggplot(aes(
+    x = mark,
+    y = income
+  )) +
   geom_point(alpha = 0.2) +
-  geom_smooth(data = rdd_example_data |> filter(mark < 80), 
-              method='lm',
-              color = "black",
-              formula = 'y ~ x') +
-  geom_smooth(data = rdd_example_data |> filter(mark >= 80), 
-              method='lm',
-              color = "black",
-              formula = 'y ~ x') +
+  geom_smooth(
+    data = rdd_example_data |> filter(mark < 80),
+    method = "lm",
+    color = "black",
+    formula = "y ~ x"
+  ) +
+  geom_smooth(
+    data = rdd_example_data |> filter(mark >= 80),
+    method = "lm",
+    color = "black",
+    formula = "y ~ x"
+  ) +
   theme_minimal() +
-  labs(x = "Mark",
-       y = "Income ($)")
+  labs(
+    x = "Mark",
+    y = "Income ($)"
+  )
 ```
 
 We can use a binary variable with linear regression to estimate the effect. We expect the coefficient to be around two, which is what we simulated.
 
 ```{r}
-rdd_example_data <- 
-  rdd_example_data |> 
-  mutate(mark_80_and_over = if_else(mark < 80, 0, 1)) 
+rdd_example_data <-
+  rdd_example_data |>
+  mutate(mark_80_and_over = if_else(mark < 80, 0, 1))
 
-lm(income ~ mark + mark_80_and_over, data = rdd_example_data) |> 
+lm(income ~ mark + mark_80_and_over, data = rdd_example_data) |>
   summary()
 ```
 
@@ -979,9 +1038,13 @@ We could also implement RDD using `rdrobust` [@rdrobust]. The advantage of this 
 
 ```{r}
 library(rdrobust)
-rdrobust(y = rdd_example_data$income, 
-         x = rdd_example_data$mark, 
-         c = 80, h = 2, all = TRUE) |> 
+rdrobust(
+  y = rdd_example_data$income,
+  x = rdd_example_data$mark,
+  c = 80,
+  h = 2,
+  all = TRUE
+) |>
   summary()
 ```
 
@@ -1028,28 +1091,32 @@ We want as 'sharp' an effect as possible, but if the thresholds are known, then 
 Another key factor for RDD is the possible effect of the decision around the choice of model. To see this, consider the difference between a linear and polynomial.
 
 ```{r}
-some_data <- 
-  tibble(outcome = rnorm(n = 100, mean = 1, sd = 1),
-         running_variable = c(1:100),
-         location = "before")
+some_data <-
+  tibble(
+    outcome = rnorm(n = 100, mean = 1, sd = 1),
+    running_variable = c(1:100),
+    location = "before"
+  )
 
-some_more_data <- 
-  tibble(outcome = rnorm(n = 100, mean = 2, sd = 1),
-         running_variable = c(101:200),
-         location = "after")
+some_more_data <-
+  tibble(
+    outcome = rnorm(n = 100, mean = 2, sd = 1),
+    running_variable = c(101:200),
+    location = "after"
+  )
 
-both <- 
+both <-
   rbind(some_data, some_more_data)
 
-both |> 
+both |>
   ggplot(aes(x = running_variable, y = outcome, color = location)) +
-  geom_point(alpha = 0.5) + 
-  geom_smooth(formula = y~x, method = 'lm')
-  
-both |> 
+  geom_point(alpha = 0.5) +
+  geom_smooth(formula = y ~ x, method = "lm")
+
+both |>
   ggplot(aes(x = running_variable, y = outcome, color = location)) +
-  geom_point(alpha = 0.5) + 
-  geom_smooth(formula = y ~ poly(x, 3), method = 'lm')
+  geom_point(alpha = 0.5) +
+  geom_smooth(formula = y ~ poly(x, 3), method = "lm")
 ```
 
 The result is that our estimate is dependent on the choice of model. We see this issue occur often in RDD [@gelmanonrdd].
@@ -1222,11 +1289,14 @@ set.seed(853)
 
 number_of_observation <- 10000
 
-iv_example_data <- tibble(person = c(1:number_of_observation),
-                          smoker = sample(x = c(0:1),
-                                          size = number_of_observation, 
-                                          replace = TRUE)
-                          )
+iv_example_data <- tibble(
+  person = c(1:number_of_observation),
+  smoker = sample(
+    x = c(0:1),
+    size = number_of_observation,
+    replace = TRUE
+  )
+)
 ```
 
 Now we need to relate the number of cigarettes that someone smoked to their health. We will model health status as a draw from the normal distribution, with either a high or low mean depending on whether the person smokes.
@@ -1235,13 +1305,13 @@ Now we need to relate the number of cigarettes that someone smoked to their heal
 #| warnings: false
 #| message: false
 
-iv_example_data <- 
-  iv_example_data |> 
-  mutate(health = if_else(smoker == 0,
-                          rnorm(n = n(), mean = 1, sd = 1),
-                          rnorm(n = n(), mean = 0, sd = 1)
-                          )
-         )
+iv_example_data <-
+  iv_example_data |>
+  mutate(health = if_else(
+    smoker == 0,
+    rnorm(n = n(), mean = 1, sd = 1),
+    rnorm(n = n(), mean = 0, sd = 1)
+  ))
 ## So health will be one standard deviation higher for people who do not or barely smoke.
 ```
 
@@ -1251,27 +1321,35 @@ Now we need a relationship between cigarettes and the province (because in this 
 #| warnings: false
 #| message: false
 
-iv_example_data <- 
-  iv_example_data |> 
-  rowwise() |> 
-  mutate(province = 
-           case_when(smoker == 0 ~ sample(x = c("Nova Scotia", "Alberta"),
-                                          size = 1, 
-                                          replace = FALSE, 
-                                          prob = c(1/2, 1/2)),
-                     smoker == 1 ~ sample(x = c("Nova Scotia", "Alberta"),
-                                          size = 1, 
-                                          replace = FALSE, 
-                                          prob = c(1/4, 3/4)))) |> 
+iv_example_data <-
+  iv_example_data |>
+  rowwise() |>
+  mutate(
+    province =
+      case_when(
+        smoker == 0 ~ sample(
+          x = c("Nova Scotia", "Alberta"),
+          size = 1,
+          replace = FALSE,
+          prob = c(1 / 2, 1 / 2)
+        ),
+        smoker == 1 ~ sample(
+          x = c("Nova Scotia", "Alberta"),
+          size = 1,
+          replace = FALSE,
+          prob = c(1 / 4, 3 / 4)
+        )
+      )
+  ) |>
   ungroup()
 
-iv_example_data <- 
-  iv_example_data |> 
-  mutate(tax = case_when(province == "Alberta" ~ 0.3,
-                         province == "Nova Scotia" ~ 0.5,
-                         TRUE ~ 9999999
-  )
-  )
+iv_example_data <-
+  iv_example_data |>
+  mutate(tax = case_when(
+    province == "Alberta" ~ 0.3,
+    province == "Nova Scotia" ~ 0.5,
+    TRUE ~ 9999999
+  ))
 
 iv_example_data$tax |> table()
 
@@ -1281,14 +1359,16 @@ head(iv_example_data)
 Now we can look at our data. 
 
 ```{r}
-iv_example_data |> 
-  mutate(smoker = as_factor(smoker)) |> 
+iv_example_data |>
+  mutate(smoker = as_factor(smoker)) |>
   ggplot(aes(x = health, fill = smoker)) +
   geom_histogram(position = "dodge", binwidth = 0.2) +
   theme_minimal() +
-  labs(x = "Health rating",
-       y = "Number of people",
-       fill = "Smoker") +
+  labs(
+    x = "Health rating",
+    y = "Number of people",
+    fill = "Smoker"
+  ) +
   scale_fill_brewer(palette = "Set1") +
   facet_wrap(vars(province))
 ```
@@ -1318,7 +1398,7 @@ We can use `iv_robust()` from `estimatr` [@estimatr] to estimate IV. One nice re
 
 ```{r}
 library(estimatr)
-iv_robust(health ~ smoker | tax, data = iv_example_data) |> 
+iv_robust(health ~ smoker | tax, data = iv_example_data) |>
   summary()
 ```
 

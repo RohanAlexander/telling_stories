@@ -6,6 +6,7 @@ engine: knitr
 
 **Required material**
 
+- Read *Promoting Open Science Through Research Data Management*, [@Borghi2022Promoting]
 - Read *Transparent and reproducible social science research*, Chapter 10 "Data Sharing", [@christensen2019transparent]
 - Read *Datasheets for datasets*, [@gebru2021datasheets]
 - Read *Data and its (dis)contents: A survey of dataset development and use in machine learning research*, [@Paullada2021]
@@ -73,7 +74,7 @@ We invite scrutiny and make it as easy as possible for criticism. We do this eve
 
 The easiest place to get started with storing a dataset is GitHub because that is already built into our workflow. For instance, if we push a dataset to a public repository, then our dataset becomes available. One benefit of this is that if we have set-up our workspace appropriately, then we likely store our raw data, and the tidy data, as well as the scripts that are needed to transform one to the other. We are most of the way to the "bronze" standard of @heil2021reproducibility without changing anything.
 
-As an example of how we have stored some data, we can access "raw_data.csv" from the ["starter_folder"](https://github.com/RohanAlexander/starter_folder), (which we recommend using for the papers in Appendix [-@sec-papers]). We navigate to the file in GitHub ("inputs" -> "data" -> "raw_data.csv"), and then click "Raw" (@fig-githubraw).
+As an example of how we have stored some data, we can access "raw_data.csv" from the ["starter_folder"](https://github.com/RohanAlexander/starter_folder), (which we recommend using for the papers in [Appendix -@sec-papers]). We navigate to the file in GitHub ("inputs" -> "data" -> "raw_data.csv"), and then click "Raw" (@fig-githubraw).
 
 ![Getting the necessary link to be able to read a CSV from a GitHub repository](figures/github_raw_data.png){#fig-githubraw width=95% fig-align="center"}
 
@@ -86,8 +87,10 @@ We can then add that URL as an argument to `read_csv()`.
 library(tidyverse)
 
 data_location <-
-  paste0("https://raw.githubusercontent.com/RohanAlexander/",
-         "starter_folder/main/inputs/data/raw_data.csv")
+  paste0(
+    "https://raw.githubusercontent.com/RohanAlexander/",
+    "starter_folder/main/inputs/data/raw_data.csv"
+  )
 
 starter_data <-
   read_csv(file = data_location)
@@ -114,18 +117,27 @@ library(tidyverse)
 set.seed(853)
 
 color_data <-
-    tibble(
-        name =
-            c("Edward", "Helen", "Hugo", "Ian", "Monica",
-              "Myles", "Patricia", "Roger", "Rohan", "Ruth"
-            ),
-        fav_color =
-            sample(
-                x = c("Black", "White", "Rainbow"),
-                size = 10,
-                replace = TRUE
-            )
-    )
+  tibble(
+    name =
+      c(
+        "Edward",
+        "Helen",
+        "Hugo",
+        "Ian",
+        "Monica",
+        "Myles",
+        "Patricia",
+        "Roger",
+        "Rohan",
+        "Ruth"
+      ),
+    fav_color =
+      sample(
+        x = c("Black", "White", "Rainbow"),
+        size = 10,
+        replace = TRUE
+      )
+  )
 ```
 
 To this point we have largely been using CSV files for our datasets. To include our data in this R package, we save our dataset in a different format, ".rda", using `save()`.
@@ -169,7 +181,6 @@ Then we create an R file "data.R" in the "R" folder. This file will only contain
 #' @source \url{tellingstorieswithdata.com/12-store_and_share.html}
 #'
 "color_data"
-
 ```
 
 Finally, add a README that provides a summary of all of this for someone coming to the project for the first time.
@@ -227,7 +238,7 @@ Instead of telling us how unhealthy various foods are, a datasheet tells us thin
 
 Sometimes we have done a lot of work to create a datasheet. In that case, we may like to publish and share it on its own, for instance, @biderman2022datasheet and @bandy2021addressing. But typically a datasheet might live in an appendix to the paper, for instance @zhang2022opt, or be included in a file adjacent to the dataset.
 
-As an example, a datasheet for the dataset that underpins @citeaustralianpoliticians is included in Appendix [-@sec-datasheet]. The text of the questions directly comes from @gebru2021datasheets. When we create datasheets for a dataset, especially a dataset that we did not put together ourselves, it is possible that the answer to some questions will simply be "Unknown", but we should do what we can to minimize that. 
+As an example, a datasheet for the dataset that underpins @citeaustralianpoliticians is included in [Appendix -@sec-datasheet]. The text of the questions directly comes from @gebru2021datasheets. When we create datasheets for a dataset, especially a dataset that we did not put together ourselves, it is possible that the answer to some questions will simply be "Unknown", but we should do what we can to minimize that. 
 
 The datasheet template created by @gebru2021datasheets is not the final word. It is possible to improve on it, and add additional detail sometimes. For instance, @Miceli2022 argue for the addition of questions to do with power relations.
 
@@ -268,10 +279,12 @@ A hash is a one-way transformation, such that the same input always provides the
 library(tidyverse)
 
 hashing <-
-  tibble(ppi_data = c(1:10),
-         modulo_ten = ppi_data %% 3,
-         modulo_eleven = ppi_data %% 11,
-         modulo_eightfivethree = ppi_data %% 853)
+  tibble(
+    ppi_data = c(1:10),
+    modulo_ten = ppi_data %% 3,
+    modulo_eleven = ppi_data %% 11,
+    modulo_eightfivethree = ppi_data %% 853
+  )
 
 hashing
 ```
@@ -285,13 +298,25 @@ Rather than write out own hash functions, we can use crytographic has functions 
 library(openssl)
 
 openssl_hashing <-
-  tibble(names =
-            c("Edward", "Helen", "Hugo", "Ian", "Monica",
-              "Myles", "Patricia", "Roger", "Rohan", "Ruth")
-        ) |>
-  mutate(md5 = md5(names),
-         sha512 = sha512(names)
-        )
+  tibble(
+    names =
+      c(
+        "Edward",
+        "Helen",
+        "Hugo",
+        "Ian",
+        "Monica",
+        "Myles",
+        "Patricia",
+        "Roger",
+        "Rohan",
+        "Ruth"
+      )
+  ) |>
+  mutate(
+    md5 = md5(names),
+    sha512 = sha512(names)
+  )
 
 openssl_hashing
 ```
@@ -305,15 +330,26 @@ One issue that remains is that anyone can take advantage of the key feature of h
 #| warning: false
 
 openssl_hashing_with_salt <-
-  tibble(names =
-            c("Edward", "Helen", "Hugo", "Ian", "Monica",
-              "Myles", "Patricia", "Roger", "Rohan", "Ruth"
-            )
-         ) |>
+  tibble(
+    names =
+      c(
+        "Edward",
+        "Helen",
+        "Hugo",
+        "Ian",
+        "Monica",
+        "Myles",
+        "Patricia",
+        "Roger",
+        "Rohan",
+        "Ruth"
+      )
+  ) |>
   mutate(names = paste0(names, "_is_a_person")) |>
-  mutate(md5 = md5(names),
-         sha512 = sha512(names)
-         )
+  mutate(
+    md5 = md5(names),
+    sha512 = sha512(names)
+  )
 
 openssl_hashing_with_salt
 ```
@@ -394,12 +430,13 @@ We use `lint()` from `lintr` [@lintr] to lint our code. For instance, consider t
 
 SIMULATED_DATA <-
   tibble(
-        division = c(1:150,151),
-         party = sample(
-           x = c("Liberal"),
-           size = 151,
-           replace = T
-         ))
+    division = c(1:150, 151),
+    party = sample(
+      x = c("Liberal"),
+      size = 151,
+      replace = T
+    )
+  )
 ```
 
 ```{r}
@@ -421,13 +458,13 @@ Making the recommended changes results in code that is more readable, and import
 
 simulated_data <-
   tibble(
-        division = c(1:150, 151),
-         party = sample(
-           x = c("Liberal"),
-           size = 151,
-           replace = TRUE
-         ))
-
+    division = c(1:150, 151),
+    party = sample(
+      x = c("Liberal"),
+      size = 151,
+      replace = TRUE
+    )
+  )
 ```
 
 At first it may seem that some linting\index{lint} aspects like trailing whitespace and only using double quotes are small and inconsequential. But they distract from being able to fix bigger issues. Further, if we are not able to get small things right, then how could anyone trust that we could get the big things right? Therefore it is important to have dealt with all the small things that a linter identifies.
@@ -484,15 +521,20 @@ library(tidyverse)
 library(tictoc)
 
 simulated_data <-
-  tibble(random_draws = runif(n = 1000000,
-                              min = 0,
-                              max = 1000) |>
-           round(),
-         more_random_draws = runif(n = 100000,
-                              min = 0,
-                              max = 1000)|>
-           round()
-         )
+  tibble(
+    random_draws = runif(
+      n = 1000000,
+      min = 0,
+      max = 1000
+    ) |>
+      round(),
+    more_random_draws = runif(
+      n = 100000,
+      min = 0,
+      max = 1000
+    ) |>
+      round()
+  )
 
 plan(sequential)
 
@@ -500,9 +542,13 @@ tic()
 simulated_data <-
   simulated_data |>
   rowwise() |>
-  mutate(which_is_smaller =
-           min(c(random_draws,
-                 more_random_draws)))
+  mutate(
+    which_is_smaller =
+      min(c(
+        random_draws,
+        more_random_draws
+      ))
+  )
 toc()
 
 plan(multisession)
@@ -510,11 +556,15 @@ plan(multisession)
 tic()
 simulated_data <-
   future(
-  simulated_data |>
-  rowwise() |>
-  mutate(which_is_smaller =
-           min(c(random_draws,
-                 more_random_draws)))
+    simulated_data |>
+      rowwise() |>
+      mutate(
+        which_is_smaller =
+          min(c(
+            random_draws,
+            more_random_draws
+          ))
+      )
   )
 toc()
 ```
@@ -614,14 +664,18 @@ some_data <-
   )
 
 tic("CSV")
-write_csv(x = some_data,
-          file = "some_data.csv")
+write_csv(
+  x = some_data,
+  file = "some_data.csv"
+)
 read_csv(file = "some_data.csv")
 toc()
 
 tic("parquet")
-write_parquet(x = some_data,
-              sink = "some_data.parquet")
+write_parquet(
+  x = some_data,
+  sink = "some_data.parquet"
+)
 read_parquet(file = "some_data.parquet")
 toc()
 ```
@@ -661,12 +715,14 @@ library(tictoc)
 library(tidyverse)
 
 tic.clearlog()
-for (number_of_draws in c(10000,
-                          100000,
-                          1000000,
-                          10000000,
-                          100000000,
-                          1000000000)) {
+for (number_of_draws in c(
+  10000,
+  100000,
+  1000000,
+  10000000,
+  100000000,
+  1000000000
+)) {
   some_data <-
     tibble(
       first = runif(n = number_of_draws),
@@ -678,19 +734,25 @@ for (number_of_draws in c(10000,
     )
 
   tic(paste("CSV write", number_of_draws))
-  write_csv(x = some_data,
-            file = "some_data.csv")
+  write_csv(
+    x = some_data,
+    file = "some_data.csv"
+  )
   toc(log = TRUE, quiet = TRUE)
 
   tic(paste("CSV read", number_of_draws))
-  the_data <- read_csv(file = "some_data.csv",
-                        show_col_types = FALSE)
+  the_data <- read_csv(
+    file = "some_data.csv",
+    show_col_types = FALSE
+  )
   toc(log = TRUE, quiet = TRUE)
   rm(the_data)
 
   tic(paste("Parquet write", number_of_draws))
-  write_parquet(x = some_data,
-                sink = "some_data.parquet")
+  write_parquet(
+    x = some_data,
+    sink = "some_data.parquet"
+  )
   toc(log = TRUE, quiet = TRUE)
 
   tic(paste("Parquet read", number_of_draws))
@@ -718,7 +780,8 @@ need_for_speed <-
   separate(raw, into = c("thing", "time"), sep = ": ") |>
   mutate(
     time = str_remove(time, " sec elapsed"),
-    time = as.numeric(time)) |>
+    time = as.numeric(time)
+  ) |>
   separate(thing, into = c("file_type", "task", "num_rows"), sep = " ")
 
 write_csv(need_for_speed, file = "inputs/data/need_for_speed.csv")
@@ -733,8 +796,10 @@ write_csv(need_for_speed, file = "inputs/data/need_for_speed.csv")
 #| label: fig-readwrite
 
 need_for_speed <-
-  read_csv("inputs/data/need_for_speed.csv",
-           show_col_types = FALSE)
+  read_csv(
+    "inputs/data/need_for_speed.csv",
+    show_col_types = FALSE
+  )
 
 need_for_speed |>
   ggplot(aes(x = num_rows, y = time, color = file_type)) +
@@ -1100,7 +1165,7 @@ Please identify a dataset you consider interesting and important, that does not 
 
 ### Paper {.unnumbered}
 
-At about this point, Paper Four in Appendix [-@sec-papers] would be appropriate.
+At about this point, Paper Four in [Appendix -@sec-papers] would be appropriate.
 
 
 

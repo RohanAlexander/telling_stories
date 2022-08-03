@@ -117,24 +117,36 @@ library(tidyverse)
 set.seed(853)
 
 newborn_weight <-
-  tibble(weight =
-           rep(x = rnorm(
-             n = 1000, mean = 3.5, sd = 0.5
-           ),
-           times = 3),
-         measurement = c(rep("Actual", 1000),
-                    rep("Censored", 1000),
-                    rep("Truncated", 1000)))
+  tibble(
+    weight =
+      rep(
+        x = rnorm(
+          n = 1000,
+          mean = 3.5,
+          sd = 0.5
+        ),
+        times = 3
+      ),
+    measurement = c(
+      rep("Actual", 1000),
+      rep("Censored", 1000),
+      rep("Truncated", 1000)
+    )
+  )
 
 newborn_weight <-
   newborn_weight |>
   mutate(
-    weight = if_else(weight <= 2.75 & measurement == "Censored",
-                              2.75,
-                            weight),
-    weight = if_else(weight >= 4.25 & measurement == "Truncated",
-                               NA_real_,
-                            weight)
+    weight = if_else(
+      weight <= 2.75 & measurement == "Censored",
+      2.75,
+      weight
+    ),
+    weight = if_else(
+      weight >= 4.25 & measurement == "Truncated",
+      NA_real_,
+      weight
+    )
   )
 
 newborn_weight |>
@@ -151,14 +163,14 @@ newborn_weight |>
 #| tbl-cap: "Comparing the means of the different scenarios identifies the bias"
 
 newborn_weight |>
-  group_by(measurement) |> 
-  summarise(mean = mean(weight, na.rm = TRUE)) |> 
+  group_by(measurement) |>
+  summarise(mean = mean(weight, na.rm = TRUE)) |>
   knitr::kable(
     col.names = c("Measurement", "Mean"),
     booktabs = TRUE,
     linesep = "",
     digits = 3
-    )
+  )
 ```
 
 
@@ -259,12 +271,12 @@ library(cancensus)
 set_api_key("ADD_YOUR_API_KEY_HERE", install = TRUE)
 
 ontario_population <-
-  get_census(dataset = "CA16",
-             level = "Regions",
-             vectors = "v_CA16_1",
-             regions = list(PR = c("35")
-                            )
-             )
+  get_census(
+    dataset = "CA16",
+    level = "Regions",
+    vectors = "v_CA16_1",
+    regions = list(PR = c("35"))
+  )
 
 ontario_population
 ```
@@ -278,12 +290,12 @@ library(tidyverse)
 library(cancensus)
 
 ontario_population <-
-  get_census(dataset = "CA16",
-             level = "Regions",
-             vectors = "v_CA16_1",
-             regions = list(PR = c("35")
-                            )
-             )
+  get_census(
+    dataset = "CA16",
+    level = "Regions",
+    vectors = "v_CA16_1",
+    regions = list(PR = c("35"))
+  )
 
 ontario_population
 ```
@@ -318,28 +330,39 @@ library(tidycensus)
 
 census_api_key("ADD_YOUR_API_KEY_HERE")
 
-us_ave_household_size_2010 <- 
-  get_decennial(geography = "state", 
-                variables = c("H012001", "H012002", "H012003" ),
-                year = 2010)
+us_ave_household_size_2010 <-
+  get_decennial(
+    geography = "state",
+    variables = c("H012001", "H012002", "H012003"),
+    year = 2010
+  )
 
-us_ave_household_size_2010 |> 
-  filter(NAME %in% c("District of Columbia",
-                     "Utah",
-                     "Massachusetts"
-                     )) |> 
-  ggplot(aes(y = NAME,
-             x = value,
-             color = variable)) +
+us_ave_household_size_2010 |>
+  filter(NAME %in% c(
+    "District of Columbia",
+    "Utah",
+    "Massachusetts"
+  )) |>
+  ggplot(aes(
+    y = NAME,
+    x = value,
+    color = variable
+  )) +
   geom_point() +
   theme_minimal() +
-  labs(x = "Average household size",
-       y = "State",
-       color = "Household type") +
-  scale_color_brewer(palette = "Set1",
-                     labels = c("Total", 
-                                "Owner occupied",
-                                "Renter occupied"))
+  labs(
+    x = "Average household size",
+    y = "State",
+    color = "Household type"
+  ) +
+  scale_color_brewer(
+    palette = "Set1",
+    labels = c(
+      "Total",
+      "Owner occupied",
+      "Renter occupied"
+    )
+  )
 ```
 
 ```{r}
@@ -353,10 +376,12 @@ us_ave_household_size_2010 |>
 library(tidyverse)
 library(tidycensus)
 
-us_ave_household_size_2010 <- 
-  get_decennial(geography = "state", 
-                variables = c("H012001", "H012002", "H012003" ),
-                year = 2010)
+us_ave_household_size_2010 <-
+  get_decennial(
+    geography = "state",
+    variables = c("H012001", "H012002", "H012003"),
+    year = 2010
+  )
 
 write_csv(us_ave_household_size_2010, "inputs/data/census_household_size.csv")
 ```
@@ -373,26 +398,35 @@ write_csv(us_ave_household_size_2010, "inputs/data/census_household_size.csv")
 library(tidyverse)
 library(tidycensus)
 
-us_ave_household_size_2010 <- 
+us_ave_household_size_2010 <-
   read_csv("inputs/data/census_household_size.csv")
 
-us_ave_household_size_2010 |> 
-  filter(NAME %in% c("District of Columbia",
-                     "Utah",
-                     "Massachusetts"
-                     )) |> 
-  ggplot(aes(y = NAME,
-             x = value,
-             color = variable)) +
+us_ave_household_size_2010 |>
+  filter(NAME %in% c(
+    "District of Columbia",
+    "Utah",
+    "Massachusetts"
+  )) |>
+  ggplot(aes(
+    y = NAME,
+    x = value,
+    color = variable
+  )) +
   geom_point() +
   theme_minimal() +
-  labs(x = "Average household size",
-       y = "State",
-       color = "Household type") +
-  scale_color_brewer(palette = "Set1",
-                     labels = c("Total", 
-                                "Owner occupied",
-                                "Renter occupied"))
+  labs(
+    x = "Average household size",
+    y = "State",
+    color = "Household type"
+  ) +
+  scale_color_brewer(
+    palette = "Set1",
+    labels = c(
+      "Total",
+      "Owner occupied",
+      "Renter occupied"
+    )
+  )
 ```
 
 
@@ -642,19 +676,25 @@ With systematic sampling, as was used by @bowley1913working, we proceed by selec
 ```{r}
 set.seed(853)
 
-starting_point <- sample(x = c(1:5),
-                         size = 1)
+starting_point <- sample(
+  x = c(1:5),
+  size = 1
+)
 
 illustrative_sampling <-
   illustrative_sampling |>
-  mutate(systematic_sampling =
-           if_else(
-             unit %in% seq.int(from = starting_point,
-                                       to = 100,
-                                       by = 5),
-             "Included",
-             "Not included"
-           ))
+  mutate(
+    systematic_sampling =
+      if_else(
+        unit %in% seq.int(
+          from = starting_point,
+          to = 100,
+          by = 5
+        ),
+        "Included",
+        "Not included"
+      )
+  )
 
 illustrative_sampling |>
   count(systematic_sampling)
@@ -680,9 +720,11 @@ selected_within_strata <-
 
 illustrative_sampling <-
   illustrative_sampling |>
-  mutate(stratified_sampling = if_else(unit %in% selected_within_strata,
-                                       "Included",
-                                       "Not included"))
+  mutate(stratified_sampling = if_else(
+    unit %in% selected_within_strata,
+    "Included",
+    "Not included"
+  ))
 
 illustrative_sampling |>
   count(stratified_sampling)
@@ -698,16 +740,20 @@ In our case, we will cluster our illustration again based on the 10s. We will us
 set.seed(853)
 
 selected_clusters <-
-  sample(x = c(0:9),
-         size = 2)
+  sample(
+    x = c(0:9),
+    size = 2
+  )
 
 illustrative_sampling <-
   illustrative_sampling |>
   mutate(
     cluster = (unit - 1) %/% 10,
-    cluster_sampling = if_else(cluster %in% selected_clusters,
-                               "Included",
-                               "Not included")
+    cluster_sampling = if_else(
+      cluster %in% selected_clusters,
+      "Included",
+      "Not included"
+    )
   ) |>
   select(-cluster)
 
@@ -765,8 +811,10 @@ illustrative_sampling_long |>
     labeller = labeller(sampling_method = new_labels)
   ) +
   theme_minimal() +
-  labs(x = "Unit",
-       y = "Is included in sample") +
+  labs(
+    x = "Unit",
+    y = "Is included in sample"
+  ) +
   theme(axis.text.y = element_blank())
 ```
 
@@ -774,7 +822,7 @@ illustrative_sampling_long |>
 
 ```{r}
 #| fig-cap: "Illustrative example of simple random sampling, systematic sampling, stratified sampling, and cluster sampling across different parts of France"
-#| fig-subcap: 
+#| fig-subcap:
 #|   - "France"
 #|   - "Systematic sampling"
 #|   - "Stratified sampling"
@@ -798,7 +846,7 @@ french_cities <-
 systematic_sample <-
   tibble(
     type = rep("systematic", 7),
-    x = c(-4,-2, 0, 2, 4, 6, 8),
+    x = c(-4, -2, 0, 2, 4, 6, 8),
     y = c(40, 42, 44, 46, 48, 50, 52)
   )
 
@@ -820,50 +868,68 @@ base <-
   ggplot() +
   geom_polygon(
     data = france,
-    aes(x = long,
-        y = lat,
-        group = group),
+    aes(
+      x = long,
+      y = lat,
+      group = group
+    ),
     fill = "white",
     colour = "grey"
   ) +
   coord_map() +
   geom_point(
-    aes(x = french_cities$long,
-        y = french_cities$lat),
+    aes(
+      x = french_cities$long,
+      y = french_cities$lat
+    ),
     alpha = 0.3,
     color = "black"
   ) +
   theme_classic() +
-  labs(x = "Longitude",
-       y = "Latitude") +
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  ) +
   xlim(-5, 10) +
   ylim(40, 52.5)
 
 base
 
 base +
-  geom_hline(data = systematic_sample,
-             aes(yintercept = y),
-             size = 9) +
-  geom_vline(data = systematic_sample,
-             aes(xintercept = x),
-             size = 9)
+  geom_hline(
+    data = systematic_sample,
+    aes(yintercept = y),
+    size = 9
+  ) +
+  geom_vline(
+    data = systematic_sample,
+    aes(xintercept = x),
+    size = 9
+  )
 
 base +
-  geom_hline(data = stratified_sample,
-             aes(yintercept = y),
-             size = 9) +
-  geom_vline(data = stratified_sample,
-             aes(xintercept = x),
-             size = 9)
+  geom_hline(
+    data = stratified_sample,
+    aes(yintercept = y),
+    size = 9
+  ) +
+  geom_vline(
+    data = stratified_sample,
+    aes(xintercept = x),
+    size = 9
+  )
 
 base +
-  geom_hline(data = cluster_sample,
-             aes(yintercept = y),
-             size = 9) +
-  geom_vline(data = cluster_sample,
-             aes(xintercept = x),
-             size = 9)
+  geom_hline(
+    data = cluster_sample,
+    aes(yintercept = y),
+    size = 9
+  ) +
+  geom_vline(
+    data = cluster_sample,
+    aes(xintercept = x),
+    size = 9
+  )
 ```
 
 The best way to appreciate the differences between these approaches is to consider them in practice and @thatrandyaupersonagain provides a number of examples. In particular, @raptors provides a fascinating comparison of simple random sampling, stratified sampling, systematic sampling and cluster sampling, as well as additional considerations, in the context of counting raptors.
@@ -905,9 +971,11 @@ illustrative_sampling_long |>
   summarize(sum_from_sample = sum(unit)) |>
   mutate(scaled_by_five = sum_from_sample * 5) |>
   knitr::kable(
-    col.names = c("Sampling method",
-                  "Sum of sample",
-                  "Implied population sum"),
+    col.names = c(
+      "Sampling method",
+      "Sum of sample",
+      "Implied population sum"
+    ),
     format.args = list(big.mark = ",")
   )
 ```
@@ -944,7 +1012,7 @@ sleep <-
     toddler_sleep = sample(x = c(2:14), size = 30, replace = TRUE),
     difference = sample(x = c(0:3), size = 30, replace = TRUE),
     parent_sleep = toddler_sleep - difference
-  ) |> 
+  ) |>
   select(toddler_sleep, parent_sleep, difference)
 
 sleep
@@ -954,8 +1022,10 @@ The average of each is:
 
 ```{r}
 sleep |>
-  summarize(toddler_sleep_average = mean(toddler_sleep),
-            parent_sleep_average = mean(parent_sleep)) |>
+  summarize(
+    toddler_sleep_average = mean(toddler_sleep),
+    parent_sleep_average = mean(parent_sleep)
+  ) |>
   knitr::kable(
     col.names = c("Toddler sleep average", "Parent sleep average"),
     format.args = list(big.mark = ","),

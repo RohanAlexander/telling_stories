@@ -134,17 +134,25 @@ The dataset consists of values for "x" and "y", which should be plotted on the x
 datasaurus_dozen |>
   filter(dataset %in% c("dino", "star", "away", "bullseye")) |>
   group_by(dataset) |>
-  summarise(across(c(x, y),
-                   list(mean = mean,
-                        sd = sd)),
-            x_y_cor = cor(x, y)) |>
+  summarise(
+    across(
+      c(x, y),
+      list(
+        mean = mean,
+        sd = sd
+      )
+    ),
+    x_y_cor = cor(x, y)
+  ) |>
   knitr::kable(
-    col.names = c("Dataset",
-                  "x mean",
-                  "x sd",
-                  "y mean",
-                  "y sd",
-                  "correlation"),
+    col.names = c(
+      "Dataset",
+      "x mean",
+      "x sd",
+      "y mean",
+      "y sd",
+      "correlation"
+    ),
     digits = 1,
     booktabs = TRUE,
     linesep = ""
@@ -184,10 +192,11 @@ Anscombe's Quartet consists of six observations for four different datasets, aga
 
 tidy_anscombe <-
   anscombe |>
-  pivot_longer(everything(),
-               names_to = c(".value", "set"),
-               names_pattern = "(.)(.)"
-               )
+  pivot_longer(
+    everything(),
+    names_to = c(".value", "set"),
+    names_pattern = "(.)(.)"
+  )
 ```
 
 We can again first create summary statistics (@tbl-anscombesummarystats) and then graph the data (@fig-anscombegraph). And we again see the importance of graphing the actual data, rather than relying on summary statistics.
@@ -199,16 +208,22 @@ We can again first create summary statistics (@tbl-anscombesummarystats) and the
 
 tidy_anscombe |>
   group_by(set) |>
-  summarise(across(c(x, y),
-                   list(mean = mean, sd = sd)),
-            x_y_cor = cor(x, y)) |>
+  summarise(
+    across(
+      c(x, y),
+      list(mean = mean, sd = sd)
+    ),
+    x_y_cor = cor(x, y)
+  ) |>
   knitr::kable(
-    col.names = c("Dataset",
-                  "x mean",
-                  "x sd",
-                  "y mean",
-                  "y sd",
-                  "correlation"),
+    col.names = c(
+      "Dataset",
+      "x mean",
+      "x sd",
+      "y mean",
+      "y sd",
+      "correlation"
+    ),
     digits = 1,
     booktabs = TRUE,
     linesep = ""
@@ -249,8 +264,8 @@ We will use a dataset from the 1997-2001 British Election Panel Study that was p
 beps <-
   read_csv(
     file =
-    "https://vincentarelbundock.github.io/Rdatasets/csv/carData/BEPS.csv"
-    )
+      "https://vincentarelbundock.github.io/Rdatasets/csv/carData/BEPS.csv"
+  )
 ```
 
 ```{r}
@@ -258,8 +273,10 @@ beps <-
 #| eval: false
 
 # INTERNAL
-write_csv(beps,
-          "inputs/data/beps.csv")
+write_csv(
+  beps,
+  "inputs/data/beps.csv"
+)
 ```
 
 ```{r}
@@ -270,7 +287,7 @@ write_csv(beps,
 beps <-
   read_csv(
     file = "inputs/data/beps.csv"
-    )
+  )
 ```
 
 ```{r}
@@ -291,22 +308,26 @@ The dataset consists of which party the respondent supports, along with various 
 
 beps <-
   beps |>
-  mutate(age_group =
-           case_when(age < 35 ~ "<35",
-                     age < 50 ~ "35-49",
-                     age < 65 ~ "50-64",
-                     age < 80 ~ "65-79",
-                     age < 100 ~ "80-99"
-                     ),
-         age_group = factor(age_group,
-                            levels = c("<35",
-                                       "35-49",
-                                       "50-64",
-                                       "65-79",
-                                       "80-99"
-                                       )
-                            )
-         )
+  mutate(
+    age_group =
+      case_when(
+        age < 35 ~ "<35",
+        age < 50 ~ "35-49",
+        age < 65 ~ "50-64",
+        age < 80 ~ "65-79",
+        age < 100 ~ "80-99"
+      ),
+    age_group = factor(
+      age_group,
+      levels = c(
+        "<35",
+        "35-49",
+        "50-64",
+        "65-79",
+        "80-99"
+      )
+    )
+  )
 
 beps |>
   ggplot(mapping = aes(x = age_group)) +
@@ -396,12 +417,14 @@ beps |>
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
   theme_minimal() +
-  labs(x = "Age-group of respondent",
-       y = "Number of respondents",
-       fill = "Voted for",
-       title = "Distribution of age-groups, and vote preference, in
+  labs(
+    x = "Age-group of respondent",
+    y = "Number of respondents",
+    fill = "Voted for",
+    title = "Distribution of age-groups, and vote preference, in
        the 1997-2001 British Election Panel Study",
-       caption = "Source: 1997-2001 British Election Panel Study.")
+    caption = "Source: 1997-2001 British Election Panel Study."
+  )
 ```
 
 We use facets to show variation, based on one or more variables [@grammarofgraphics, p. 219]. They are especially useful when we have already used color to highlight variation in some other variable and add an additional dimension. For instance, we may be interested to explain vote, by age and gender (@fig-facets).
@@ -417,9 +440,11 @@ beps |>
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
   theme_minimal() +
-  labs(x = "Age-group of respondent",
-       y = "Number of respondents",
-       fill = "Voted for") +
+  labs(
+    x = "Age-group of respondent",
+    y = "Number of respondents",
+    fill = "Voted for"
+  ) +
   facet_wrap(vars(gender))
 ```
 
@@ -436,12 +461,16 @@ beps |>
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
   theme_minimal() +
-  labs(x = "Age-group of respondent",
-       y = "Number of respondents",
-       fill = "Voted for") +
-  facet_wrap(vars(gender),
-             dir = "v",
-             scales = "free") +
+  labs(
+    x = "Age-group of respondent",
+    y = "Number of respondents",
+    fill = "Voted for"
+  ) +
+  facet_wrap(
+    vars(gender),
+    dir = "v",
+    scales = "free"
+  ) +
   theme(legend.position = "bottom")
 ```
 
@@ -454,22 +483,28 @@ Finally, we can change the labels of the facets using `labeller()` (@fig-facetsf
 #| label: fig-facetsfancylabels
 #| warning: false
 
-new_labels <- c("0" = "No knowledge",
-                "1" = "Low knowledge",
-                "2" = "Moderate knowledge",
-                "3" = "High knowledge")
+new_labels <- c(
+  "0" = "No knowledge",
+  "1" = "Low knowledge",
+  "2" = "Moderate knowledge",
+  "3" = "High knowledge"
+)
 
 beps |>
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
   theme_minimal() +
-  labs(x = "Age-group of respondent",
-       y = "Number of respondents",
-       fill = "Voted for") +
-  facet_wrap(vars(political.knowledge),
-             dir = "v",
-             scales = "free",
-             labeller = labeller(political.knowledge = new_labels)) +
+  labs(
+    x = "Age-group of respondent",
+    y = "Number of respondents",
+    fill = "Voted for"
+  ) +
+  facet_wrap(
+    vars(political.knowledge),
+    dir = "v",
+    scales = "free",
+    labeller = labeller(political.knowledge = new_labels)
+  ) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
 
@@ -493,9 +528,11 @@ RColorBrewerBrBG <-
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
   theme_minimal() +
-  labs(x = "Age-group",
-       y = "Number",
-       fill = "Voted for") +
+  labs(
+    x = "Age-group",
+    y = "Number",
+    fill = "Voted for"
+  ) +
   scale_fill_brewer(palette = "Blues")
 
 RColorBrewerSet2 <-
@@ -503,9 +540,11 @@ RColorBrewerSet2 <-
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
   theme_minimal() +
-  labs(x = "Age-group",
-       y = "Number",
-       fill = "Voted for") +
+  labs(
+    x = "Age-group",
+    y = "Number",
+    fill = "Voted for"
+  ) +
   scale_fill_brewer(palette = "Set1")
 
 viridis <-
@@ -513,9 +552,11 @@ viridis <-
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
   theme_minimal() +
-  labs(x = "Age-group",
-       y = "Number",
-       fill = "Voted for") +
+  labs(
+    x = "Age-group",
+    y = "Number",
+    fill = "Voted for"
+  ) +
   scale_fill_viridis(discrete = TRUE)
 
 viridismagma <-
@@ -523,11 +564,15 @@ viridismagma <-
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
   theme_minimal() +
-  labs(x = "Age-group",
-       y = "Number",
-       fill = "Voted for") +
-   scale_fill_viridis(discrete = TRUE,
-                      option = "magma")
+  labs(
+    x = "Age-group",
+    y = "Number",
+    fill = "Voted for"
+  ) +
+  scale_fill_viridis(
+    discrete = TRUE,
+    option = "magma"
+  )
 
 (RColorBrewerBrBG + RColorBrewerSet2) /
   (viridis + viridismagma)
@@ -570,13 +615,15 @@ WDIsearch("Unemployment, total")
 #| eval: false
 
 world_bank_data <-
-  WDI(indicator = c("FP.CPI.TOTL.ZG",
-                    "NY.GDP.MKTP.KD.ZG",
-                    "SP.POP.TOTL",
-                    "SL.UEM.TOTL.NE.ZS"
-                    ),
-      country = c("AU", "ET", "IN", "US")
-      )
+  WDI(
+    indicator = c(
+      "FP.CPI.TOTL.ZG",
+      "NY.GDP.MKTP.KD.ZG",
+      "SP.POP.TOTL",
+      "SL.UEM.TOTL.NE.ZS"
+    ),
+    country = c("AU", "ET", "IN", "US")
+  )
 ```
 
 ```{r}
@@ -599,7 +646,7 @@ world_bank_data <-
   read_csv(
     "inputs/data/world_bank_data.csv",
     show_col_types = FALSE
-    )
+  )
 ```
 
 We may like to change the names to be more meaningful, and only keep the columns that we need.
@@ -610,11 +657,12 @@ We may like to change the names to be more meaningful, and only keep the columns
 
 world_bank_data <-
   world_bank_data |>
-  rename(inflation = FP.CPI.TOTL.ZG,
-         gdp_growth = NY.GDP.MKTP.KD.ZG,
-         population = SP.POP.TOTL,
-         unemployment_rate = SL.UEM.TOTL.NE.ZS
-         ) |>
+  rename(
+    inflation = FP.CPI.TOTL.ZG,
+    gdp_growth = NY.GDP.MKTP.KD.ZG,
+    population = SP.POP.TOTL,
+    unemployment_rate = SL.UEM.TOTL.NE.ZS
+  ) |>
   select(-iso2c)
 
 head(world_bank_data)
@@ -643,11 +691,13 @@ world_bank_data |>
   ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
   geom_point() +
   theme_minimal() +
-  labs(x = "GDP growth",
-       y = "Inflation",
-       color = "Country",
-       title = "Relationship between inflation and GDP growth",
-       caption = "Data source: World Bank.")
+  labs(
+    x = "GDP growth",
+    y = "Inflation",
+    color = "Country",
+    title = "Relationship between inflation and GDP growth",
+    caption = "Data source: World Bank."
+  )
 ```
 
 Here we use "color" instead of "fill" because we are using dots rather than bars. This also then slightly affects how we change the palette (@fig-scatterplotnicercolor). 
@@ -667,9 +717,11 @@ basis <-
   ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
   geom_point() +
   theme_minimal() +
-  labs(x = "GDP growth",
-       y = "Inflation",
-       color = "Country") +
+  labs(
+    x = "GDP growth",
+    y = "Inflation",
+    color = "Country"
+  ) +
   theme(legend.position = "bottom")
 
 RColorBrewerBrBG <-
@@ -712,37 +764,49 @@ The points of a scatterplot sometimes overlap. We can address this situation in 
 library(ggbeeswarm)
 
 world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, 
-                       y = inflation, 
-                       color = country)) +
+  ggplot(mapping = aes(
+    x = gdp_growth,
+    y = inflation,
+    color = country
+  )) +
   geom_point(alpha = 0.5) +
   theme_minimal() +
-  labs(x = "GDP growth",
-       y = "Inflation",
-       color = "Country",
-       caption = "Data source: World Bank.")
+  labs(
+    x = "GDP growth",
+    y = "Inflation",
+    color = "Country",
+    caption = "Data source: World Bank."
+  )
 
 world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, 
-                       y = inflation, 
-                       color = country)) +
+  ggplot(mapping = aes(
+    x = gdp_growth,
+    y = inflation,
+    color = country
+  )) +
   geom_jitter() +
   theme_minimal() +
-  labs(x = "GDP growth",
-       y = "Inflation",
-       color = "Country",
-       caption = "Data source: World Bank.")
+  labs(
+    x = "GDP growth",
+    y = "Inflation",
+    color = "Country",
+    caption = "Data source: World Bank."
+  )
 
 world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, 
-                       y = inflation, 
-                       color = country)) +
+  ggplot(mapping = aes(
+    x = gdp_growth,
+    y = inflation,
+    color = country
+  )) +
   geom_beeswarm() +
   theme_minimal() +
-  labs(x = "GDP growth",
-       y = "Inflation",
-       color = "Country",
-       caption = "Data source: World Bank.")
+  labs(
+    x = "GDP growth",
+    y = "Inflation",
+    color = "Country",
+    caption = "Data source: World Bank."
+  )
 ```
 
 A common use case for a scatterplot is to illustrate a relationship between two continuous variables. It can be useful to add a line of best fit using `geom_smooth()` (@fig-scattorplottwo). By default, `geom_smooth()` will use locally estimated scatterplot smoothing (LOESS) for datasets with less than 1,000 observations, but we can specify the relationship using "method", change the color with "color" and add or remove standard errors with "se". A commonly used "method" is `lm`, which computes and plots a simple linear regression line similar to using the `lm()` function [@citeR]. Using `geom_smooth()` adds a layer to the graph, and so it inherits aesthetics from `ggplot()`. For instance, that is why we initially have one line for each country in @fig-scattorplottwo. We could overwrite that by specifying a particular color, which we do in the third graph of @fig-scattorplottwo.
@@ -755,39 +819,51 @@ A common use case for a scatterplot is to illustrate a relationship between two 
 
 defaults <-
   world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, 
-                       y = inflation, 
-                       color = country)) +
+  ggplot(mapping = aes(
+    x = gdp_growth,
+    y = inflation,
+    color = country
+  )) +
   geom_jitter() +
   geom_smooth() +
   theme_minimal() +
-  labs(x = "GDP growth",
-       y = "Inflation",
-       color = "Country")
+  labs(
+    x = "GDP growth",
+    y = "Inflation",
+    color = "Country"
+  )
 
 straightline <-
   world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, 
-                       y = inflation, 
-                       color = country)) +
+  ggplot(mapping = aes(
+    x = gdp_growth,
+    y = inflation,
+    color = country
+  )) +
   geom_jitter() +
   geom_smooth(method = lm, se = FALSE) +
   theme_minimal() +
-  labs(x = "GDP growth",
-       y = "Inflation",
-       color = "Country")
+  labs(
+    x = "GDP growth",
+    y = "Inflation",
+    color = "Country"
+  )
 
 onestraightline <-
   world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, 
-                       y = inflation, 
-                       color = country)) +
+  ggplot(mapping = aes(
+    x = gdp_growth,
+    y = inflation,
+    color = country
+  )) +
   geom_jitter() +
   geom_smooth(method = lm, color = "black", se = FALSE) +
   theme_minimal() +
-  labs(x = "GDP growth",
-       y = "Inflation",
-       color = "Country")
+  labs(
+    x = "GDP growth",
+    y = "Inflation",
+    color = "Country"
+  )
 
 patch <- defaults /
   straightline /
@@ -826,9 +902,11 @@ world_bank_data |>
   ggplot(mapping = aes(x = year, y = gdp_growth)) +
   geom_line() +
   theme_minimal() +
-  labs(x = "Year",
-       y = "GDP growth",
-       caption = "Data source: World Bank.")
+  labs(
+    x = "Year",
+    y = "GDP growth",
+    caption = "Data source: World Bank."
+  )
 ```
 
 We can use a slight variant of `geom_line()`, `geom_step()`, to focus attention on the change from year to year (@fig-stepplot).
@@ -843,9 +921,11 @@ world_bank_data |>
   ggplot(mapping = aes(x = year, y = gdp_growth)) +
   geom_step() +
   theme_minimal() +
-  labs(x = "Year",
-       y = "GDP growth",
-       caption = "Data source: World Bank.")
+  labs(
+    x = "Year",
+    y = "GDP growth",
+    caption = "Data source: World Bank."
+  )
 ```
 
 The Phillips curve is the name given to plot of the relationship between unemployment and inflation over time. An inverse relationship is sometimes found in the data, for instance in the UK between 1861 and 1957 [@phillips1958relation]. We have a variety of ways to investigate this including:
@@ -861,19 +941,24 @@ The Phillips curve is the name given to plot of the relationship between unemplo
 world_bank_data |>
   filter(country == "United States") |>
   select(-population, -gdp_growth) |>
-  pivot_longer(cols = c("inflation", "unemployment_rate"),
-               names_to = "series",
-               values_to = "value"
-               ) |>
+  pivot_longer(
+    cols = c("inflation", "unemployment_rate"),
+    names_to = "series",
+    values_to = "value"
+  ) |>
   ggplot(mapping = aes(x = year, y = value, color = series)) +
   geom_line() +
   theme_minimal() +
-  labs(x = "Year",
-       y = "Value",
-       color = "Economic indicator",
-       caption = "Data source: World Bank.") +
-  scale_color_brewer(palette = "Set1",
-                     labels = c("Inflation", "Unemployment")) +
+  labs(
+    x = "Year",
+    y = "Value",
+    color = "Economic indicator",
+    caption = "Data source: World Bank."
+  ) +
+  scale_color_brewer(
+    palette = "Set1",
+    labels = c("Inflation", "Unemployment")
+  ) +
   theme(legend.position = "bottom")
 ```
 
@@ -888,9 +973,11 @@ world_bank_data |>
   ggplot(mapping = aes(x = unemployment_rate, y = inflation)) +
   geom_path() +
   theme_minimal() +
-  labs(x = "Unemployment rate",
-       y = "Inflation",
-       caption = "Data source: World Bank.")
+  labs(
+    x = "Unemployment rate",
+    y = "Inflation",
+    caption = "Data source: World Bank."
+  )
 ```
 
 <!-- One of the issues with @fig-phillipsmyboy) is that we do not have a good sense of the passage of time. Here, color could be useful (@fig-phillipsmyboycolor). -->
@@ -927,9 +1014,11 @@ world_bank_data |>
   ggplot(mapping = aes(x = gdp_growth)) +
   geom_histogram() +
   theme_minimal() +
-  labs(x = "GDP growth",
-       y = "Number of occurrences",
-       caption = "Data source: World Bank.")
+  labs(
+    x = "GDP growth",
+    y = "Number of occurrences",
+    caption = "Data source: World Bank."
+  )
 ```
 
 The key component determining the shape of a histogram is the number of bins. This can be specified in one of two ways (@fig-hisogrambins): 
@@ -949,8 +1038,10 @@ twobins <-
   ggplot(mapping = aes(x = gdp_growth)) +
   geom_histogram(bins = 2) +
   theme_minimal() +
-  labs(x = "GDP",
-       y = "Number of occurrences")
+  labs(
+    x = "GDP",
+    y = "Number of occurrences"
+  )
 
 fivebins <-
   world_bank_data |>
@@ -958,8 +1049,10 @@ fivebins <-
   ggplot(mapping = aes(x = gdp_growth)) +
   geom_histogram(bins = 5) +
   theme_minimal() +
-  labs(x = "GDP",
-       y = "Number of occurrences")
+  labs(
+    x = "GDP",
+    y = "Number of occurrences"
+  )
 
 twentybins <-
   world_bank_data |>
@@ -967,8 +1060,10 @@ twentybins <-
   ggplot(mapping = aes(x = gdp_growth)) +
   geom_histogram(bins = 20) +
   theme_minimal() +
-  labs(x = "GDP",
-       y = "Number of occurrences")
+  labs(
+    x = "GDP",
+    y = "Number of occurrences"
+  )
 
 halfbinwidth <-
   world_bank_data |>
@@ -976,8 +1071,10 @@ halfbinwidth <-
   ggplot(mapping = aes(x = gdp_growth)) +
   geom_histogram(binwidth = 0.5) +
   theme_minimal() +
-  labs(x = "GDP",
-       y = "Number of occurrences")
+  labs(
+    x = "GDP",
+    y = "Number of occurrences"
+  )
 
 twobinwidth <-
   world_bank_data |>
@@ -985,8 +1082,10 @@ twobinwidth <-
   ggplot(mapping = aes(x = gdp_growth)) +
   geom_histogram(binwidth = 2) +
   theme_minimal() +
-  labs(x = "GDP",
-       y = "Number of occurrences")
+  labs(
+    x = "GDP",
+    y = "Number of occurrences"
+  )
 
 fivebinwidth <-
   world_bank_data |>
@@ -994,8 +1093,10 @@ fivebinwidth <-
   ggplot(mapping = aes(x = gdp_growth)) +
   geom_histogram(binwidth = 5) +
   theme_minimal() +
-  labs(x = "GDP",
-       y = "Number of occurrences")
+  labs(
+    x = "GDP",
+    y = "Number of occurrences"
+  )
 
 patchwork <- (twobins + fivebins + twentybins) /
   (halfbinwidth + twobinwidth + fivebinwidth)
@@ -1021,20 +1122,24 @@ world_bank_data |>
   ggplot(mapping = aes(x = gdp_growth, color = country)) +
   geom_freqpoly() +
   theme_minimal() +
-  labs(x = "GDP",
-       y = "Number of occurrences",
-       color = "Country",
-       caption = "Data source: World Bank.") +
+  labs(
+    x = "GDP",
+    y = "Number of occurrences",
+    color = "Country",
+    caption = "Data source: World Bank."
+  ) +
   scale_color_brewer(palette = "Set1")
 
 world_bank_data |>
   ggplot(mapping = aes(x = gdp_growth, group = country, fill = country)) +
   geom_dotplot(method = "histodot", alpha = 0.4) +
   theme_minimal() +
-  labs(x = "GDP",
-       y = "Number of occurrences",
-       fill = "Country",
-       caption = "Data source: World Bank.") +
+  labs(
+    x = "GDP",
+    y = "Number of occurrences",
+    fill = "Country",
+    caption = "Data source: World Bank."
+  ) +
   scale_color_brewer(palette = "Set1")
 
 world_bank_data |>
@@ -1042,10 +1147,12 @@ world_bank_data |>
   ggplot(mapping = aes(x = gdp_growth, fill = country), alpha = 0.5) +
   geom_histogram() +
   theme_minimal() +
-  labs(x = "GDP",
-       y = "Number of occurrences",
-       color = "Country",
-       caption = "Data source: World Bank.") +
+  labs(
+    x = "GDP",
+    y = "Number of occurrences",
+    color = "Country",
+    caption = "Data source: World Bank."
+  ) +
   scale_color_brewer(palette = "Set1")
 ```
 
@@ -1063,7 +1170,7 @@ both_left_and_right_skew <-
   c(
     rbeta(number_of_draws / 2, 5, 2),
     rbeta(number_of_draws / 2, 2, 5)
-    )
+  )
 
 no_skew <-
   rbeta(number_of_draws, 1, 1)
@@ -1071,9 +1178,10 @@ no_skew <-
 beta_distributions <-
   tibble(
     observation = c(both_left_and_right_skew, no_skew),
-    source = c(rep("Left and right skew", number_of_draws),
-               rep("No skew", number_of_draws)
-               )
+    source = c(
+      rep("Left and right skew", number_of_draws),
+      rep("No skew", number_of_draws)
+    )
   )
 ```
 
@@ -1111,9 +1219,11 @@ world_bank_data |>
   geom_boxplot() +
   geom_jitter(alpha = 0.3, width = 0.15, height = 0) +
   theme_minimal() +
-  labs(x = "Country",
-       y = "Inflation",
-       caption = "Data source: World Bank.") +
+  labs(
+    x = "Country",
+    y = "Inflation",
+    caption = "Data source: World Bank."
+  ) +
   scale_color_brewer(palette = "Set1")
 ```
 
@@ -1158,8 +1268,14 @@ In order to be able to cross-reference it in text, we need to add a caption to t
 world_bank_data |>
   slice(1:10) |>
   kable(
-    col.names = c("Country", "Year", "Inflation", "GDP growth", 
-                  "Population", "Unemployment rate"),
+    col.names = c(
+      "Country",
+      "Year",
+      "Inflation",
+      "GDP growth",
+      "Population",
+      "Unemployment rate"
+    ),
     digits = 1
   )
 ```
@@ -1177,8 +1293,14 @@ When producing PDFs, the "booktabs" option makes a host of small changes to the 
 world_bank_data |>
   slice(1:10) |>
   kable(
-    col.names = c("Country", "Year", "Inflation", 
-                  "GDP growth", "Population", "Unemployment rate"),
+    col.names = c(
+      "Country",
+      "Year",
+      "Inflation",
+      "GDP growth",
+      "Population",
+      "Unemployment rate"
+    ),
     digits = 1,
     booktabs = TRUE,
     linesep = ""
@@ -1193,8 +1315,14 @@ world_bank_data |>
 world_bank_data |>
   slice(1:10) |>
   kable(
-    col.names = c("Country", "Year", "Inflation", 
-                  "GDP growth", "Population", "Unemployment rate"),
+    col.names = c(
+      "Country",
+      "Year",
+      "Inflation",
+      "GDP growth",
+      "Population",
+      "Unemployment rate"
+    ),
     digits = 1,
     booktabs = TRUE
   )
@@ -1212,8 +1340,14 @@ world_bank_data |>
   slice(1:10) |>
   mutate(year = as.factor(year)) |>
   kable(
-    col.names = c("Country", "Year", "Inflation", "GDP growth",
-                  "Population", "Unemployment rate"),
+    col.names = c(
+      "Country",
+      "Year",
+      "Inflation",
+      "GDP growth",
+      "Population",
+      "Unemployment rate"
+    ),
     digits = 1,
     booktabs = TRUE,
     linesep = "",
@@ -1234,8 +1368,14 @@ library(kableExtra)
 world_bank_data |>
   slice(1:10) |>
   kable(
-    col.names = c("Country", "Year", "Inflation", "GDP growth",
-                  "Population", "Unemployment rate"),
+    col.names = c(
+      "Country",
+      "Year",
+      "Inflation",
+      "GDP growth",
+      "Population",
+      "Unemployment rate"
+    ),
     digits = 1,
     booktabs = TRUE,
     linesep = "",
@@ -1267,13 +1407,13 @@ world_bank_data |>
   slice(1:10) |>
   gt() |>
   cols_label(
-      country = "Country",
-      year = "Year",
-      inflation = "Inflation",
-      gdp_growth = "GDP growth",
-      population = "Population",
-      unemployment_rate = "Unemployment rate"
-    )
+    country = "Country",
+    year = "Year",
+    inflation = "Inflation",
+    gdp_growth = "GDP growth",
+    population = "Population",
+    unemployment_rate = "Unemployment rate"
+  )
 ```
 
 
@@ -1320,9 +1460,11 @@ We typically need a table of descriptive statistics that we could add to our pap
 #| warning: false
 #| tbl-cap: "Descriptive statistics for the inflation and GDP dataset"
 
-datasummary_balance(formula = ~country,
-                    data = world_bank_data,
-                    notes = "Data source: World Bank.")
+datasummary_balance(
+  formula = ~country,
+  data = world_bank_data,
+  notes = "Data source: World Bank."
+)
 ```
 
 
@@ -1334,8 +1476,10 @@ datasummary_balance(formula = ~country,
 Finally, one common reason for needing a table is to report regression results. We will do this using `modelsummary()` from `modelsummary` [@citemodelsummary].
 
 ```{r}
-first_model <- lm(formula = gdp_growth ~ inflation,
-                  data = world_bank_data)
+first_model <- lm(
+  formula = gdp_growth ~ inflation,
+  data = world_bank_data
+)
 
 modelsummary(first_model)
 ```
@@ -1346,11 +1490,15 @@ We can put a variety of different of different models together (@tbl-twomodels).
 #| label: tbl-twomodels
 #| tbl-cap: "Explaining GDP as a function of inflation"
 
-second_model <- lm(formula = gdp_growth ~ inflation + country,
-                  data = world_bank_data)
+second_model <- lm(
+  formula = gdp_growth ~ inflation + country,
+  data = world_bank_data
+)
 
-third_model <- lm(formula = gdp_growth ~ inflation + country + population,
-                  data = world_bank_data)
+third_model <- lm(
+  formula = gdp_growth ~ inflation + country + population,
+  data = world_bank_data
+)
 
 modelsummary(list(first_model, second_model, third_model))
 ```
@@ -1362,8 +1510,10 @@ We can adjust the number of significant digits (@tbl-twomodelstwo). This is a cr
 #| label: tbl-twomodelstwo
 #| tbl-cap: "Two models of GDP as a function of inflation"
 
-modelsummary(list(first_model, second_model, third_model),
-             fmt = 1)
+modelsummary(
+  list(first_model, second_model, third_model),
+  fmt = 1
+)
 ```
 
 
@@ -1382,17 +1532,23 @@ In many ways maps can be thought of as another type of graph, where the x-axis i
 #| eval: false
 
 ggplot() +
-  geom_polygon( # First draw an outline
+  geom_polygon(
+    # First draw an outline
     data = some_data,
-    aes(x = latitude,
-        y = longitude,
-        group = group
-        )) +
-  geom_point( # Then add points of interest
-    data = some_other_data,
-    aes(x = latitude,
-        y = longitude)
+    aes(
+      x = latitude,
+      y = longitude,
+      group = group
     )
+  ) +
+  geom_point(
+    # Then add points of interest
+    data = some_other_data,
+    aes(
+      x = latitude,
+      y = longitude
+    )
+  )
 ```
 
 And while there are some small complications, for the most part it is as straight-forward as that. The first step is to get some data. There is some geographic data built into `ggplot2`, and there is additional information in the "world.cities" dataset from `maps`. 
@@ -1421,20 +1577,30 @@ With that information in hand, we can then create a map of France that shows the
 #| warning: false
 
 ggplot() +
-  geom_polygon(data = france,
-               aes(x = long,
-                   y = lat,
-                   group = group),
-               fill = "white",
-               colour = "grey") +
+  geom_polygon(
+    data = france,
+    aes(
+      x = long,
+      y = lat,
+      group = group
+    ),
+    fill = "white",
+    colour = "grey"
+  ) +
   coord_map() +
-  geom_point(aes(x = french_cities$long,
-                 y = french_cities$lat),
-             alpha = 0.3,
-             color = "black") +
+  geom_point(
+    aes(
+      x = french_cities$long,
+      y = french_cities$lat
+    ),
+    alpha = 0.3,
+    color = "black"
+  ) +
   theme_classic() +
-  labs(x = "Longitude",
-       y = "Latitude")
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  )
 ```
 
 
@@ -1512,24 +1678,34 @@ Now we can use `ggmap` in the same way as before to plot our underlying tiles, a
 #| warning: false
 #| message: false
 
-ggmap(canberra_stamen_map,
-      extent = "normal",
-      maprange = FALSE) +
-  geom_point(data = booths_reduced,
-             aes(x = Longitude,
-                 y = Latitude,
-                 colour = DivisionNm)) +
+ggmap(
+  canberra_stamen_map,
+  extent = "normal",
+  maprange = FALSE
+) +
+  geom_point(
+    data = booths_reduced,
+    aes(
+      x = Longitude,
+      y = Latitude,
+      colour = DivisionNm
+    )
+  ) +
   scale_color_brewer(name = "2019 Division", palette = "Set1") +
   coord_map(
     projection = "mercator",
     xlim = c(attr(map, "bb")$ll.lon, attr(map, "bb")$ur.lon),
     ylim = c(attr(map, "bb")$ll.lat, attr(map, "bb")$ur.lat)
   ) +
-  labs(x = "Longitude",
-       y = "Latitude") +
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  ) +
   theme_minimal() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()
+  )
 ```
 
 We may like to save the map so that we do not have to draw it every time, and we can do that in the same way as any other graph, using `ggsave()`.
@@ -1621,12 +1797,17 @@ And finally, we can bring it all together with maps show US military bases in Ge
 #| warning: false
 
 ggmap(germany_stamen_map) +
-  geom_point(data = bases,
-             aes(x = lon,
-                 y = lat)
-             ) +
-  labs(x = "Longitude",
-       y = "Latitude") +
+  geom_point(
+    data = bases,
+    aes(
+      x = lon,
+      y = lat
+    )
+  ) +
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  ) +
   theme_minimal()
 ```
 
@@ -1637,12 +1818,17 @@ ggmap(germany_stamen_map) +
 #| warning: false
 
 ggmap(japan_stamen_map) +
-  geom_point(data = bases,
-             aes(x = lon,
-                 y = lat)
-             ) +
-  labs(x = "Longitude",
-       y = "Latitude") +
+  geom_point(
+    data = bases,
+    aes(
+      x = lon,
+      y = lat
+    )
+  ) +
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  ) +
   theme_minimal()
 ```
 
@@ -1654,12 +1840,17 @@ ggmap(japan_stamen_map) +
 #| warning: false
 
 ggmap(australia_stamen_map) +
-  geom_point(data = bases,
-             aes(x = lon,
-                 y = lat)
-             ) +
-  labs(x = "Longitude",
-       y = "Latitude") +
+  geom_point(
+    data = bases,
+    aes(
+      x = lon,
+      y = lat
+    )
+  ) +
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  ) +
   theme_minimal()
 ```
 
@@ -1690,9 +1881,11 @@ place_names
 library(tidygeocoder)
 
 place_names <-
-  geo(city = place_names$city,
-      country = place_names$country,
-      method = "osm")
+  geo(
+    city = place_names$city,
+    country = place_names$country,
+    method = "osm"
+  )
 
 place_names
 ```
@@ -1710,25 +1903,35 @@ world <- map_data(map = "world")
 ggplot() +
   geom_polygon(
     data = world,
-    aes(x = long,
-        y = lat,
-        group = group),
+    aes(
+      x = long,
+      y = lat,
+      group = group
+    ),
     fill = "white",
     colour = "grey"
   ) +
   coord_map(ylim = c(47, -47)) +
-  geom_point(aes(x = place_names$long,
-                 y = place_names$lat),
-             color = "black") +
-  geom_text(aes(
-    x = place_names$long,
-    y = place_names$lat,
-    label = place_names$city
-  ),
-  nudge_y = -5) +
+  geom_point(
+    aes(
+      x = place_names$long,
+      y = place_names$lat
+    ),
+    color = "black"
+  ) +
+  geom_text(
+    aes(
+      x = place_names$long,
+      y = place_names$lat,
+      label = place_names$city
+    ),
+    nudge_y = -5
+  ) +
   theme_classic() +
-  labs(x = "Longitude",
-       y = "Latitude")
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  )
 ```
 
 

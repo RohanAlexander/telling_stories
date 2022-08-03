@@ -110,25 +110,29 @@ set.seed(853)
 
 size_of_population <- 1000000
 
-population_for_mrp_example <- 
-  tibble(age_group = sample(x = c(1:3),
-                            size = size_of_population,
-                            replace = TRUE
-                            ),
-         toilet_trained = sample(x = c(0, 1),
-                                 size = size_of_population,
-                                 replace = TRUE
-                                 ),
-         noise = rnorm(size_of_population, mean = 0, sd = 1), 
-         # No special reason for this intercept to be five; it could be anything.
-         bed_time = 5 + 0.5 * age_group + 1 * toilet_trained + noise, 
-         ) |> 
-  select(-noise) |> 
-  mutate(age_group = as_factor(age_group),
-         toilet_trained = as_factor(toilet_trained)
-         )
+population_for_mrp_example <-
+  tibble(
+    age_group = sample(
+      x = c(1:3),
+      size = size_of_population,
+      replace = TRUE
+    ),
+    toilet_trained = sample(
+      x = c(0, 1),
+      size = size_of_population,
+      replace = TRUE
+    ),
+    noise = rnorm(size_of_population, mean = 0, sd = 1),
+    # No special reason for this intercept to be five; it could be anything.
+    bed_time = 5 + 0.5 * age_group + 1 * toilet_trained + noise,
+  ) |>
+  select(-noise) |>
+  mutate(
+    age_group = as_factor(age_group),
+    toilet_trained = as_factor(toilet_trained)
+  )
 
-population_for_mrp_example |> 
+population_for_mrp_example |>
   head()
 ```
 
@@ -138,16 +142,20 @@ That is, as always, when we have a dataset, we first try to graph it to better u
 #| message: false
 #| warning: false
 
-population_for_mrp_example |> 
-  slice(1:1000) |> 
+population_for_mrp_example |>
+  slice(1:1000) |>
   ggplot(aes(x = age_group, y = bed_time)) +
-  geom_jitter(aes(color = toilet_trained), 
-              alpha = 0.4, 
-              width = 0.1, 
-              height = 0) +
-  labs(x = "Age-group",
-       y = "Bed time",
-       color = "Toilet trained") +
+  geom_jitter(
+    aes(color = toilet_trained),
+    alpha = 0.4,
+    width = 0.1,
+    height = 0
+  ) +
+  labs(
+    x = "Age-group",
+    y = "Bed time",
+    color = "Toilet trained"
+  ) +
   theme_classic() +
   scale_color_brewer(palette = "Set1")
 ```
@@ -155,14 +163,16 @@ population_for_mrp_example |>
 And we can also work out what the 'truth' is for the information that we are interested in (remembering that we'd never actually know this when we move away from simulated examples).
 
 ```{r}
-population_for_mrp_example_summarised <- 
-  population_for_mrp_example |> 
-  group_by(age_group, toilet_trained) |> 
-  summarise(median_bed_time = median(bed_time)) 
+population_for_mrp_example_summarised <-
+  population_for_mrp_example |>
+  group_by(age_group, toilet_trained) |>
+  summarise(median_bed_time = median(bed_time))
 
-population_for_mrp_example_summarised |> 
-  knitr::kable(digits = 2,
-               col.names = c("Age-group", "Is toilet trained", "Average bed time"))
+population_for_mrp_example_summarised |>
+  knitr::kable(
+    digits = 2,
+    col.names = c("Age-group", "Is toilet trained", "Average bed time")
+  )
 ```
 
 ### Get a biased sample from it
@@ -174,31 +184,33 @@ Now we want to pretend that we have some survey that has a biased sample. We wil
 set.seed(853)
 
 # Add a weight for each 'type' (has to sum to one)
-population_for_mrp_example <- 
-  population_for_mrp_example |> 
-  mutate(weight = 
-           case_when(toilet_trained == 0 & age_group == 1 ~ 0.7,
-                     toilet_trained == 0 ~ 0.1,
-                     age_group %in% c(1, 2, 3) ~ 0.2
-                     ),
-         id = 1:n()
-         )
+population_for_mrp_example <-
+  population_for_mrp_example |>
+  mutate(
+    weight =
+      case_when(
+        toilet_trained == 0 & age_group == 1 ~ 0.7,
+        toilet_trained == 0 ~ 0.1,
+        age_group %in% c(1, 2, 3) ~ 0.2
+      ),
+    id = 1:n()
+  )
 
-get_these <- 
+get_these <-
   sample(
     x = population_for_mrp_example$id,
     size = 1000,
     prob = population_for_mrp_example$weight
-    )
+  )
 
-sample_for_mrp_example <- 
-  population_for_mrp_example |> 
-  filter(id %in% get_these) |> 
+sample_for_mrp_example <-
+  population_for_mrp_example |>
+  filter(id %in% get_these) |>
   select(-weight, -id)
 
 # Clean up
-poststratification_dataset <- 
-  population_for_mrp_example |> 
+poststratification_dataset <-
+  population_for_mrp_example |>
   select(-weight, -id)
 ```
 
@@ -208,13 +220,15 @@ And we can plot those also.
 #| message: false
 #| warning: false
 
-sample_for_mrp_example |> 
-  mutate(toilet_trained = as_factor(toilet_trained)) |> 
+sample_for_mrp_example |>
+  mutate(toilet_trained = as_factor(toilet_trained)) |>
   ggplot(aes(x = age_group, y = bed_time)) +
   geom_jitter(aes(color = toilet_trained), alpha = 0.4, width = 0.1, height = 0) +
-  labs(x = "Age-group",
-       y = "Bed time",
-       color = "Toilet trained") +
+  labs(
+    x = "Age-group",
+    y = "Bed time",
+    color = "Toilet trained"
+  ) +
   theme_classic() +
   scale_color_brewer(palette = "Set1")
 ```
@@ -222,14 +236,16 @@ sample_for_mrp_example |>
 It is pretty clear that our sample has a different bedtime than the overall population, but let us just do the same exercise as before to look at the median, by age and toilet-trained status.
 
 ```{r}
-sample_for_mrp_example_summarized <- 
-  sample_for_mrp_example |> 
-  group_by(age_group, toilet_trained) |> 
+sample_for_mrp_example_summarized <-
+  sample_for_mrp_example |>
+  group_by(age_group, toilet_trained) |>
   summarise(median_bed_time = median(bed_time))
 
-sample_for_mrp_example_summarized |> 
-  knitr::kable(digits = 2,
-               col.names = c("Age-group", "Is toilet trained", "Average bed time"))
+sample_for_mrp_example_summarized |>
+  knitr::kable(
+    digits = 2,
+    col.names = c("Age-group", "Is toilet trained", "Average bed time")
+  )
 ```
 
 
@@ -240,10 +256,10 @@ We will quickly train a model based on the (biased) survey. We will use `modelsu
 ```{r}
 library(modelsummary)
 
-mrp_example_model <- 
+mrp_example_model <-
   lm(bed_time ~ age_group + toilet_trained, data = sample_for_mrp_example)
 
-mrp_example_model |> 
+mrp_example_model |>
   modelsummary::modelsummary(fmt = 2)
 ```
 
@@ -258,24 +274,24 @@ In this simulation example, we will just take a 10 per cent sample from the popu
 ```{r}
 set.seed(853)
 
-poststratification_dataset <- 
-  population_for_mrp_example |> 
-  slice(1:100000) |> 
+poststratification_dataset <-
+  population_for_mrp_example |>
+  slice(1:100000) |>
   select(-bed_time)
 
-poststratification_dataset |> 
+poststratification_dataset |>
   head()
 ```
 
 In an ideal world we have individual-level data in our post-stratification dataset (that is the case above). In that world we can apply our model to each individual. The more likely situation, in reality, is that we just have counts by groups, so we are going to try to construct an estimate for each group.
 
 ```{r}
-poststratification_dataset_grouped <- 
-  poststratification_dataset |> 
-  group_by(age_group, toilet_trained) |> 
+poststratification_dataset_grouped <-
+  poststratification_dataset |>
+  group_by(age_group, toilet_trained) |>
   count()
 
-poststratification_dataset_grouped |> 
+poststratification_dataset_grouped |>
   head()
 ```
 
@@ -285,28 +301,34 @@ poststratification_dataset_grouped |>
 Now we create an estimate for each group, and add some confidence intervals.
 
 ```{r}
-poststratification_dataset_grouped <- 
-  mrp_example_model |> 
-  predict(newdata = poststratification_dataset_grouped, interval = "confidence") |> 
-  as_tibble() |> 
-  cbind(poststratification_dataset_grouped) 
+poststratification_dataset_grouped <-
+  mrp_example_model |>
+  predict(newdata = poststratification_dataset_grouped, interval = "confidence") |>
+  as_tibble() |>
+  cbind(poststratification_dataset_grouped)
 ```
 
 At this point we can have a look at our MRP estimates (circles) along with their confidence intervals, and compare them the raw estimates from the data (squares). In this case, because we know the truth, we can also compare them to the known truth (triangles) (but that is not something we can do normally).
 
 ```{r}
-poststratification_dataset_grouped |> 
+poststratification_dataset_grouped |>
   ggplot(aes(x = age_group, y = fit)) +
-  geom_point(data = population_for_mrp_example_summarised,
-             aes(x = age_group, y = median_bed_time, color = toilet_trained), 
-             shape = 17) +
-  geom_point(data = sample_for_mrp_example_summarized,
-             aes(x = age_group, y = median_bed_time, color = toilet_trained), 
-             shape = 15) +
-  geom_pointrange(aes(ymin=lwr, ymax=upr, color = toilet_trained)) +
-  labs(x = "Age-group",
-       y = "Bed time",
-       color = "Toilet trained") +
+  geom_point(
+    data = population_for_mrp_example_summarised,
+    aes(x = age_group, y = median_bed_time, color = toilet_trained),
+    shape = 17
+  ) +
+  geom_point(
+    data = sample_for_mrp_example_summarized,
+    aes(x = age_group, y = median_bed_time, color = toilet_trained),
+    shape = 15
+  ) +
+  geom_pointrange(aes(ymin = lwr, ymax = upr, color = toilet_trained)) +
+  labs(
+    x = "Age-group",
+    y = "Bed time",
+    color = "Toilet trained"
+  ) +
   theme_classic() +
   scale_color_brewer(palette = "Set1")
 ```
@@ -401,81 +423,87 @@ set.seed(853)
 
 size_of_sample_for_australian_polling <- 2000
 
-sample_for_australian_polling <- 
-  tibble(age_group = 
-           sample(x = c(0:3), 
-                  size = size_of_sample_for_australian_polling,
-                  replace = TRUE
-                  ),
-         gender = 
-           sample(x = c(0:1),
-                  size = size_of_sample_for_australian_polling,
-                  replace = TRUE
-                  ),
-         state = 
-           sample(x = c(1:8),
-                  size = size_of_sample_for_australian_polling,
-                  replace = TRUE
-                  ),
-         noise = rnorm(size_of_sample_for_australian_polling, mean = 0, sd = 1), 
-         support_alp = 1 + 0.5 * age_group + 0.5 * gender + 0.01 * state + noise
-         ) 
+sample_for_australian_polling <-
+  tibble(
+    age_group =
+      sample(
+        x = c(0:3),
+        size = size_of_sample_for_australian_polling,
+        replace = TRUE
+      ),
+    gender =
+      sample(
+        x = c(0:1),
+        size = size_of_sample_for_australian_polling,
+        replace = TRUE
+      ),
+    state =
+      sample(
+        x = c(1:8),
+        size = size_of_sample_for_australian_polling,
+        replace = TRUE
+      ),
+    noise = rnorm(size_of_sample_for_australian_polling, mean = 0, sd = 1),
+    support_alp = 1 + 0.5 * age_group + 0.5 * gender + 0.01 * state + noise
+  )
 
 # Normalize the outcome variable
-sample_for_australian_polling <- 
-  sample_for_australian_polling |> 
-  mutate(support_alp = 
-           if_else(support_alp > median(support_alp, na.rm = TRUE), 
-                   'Supports ALP', 
-                   'Does not')
-         )
+sample_for_australian_polling <-
+  sample_for_australian_polling |>
+  mutate(
+    support_alp =
+      if_else(
+        support_alp > median(support_alp, na.rm = TRUE),
+        "Supports ALP",
+        "Does not"
+      )
+  )
 
 # Clean up the simulated data
-sample_for_australian_polling <- 
-  sample_for_australian_polling |> 
+sample_for_australian_polling <-
+  sample_for_australian_polling |>
   mutate(
     age_group = case_when(
-      age_group == 0 ~ 'Ages 18 to 29',
-      age_group == 1 ~ 'Ages 30 to 44',
-      age_group == 2 ~ 'Ages 45 to 59',
-      age_group == 3 ~ 'Ages 60 plus',
-      TRUE ~ 'Problem'
-      ),
+      age_group == 0 ~ "Ages 18 to 29",
+      age_group == 1 ~ "Ages 30 to 44",
+      age_group == 2 ~ "Ages 45 to 59",
+      age_group == 3 ~ "Ages 60 plus",
+      TRUE ~ "Problem"
+    ),
     gender = case_when(
-      gender == 0 ~ 'Male',
-      gender == 1 ~ 'Female',
-      TRUE ~ 'Problem'
-      ),
+      gender == 0 ~ "Male",
+      gender == 1 ~ "Female",
+      TRUE ~ "Problem"
+    ),
     state = case_when(
-      state == 1 ~ 'Queensland',
-      state == 2 ~ 'New South Wales',
-      state == 3 ~ 'Australian Capital Territory',
-      state == 4 ~ 'Victoria',
-      state == 5 ~ 'Tasmania',
-      state == 6 ~ 'Northern Territory',
-      state == 7 ~ 'South Australia',
-      state == 8 ~ 'Western Australia',
-      TRUE ~ 'Problem'
-      ),
-    
-    ) |> 
+      state == 1 ~ "Queensland",
+      state == 2 ~ "New South Wales",
+      state == 3 ~ "Australian Capital Territory",
+      state == 4 ~ "Victoria",
+      state == 5 ~ "Tasmania",
+      state == 6 ~ "Northern Territory",
+      state == 7 ~ "South Australia",
+      state == 8 ~ "Western Australia",
+      TRUE ~ "Problem"
+    ),
+  ) |>
   select(-noise)
 
 # Tidy the class
-sample_for_australian_polling <- 
-  sample_for_australian_polling |> 
+sample_for_australian_polling <-
+  sample_for_australian_polling |>
   mutate(across(c(age_group, gender, state, support_alp), as_factor))
 
-sample_for_australian_polling |>   
+sample_for_australian_polling |>
   head()
 ```
 
 Finally, we want our survey to over-sample females, so we will just get rid of 300 males.
 
 ```{r}
-sample_for_australian_polling <- 
-  sample_for_australian_polling |> 
-  arrange(gender) |> 
+sample_for_australian_polling <-
+  sample_for_australian_polling |>
+  arrange(gender) |>
   slice(1:1700)
 ```
 
@@ -486,8 +514,8 @@ This polling data was generated to make both males and older people less likely 
 ```{r}
 library(modelsummary)
 
-sample_for_australian_polling |> 
-    datasummary_skim(type = "categorical")
+sample_for_australian_polling |>
+  datasummary_skim(type = "categorical")
 ```
 
 Now we'd like to see if we can get our results back (we should find females less likely than males to vote for Australian Labor Party and that people are less likely to vote Australian Labor Party as they get older). Our model is:
@@ -499,13 +527,14 @@ This model says that the probability that some person, $j$, will vote for the Au
 ```{r}
 #| label: initial_model_analyse_example_polling
 
-alp_support <- 
-  glm(support_alp ~ gender + age_group + state, 
-      data = sample_for_australian_polling,
-      family = "binomial"
-      )
+alp_support <-
+  glm(
+    support_alp ~ gender + age_group + state,
+    data = sample_for_australian_polling,
+    family = "binomial"
+  )
 
-alp_support |> 
+alp_support |>
   modelsummary(fmt = 2, exponentiate = TRUE)
 ```
 
@@ -521,7 +550,7 @@ First read in some real demographic data, on a state basis, from the ABS.
 #| message: false
 #| warning: false
 
-post_strat_census_data <- 
+post_strat_census_data <-
   read_csv("outputs/data/census_data.csv")
 
 head(post_strat_census_data)
@@ -530,27 +559,27 @@ head(post_strat_census_data)
 At this point, we have got a decision to make because we need the variables to be the same in the survey and the post-stratification dataset, but here the state abbreviations have been used, while in the survey, the full names were used. We will change the post-stratification dataset because the survey data has already modelled.
 
 ```{r}
-post_strat_census_data <- 
-  post_strat_census_data |> 
+post_strat_census_data <-
+  post_strat_census_data |>
   mutate(
-    state = 
+    state =
       case_when(
-        state == 'ACT' ~ 'Australian Capital Territory',
-        state == 'NSW' ~ 'New South Wales',
-        state == 'NT' ~ 'Northern Territory',
-        state == 'QLD' ~ 'Queensland',
-        state == 'SA' ~ 'South Australia',
-        state == 'TAS' ~ 'Tasmania',
-        state == 'VIC' ~ 'Victoria',
-        state == 'WA' ~ 'Western Australia',
+        state == "ACT" ~ "Australian Capital Territory",
+        state == "NSW" ~ "New South Wales",
+        state == "NT" ~ "Northern Territory",
+        state == "QLD" ~ "Queensland",
+        state == "SA" ~ "South Australia",
+        state == "TAS" ~ "Tasmania",
+        state == "VIC" ~ "Victoria",
+        state == "WA" ~ "Western Australia",
         TRUE ~ "Problem"
       ),
-    age_group = 
+    age_group =
       case_when(
-        age_group == 'ages18to29' ~ 'Ages 18 to 29',
-        age_group == 'ages30to44' ~ 'Ages 30 to 44',
-        age_group == 'ages45to59' ~ 'Ages 45 to 59',
-        age_group == 'ages60plus' ~ 'Ages 60 plus',
+        age_group == "ages18to29" ~ "Ages 18 to 29",
+        age_group == "ages30to44" ~ "Ages 30 to 44",
+        age_group == "ages45to59" ~ "Ages 45 to 59",
+        age_group == "ages60plus" ~ "Ages 60 plus",
         TRUE ~ "Problem"
       )
   )
@@ -560,15 +589,15 @@ post_strat_census_data <-
 We are just going to do some rough forecasts. For each gender and age-group we want the relevant coefficient in the example data and we can construct the estimates.
 
 ```{r}
-post_strat_census_data <- 
-  alp_support |> 
-  predict(newdata = post_strat_census_data, type = 'response', se.fit = TRUE) |> 
-  as_tibble() |> 
+post_strat_census_data <-
+  alp_support |>
+  predict(newdata = post_strat_census_data, type = "response", se.fit = TRUE) |>
+  as_tibble() |>
   cbind(post_strat_census_data)
 
-post_strat_census_data |> 
-  mutate(alp_predict_prop = fit*cell_prop_of_division_total) |> 
-  group_by(state) |> 
+post_strat_census_data |>
+  mutate(alp_predict_prop = fit * cell_prop_of_division_total) |>
+  group_by(state) |>
   summarise(alp_predict = sum(alp_predict_prop))
 ```
 
@@ -586,15 +615,16 @@ Now, using the same basic model as before, but in a Bayesian setting.
 ```{r}
 library(rstanarm)
 
-improved_alp_support <- 
-  stan_glm(support_alp ~ gender + age_group + state,
-                     data = sample_for_australian_polling,
-                     family = binomial(link = "logit"),
-                     prior = normal(0, 1), 
-                     prior_intercept = normal(0, 1),
-                     cores = 2, 
-                     seed = 12345)
-
+improved_alp_support <-
+  stan_glm(
+    support_alp ~ gender + age_group + state,
+    data = sample_for_australian_polling,
+    family = binomial(link = "logit"),
+    prior = normal(0, 1),
+    prior_intercept = normal(0, 1),
+    cores = 2,
+    seed = 12345
+  )
 ```
 
 As before, we'd like an estimate for each state based on their demographic features. We are just going to do some rough forecasts. For each gender and age-group we want the relevant coefficient in the example data and we can construct the estimates (this code is from [Monica Alexander](https://www.monicaalexander.com/posts/2019-08-07-mrp/)). We are going to use `tidybayes` for this [@citetidybayes].
@@ -602,17 +632,19 @@ As before, we'd like an estimate for each state based on their demographic featu
 ```{r}
 library(tidybayes)
 
-post_stratified_estimates <- 
-  improved_alp_support |> 
-  add_fitted_draws(newdata = post_strat_census_data) |> 
-  rename(alp_predict = .value) |> 
-  mutate(alp_predict_prop = alp_predict*cell_prop_of_division_total) |> 
-  group_by(state, .draw) |> 
-  summarise(alp_predict = sum(alp_predict_prop)) |> 
-  group_by(state) |> 
-  summarise(mean = mean(alp_predict), 
-            lower = quantile(alp_predict, 0.025), 
-            upper = quantile(alp_predict, 0.975))
+post_stratified_estimates <-
+  improved_alp_support |>
+  add_fitted_draws(newdata = post_strat_census_data) |>
+  rename(alp_predict = .value) |>
+  mutate(alp_predict_prop = alp_predict * cell_prop_of_division_total) |>
+  group_by(state, .draw) |>
+  summarise(alp_predict = sum(alp_predict_prop)) |>
+  group_by(state) |>
+  summarise(
+    mean = mean(alp_predict),
+    lower = quantile(alp_predict, 0.025),
+    upper = quantile(alp_predict, 0.975)
+  )
 
 post_stratified_estimates
 ```
@@ -624,12 +656,14 @@ One interesting aspect is that our multilevel approach will allow us to deal wit
 There are many interesting aspects that we may like to communicate to others. For instance, we may like to show how the model is affecting the results. We can make a graph that compares the raw estimate with the model estimate.
 
 ```{r}
-post_stratified_estimates |> 
-  ggplot(aes(y = mean, x = forcats::fct_inorder(state), color = "MRP estimate")) + 
+post_stratified_estimates |>
+  ggplot(aes(y = mean, x = forcats::fct_inorder(state), color = "MRP estimate")) +
   geom_point() +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0) + 
-  labs(y = "Proportion ALP support",
-       x = "State") + 
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0) +
+  labs(
+    y = "Proportion ALP support",
+    x = "State"
+  ) +
   theme_minimal() +
   scale_color_brewer(palette = "Set1") +
   theme(legend.position = "bottom") +
@@ -651,12 +685,12 @@ Similarly, we may like to plot the distribution of the coefficients. We can work
 #                                            `Age 30-44` = "age_groupages30to44",
 #                                            `Age 45-59` = "age_groupages45to59",
 #                                            `Age 60+` = "age_groupages60plus"
-#                                            )) |> 
-# 
-# # both |> 
-#   ggplot(aes(y=fct_rev(coefficient), x = .value)) + 
+#                                            )) |>
+#
+# # both |>
+#   ggplot(aes(y=fct_rev(coefficient), x = .value)) +
 #   ggridges::geom_density_ridges2(aes(height = ..density..),
-#                                  rel_min_height = 0.01, 
+#                                  rel_min_height = 0.01,
 #                                  stat = "density",
 #                                  scale=1.5) +
 #   xlab("Distribution of estimate") +
@@ -666,8 +700,6 @@ Similarly, we may like to plot the distribution of the coefficients. We can work
 #   theme(panel.grid.major = element_blank(),
 #         panel.grid.minor = element_blank()) +
 #   theme(legend.position = "bottom")
-
-
 ```
 
 
@@ -689,45 +721,48 @@ We can read in '.dta' files using the `haven` package [@citehaven]. This code is
 library(haven)
 library(tidyverse)
 
-raw_nationscape_data <- 
+raw_nationscape_data <-
   read_dta(here::here("dont_push/ns20200625.dta"))
 
 # The Stata format separates labels so reunite those
-raw_nationscape_data <- 
+raw_nationscape_data <-
   labelled::to_factor(raw_nationscape_data)
 
 # Just keep relevant variables
-nationscape_data <- 
-  raw_nationscape_data |> 
-  select(vote_2020,
-         gender,
-         education,
-         state,
-         age)
+nationscape_data <-
+  raw_nationscape_data |>
+  select(
+    vote_2020,
+    gender,
+    education,
+    state,
+    age
+  )
 
 # For simplicity, remove anyone undecided or planning to vote for someone other than Biden/Trump and make vote a binary variable: 1 for Biden, 0 for Trump.
-nationscape_data <- 
-  nationscape_data |> 
-  filter(vote_2020 == "Joe Biden" | vote_2020 == "Donald Trump") |> 
-  mutate(vote_biden = if_else(vote_2020 == "Joe Biden", 1, 0)) |> 
+nationscape_data <-
+  nationscape_data |>
+  filter(vote_2020 == "Joe Biden" | vote_2020 == "Donald Trump") |>
+  mutate(vote_biden = if_else(vote_2020 == "Joe Biden", 1, 0)) |>
   select(-vote_2020)
 
 # Create the dependent variables by grouping the existing variables
-nationscape_data <- 
-  nationscape_data |> 
+nationscape_data <-
+  nationscape_data |>
   mutate(
-    age_group = case_when( # case_when works in order and exits when there's a match
-      age <= 29 ~ 'age_18-29',
-      age <= 44 ~ 'age_30-44',
-      age <= 59 ~ 'age_45-59',
-      age >= 60 ~ 'age_60_or_more',
-      TRUE ~ 'Trouble'
-      ),
+    age_group = case_when(
+      # case_when works in order and exits when there's a match
+      age <= 29 ~ "age_18-29",
+      age <= 44 ~ "age_30-44",
+      age <= 59 ~ "age_45-59",
+      age >= 60 ~ "age_60_or_more",
+      TRUE ~ "Trouble"
+    ),
     gender = case_when(
-      gender == "Female" ~ 'female',
-      gender == "Male" ~ 'male',
-      TRUE ~ 'Trouble'
-      ),
+      gender == "Female" ~ "female",
+      gender == "Male" ~ "male",
+      TRUE ~ "Trouble"
+    ),
     education_level = case_when(
       education == "3rd Grade or less" ~ "High school or less",
       education == "Middle School - Grades 4 - 8" ~ "High school or less",
@@ -740,28 +775,35 @@ nationscape_data <-
       education == "Completed some graduate, but no degree" ~ "Post secondary or higher",
       education == "Masters degree" ~ "Graduate degree",
       education == "Doctorate degree" ~ "Graduate degree",
-      TRUE ~ 'Trouble'
-      )
-    ) |> 
+      TRUE ~ "Trouble"
+    )
+  ) |>
   select(-education, -age)
 
-tests <- 
-  nationscape_data |> 
-  mutate(test = stringr::str_detect(age_group, 'Trouble'),
-         test = if_else(test == TRUE, TRUE, 
-                        stringr::str_detect(education_level, 'Trouble')),
-         test = if_else(test == TRUE, TRUE, 
-                        stringr::str_detect(gender, 'Trouble'))
-         ) |> 
+tests <-
+  nationscape_data |>
+  mutate(
+    test = stringr::str_detect(age_group, "Trouble"),
+    test = if_else(
+      test == TRUE,
+      TRUE,
+      stringr::str_detect(education_level, "Trouble")
+    ),
+    test = if_else(
+      test == TRUE,
+      TRUE,
+      stringr::str_detect(gender, "Trouble")
+    )
+  ) |>
   filter(test == TRUE)
 
-if(nrow(tests) != 0) {
+if (nrow(tests) != 0) {
   print("Check nationscape_data")
-  } else {
-    rm(tests)
-    }
+} else {
+  rm(tests)
+}
 
-nationscape_data |> 
+nationscape_data |>
   head()
 ```
 
@@ -770,7 +812,7 @@ As we have seen, one of the most difficult aspects with MRP is ensuring consiste
 ```{r}
 # This code is very directly from Alen Mitrovski, Xiaoyan Yang, and Matthew Wankiewicz.
 # Format state names so the whole state name is written out, to match IPUMS data
-states_names_and_abbrevs <- 
+states_names_and_abbrevs <-
   tibble(stateicp = state.name, state = state.abb)
 
 nationscape_data <-
@@ -780,23 +822,23 @@ nationscape_data <-
 rm(states_names_and_abbrevs)
 
 # Make lowercase to match IPUMS data
-nationscape_data <- 
-  nationscape_data |> 
+nationscape_data <-
+  nationscape_data |>
   mutate(stateicp = tolower(stateicp))
 
 # Replace NAs with DC
-nationscape_data$stateicp <- 
+nationscape_data$stateicp <-
   replace_na(nationscape_data$stateicp, "district of columbia")
 
 # Tidy the class
-nationscape_data <- 
-  nationscape_data |> 
+nationscape_data <-
+  nationscape_data |>
   mutate(across(c(gender, stateicp, education_level, age_group), as_factor))
 
 # Save data
 write_csv(nationscape_data, "outputs/data/polling_data.csv")
 
-nationscape_data |> 
+nationscape_data |>
   head()
 ```
 
@@ -816,29 +858,30 @@ In any case let us tidy up the data.
 library(haven)
 library(tidyverse)
 
-raw_poststrat_data <- 
+raw_poststrat_data <-
   read_dta(here::here("dont_push/usa_00004.dta"))
 
 # The Stata format separates labels so reunite those
-raw_poststrat_data <- 
+raw_poststrat_data <-
   labelled::to_factor(raw_poststrat_data)
 head(raw_poststrat_data)
 
 raw_poststrat_data$age <- as.numeric(raw_poststrat_data$age)
 
-poststrat_data <- 
-  raw_poststrat_data |> 
-  filter(inctot < 9999999) |> 
-  filter(age >= 18) |> 
-  mutate(gender = sex) |> 
+poststrat_data <-
+  raw_poststrat_data |>
+  filter(inctot < 9999999) |>
+  filter(age >= 18) |>
+  mutate(gender = sex) |>
   mutate(
-    age_group = case_when( # case_when works in order and exits when there's a match
-      age <= 29 ~ 'age_18-29',
-      age <= 44 ~ 'age_30-44',
-      age <= 59 ~ 'age_45-59',
-      age >= 60 ~ 'age_60_or_more',
-      TRUE ~ 'Trouble'
-      ),
+    age_group = case_when(
+      # case_when works in order and exits when there's a match
+      age <= 29 ~ "age_18-29",
+      age <= 44 ~ "age_30-44",
+      age <= 59 ~ "age_45-59",
+      age >= 60 ~ "age_60_or_more",
+      TRUE ~ "Trouble"
+    ),
     education_level = case_when(
       educd == "nursery school, preschool" ~ "High school or less",
       educd == "kindergarten" ~ "High school or less",
@@ -864,46 +907,48 @@ poststrat_data <-
       educd == "professional degree beyond a bachelor's degree" ~ "Graduate degree",
       educd == "doctoral degree" ~ "Graduate degree",
       educd == "no schooling completed" ~ "High school or less",
-      TRUE ~ 'Trouble'
-      )
+      TRUE ~ "Trouble"
     )
+  )
 
 # Just keep relevant variables
-poststrat_data <- 
-  poststrat_data |> 
-  select(gender,
-         age_group,
-         education_level,
-         stateicp)
+poststrat_data <-
+  poststrat_data |>
+  select(
+    gender,
+    age_group,
+    education_level,
+    stateicp
+  )
 
 # Tidy the class
-poststrat_data <- 
-  poststrat_data |> 
+poststrat_data <-
+  poststrat_data |>
   mutate(across(c(gender, stateicp, education_level, age_group), as_factor))
 
 # Save data
 write_csv(poststrat_data, "outputs/data/us_poststrat.csv")
 
-poststrat_data |> 
+poststrat_data |>
   head()
 ```
 
 This dataset is on an individual level. So we'll create counts of each sub-cell, and then proportions by state.
 
 ```{r}
-poststrat_data_cells <- 
-  poststrat_data |> 
-  group_by(stateicp, gender, age_group, education_level) |> 
+poststrat_data_cells <-
+  poststrat_data |>
+  group_by(stateicp, gender, age_group, education_level) |>
   count()
 ```
 
 Now we would like to add proportions by state.
 
 ```{r}
-poststrat_data_cells <- 
-  poststrat_data_cells |> 
-  group_by(stateicp) |> 
-  mutate(prop = n/sum(n)) |> 
+poststrat_data_cells <-
+  poststrat_data_cells |>
+  group_by(stateicp) |>
+  mutate(prop = n / sum(n)) |>
   ungroup()
 
 poststrat_data_cells |> head()
@@ -920,14 +965,16 @@ We are going to use logistic regression to estimate a model where the binary of 
 ```{r}
 library(rstanarm)
 
-us_election_model <- 
-  rstanarm::stan_glmer(vote_biden ~ gender + age_group + (1 | stateicp) + education_level,
-                       data = nationscape_data,
-                       family = binomial(link = "logit"),
-                       prior = normal(0, 1), 
-                       prior_intercept = normal(0, 1),
-                       cores = 2, 
-                       seed = 853)
+us_election_model <-
+  rstanarm::stan_glmer(
+    vote_biden ~ gender + age_group + (1 | stateicp) + education_level,
+    data = nationscape_data,
+    family = binomial(link = "logit"),
+    prior = normal(0, 1),
+    prior_intercept = normal(0, 1),
+    cores = 2,
+    seed = 853
+  )
 ```
 
 There are a variety of options here that we have largely unthinkingly set, and exploring the effect of these would be a good idea, but for now we can just have a quick look at the model.
@@ -937,50 +984,57 @@ modelsummary::get_estimates(us_election_model)
 # The default usage of modelsummary requires statistics that we don't have.
 # Uncomment the following line if you want to look at what is available and specify your own:
 # modelsummary::get_estimates(us_election_model)
-modelsummary::modelsummary(us_election_model,
-                            statistic = c('conf.low', 'conf.high')
-                            )
+modelsummary::modelsummary(
+  us_election_model,
+  statistic = c("conf.low", "conf.high")
+)
 ```
 
 
 ### Post-stratify
 
 ```{r}
-biden_support_by_state <- 
+biden_support_by_state <-
   us_election_model |>
-  tidybayes::add_fitted_draws(newdata=poststrat_data_cells) |>
-  rename(support_biden_predict = .value) |> 
-  mutate(support_biden_predict_prop = support_biden_predict*prop) |> 
-  group_by(stateicp, .draw) |> 
-  summarise(support_biden_predict = sum(support_biden_predict_prop)) |> 
-  group_by(stateicp) |> 
-  summarise(mean = mean(support_biden_predict), 
-            lower = quantile(support_biden_predict, 0.025), 
-            upper = quantile(support_biden_predict, 0.975))
+  tidybayes::add_fitted_draws(newdata = poststrat_data_cells) |>
+  rename(support_biden_predict = .value) |>
+  mutate(support_biden_predict_prop = support_biden_predict * prop) |>
+  group_by(stateicp, .draw) |>
+  summarise(support_biden_predict = sum(support_biden_predict_prop)) |>
+  group_by(stateicp) |>
+  summarise(
+    mean = mean(support_biden_predict),
+    lower = quantile(support_biden_predict, 0.025),
+    upper = quantile(support_biden_predict, 0.975)
+  )
 ```
 
 
 And we can have a look at our estimates, if we like.
 
 ```{r}
-biden_support_by_state |> 
-  ggplot(aes(y = mean, x = stateicp, color = "MRP estimate")) + 
+biden_support_by_state |>
+  ggplot(aes(y = mean, x = stateicp, color = "MRP estimate")) +
   geom_point() +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0) + 
-  geom_point(data = 
-               nationscape_data |> 
-               group_by(stateicp, vote_biden) |>
-               summarise(n = n()) |> 
-               group_by(stateicp) |> 
-               mutate(prop = n/sum(n)) |> 
-               filter(vote_biden==1), 
-             aes(y = prop, x = stateicp, color = 'Nationscape raw data')) +
-  geom_hline(yintercept = 0.5, linetype = 'dashed') +
-  labs(x = 'State',
-       y = 'Estimated proportion support for Biden',
-       color = 'Source') +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0) +
+  geom_point(
+    data =
+      nationscape_data |>
+        group_by(stateicp, vote_biden) |>
+        summarise(n = n()) |>
+        group_by(stateicp) |>
+        mutate(prop = n / sum(n)) |>
+        filter(vote_biden == 1),
+    aes(y = prop, x = stateicp, color = "Nationscape raw data")
+  ) +
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  labs(
+    x = "State",
+    y = "Estimated proportion support for Biden",
+    color = "Source"
+  ) +
   theme_classic() +
-  scale_color_brewer(palette = 'Set1') +
+  scale_color_brewer(palette = "Set1") +
   coord_flip()
 ```
 

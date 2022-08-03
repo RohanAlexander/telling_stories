@@ -98,9 +98,9 @@ library(tidyverse)
 
 set.seed(853)
 
-twenty_draws_from_normal_distribution <- 
+twenty_draws_from_normal_distribution <-
   tibble(draws = rnorm(n = 20, mean = 0, sd = 1))
-  
+
 twenty_draws_from_normal_distribution
 ```
 
@@ -123,10 +123,10 @@ estimated_mean <-
 estimated_mean
 
 estimated_mean <-
-  twenty_draws_from_normal_distribution |> 
+  twenty_draws_from_normal_distribution |>
   mutate(draws_diff_square = (draws - estimated_mean)^2)
 
-estimated_standard_deviation <- 
+estimated_standard_deviation <-
   sqrt(
     sum(estimated_mean$draws_diff_square) / nrow(twenty_draws_from_normal_distribution)
   )
@@ -176,10 +176,14 @@ tibble(
   ggplot(aes(x = draws)) +
   geom_density() +
   theme_minimal() +
-  facet_wrap(vars(number_of_draws),
-             scales = "free_y") +
-  labs(x = 'Draw',
-       y = 'Density')
+  facet_wrap(
+    vars(number_of_draws),
+    scales = "free_y"
+  ) +
+  labs(
+    x = "Draw",
+    y = "Density"
+  )
 ```
 
 When we use simple linear regression, we assume that our relationship is characterized by the variables and the parameters. If we have two variables, $Y$ and $X$, then we could characterize a linear relationship between these as:
@@ -201,16 +205,21 @@ set.seed(853)
 number_of_observations <- 100
 expected_relationship <- 8.4
 
-simulated_running_data <- 
-  tibble(five_km_time = 
-           runif(n = number_of_observations, 
-                 min = 15, 
-                 max = 30),
-         noise = rnorm(number_of_observations, 0, 20),
-         marathon_time = five_km_time * expected_relationship + noise
-         ) |>
-  mutate(five_km_time = round(five_km_time, digits = 1),
-         marathon_time = round(marathon_time, digits = 1)) |>
+simulated_running_data <-
+  tibble(
+    five_km_time =
+      runif(
+        n = number_of_observations,
+        min = 15,
+        max = 30
+      ),
+    noise = rnorm(number_of_observations, 0, 20),
+    marathon_time = five_km_time * expected_relationship + noise
+  ) |>
+  mutate(
+    five_km_time = round(five_km_time, digits = 1),
+    marathon_time = round(marathon_time, digits = 1)
+  ) |>
   select(-noise)
 
 simulated_running_data
@@ -225,11 +234,13 @@ simulated_running_data
 #| message: false
 #| warning: false
 
-simulated_running_data |> 
+simulated_running_data |>
   ggplot(aes(x = five_km_time, y = marathon_time)) +
   geom_point() +
-  labs(x = "Five-kilometer time (minutes)",
-       y = "Marathon time (minutes)") +
+  labs(
+    x = "Five-kilometer time (minutes)",
+    y = "Marathon time (minutes)"
+  ) +
   theme_classic()
 ```
 
@@ -255,16 +266,20 @@ This results in one 'linear best-fit' line (@fig-fivekmvsmarathonwithbestfit), b
 #| message: false
 #| warning: false
 
-simulated_running_data |> 
+simulated_running_data |>
   ggplot(aes(x = five_km_time, y = marathon_time)) +
-  geom_point() + 
-  geom_smooth(method = "lm", 
-              se = FALSE, 
-              color = "black", 
-              linetype = "dashed",
-              formula = 'y ~ x') +
-  labs(x = "Five-kilometer time (minutes)",
-       y = "Marathon time (minutes)") +
+  geom_point() +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "black",
+    linetype = "dashed",
+    formula = "y ~ x"
+  ) +
+  labs(
+    x = "Five-kilometer time (minutes)",
+    y = "Marathon time (minutes)"
+  ) +
   theme_classic()
 ```
 
@@ -283,9 +298,11 @@ That $\epsilon$ is a measure of our error---what does the model not know? There 
 We can conduct simple linear regression with `lm()` from base R. We specify the dependent variable first, then `~`, followed by the independent variables. Finally, we specify the dataset. 
 
 ```{r}
-simulated_running_data_first_model <- 
-  lm(marathon_time ~ five_km_time, 
-     data = simulated_running_data)
+simulated_running_data_first_model <-
+  lm(
+    marathon_time ~ five_km_time,
+    data = simulated_running_data
+  )
 ```
 
 To see the result of the regression, we can use `summary()` from base R.
@@ -303,9 +320,11 @@ We use `augment()` from `broom` [@broom] to add the fitted values and residuals 
 ```{r}
 library(broom)
 
-simulated_running_data <- 
-  augment(simulated_running_data_first_model,
-          data = simulated_running_data)
+simulated_running_data <-
+  augment(
+    simulated_running_data_first_model,
+    data = simulated_running_data
+  )
 
 simulated_running_data
 ```
@@ -320,27 +339,39 @@ simulated_running_data
 #| fig-cap: "Residuals from the simple linear regression with simulated data on the time someone takes to run five kilometers and a marathon"
 #| fig-subcap: ["Distribution of residuals","Residuals by order", "Comparing the estimated time with the actual time"]
 
-ggplot(simulated_running_data, 
-       aes(x = .resid)) + 
+ggplot(
+  simulated_running_data,
+  aes(x = .resid)
+) +
   geom_histogram(binwidth = 1) +
   theme_classic() +
-  labs(y = "Number of occurrences",
-       x = "Residuals")
+  labs(
+    y = "Number of occurrences",
+    x = "Residuals"
+  )
 
-ggplot(simulated_running_data, 
-       aes(x = five_km_time, y = .resid)) + 
+ggplot(
+  simulated_running_data,
+  aes(x = five_km_time, y = .resid)
+) +
   geom_point() +
   geom_hline(yintercept = 0, linetype = "dotted", color = "grey") +
   theme_classic() +
-  labs(y = "Residuals",
-       x = "Five-kilometer time (minutes)")
+  labs(
+    y = "Residuals",
+    x = "Five-kilometer time (minutes)"
+  )
 
-ggplot(simulated_running_data, 
-       aes(x = marathon_time, .fitted)) + 
+ggplot(
+  simulated_running_data,
+  aes(x = marathon_time, .fitted)
+) +
   geom_point() +
   theme_classic() +
-  labs(y = "Estimated marathon time",
-       x = "Actual marathon time")
+  labs(
+    y = "Estimated marathon time",
+    x = "Actual marathon time"
+  )
 ```
 
 We want our estimate to be unbiased. When we say our estimate is unbiased, we are trying to say that even though with some sample our estimate might be too high, and with another sample our estimate might be too low, eventually if we have a lot of data then our estimate would be the same as the population. An estimator is unbiased if it does not systematically over- or under-estimate [@islr, p. 65].
@@ -355,16 +386,20 @@ But we want to try to speak to the 'true' relationship, so we need to try to cap
 #| message: false
 #| warning: false
 
-simulated_running_data |> 
+simulated_running_data |>
   ggplot(aes(x = five_km_time, y = marathon_time)) +
-  geom_point() + 
-  geom_smooth(method = "lm", 
-              se = TRUE, 
-              color = "black", 
-              linetype = "dashed",
-              formula = 'y ~ x') +
-  labs(x = "Five-kilometer time (minutes)",
-       y = "Marathon time (minutes)") +
+  geom_point() +
+  geom_smooth(
+    method = "lm",
+    se = TRUE,
+    color = "black",
+    linetype = "dashed",
+    formula = "y ~ x"
+  ) +
+  labs(
+    x = "Five-kilometer time (minutes)",
+    y = "Marathon time (minutes)"
+  ) +
   theme_classic()
 ```
 
@@ -406,7 +441,7 @@ simulated_running_data <-
     size = number_of_observations,
     replace = TRUE,
     prob = c(0.2, 0.8)
-  )) |> 
+  )) |>
   select(five_km_time, marathon_time, was_raining)
 
 simulated_running_data
@@ -417,8 +452,10 @@ We can add additional explanatory variables to `lm()` with `+`.
 ```{r}
 #| include: true
 simulated_running_data_rain_model <-
-  lm(marathon_time ~ five_km_time + was_raining,
-     data = simulated_running_data)
+  lm(
+    marathon_time ~ five_km_time + was_raining,
+    data = simulated_running_data
+  )
 
 summary(simulated_running_data_rain_model)
 ```
@@ -436,13 +473,17 @@ The result probably is not too surprising if we look at a plot of the data (@fig
 simulated_running_data |>
   ggplot(aes(x = five_km_time, y = marathon_time, color = was_raining)) +
   geom_point() +
-  geom_smooth(method = "lm",
-              color = "black", 
-              linetype = "dashed",
-              formula = 'y ~ x') +
-  labs(x = "Five-kilometer time (minutes)",
-       y = "Marathon time (minutes)",
-       color = "Was raining") +
+  geom_smooth(
+    method = "lm",
+    color = "black",
+    linetype = "dashed",
+    formula = "y ~ x"
+  ) +
+  labs(
+    x = "Five-kilometer time (minutes)",
+    y = "Marathon time (minutes)",
+    color = "Was raining"
+  ) +
   theme_classic() +
   scale_color_brewer(palette = "Set1")
 ```
@@ -466,8 +507,10 @@ simulated_running_data
 #| include: true
 
 simulated_running_data_rain_and_humidity_model <-
-  lm(marathon_time ~ five_km_time + was_raining*humidity,
-     data = simulated_running_data)
+  lm(
+    marathon_time ~ five_km_time + was_raining * humidity,
+    data = simulated_running_data
+  )
 
 summary(simulated_running_data_rain_and_humidity_model)
 ```
@@ -490,10 +533,14 @@ To this point, we have just had a quick look at the regression results using `su
 
 library(modelsummary)
 
-modelsummary(list(simulated_running_data_first_model,
-                  simulated_running_data_rain_model, 
-                  simulated_running_data_rain_and_humidity_model),
-             fmt = 2)
+modelsummary(
+  list(
+    simulated_running_data_first_model,
+    simulated_running_data_rain_model,
+    simulated_running_data_rain_and_humidity_model
+  ),
+  fmt = 2
+)
 ```
 
 When we are focused on prediction, we will often want to fit many models. One way to do this is to copy and paste code many times. There is nothing wrong with that. And that is the way that most people get started. But we need an approach that: 
@@ -514,9 +561,11 @@ library(tidymodels)
 
 set.seed(853)
 
-simulated_running_data_split <- 
-  initial_split(data = simulated_running_data, 
-                prop = 0.80)
+simulated_running_data_split <-
+  initial_split(
+    data = simulated_running_data,
+    prop = 0.80
+  )
 
 simulated_running_data_split
 ```
@@ -536,12 +585,13 @@ simulated_running_data_test
 When we look at the training and test datasets, we can see that we have placed most of our dataset into the training dataset. We will use that to estimate the parameters of our model. We have kept a small amount of it back, and we will use that to evaluate our model.
 
 ```{r}
-simulated_running_data_first_model_tidymodels <- 
+simulated_running_data_first_model_tidymodels <-
   linear_reg() |>
-  set_engine(engine = "lm") |> 
-  fit(marathon_time ~ five_km_time + was_raining, 
-      data = simulated_running_data_train
-      )
+  set_engine(engine = "lm") |>
+  fit(
+    marathon_time ~ five_km_time + was_raining,
+    data = simulated_running_data_train
+  )
 
 simulated_running_data_first_model_tidymodels
 ```
@@ -572,7 +622,7 @@ library(rstanarm)
 
 simulated_running_data_first_model_rstanarm <-
   stan_lm(
-    marathon_time ~ five_km_time + was_raining, 
+    marathon_time ~ five_km_time + was_raining,
     data = simulated_running_data,
     prior = NULL,
     seed = 853
@@ -588,8 +638,10 @@ simulated_running_data_first_model_rstanarm <-
 #     seed = 853
 #     )
 
-saveRDS(simulated_running_data_first_model_rstanarm,
-        file = "simulated_running_data_first_model_rstanarm.rds")
+saveRDS(
+  simulated_running_data_first_model_rstanarm,
+  file = "simulated_running_data_first_model_rstanarm.rds"
+)
 ```
 
 ```{r}
@@ -599,8 +651,10 @@ saveRDS(simulated_running_data_first_model_rstanarm,
 #| eval: false
 
 # INTERNAL
-saveRDS(simulated_running_data_first_model_rstanarm,
-        file = "outputs/model/simulated_running_data_first_model_rstanarm.rds")
+saveRDS(
+  simulated_running_data_first_model_rstanarm,
+  file = "outputs/model/simulated_running_data_first_model_rstanarm.rds"
+)
 ```
 
 ```{r}
@@ -609,7 +663,7 @@ saveRDS(simulated_running_data_first_model_rstanarm,
 #| warning: false
 #| message: false
 
-simulated_running_data_first_model_rstanarm <- 
+simulated_running_data_first_model_rstanarm <-
   readRDS(file = "outputs/model/simulated_running_data_first_model_rstanarm.rds")
 ```
 
@@ -723,15 +777,15 @@ library(tidyverse)
 
 set.seed(853)
 
-day_or_night <- 
+day_or_night <-
   tibble(
     number_of_cars = runif(n = 1000, min = 0, 100),
     noise = rnorm(n = 1000, mean = 0, sd = 2),
     is_night = if_else(number_of_cars + noise > 50, 1, 0)
-  ) |> 
-  mutate(number_of_cars = round(number_of_cars)) |> 
+  ) |>
+  mutate(number_of_cars = round(number_of_cars)) |>
   select(-noise)
-  
+
 day_or_night
 ```
 
@@ -741,10 +795,12 @@ $$
 $$ {#eq-logisticexample}
 
 ```{r}
-day_or_night_model <- 
-  glm(is_night ~ number_of_cars,
-      data = day_or_night,
-      family = 'binomial')
+day_or_night_model <-
+  glm(
+    is_night ~ number_of_cars,
+    data = day_or_night,
+    family = "binomial"
+  )
 
 summary(day_or_night_model)
 ```
@@ -755,9 +811,11 @@ One reason that logistic regression can be a bit tricky initially, is because th
 library(broom)
 
 day_or_night <-
-  augment(day_or_night_model,
-          data = day_or_night,
-          type.predict = "response")
+  augment(
+    day_or_night_model,
+    data = day_or_night,
+    type.predict = "response"
+  )
 
 day_or_night
 ```
@@ -772,13 +830,17 @@ day_or_night
 
 day_or_night |>
   mutate(is_night = factor(is_night)) |>
-  ggplot(aes(x = number_of_cars,
-             y = .fitted,
-             color = is_night)) +
+  ggplot(aes(
+    x = number_of_cars,
+    y = .fitted,
+    color = is_night
+  )) +
   geom_jitter(width = 0.01, height = 0.01) +
-  labs(x = "Number of cars that were seen",
-       y = "Estimated probability it is night",
-       color = "Was actually night") +
+  labs(
+    x = "Number of cars that were seen",
+    y = "Estimated probability it is night",
+    color = "Was actually night"
+  ) +
   theme_classic() +
   scale_color_brewer(palette = "Set1")
 ```
@@ -799,8 +861,10 @@ day_or_night_test <- testing(day_or_night_split)
 day_or_night_tidymodels <-
   logistic_reg(mode = "classification") |>
   set_engine("glm") |>
-  fit(is_night ~ number_of_cars,
-      data = day_or_night_train)
+  fit(
+    is_night ~ number_of_cars,
+    data = day_or_night_train
+  )
 
 day_or_night_tidymodels
 ```
@@ -842,8 +906,10 @@ day_or_night_rstanarm <-
     seed = 853
   )
 
-saveRDS(day_or_night_rstanarm,
-        file = "day_or_night_rstanarm.rds")
+saveRDS(
+  day_or_night_rstanarm,
+  file = "day_or_night_rstanarm.rds"
+)
 ```
 
 ```{r}
@@ -853,8 +919,10 @@ saveRDS(day_or_night_rstanarm,
 #| warning: false
 
 # INTERNAL
-saveRDS(day_or_night_rstanarm,
-        file = "outputs/model/day_or_night_rstanarm.rds")
+saveRDS(
+  day_or_night_rstanarm,
+  file = "outputs/model/day_or_night_rstanarm.rds"
+)
 ```
 
 ```{r}
@@ -863,7 +931,7 @@ saveRDS(day_or_night_rstanarm,
 #| message: false
 #| warning: false
 
-day_or_night_rstanarm <- 
+day_or_night_rstanarm <-
   readRDS(file = "outputs/model/day_or_night_rstanarm.rds")
 ```
 
@@ -923,11 +991,15 @@ tibble(
 ) |>
   ggplot(aes(x = draw)) +
   geom_density() +
-  facet_wrap(vars(lambda),
-             scales = "free_y") +
+  facet_wrap(
+    vars(lambda),
+    scales = "free_y"
+  ) +
   theme_minimal() +
-  labs(x = 'Integer',
-       y = 'Density')
+  labs(
+    x = "Integer",
+    y = "Density"
+  )
 ```
 
 For instance, if we look at the number of A+ grades that are awarded in each university course in a given term then for each course we would have a count.
@@ -941,15 +1013,21 @@ count_of_A_plus <-
     department = c(rep.int("1", 26), rep.int("2", 26), rep.int("3", 26)),
     course = c(paste0("DEP_1_", letters), paste0("DEP_2_", letters), paste0("DEP_3_", letters)),
     number_of_A_plus = c(
-      sample(c(1:10),
-             size = 26,
-             replace = TRUE),
-      sample(c(1:50),
-             size = 26,
-             replace = TRUE),
-      sample(c(1:25),
-             size = 26,
-             replace = TRUE)
+      sample(
+        c(1:10),
+        size = 26,
+        replace = TRUE
+      ),
+      sample(
+        c(1:50),
+        size = 26,
+        replace = TRUE
+      ),
+      sample(
+        c(1:25),
+        size = 26,
+        replace = TRUE
+      )
     )
   )
 
@@ -958,10 +1036,12 @@ count_of_A_plus
 Our simulated dataset has the number of A+ grades awarded by courses, which are structured within departments. We can use `glm()` and `summary()` from base to quickly get a sense of the data.
 
 ```{r}
-grades_model_base <- 
-  glm(number_of_A_plus ~ department, 
-    data = count_of_A_plus, 
-    family = 'poisson')
+grades_model_base <-
+  glm(
+    number_of_A_plus ~ department,
+    data = count_of_A_plus,
+    family = "poisson"
+  )
 
 summary(grades_model_base)
 ```
@@ -983,8 +1063,10 @@ count_of_A_plus_test <- rsample::testing(count_of_A_plus_split)
 a_plus_model_tidymodels <-
   poisson_reg(mode = "regression") |>
   set_engine("glm") |>
-  fit(number_of_A_plus ~ department,
-      data = count_of_A_plus_train)
+  fit(
+    number_of_A_plus ~ department,
+    data = count_of_A_plus_train
+  )
 
 a_plus_model_tidymodels
 ```
@@ -1017,8 +1099,10 @@ count_of_A_plus_rstanarm <-
     seed = 853
   )
 
-saveRDS(count_of_A_plus_rstanarm,
-        file = "count_of_A_plus_rstanarm.rds")
+saveRDS(
+  count_of_A_plus_rstanarm,
+  file = "count_of_A_plus_rstanarm.rds"
+)
 ```
 
 ```{r}
@@ -1028,8 +1112,10 @@ saveRDS(count_of_A_plus_rstanarm,
 #| warning: false
 
 # INTERNAL
-saveRDS(count_of_A_plus_rstanarm,
-        file = "outputs/model/count_of_A_plus_rstanarm.rds")
+saveRDS(
+  count_of_A_plus_rstanarm,
+  file = "outputs/model/count_of_A_plus_rstanarm.rds"
+)
 ```
 
 ```{r}
@@ -1038,7 +1124,7 @@ saveRDS(count_of_A_plus_rstanarm,
 #| message: false
 #| warning: false
 
-count_of_A_plus_rstanarm <- 
+count_of_A_plus_rstanarm <-
   readRDS(file = "outputs/model/count_of_A_plus_rstanarm.rds")
 ```
 
@@ -1183,17 +1269,20 @@ set.seed(853)
 
 number_of_observations <- 1000
 
-baby_sleep <- 
-  tibble(afternoon_nap_length = rnorm(number_of_observations, 120, 5) |> abs(),
-         noise = rnorm(number_of_observations, 0, 120),
-         night_sleep_length = afternoon_nap_length * 4 + noise,
-         )
+baby_sleep <-
+  tibble(
+    afternoon_nap_length = rnorm(number_of_observations, 120, 5) |> abs(),
+    noise = rnorm(number_of_observations, 0, 120),
+    night_sleep_length = afternoon_nap_length * 4 + noise,
+  )
 
-baby_sleep |> 
+baby_sleep |>
   ggplot(aes(x = afternoon_nap_length, y = night_sleep_length)) +
   geom_point(alpha = 0.5) +
-  labs(x = "Baby's afternoon nap length (minutes)",
-       y = "Baby's overnight sleep length (minutes)") +
+  labs(
+    x = "Baby's afternoon nap length (minutes)",
+    y = "Baby's overnight sleep length (minutes)"
+  ) +
   theme_classic()
 ```
 
@@ -1211,12 +1300,13 @@ baby_sleep_split <- rsample::initial_split(baby_sleep, prop = 0.80)
 baby_sleep_train <- rsample::training(baby_sleep_split)
 baby_sleep_test <- rsample::testing(baby_sleep_split)
 
-model <- 
+model <-
   parsnip::linear_reg() |>
-  parsnip::set_engine(engine = "lm") |> 
-  parsnip::fit(night_sleep_length ~ afternoon_nap_length, 
-               data = baby_sleep_train
-               )
+  parsnip::set_engine(engine = "lm") |>
+  parsnip::fit(
+    night_sleep_length ~ afternoon_nap_length,
+    data = baby_sleep_train
+  )
 
 write_rds(x = model, file = "baby_sleep.rds")
 ```
@@ -1246,7 +1336,7 @@ model <- readRDS("baby_sleep.rds")
 
 version_number <- "0.0.1"
 
-variables <- 
+variables <-
   list(
     afternoon_nap_length = "A value in minutes, likely between 0 and 240.",
     night_sleep_length = "A forecast, in minutes, likely between 0 and 1000."
@@ -1254,18 +1344,19 @@ variables <-
 
 #* @param afternoon_nap_length
 #* @get /survival
-predict_sleep <- function(afternoon_nap_length=0) {
-  afternoon_nap_length = as.integer(afternoon_nap_length)
-  
-  payload <- data.frame(afternoon_nap_length=afternoon_nap_length)
-  
+predict_sleep <- function(afternoon_nap_length = 0) {
+  afternoon_nap_length <- as.integer(afternoon_nap_length)
+
+  payload <- data.frame(afternoon_nap_length = afternoon_nap_length)
+
   prediction <- predict(model, payload)
 
   result <- list(
     input = list(payload),
     response = list("estimated_night_sleep" = prediction),
     status = 200,
-    model_version = version_number)
+    model_version = version_number
+  )
 
   return(result)
 }
@@ -1332,25 +1423,39 @@ Then we get asked for the SSH passphrase and then it will just set-up a bunch of
 ```{r}
 #| eval: false
 
-analogsea::install_r_package(droplet = id, c("plumber", 
-                                             "remotes", 
-                                             "here"))
-analogsea::debian_apt_get_install(id, "libssl-dev", 
-                                  "libsodium-dev", 
-                                  "libcurl4-openssl-dev")
-analogsea::debian_apt_get_install(id, 
-                                  "libxml2-dev")
+analogsea::install_r_package(
+  droplet = id,
+  c(
+    "plumber",
+    "remotes",
+    "here"
+  )
+)
+analogsea::debian_apt_get_install(
+  id,
+  "libssl-dev",
+  "libsodium-dev",
+  "libcurl4-openssl-dev"
+)
+analogsea::debian_apt_get_install(
+  id,
+  "libxml2-dev"
+)
 
-analogsea::install_r_package(id, c("config",
-                                   "httr",
-                                   "urltools",
-                                   "plumber"))
+analogsea::install_r_package(
+  id,
+  c(
+    "config",
+    "httr",
+    "urltools",
+    "plumber"
+  )
+)
 
 analogsea::install_r_package(id, c("xml2"))
 analogsea::install_r_package(id, c("tidyverse"))
 
 analogsea::install_r_package(id, c("tidymodels"))
-
 ```
 
 And then when that is finally set-up (it will take 30 minutes or so) we can deploy our API.
@@ -1358,12 +1463,14 @@ And then when that is finally set-up (it will take 30 minutes or so) we can depl
 ```{r}
 #| eval: false
 
-plumberDeploy::do_deploy_api(droplet = id, 
-                             path = "example", 
-                             localPath = getwd(), 
-                             port = 8000, 
-                             docs = TRUE, 
-                             overwrite=TRUE)
+plumberDeploy::do_deploy_api(
+  droplet = id,
+  path = "example",
+  localPath = getwd(),
+  port = 8000,
+  docs = TRUE,
+  overwrite = TRUE
+)
 ```
 
 

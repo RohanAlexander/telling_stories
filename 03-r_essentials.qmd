@@ -383,16 +383,18 @@ At this point, we will use `select()` to reduce the width of our dataset.
 
 australian_politicians <-
   australian_politicians |>
-  select(uniqueID,
-         surname,
-         firstName,
-         gender,
-         birthDate,
-         birthYear,
-         deathDate,
-         member,
-         senator,
-         wasPrimeMinister)
+  select(
+    uniqueID,
+    surname,
+    firstName,
+    gender,
+    birthDate,
+    birthYear,
+    deathDate,
+    member,
+    senator,
+    wasPrimeMinister
+  )
 
 australian_politicians
 ```
@@ -658,19 +660,20 @@ Finally, we use `case_when()` when we need to make a new column on the basis of 
 library(lubridate)
 
 australian_politicians |>
-  mutate(year_of_birth = year(birthDate),
-         decade_of_birth =
-           case_when(
-             year_of_birth <= 1929 ~ "pre-1930",
-             year_of_birth <= 1939 ~ "1930s",
-             year_of_birth <= 1949 ~ "1940s",
-             year_of_birth <= 1959 ~ "1950s",
-             year_of_birth <= 1969 ~ "1960s",
-             year_of_birth <= 1979 ~ "1970s",
-             year_of_birth <= 1989 ~ "1980s",
-             year_of_birth <= 1999 ~ "1990s",
-             TRUE ~ "Unknown or error"
-             )
+  mutate(
+    year_of_birth = year(birthDate),
+    decade_of_birth =
+      case_when(
+        year_of_birth <= 1929 ~ "pre-1930",
+        year_of_birth <= 1939 ~ "1930s",
+        year_of_birth <= 1949 ~ "1940s",
+        year_of_birth <= 1959 ~ "1950s",
+        year_of_birth <= 1969 ~ "1960s",
+        year_of_birth <= 1979 ~ "1970s",
+        year_of_birth <= 1989 ~ "1980s",
+        year_of_birth <= 1999 ~ "1990s",
+        TRUE ~ "Unknown or error"
+      )
   ) |>
   select(uniqueID, year_of_birth, decade_of_birth)
 ```
@@ -687,9 +690,11 @@ We use `summarise()` when we would like to make new, condensed, summary variable
 #| echo: true
 
 australian_politicians |>
-  summarise(youngest = min(age, na.rm = TRUE),
-            oldest = max(age, na.rm = TRUE),
-            average = mean(age, na.rm = TRUE))
+  summarise(
+    youngest = min(age, na.rm = TRUE),
+    oldest = max(age, na.rm = TRUE),
+    average = mean(age, na.rm = TRUE)
+  )
 ```
 
 As an aside, `summarise()` and `summarize()` are equivalent and we can use either.
@@ -699,9 +704,11 @@ As an aside, `summarise()` and `summarize()` are equivalent and we can use eithe
 #| echo: true
 
 australian_politicians |>
-  summarize(youngest = min(age, na.rm = TRUE),
-            oldest = max(age, na.rm = TRUE),
-            average = mean(age, na.rm = TRUE))
+  summarize(
+    youngest = min(age, na.rm = TRUE),
+    oldest = max(age, na.rm = TRUE),
+    average = mean(age, na.rm = TRUE)
+  )
 ```
 
 By default, `summarise()` will provide one row of output for a whole dataset. For instance, in the earlier example we found the youngest, oldest, and average across all politicians. However, we can create more groups in our dataset using `group_by()`. And we can then apply another function within the context of those groups. We could use many functions on the basis of groups, but the `summarise()` function is particularly powerful in conjunction with `group_by()`. For instance, we could group by gender, and then get age-based summary statistics.
@@ -712,9 +719,11 @@ By default, `summarise()` will provide one row of output for a whole dataset. Fo
 
 australian_politicians |>
   group_by(gender) |>
-  summarise(youngest = min(age, na.rm = TRUE),
-            oldest = max(age, na.rm = TRUE),
-            average = mean(age, na.rm = TRUE))
+  summarise(
+    youngest = min(age, na.rm = TRUE),
+    oldest = max(age, na.rm = TRUE),
+    average = mean(age, na.rm = TRUE)
+  )
 ```
 
 Similarly, we could look at youngest, oldest, and mean age at death by gender.
@@ -731,7 +740,7 @@ australian_politicians |>
     min_days = min(days_lived),
     mean_days = mean(days_lived) |> round(),
     max_days = max(days_lived)
-    )
+  )
 ```
 
 And so we learn that female members of parliament on average lived slightly longer than male members of parliament.
@@ -752,7 +761,7 @@ australian_politicians |>
     min_days = min(days_lived),
     mean_days = mean(days_lived) |> round(),
     max_days = max(days_lived)
-    )
+  )
 ```
 
 We can use `count()` to create counts by groups. For instance, the number of politicians by gender.
@@ -949,10 +958,12 @@ number_of_observations <- 5
 simulated_data <-
   data.frame(
     person = c(1:number_of_observations),
-    std_normal_observations = rnorm(n = number_of_observations,
-                                    mean = 0,
-                                    sd = 1)
+    std_normal_observations = rnorm(
+      n = number_of_observations,
+      mean = 0,
+      sd = 1
     )
+  )
 
 simulated_data
 ```
@@ -984,10 +995,12 @@ Finally, we will add a favorite color to each observation with `sample()`.
 
 simulated_data <-
   data.frame(
-    favorite_color = sample(x = c("blue", "white"),
-                             size = number_of_observations,
-                             replace = TRUE)
-    ) |>
+    favorite_color = sample(
+      x = c("blue", "white"),
+      size = number_of_observations,
+      replace = TRUE
+    )
+  ) |>
   cbind(simulated_data)
 
 simulated_data
@@ -1082,8 +1095,10 @@ write_csv(oecd_gdp, "inputs/data/oecd_gdp.csv")
 library(tidyverse)
 
 oecd_gdp <-
-  read_csv("inputs/data/oecd_gdp.csv",
-           show_col_types = FALSE)
+  read_csv(
+    "inputs/data/oecd_gdp.csv",
+    show_col_types = FALSE
+  )
 
 head(oecd_gdp)
 ```
@@ -1093,18 +1108,35 @@ We are interested, firstly, in making a bar chart of GDP change in the third qua
 ```{r}
 oecd_gdp_2021_q3 <-
   oecd_gdp |>
-  filter(TIME == "2021-Q3",
-         SUBJECT == "TOT",
-         LOCATION %in% c("AUS", "CAN", "CHL", "DEU", "GBR",
-                         "IDN", "ESP", "NZL", "USA", "ZAF"),
-         MEASURE == "PC_CHGPY") |>
-  mutate(european = if_else(LOCATION %in% c("DEU", "GBR", "ESP"),
-                             "European",
-                             "Not european"),
-         hemisphere = if_else(LOCATION %in% c("CAN", "DEU", "GBR", "ESP", "USA"),
-                             "Northern Hemisphere",
-                             "Southern Hemisphere"),
-         )
+  filter(
+    TIME == "2021-Q3",
+    SUBJECT == "TOT",
+    LOCATION %in% c(
+      "AUS",
+      "CAN",
+      "CHL",
+      "DEU",
+      "GBR",
+      "IDN",
+      "ESP",
+      "NZL",
+      "USA",
+      "ZAF"
+    ),
+    MEASURE == "PC_CHGPY"
+  ) |>
+  mutate(
+    european = if_else(
+      LOCATION %in% c("DEU", "GBR", "ESP"),
+      "European",
+      "Not european"
+    ),
+    hemisphere = if_else(
+      LOCATION %in% c("CAN", "DEU", "GBR", "ESP", "USA"),
+      "Northern Hemisphere",
+      "Southern Hemisphere"
+    ),
+  )
 ```
 
 We start with `ggplot()` and specify a mapping/aesthetic, which in this case means specifying the x-axis and the y-axis. The first argument in `ggplot()` is the data we want to visualize, so we can use the pipe operator at this stage as usual.
@@ -1148,10 +1180,12 @@ Finally, we could make it look nicer by: adding labels, `labs()`; changing the c
 oecd_gdp_2021_q3 |>
   ggplot(mapping = aes(x = LOCATION, y = Value, fill = european)) +
   geom_bar(stat = "identity") +
-  labs(title = "Quarterly change in GDP for ten OECD countries in 2021Q3",
-       x = "Countries",
-       y = "Change (%)",
-       fill = "Is European?") +
+  labs(
+    title = "Quarterly change in GDP for ten OECD countries in 2021Q3",
+    x = "Countries",
+    y = "Change (%)",
+    fill = "Is European?"
+  ) +
   theme_classic() +
   scale_fill_brewer(palette = "Set1")
 ```
@@ -1166,14 +1200,18 @@ Facets enable us to that we create subplots that focus on specific aspects of ou
 oecd_gdp_2021_q3 |>
   ggplot(mapping = aes(x = LOCATION, y = Value, fill = european)) +
   geom_bar(stat = "identity") +
-  labs(title = "Quarterly change in GDP for ten OECD countries in 2021Q3",
-       x = "Countries",
-       y = "Change (%)",
-       fill = "Is European?") +
+  labs(
+    title = "Quarterly change in GDP for ten OECD countries in 2021Q3",
+    x = "Countries",
+    y = "Change (%)",
+    fill = "Is European?"
+  ) +
   theme_classic() +
   scale_fill_brewer(palette = "Set1") +
-  facet_wrap(~hemisphere,
-              scales = "free_x")
+  facet_wrap(
+    ~hemisphere,
+    scales = "free_x"
+  )
 ```
 
 
@@ -1230,13 +1268,13 @@ tibble(
   person = c("Rohan", "Monica", "Edward", "Hugo"),
   age = c(35, 35, 3, 1),
   hair = c("Black", "Blonde", "Brown", "Blonde")
-  ) |>
+) |>
   knitr::kable(
     col.names = c("Person", "Age", "Hair"),
     digits = 1,
     booktabs = TRUE,
     linesep = ""
-    )
+  )
 ```
 
 
@@ -1257,18 +1295,20 @@ We can make a tibble manually, if need be, for instance, when we simulate data. 
 #| echo: true
 
 people_as_dataframe <-
-  data.frame(names = c("rohan", "monica"),
-             website = c("rohanalexander.com", "monicaalexander.com"),
-             fav_color = c("blue", "white")
-             )
+  data.frame(
+    names = c("rohan", "monica"),
+    website = c("rohanalexander.com", "monicaalexander.com"),
+    fav_color = c("blue", "white")
+  )
 class(people_as_dataframe)
 people_as_dataframe
 
 people_as_tibble <-
-  tibble(names = c("rohan", "monica"),
-         website = c("rohanalexander.com", "monicaalexander.com"),
-         fav_color = c("blue", "white")
-         )
+  tibble(
+    names = c("rohan", "monica"),
+    website = c("rohanalexander.com", "monicaalexander.com"),
+    fav_color = c("blue", "white")
+  )
 people_as_tibble
 class(people_as_tibble)
 ```
@@ -1316,10 +1356,11 @@ anscombe
 #| include: false
 anscombe_long <-
   anscombe |>
-  pivot_longer(everything(),
-               names_to = c(".value", "set"),
-               names_pattern = "(.)(.)"
-               )
+  pivot_longer(
+    everything(),
+    names_to = c(".value", "set"),
+    names_pattern = "(.)(.)"
+  )
 ```
 
 
@@ -1335,9 +1376,11 @@ We will create some wide data on whether "mark" or "lauren" won a running race i
 
 ```{r}
 pivot_example_data <-
-  tibble(year = c(2019, 2020, 2021),
-         mark = c("first", "second", "first"),
-         lauren = c("second", "first", "second"))
+  tibble(
+    year = c(2019, 2020, 2021),
+    mark = c("first", "second", "first"),
+    lauren = c("second", "first", "second")
+  )
 
 pivot_example_data
 ```
@@ -1347,9 +1390,11 @@ This dataset is in wide format at the moment. To get it into long format, we nee
 ```{r}
 data_pivoted_longer <-
   pivot_example_data |>
-  pivot_longer(cols = c("mark", "lauren"),
-              names_to = "person",
-               values_to = "position")
+  pivot_longer(
+    cols = c("mark", "lauren"),
+    names_to = "person",
+    values_to = "position"
+  )
 
 head(data_pivoted_longer)
 ```
@@ -1359,8 +1404,10 @@ Occasionally, we need to go from long data to wide data. We use `pivot_wider()` 
 ```{r}
 data_pivoted_wider <-
   data_pivoted_longer |>
-  pivot_wider(names_from = "person",
-                     values_from = "position")
+  pivot_wider(
+    names_from = "person",
+    values_from = "position"
+  )
 
 head(data_pivoted_wider)
 ```
@@ -1378,37 +1425,42 @@ If we want to look for whether a string contains certain content, then we can us
 
 dataset_of_strings <-
   tibble(
-    names = c("rohan alexander",
-              "monica alexander",
-              "edward alexander",
-              "hugo alexander")
+    names = c(
+      "rohan alexander",
+      "monica alexander",
+      "edward alexander",
+      "hugo alexander"
+    )
   )
 
 dataset_of_strings |>
-  mutate(is_rohan = str_detect(names, "rohan"),
-         make_howlett = str_replace(names, "alexander", "howlett"),
-         remove_rohan = str_remove(names, "rohan")
-         )
+  mutate(
+    is_rohan = str_detect(names, "rohan"),
+    make_howlett = str_replace(names, "alexander", "howlett"),
+    remove_rohan = str_remove(names, "rohan")
+  )
 ```
 
 There are a variety of other functions that are often especially useful in data cleaning. For instance, we can use `str_length()` to find out how long a string is, and `str_c()` to bring strings together.
 
 ```{r}
 dataset_of_strings |>
-  mutate(length_is = str_length(string = names),
-         name_and_length = str_c(names, length_is, sep = " - ")
-         )
-
+  mutate(
+    length_is = str_length(string = names),
+    name_and_length = str_c(names, length_is, sep = " - ")
+  )
 ```
 
 Finally, `separate()` from `tidyr`, although not part of `stringr`, is indispensable for string manipulation. It turns one character column into many.
 
 ```{r}
 dataset_of_strings |>
-  separate(col = names,
-           into = c("first", "last"),
-           sep = " ",
-           remove = FALSE)
+  separate(
+    col = names,
+    into = c("first", "last"),
+    sep = " ",
+    remove = FALSE
+  )
 ```
 
 

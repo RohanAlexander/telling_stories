@@ -66,8 +66,10 @@ Inspired by @sharlasephora and following @thenakedtruth, we will draw on the dat
 library(tidyverse)
 
 makeup <-
-  read_csv(file = 
-             "https://raw.githubusercontent.com/the-pudding/data/master/foundation-names/allNumbers.csv")
+  read_csv(
+    file =
+      "https://raw.githubusercontent.com/the-pudding/data/master/foundation-names/allNumbers.csv"
+  )
 
 makeup
 ```
@@ -80,8 +82,7 @@ We will focus on 'product', which provides the name of the item, and 'lightness'
 makeup <-
   makeup |>
   select(product, lightness) |>
-  mutate(lightness_above_half = if_else(lightness >= 0.5, "Yes", "No")
-         )
+  mutate(lightness_above_half = if_else(lightness >= 0.5, "Yes", "No"))
 
 table(makeup$lightness_above_half)
 ```
@@ -96,9 +97,11 @@ library(tidytext)
 
 makeup_by_words <-
   makeup |>
-  unnest_tokens(output = word, 
-                input = product, 
-                token = "words")
+  unnest_tokens(
+    output = word,
+    input = product,
+    token = "words"
+  )
 
 head(makeup_by_words)
 ```
@@ -126,9 +129,11 @@ We can create this value using `bind_tf_idf()` from `tidytext`. It will create a
 ```{r}
 makeup_by_words_tf_idf <-
   makeup_by_words |>
-  bind_tf_idf(term = word, 
-              document = lightness_above_half, 
-              n = n) |>
+  bind_tf_idf(
+    term = word,
+    document = lightness_above_half,
+    n = n
+  ) |>
   arrange(-tf_idf)
 
 makeup_by_words_tf_idf
@@ -165,10 +170,11 @@ library(gutenbergr)
 library(tidyverse)
 
 # The books that we are interested in have the keys of 1260 and 11, respectively.
-alice_and_jane <- 
+alice_and_jane <-
   gutenberg_download(
-    gutenberg_id = c(1260, 11), 
-    meta_fields = "title")
+    gutenberg_id = c(1260, 11),
+    meta_fields = "title"
+  )
 
 write_csv(alice_and_jane, "alice_and_jane.csv")
 
@@ -196,10 +202,10 @@ By looking at the number of lines in each, it looks like *Jane Eyre* is much lon
 ```{r}
 library(janitor)
 
-alice_and_jane <- 
-  alice_and_jane |> 
-  mutate(blank_line = if_else(text == "", 1, 0)) |> 
-  filter(blank_line == 0) |> 
+alice_and_jane <-
+  alice_and_jane |>
+  mutate(blank_line = if_else(text == "", 1, 0)) |>
+  filter(blank_line == 0) |>
   select(-blank_line)
 
 table(alice_and_jane$title)
@@ -214,9 +220,9 @@ alice_and_jane$rows <- c(1:nrow(alice_and_jane))
 sample_from_me <- alice_and_jane |> filter(title == "Jane Eyre: An Autobiography")
 keep_me <- sample(x = sample_from_me$rows, size = 2481, replace = FALSE)
 
-alice_and_jane <- 
-  alice_and_jane |> 
-  filter(title == "Alice's Adventures in Wonderland" | rows %in% keep_me) |> 
+alice_and_jane <-
+  alice_and_jane |>
+  filter(title == "Alice's Adventures in Wonderland" | rows %in% keep_me) |>
   select(-rows)
 
 table(alice_and_jane$title)
@@ -225,10 +231,10 @@ table(alice_and_jane$title)
 There are a variety of issues here, for instance, we have the whole of Alice, but we only have random bits of Jane, but nonetheless we will continue and add a counter with the line number for each book.
 
 ```{r}
-alice_and_jane <- 
-  alice_and_jane |> 
-  group_by(title) |> 
-  mutate(line_number = paste(gutenberg_id, row_number(), sep = "_")) |> 
+alice_and_jane <-
+  alice_and_jane |>
+  group_by(title) |>
+  mutate(line_number = paste(gutenberg_id, row_number(), sep = "_")) |>
   ungroup()
 ```
 
@@ -240,8 +246,8 @@ We now want to unnest the tokes. We will use `unnest_tokens()` from `tidytext` [
 
 library(tidytext)
 
-alice_and_jane_by_word <- 
-  alice_and_jane |> 
+alice_and_jane_by_word <-
+  alice_and_jane |>
   unnest_tokens(word, text) |>
   group_by(word) |>
   filter(n() > 10) |>
@@ -255,12 +261,12 @@ The reason this is relevant is because these are our independent variables. So w
 However, as mentioned before, we are going to have some rows that essentially just had one word. And so we filter for that also, which ensures that the model will have at least some words to work with.
 
 ```{r}
-alice_and_jane_by_word <- 
-  alice_and_jane_by_word |> 
-  group_by(title, line_number) |> 
-  mutate(number_of_words_in_line = n()) |> 
-  ungroup() |> 
-  filter(number_of_words_in_line > 2) |> 
+alice_and_jane_by_word <-
+  alice_and_jane_by_word |>
+  group_by(title, line_number) |>
+  mutate(number_of_words_in_line = n()) |>
+  ungroup() |>
+  filter(number_of_words_in_line > 2) |>
   select(-number_of_words_in_line)
 ```
 
@@ -274,20 +280,20 @@ library(tidymodels)
 
 set.seed(853)
 
-alice_and_jane_by_word_split <- 
+alice_and_jane_by_word_split <-
   alice_and_jane_by_word |>
-  select(title, line_number) |> 
-  distinct() |> 
-  initial_split(prop = 3/4, strata = title)
+  select(title, line_number) |>
+  distinct() |>
+  initial_split(prop = 3 / 4, strata = title)
 ```
 
 Then we can use `cast_dtm()` to create a document-term matrix. This provides a count of how many times each word is used.
 
 ```{r}
-alice_and_jane_dtm_training <- 
-  alice_and_jane_by_word |> 
-  count(line_number, word) |> 
-  inner_join(training(alice_and_jane_by_word_split) |> select(line_number)) |> 
+alice_and_jane_dtm_training <-
+  alice_and_jane_by_word |>
+  count(line_number, word) |>
+  inner_join(training(alice_and_jane_by_word_split) |> select(line_number)) |>
   cast_dtm(term = word, document = line_number, value = n)
 
 dim(alice_and_jane_dtm_training)
@@ -296,11 +302,11 @@ dim(alice_and_jane_dtm_training)
 So we have our independent variables sorted, now we need our binary dependent variable, which is whether the book is Alice in Wonderland or Jane Eyre.
 
 ```{r}
-response <- 
-  data.frame(id = dimnames(alice_and_jane_dtm_training)[[1]]) |> 
-  separate(id, into = c("book", "line", sep = "_")) |> 
-  mutate(is_alice = if_else(book == 11, 1, 0)) 
-  
+response <-
+  data.frame(id = dimnames(alice_and_jane_dtm_training)[[1]]) |>
+  separate(id, into = c("book", "line", sep = "_")) |>
+  mutate(is_alice = if_else(book == 11, 1, 0))
+
 predictor <- alice_and_jane_dtm_training[] |> as.matrix()
 ```
 
@@ -312,11 +318,12 @@ Now we can run our model.
 
 library(glmnet)
 
-model <- cv.glmnet(x = predictor,
-                   y = response$is_alice,
-                   family = "binomial",
-                   keep = TRUE
-                   )
+model <- cv.glmnet(
+  x = predictor,
+  y = response$is_alice,
+  family = "binomial",
+  keep = TRUE
+)
 
 save(model, file = "alice_vs_jane.rda")
 ```
@@ -348,8 +355,10 @@ coefs |>
   geom_col(alpha = 0.8, show.legend = FALSE) +
   coord_flip() +
   theme_minimal() +
-  labs(x = "Coefficient",
-       y = "Word") +
+  labs(
+    x = "Coefficient",
+    y = "Word"
+  ) +
   scale_fill_brewer(palette = "Set1")
 ```
 
@@ -382,17 +391,25 @@ LDA considers each statement to be a result of a process where a person first ch
 
 document_1 <- tibble(
   Topics = c(
-  "topic 1", "topic 2", "topic 3", "topic 4", "topic 5"
+    "topic 1",
+    "topic 2",
+    "topic 3",
+    "topic 4",
+    "topic 5"
   ),
   Probability = c(0.40, 0.40, 0.1, 0.05, 0.05)
-  )
+)
 
 document_2 <- tibble(
   Topics = c(
-  "topic 1", "topic 2", "topic 3", "topic 4", "topic 5"
+    "topic 1",
+    "topic 2",
+    "topic 3",
+    "topic 4",
+    "topic 5"
   ),
   Probability = c(0.01, 0.04, 0.35, 0.20, 0.4)
-  )  
+)
 
 ggplot(document_1, aes(Topics, Probability)) +
   geom_point() +
@@ -419,17 +436,35 @@ Similarly, each topic could be considered a probability distribution over terms.
 
 topic_1 <- tibble(
   Terms = c(
-  "immigration", "race", "influx", "loans", "wealth", "saving", "chinese", "france", "british", "english"
+    "immigration",
+    "race",
+    "influx",
+    "loans",
+    "wealth",
+    "saving",
+    "chinese",
+    "france",
+    "british",
+    "english"
   ),
   Probability = c(0.0083, 0.0083, 0.0083, 0.0083, 0.0083, 0.0083, 0.2, 0.15, 0.4, 0.2)
-  )
+)
 
 topic_2 <- tibble(
   Terms = c(
-  "immigration", "race", "influx", "loans", "wealth", "saving", "chinese", "france", "british", "english"
+    "immigration",
+    "race",
+    "influx",
+    "loans",
+    "wealth",
+    "saving",
+    "chinese",
+    "france",
+    "british",
+    "english"
   ),
   Probability = c(0.0142, 0.0142, 0.0142, 0.25, 0.35, 0.30, 0.0142, 0.0142, 0.0142, 0.0142)
-  )  
+)
 
 ggplot(topic_1, aes(Terms, Probability)) +
   geom_point() +

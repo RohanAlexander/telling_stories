@@ -295,7 +295,7 @@ saveRDS(rstats_tweets, "rstats_tweets.rds")
 #| include: false
 #| eval: false
 
-#INTERNAL
+# INTERNAL
 
 rstats_tweets <- search_tweets(
   q = "#rstats",
@@ -358,8 +358,8 @@ When we run `edit_r_environ()`, our ".Renviron" file will open and we can add ou
 ```{r}
 #| eval: false
 
-SPOTIFY_CLIENT_ID = "PUT_YOUR_CLIENT_ID_HERE"
-SPOTIFY_CLIENT_SECRET = "PUT_YOUR_SECRET_HERE"
+SPOTIFY_CLIENT_ID <- "PUT_YOUR_CLIENT_ID_HERE"
+SPOTIFY_CLIENT_SECRET <- "PUT_YOUR_SECRET_HERE"
 ```
 
 Save the ".Renviron" file, and then restart R ("Session" -> "Restart R"). We can now use our "Spotify Client ID" and "Client Secret" as needed. And functions that require those details as arguments will work without them being explicitly specified again. 
@@ -416,15 +416,18 @@ library(lubridate)
 
 radiohead |>
   mutate(album_release_date = ymd(album_release_date)) |>
-  ggplot(aes(x = album_release_date,
-             y = duration_ms,
-             group = album_release_date)) +
+  ggplot(aes(
+    x = album_release_date,
+    y = duration_ms,
+    group = album_release_date
+  )) +
   geom_boxplot() +
   geom_jitter(alpha = 0.5, width = 0.3, height = 0) +
   theme_minimal() +
-  labs(x = "Album release date",
-       y = "Duration of song (ms)"
-       )
+  labs(
+    x = "Album release date",
+    y = "Duration of song (ms)"
+  )
 ```
 
 One interesting variable provided by Spotify about each song is "valence". The Spotify [documentation](https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features) describe this as a measure between 0 and 1 that signals the "the musical positiveness" of the track with higher values being more positive. We might be interested to compare valence over time between a few artists, for instance, Radiohead, The National who are an American rock band, and the American singer Taylor Swift.
@@ -480,17 +483,23 @@ three_artists <-
   mutate(album_release_date = ymd(album_release_date))
 
 three_artists |>
-  ggplot(aes(x = album_release_date,
-             y = valence,
-             color = artist_name)) +
+  ggplot(aes(
+    x = album_release_date,
+    y = valence,
+    color = artist_name
+  )) +
   geom_point(alpha = 0.3) +
   geom_smooth() +
   theme_minimal() +
-  facet_wrap(vars(artist_name),
-              dir = "v") +
-  labs(x = "Album release date",
-       y = "Valence",
-       color = "Artist") +
+  facet_wrap(
+    vars(artist_name),
+    dir = "v"
+  ) +
+  labs(
+    x = "Album release date",
+    y = "Valence",
+    color = "Artist"
+  ) +
   scale_color_brewer(palette = "Set1")
 ```
 
@@ -730,14 +739,14 @@ Finally, we could make, say, a table of the distribution of the first letter of 
 all_books |>
   mutate(
     first_letter = str_sub(author, 1, 1)
-    ) |>
+  ) |>
   group_by(first_letter) |>
   count() |>
   knitr::kable(
     col.names = c("First letter", "Number of times"),
     booktabs = TRUE,
     linesep = ""
-    )
+  )
 ```
 
 
@@ -810,7 +819,7 @@ library(tidyverse)
 raw_data <-
   read_html(
     "https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom"
-    )
+  )
 write_html(raw_data, "inputs/wiki/pms.html") # Note that we save the file as a HTML file.
 ```
 
@@ -821,8 +830,8 @@ write_html(raw_data, "inputs/wiki/pms.html") # Note that we save the file as a H
 
 raw_data <-
   read_html(
-"https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom"
-    )
+    "https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom"
+  )
 write_html(raw_data, "pms.html")
 ```
 
@@ -906,15 +915,19 @@ Now that we have the parsed data, we need to clean it to match what we wanted. I
 initial_clean <-
   parsed_data |>
   mutate(raw_text = str_remove_all(raw_text, "\n")) |>
-  separate(raw_text,
-            into = c("Name", "not_name"),
-            sep = "\\(",
-            remove = FALSE) |> # The remove = FALSE option here means that we
+  separate(
+    raw_text,
+    into = c("Name", "not_name"),
+    sep = "\\(",
+    remove = FALSE
+  ) |> # The remove = FALSE option here means that we
   # keep the original column that we are separating.
-  separate(not_name,
-            into = c("Date", "all_the_rest"),
-            sep = "\\)",
-            remove = FALSE)
+  separate(
+    not_name,
+    into = c("Date", "all_the_rest"),
+    sep = "\\)",
+    remove = FALSE
+  )
 
 head(initial_clean)
 ```
@@ -926,17 +939,21 @@ Finally, we need to clean up the columns.
 #| include: true
 
 initial_clean <-
- initial_clean |>
-  separate(col = Name,
-           into = c("Name", "Title"),
-           sep = "[[:digit:]]",
-           extra = "merge",
-           fill = "right") |>
-  separate(col = Name,
-           into = c("Name", "Title"),
-           sep = "MP for",
-           extra = "merge",
-           fill = "right") |>
+  initial_clean |>
+  separate(
+    col = Name,
+    into = c("Name", "Title"),
+    sep = "[[:digit:]]",
+    extra = "merge",
+    fill = "right"
+  ) |>
+  separate(
+    col = Name,
+    into = c("Name", "Title"),
+    sep = "MP for",
+    extra = "merge",
+    fill = "right"
+  ) |>
   mutate(Name = str_remove(Name, "\\[b\\]"))
 
 head(initial_clean)
@@ -954,13 +971,14 @@ cleaned_data <-
   # PMs who have died have their birth and death years separated by a hyphen,
   # but we need to be careful with the hyphen as it seems to be a slightly odd
   # type of hyphen and we need to copy/paste it.
-  mutate(Birth = str_remove_all(Birth, "born"),
-         Birth = str_trim(Birth)
-         ) |> # Alive PMs have slightly different format
+  mutate(
+    Birth = str_remove_all(Birth, "born"),
+    Birth = str_trim(Birth)
+  ) |> # Alive PMs have slightly different format
   select(-Date) |>
   mutate(Name = str_remove(Name, "\n")) |> # Remove some HTML tags that remain
-  mutate_at(vars(Birth, Died), ~as.integer(.)) |> # Change birth and death to integers
-  mutate(Age_at_Death = Died - Birth) |>  # Add column of the number of years they lived
+  mutate_at(vars(Birth, Died), ~ as.integer(.)) |> # Change birth and death to integers
+  mutate(Age_at_Death = Died - Birth) |> # Add column of the number of years they lived
   distinct() # Some of the PMs had two goes at it.
 
 head(cleaned_data)
@@ -980,7 +998,7 @@ cleaned_data |>
     col.names = c("Prime Minister", "Birth year", "Death year", "Age at death"),
     booktabs = TRUE,
     linesep = ""
-    )
+  )
 ```
 
 
@@ -990,19 +1008,25 @@ At this point we would like to make a graph that illustrates how long each prime
 #| echo: true
 
 cleaned_data |>
-  mutate(still_alive = if_else(is.na(Died), "Yes", "No"),
-         Died = if_else(is.na(Died), as.integer(2022), Died)) |>
+  mutate(
+    still_alive = if_else(is.na(Died), "Yes", "No"),
+    Died = if_else(is.na(Died), as.integer(2022), Died)
+  ) |>
   mutate(Name = as_factor(Name)) |>
-  ggplot(aes(x = Birth,
-             xend = Died,
-             y = Name,
-             yend = Name,
-             color = still_alive)) +
+  ggplot(aes(
+    x = Birth,
+    xend = Died,
+    y = Name,
+    yend = Name,
+    color = still_alive
+  )) +
   geom_segment() +
-  labs(x = "Year of birth",
-       y = "Prime minister",
-       color = "PM is currently alive",
-       title = "How long each UK Prime Minister lived, by year of birth") +
+  labs(
+    x = "Year of birth",
+    y = "Prime minister",
+    color = "PM is currently alive",
+    title = "How long each UK Prime Minister lived, by year of birth"
+  ) +
   theme_minimal() +
   scale_color_brewer(palette = "Set1") +
   theme(legend.position = "bottom")
@@ -1026,11 +1050,12 @@ library(tidyverse)
 statements_of_interest <-
   tibble(
     address =
-      c("https://www.rba.gov.au/publications/smp/2021/nov/pdf/00-overview.pdf",
+      c(
+        "https://www.rba.gov.au/publications/smp/2021/nov/pdf/00-overview.pdf",
         "https://www.rba.gov.au/publications/smp/2021/aug/pdf/00-overview.pdf",
         "https://www.rba.gov.au/publications/smp/2021/may/pdf/00-overview.pdf",
         "https://www.rba.gov.au/publications/smp/2021/feb/pdf/00-overview.pdf"
-        ),
+      ),
     local_save_name = c(
       "2021-11.pdf",
       "2021-08.pdf",
@@ -1049,10 +1074,10 @@ We want to apply the function `download.files()` to these four. To do this we wr
 
 visit_download_and_wait <-
   function(the_address_to_visit, where_to_save_it_locally) {
-
-    download.file(url = the_address_to_visit,
-                  destfile = where_to_save_it_locally
-                  )
+    download.file(
+      url = the_address_to_visit,
+      destfile = where_to_save_it_locally
+    )
 
     print(paste("Done with", the_address_to_visit, "at", Sys.time()))
 
@@ -1066,9 +1091,11 @@ We now apply that function to our tibble of URLs and save names using the funtio
 #| eval: false
 #| include: true
 
-walk2(statements_of_interest$address,
-      statements_of_interest$local_save_name,
-      ~visit_download_and_wait(.x, .y))
+walk2(
+  statements_of_interest$address,
+  statements_of_interest$local_save_name,
+  ~ visit_download_and_wait(.x, .y)
+)
 ```
 
 The result is that we have downloaded these four PDFs and saved them to our computer. An alternative to writing these functions ourselves would be use `heapsofpapers` [@heapsofpapers], which includes various helpful options for downloading lists of files, especially PDF, CSV, and txt files. For instance, @collinsalexander use this to obtain thousands of PDFs and estimate the extent to which COVID-19 research was reproducible.
@@ -1188,8 +1215,10 @@ First we want to convert the character vector into a tibble. At this point we ma
 ```{r}
 #| echo: true
 
-jane_eyre <- tibble(raw_text = third_example,
-                    page_number = c(1:2))
+jane_eyre <- tibble(
+  raw_text = third_example,
+  page_number = c(1:2)
+)
 ```
 
 We then want to separate the lines so that each line is an observation. We can do that by looking for "\\n" remembering that we need to escape the backslash as it is a special character.
@@ -1248,8 +1277,10 @@ We will choose the year 2000. We first download and save the PDF using `download
 #| label: justfirstyearr
 #| eval: false
 
-download.file(url = summary_tfr_dataset$url[1],
-              destfile = "year_2000.pdf")
+download.file(
+  url = summary_tfr_dataset$url[1],
+  destfile = "year_2000.pdf"
+)
 ```
 
 ```{r}
@@ -1259,8 +1290,10 @@ download.file(url = summary_tfr_dataset$url[1],
 
 # INTERNAL
 
-download.file(url = summary_tfr_dataset$url[1],
-              destfile = "inputs/pdfs/dhs/year_2000.pdf")
+download.file(
+  url = summary_tfr_dataset$url[1],
+  destfile = "inputs/pdfs/dhs/year_2000.pdf"
+)
 ```
 
 We then read the PDF in as a character vector using `pdf_text()` from `pdftools`. And then convert it to a tibble, so that we can use familiar verbs on it.
@@ -1345,12 +1378,13 @@ We can now separate this in to separate columns. First, we want to match on when
 
 dhs_2000_separate_columns <-
   dhs_2000_separate_rows |>
-  separate(col = raw_data,
-           into = c("state", "data"),
-           sep = "\\.{2,}",
-           remove = FALSE,
-           fill = "right"
-           )
+  separate(
+    col = raw_data,
+    into = c("state", "data"),
+    sep = "\\.{2,}",
+    remove = FALSE,
+    fill = "right"
+  )
 
 dhs_2000_separate_columns[18:28, ] |>
   select(state, data)
@@ -1366,17 +1400,20 @@ We can now separate the data based on spaces. There is an inconsistent number of
 dhs_2000_separate_data <-
   dhs_2000_separate_columns |>
   mutate(data = str_squish(data)) |>
-  separate(col = data,
-           into = c("number_of_births",
-                    "birth_rate",
-                    "fertility_rate",
-                    "TFR",
-                    "teen_births_all",
-                    "teen_births_15_17",
-                    "teen_births_18_19"),
-           sep = "\\s",
-           remove = FALSE
-           )
+  separate(
+    col = data,
+    into = c(
+      "number_of_births",
+      "birth_rate",
+      "fertility_rate",
+      "TFR",
+      "teen_births_all",
+      "teen_births_15_17",
+      "teen_births_18_19"
+    ),
+    sep = "\\s",
+    remove = FALSE
+  )
 
 dhs_2000_separate_data[18:28, ] |>
   select(-raw_data, -data)
@@ -1523,8 +1560,10 @@ get_pdf_convert_to_tibble <- function(pdf_name, page, year) {
       sep = "[�|\\.]\\s+(?=[[:digit:]])",
       remove = FALSE
     ) |>
-    mutate(data = str_squish(data),
-           year_of_data = year)
+    mutate(
+      data = str_squish(data),
+      year_of_data = year
+    )
 
   print(paste("Done with", year))
 
@@ -1532,9 +1571,11 @@ get_pdf_convert_to_tibble <- function(pdf_name, page, year) {
 }
 
 raw_dhs_data <-
-  pmap_dfr(summary_tfr_dataset |>
-             select(pdf_name, page, year),
-           get_pdf_convert_to_tibble)
+  pmap_dfr(
+    summary_tfr_dataset |>
+      select(pdf_name, page, year),
+    get_pdf_convert_to_tibble
+  )
 
 head(raw_dhs_data)
 ```
@@ -1546,29 +1587,72 @@ Now we need to clean up the state names and then filter on them.
 #| warning: false
 #| echo: true
 
-states <- c("Alabama", "Alaska", "Arizona", "Arkansas", "California",
-            "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
-            "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas",
-            "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts",
-            "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana",
-            "Nebraska", "Nevada", "New Hampshire", "New Jersey",
-            "New Mexico", "New York", "North Carolina", "North Dakota",
-            "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island",
-            "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah",
-            "Vermont", "Virginia", "Washington", "West Virginia",
-            "Wisconsin", "Wyoming", "District of Columbia")
+states <- c(
+  "Alabama",
+  "Alaska",
+  "Arizona",
+  "Arkansas",
+  "California",
+  "Colorado",
+  "Connecticut",
+  "Delaware",
+  "Florida",
+  "Georgia",
+  "Hawaii",
+  "Idaho",
+  "Illinois",
+  "Indiana",
+  "Iowa",
+  "Kansas",
+  "Kentucky",
+  "Louisiana",
+  "Maine",
+  "Maryland",
+  "Massachusetts",
+  "Michigan",
+  "Minnesota",
+  "Mississippi",
+  "Missouri",
+  "Montana",
+  "Nebraska",
+  "Nevada",
+  "New Hampshire",
+  "New Jersey",
+  "New Mexico",
+  "New York",
+  "North Carolina",
+  "North Dakota",
+  "Ohio",
+  "Oklahoma",
+  "Oregon",
+  "Pennsylvania",
+  "Rhode Island",
+  "South Carolina",
+  "South Dakota",
+  "Tennessee",
+  "Texas",
+  "Utah",
+  "Vermont",
+  "Virginia",
+  "Washington",
+  "West Virginia",
+  "Wisconsin",
+  "Wyoming",
+  "District of Columbia"
+)
 
 raw_dhs_data <-
   raw_dhs_data |>
-  mutate(state = str_remove_all(state, "\\."),
-         state = str_remove_all(state, "�"),
-         state = str_remove_all(state, "\u0008"),
-         state = str_replace_all(state, "United States 1", "United States"),
-         state = str_replace_all(state, "United States1", "United States"),
-         state = str_replace_all(state, "United States 2", "United States"),
-         state = str_replace_all(state, "United States2", "United States"),
-         state = str_replace_all(state, "United States²", "United States"),
-         ) |>
+  mutate(
+    state = str_remove_all(state, "\\."),
+    state = str_remove_all(state, "�"),
+    state = str_remove_all(state, "\u0008"),
+    state = str_replace_all(state, "United States 1", "United States"),
+    state = str_replace_all(state, "United States1", "United States"),
+    state = str_replace_all(state, "United States 2", "United States"),
+    state = str_replace_all(state, "United States2", "United States"),
+    state = str_replace_all(state, "United States²", "United States"),
+  ) |>
   mutate(state = str_squish(state)) |>
   filter(state %in% states)
 
@@ -1585,10 +1669,23 @@ The next step is to separate the data and get the correct column from it. We are
 raw_dhs_data <-
   raw_dhs_data |>
   mutate(data = str_remove_all(data, "\\*")) |>
-  separate(data, into = c("col_1", "col_2", "col_3", "col_4", "col_5",
-                          "col_6", "col_7", "col_8", "col_9", "col_10"),
-           sep = " ",
-           remove = FALSE)
+  separate(
+    data,
+    into = c(
+      "col_1",
+      "col_2",
+      "col_3",
+      "col_4",
+      "col_5",
+      "col_6",
+      "col_7",
+      "col_8",
+      "col_9",
+      "col_10"
+    ),
+    sep = " ",
+    remove = FALSE
+  )
 head(raw_dhs_data)
 ```
 
@@ -1616,8 +1713,10 @@ head(tfr_data)
 
 tfr_data <-
   tfr_data |>
-  mutate(TFR = str_remove_all(TFR, ","),
-         TFR = as.numeric(TFR))
+  mutate(
+    TFR = str_remove_all(TFR, ","),
+    TFR = as.numeric(TFR)
+  )
 
 head(tfr_data)
 ```
@@ -1627,8 +1726,12 @@ And run some checks.
 ```{r}
 #| echo: true
 
-tfr_data$state |> unique() |> length() == 51
-tfr_data$year |> unique() |> length() == 19
+tfr_data$state |>
+  unique() |>
+  length() == 51
+tfr_data$year |>
+  unique() |>
+  length() == 19
 ```
 
 In particular we want for there to be 51 states and for there to be 19 years.
@@ -1643,7 +1746,7 @@ And we are done (@tbl-tfrforthewin)!
 tfr_data |>
   slice(1:10) |>
   mutate(across(TFR, ~ format(.x, big.mark = ","))) |>
-  knitr:: kable(
+  knitr::kable(
     col.names = c("State", "Year", "TFR"),
     digits = 0,
     booktabs = TRUE,
@@ -1679,8 +1782,10 @@ Let us see an example with a scan from the first page of Jane Eyre (@fig-janesca
 
 library(tesseract)
 
-text <- tesseract::ocr(here::here("jane_scan.png"),
-                       engine = tesseract("eng"))
+text <- tesseract::ocr(
+  here::here("jane_scan.png"),
+  engine = tesseract("eng")
+)
 cat(text)
 ```
 
@@ -1690,8 +1795,10 @@ cat(text)
 
 library(tesseract)
 
-text <- ocr(here::here("figures/jane_scan.png"),
-            engine = tesseract("eng"))
+text <- ocr(
+  here::here("figures/jane_scan.png"),
+  engine = tesseract("eng")
+)
 cat(text)
 ```
 
@@ -1725,9 +1832,9 @@ In general the result is not too bad. OCR is a useful tool but is not perfect an
 library(gh)
 repos <- gh("/users/RohanAlexander/repos", per_page = 100)
 repo_info <- tibble(
-    name = map_chr(repos, "name"),
-    created = map_chr(repos, "created_at"),
-    full_name = map_chr(repos, "full_name"),
+  name = map_chr(repos, "name"),
+  created = map_chr(repos, "created_at"),
+  full_name = map_chr(repos, "full_name"),
 )
 ```
 
@@ -1748,12 +1855,18 @@ my_location <- 50
 my_startyr <- 1996
 my_endyr <- 1999
 
-url <- paste0("https://population.un.org/dataportalapi/api/v1",
-              "/data/indicators/", my_indicator,
-              "/locations/", my_location,
-              "/start/", my_startyr,
-              "/end/", my_endyr,
-              "/?format=csv")
+url <- paste0(
+  "https://population.un.org/dataportalapi/api/v1",
+  "/data/indicators/",
+  my_indicator,
+  "/locations/",
+  my_location,
+  "/start/",
+  my_startyr,
+  "/end/",
+  my_endyr,
+  "/?format=csv"
+)
 
 un_data <- read_delim(file = url, delim = "|", skip = 1)
 

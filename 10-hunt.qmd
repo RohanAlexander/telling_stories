@@ -7,7 +7,6 @@ engine: knitr
 **Required material**
 
 - Read *Impact evaluation in practice*, Chapters 3 and 4, [@gertler2016impact]
-- Read *Inventing the randomized double-blind trial: the Nuremberg salt test of 1835*, [@stolberg2006inventing]
 - Read *The Psychology of Survey Response*, Chapter 2 "Respondents' Understanding of Survey Questions", [@tourangeau2000]
 - Read *Statistics and causal inference*, Parts 1-3, [@holland1986statistics]
 - Read *Big tech is testing you*, [@fry2020big]
@@ -71,7 +70,7 @@ One way to get at the answer would be to run an experiment. Make a list of the N
 
 A treatment, $t$, will often be a binary variable, that is either 0 or 1. It is 0 if the person, $i$, is not treated, which is to say they are in the control group, and 1 if they are treated. We will typically have some outcome, $Y_i$, of interest for that person, and that could be binary, categorical, multinomial, ordinal, continuous, or possibly even some other type. For instance, it could be vote choice, in which case we could measure whether the person is: 'Conservative' or 'Not Conservative'; which party they support, say: 'Conservative', 'Liberal', 'Democratic', 'Green'; or maybe a probability of support.
 
-A treatment is then causal if $(Y_i|t=0) \neq (Y_i|t=1)$. That is to say, the outcome for person $i$, given they were not treated, is different to their outcome given they were treated. If we could both treat and control the one individual at the one time, then we would know that it was only the treatment that had caused any change in outcome, as there could be no other factor to explain it. But the fundamental problem of causal inference remains: we cannot both treat and control the one individual at the one time. So when we want to know the effect of the treatment, we need to compare it with a counterfactual. The counterfactual, introduced in @sec-on-writing, is what would have happened if the treated individual were not treated. As it turns out, this means one way to think of causal inference is as a missing data problem, where we are missing the counterfactual.
+A treatment is then causal if $(Y_i|t=0) \neq (Y_i|t=1)$. That is to say, the outcome for person $i$, given they were not treated, is different to their outcome given they were treated. If we could both treat and control the one individual at the one time, then we would know that it was only the treatment that had caused any change in outcome, as there could be no other factor to explain it. But the fundamental problem of causal inference remains: we cannot both treat and control the one individual at the one time. So, when we want to know the effect of the treatment, we need to compare it with a counterfactual. The counterfactual, introduced in @sec-on-writing, is what would have happened if the treated individual were not treated. As it turns out, this means one way to think of causal inference is as a missing data problem, where we are missing the counterfactual.
 
 As we cannot compare treatment and control in one individual, we instead compare the average of two groups---those treated and those not. We are looking to estimate the counterfactual at a group level because of the impossibility of doing it at an individual level. Making this trade-off allows us to move forward but comes at the cost of certainty. We must instead rely on randomization, probabilities, and expectations.
 
@@ -92,7 +91,7 @@ library(tidyverse)
 
 set.seed(853)
 
-treat_control <- 
+treat_control <-
   tibble(
     group = sample(x = c("Treatment", "Control"), size = 100, replace = TRUE),
     binary_effect = sample(x = c(0, 1), size = 100, replace = TRUE)
@@ -107,18 +106,18 @@ treat_control
 #| warning: false
 #| message: false
 
-effect_of_being_treated <- 
-  treat_control |> 
-  group_by(group) |> 
+treat_control |>
+  group_by(group) |>
   summarise(
-    result_of_being_treated = sum(binary_effect) / length(binary_effect))
+    result_of_being_treated = sum(binary_effect) / length(binary_effect)
+  )
 ```
 
 In this case, we draw either 0 or 1, 100 times, for each the treatment and control group, and then the estimate of the effect of being treated is 0.22.
 
 More broadly, to tell causal stories we need to bring together both theory and a detailed knowledge of what we are interested in [@Cunningham2021, p. 4]. In @sec-gather-data we discussed gathering data that we observed about the world. In this chapter we are going to be more active about turning the world into the data that we need. As the researcher, we will decide what to measure and how, and we will need to define what we are interested in. We will be active participants in the data generating process. That is, if we want to use this data, then as researchers we must go out and hunt it.
 
-In this chapter we cover experiments, especially constructing treatment and control groups, and appropriately considering their results. We discuss some aspects of ethical behavior in experiments through reference to the abhorrent Tuskegee Syphilis Study and ECMO experiment, and go through various case studies. We then turn to A/B testing, which is extensively used in industry, and consider a case study based on Upworthy data. Finally, we go through actually implementing a survey.
+In this chapter we cover experiments, especially constructing treatment and control groups, and appropriately considering their results. We go through implementing a survey. We discuss some aspects of ethical behavior in experiments through reference to the abhorrent Tuskegee Syphilis Study and ECMO experiment and go through various case studies. Finally, we then turn to A/B testing, which is extensively used in industry, and consider a case study based on Upworthy data. 
 
 Ronald Fisher, the twentieth century statistician, and Francis Galton, the nineteenth century statistician, are the intellectual grandfathers of much of the work that we cover in this chapter. In some cases it is directly their work, in other cases it is work that built on their contributions. Both men believed in eugenics, amongst other things that are generally reprehensible. In the same way that art history acknowledges, say, Caravaggio as a murderer, while also considering his work and influence, so to must statistics and the data sciences more generally concern themselves with this past, at the same time as we try to build a better future.
 
@@ -128,11 +127,11 @@ Ronald Fisher, the twentieth century statistician, and Francis Galton, the ninet
 
 ### Randomization
 
-Correlation can be enough in some settings [@hill1965environment], but in order to be able to make forecasts when things change, and the circumstances are slightly different, we need to understand causation. Economics went through a credibility revolution in the 2000s [@angrist2010credibility]. During this time economists looked back on previous work and realized it was not as reliable as it could be. There was increased concern with research design and use of experiments. This considerable increased use of experiments also happened in political science in the 2000s and 2010s [@Druckman2021]. 
+Correlation can be enough in some settings [@hill1965environment], but to be able to make forecasts when things change, and the circumstances are slightly different, we need to understand causation. Economics went through a credibility revolution in the 2000s [@angrist2010credibility]. During this time economists looked back on previous work and realized it was not as reliable as it could be. There was increased concern with research design and use of experiments. This considerable increased use of experiments also happened in political science in the 2000s and 2010s [@Druckman2021]. 
 
 The key is the counterfactual: what would have happened in the absence of the treatment. Ideally, we could keep everything else constant, randomly divide the world into two groups, and treat one and not the other. Then we could be pretty confident that any difference between the two groups was due to that treatment. The reason for this is that if we have some population and we randomly select two groups from it, then our two groups (provided they are both big enough) should have the same characteristics as the population. Randomized controlled trials (RCTs) and A/B testing attempt to get us as close to this 'gold standard' as we can hope. 
 
-When we, and others such as @athey2017state, use such positive language to refer to these approaches, we do not mean to imply that they are perfect. Just that they can be better than most of the other options. For instance, in @sec-causality-from-observational-data we will consider causality from observation data, and while this is sometimes all that we can do, the circumstances in which it is possible to evaluate both makes it clear that approaches based on observational data are usually second-best [@Gordon2019; @closeenoughaintgoodenough]. RCTs and A/B testing also bring other benefits, such as being able to design a study that focuses on a particular question and tries to uncover the mechanism by which the effect occurs [@alsan2021beyond]. But they are not perfect, and the embrace of RCTs has not been unanimous [@Deaton2010]. In particular, one bedrock of experimental practice is that it be blinded, that is, a participant does not know whether they are in the treatment or control group. And ideally, double-blind, that is, even the research does not know. This is rarely the case for RCTs and A/B testing. Again, this is not to say they are not useful, after all in 1847 Semmelweis identified the benefit of having an intern wash their hands before delivering babies without a blinded study [@morange, p. 121]. Another major concern is with the extent to which the result found in the RCT generalizes to outside of that setting. Finally, there are typically few RCTs conducted over a long time period, although it is possible this is changing and @Bouguen2019 provide a large number of RCTs that could be followed up on to assess long-term effects.
+When we, and others such as @athey2017state, use such positive language to refer to these approaches, we do not mean to imply that they are perfect. Just that they can be better than most of the other options. For instance, in @sec-causality-from-observational-data we will consider causality from observation data, and while this is sometimes all that we can do, the circumstances in which it is possible to evaluate both makes it clear that approaches based on observational data are usually second-best [@Gordon2019; @closeenoughaintgoodenough]. RCTs and A/B testing also bring other benefits, such as being able to design a study that focuses on a particular question and tries to uncover the mechanism by which the effect occurs [@alsan2021beyond]. But they are not perfect, and the embrace of RCTs has not been unanimous [@Deaton2010]. One bedrock of experimental practice is that it be blinded, that is, a participant does not know whether they are in the treatment or control group. And ideally, double-blind, that is, even the research does not know. For instance, @stolberg2006inventing discusses an early example of a randomized double-blind trial in 1835 to evaluate the effect of homeopathic drugs where neither the participants nor the organizers knew who was in which group. This is rarely the case for RCTs and A/B testing. Again, this is not to say they are not useful, after all in 1847 Semmelweis identified the benefit of having an intern wash their hands before delivering babies without a blinded study [@morange, p. 121]. Another major concern is with the extent to which the result found in the RCT generalizes to outside of that setting. Finally, there are typically few RCTs conducted over a long time, although it is possible this is changing and @Bouguen2019 provide a large number of RCTs that could be followed up on to assess long-term effects.
 
 What we hope to be able to do is to establish treatment and control groups that are the same, but for the treatment. This means that establishing the control group is critical because when we do that, we establish the counterfactual. We might be worried about, say, underlying trends, which is one issue with a before-and-after comparison, or selection bias, which could occur when we allow self-selection into the treatment group. Either of these issues could result in biased estimates. We use randomization to go some way to addressing these.
 
@@ -148,7 +147,7 @@ population <-
     person = c(1:number_of_people),
     favorite_color = sample(
       x = c("Blue", "White"),
-      size  = number_of_people,
+      size = number_of_people,
       replace = TRUE
     )
   ) |>
@@ -160,17 +159,19 @@ population <-
       if_else(
         noise <= 8, # No special reason for using 8 as cut-off
         prefers_dogs_to_cats,
-        sample(c("Yes", "No"), 
-               size = 1)
+        sample(
+          c("Yes", "No"),
+          size = 1
         )
-  ) |> 
+      )
+  ) |>
   select(-noise)
 
 
 population
 
 population |>
-  group_by(favorite_color) |> 
+  group_by(favorite_color) |>
   count()
 ```
 
@@ -184,18 +185,19 @@ frame <-
   mutate(
     in_frame = sample(
       x = c(0, 1),
-      size  = number_of_people,
+      size = number_of_people,
       replace = TRUE,
       prob = c(0.2, 0.8)
-  )) |>
+    )
+  ) |>
   filter(in_frame == 1)
 
 frame |>
-  group_by(favorite_color) |> 
+  group_by(favorite_color) |>
   count()
 ```
 
-For now, we will set aside dog or cat preferences and focus on creating treatment and control groups on the basis of favorite color only.
+For now, we will set aside dog or cat preferences and focus on creating treatment and control groups based on favorite color only.
 
 ```{r}
 set.seed(853)
@@ -205,7 +207,7 @@ sample <-
   select(-prefers_dogs_to_cats) |>
   mutate(group = sample(
     x = c("Treatment", "Control"),
-    size  = nrow(frame),
+    size = nrow(frame),
     replace = TRUE
   ))
 ```
@@ -237,19 +239,23 @@ We randomized based on favorite color. But we should also find that we took dog 
 #| label: tbl-dogstocats
 #| tbl-cap: "Proportion of the treatment and control group that prefer dogs or cats"
 
-sample |> 
-  left_join(frame |> select(person, prefers_dogs_to_cats), 
-            by = "person") |>
-  group_by(group, prefers_dogs_to_cats) |> 
+sample |>
+  left_join(
+    frame |> select(person, prefers_dogs_to_cats),
+    by = "person"
+  ) |>
+  group_by(group, prefers_dogs_to_cats) |>
   count() |>
   ungroup() |>
   group_by(group) |>
   mutate(prop = n / sum(n)) |>
   knitr::kable(
-    col.names = c("Group", 
-                  "Prefers dogs to cats", 
-                  "Number", 
-                  "Proportion"),
+    col.names = c(
+      "Group",
+      "Prefers dogs to cats",
+      "Number",
+      "Proportion"
+    ),
     digits = 2,
     booktabs = TRUE,
     linesep = "",
@@ -301,12 +307,14 @@ To illustrate this concept, we first simulate some data that shows an average di
 
 set.seed(853)
 
-ate_example <- tibble(person = c(1:1000),
-                      was_treated = sample(
-                        x = c("Yes", "No"),
-                        size  = 1000,
-                        replace = TRUE
-                      ))
+ate_example <- tibble(
+  person = c(1:1000),
+  was_treated = sample(
+    x = c("Yes", "No"),
+    size = 1000,
+    replace = TRUE
+  )
+)
 
 # Make outcome a bit more likely if treated.
 ate_example <-
@@ -326,14 +334,20 @@ We can see the difference, which we simulated to be one, between the two groups 
 #| label: fig-exampleatefig
 
 ate_example |>
-  ggplot(aes(x = outcome,
-             fill = was_treated)) +
-  geom_histogram(position = "dodge",
-                 binwidth = 0.2) +
+  ggplot(aes(
+    x = outcome,
+    fill = was_treated
+  )) +
+  geom_histogram(
+    position = "dodge",
+    binwidth = 0.2
+  ) +
   theme_minimal() +
-  labs(x = "Outcome",
-       y = "Number of people",
-       fill = "Person was treated") +
+  labs(
+    x = "Outcome",
+    y = "Number of people",
+    fill = "Person was treated"
+  ) +
   scale_fill_brewer(palette = "Set1")
 ```
 
@@ -348,9 +362,11 @@ ate_example |>
   pivot_wider(names_from = was_treated, values_from = mean) |>
   mutate(difference = Yes - No) |>
   knitr::kable(
-    col.names = c("Average for treated", 
-                  "Average for not treated", 
-                  "Difference"),
+    col.names = c(
+      "Average for treated",
+      "Average for not treated",
+      "Difference"
+    ),
     digits = 2,
     booktabs = TRUE,
     linesep = ""
@@ -390,7 +406,7 @@ What we are looking for, in order to claim something is experimentally demonstra
 
 One of the foundations of ethical experimental practice is informed consent and ensuring that an experiment is actually needed. We now detail two cases where human life was potentially lost to remind us of the importance of these foundations. One issue with experiments in medical settings is that the weight of evidence is measured in lost lives. Ethical practice in experiments develops because of the many people who may have unnecessarily lost their life. Two cases that have dramatically informed practice are the Tuskegee Syphilis Study and the ECMO experiments.
 
-The Tuskegee Syphilis Study is an infamous medical trial that began in 1932. As part of this experiment, 400 Black Americans with syphilis were not given appropriate treatment, nor even told they had syphilis, well after a standard treatment for syphilis was established and widely available [@brandt1978racism; @tuskegeeandthehealthofblackmen]. A control group, without syphilis, were also given non-effective drugs. These financially-poor Black Americans in the US South were offered minimal compensation and not told they were part of an experiment [@brandt1978racism; @tuskegeeandthehealthofblackmen]. Further, extensive work was undertaken to ensure the men would not receive treatment from anywhere, including writing to local doctors and the local health department. Incredibly, after some of the men were drafted and told to immediately get treatment, the draft board complied with a request to have the men excluded from treatment [@brandt1978racism, p. 25]. By the time the study was stopped in 1972, more than half of the men were deceased and many of deaths were from syphilis-related causes [@tuskegeeandthehealthofblackmen].
+The Tuskegee Syphilis Study is an infamous medical trial that began in 1932. As part of this experiment, 400 Black Americans with syphilis were not given appropriate treatment, nor even told they had syphilis, well after a standard treatment for syphilis was established and widely available [@brandt1978racism; @tuskegeeandthehealthofblackmen]. A control group, without syphilis, were also given non-effective drugs. These financially poor Black Americans in the US South were offered minimal compensation and not told they were part of an experiment [@brandt1978racism; @tuskegeeandthehealthofblackmen]. Further, extensive work was undertaken to ensure the men would not receive treatment from anywhere, including writing to local doctors and the local health department. Incredibly, after some of the men were drafted and told to immediately get treatment, the draft board complied with a request to have the men excluded from treatment [@brandt1978racism, p. 25]. By the time the study was stopped in 1972, more than half of the men were deceased and many of deaths were from syphilis-related causes [@tuskegeeandthehealthofblackmen].
 
 The effect of the Tuskegee Syphilis Study was felt not just by the men in the study, but more broadly. @tuskegeeandthehealthofblackmen found that it is associated with a decrease in life expectancy at age 45 of up to 1.5 years for Black men located around central Alabama. They show that this is because of medical mistrust and decreased physician interactions. In response the US established requirements for Institutional Review Boards and President Clinton made a formal apology in 1997. @brandt1978racism [p. 27] says:
 
@@ -407,20 +423,20 @@ Dr Marcella Alsan is a Professor of Public Policy at Harvard University. She has
 
 Turning to the evaluation of extracorporeal membrane oxygenation (ECMO), @ware1989investigating describes how they viewed ECMO as a possible treatment for persistent pulmonary hypertension in newborns. They enrolled 19 patients and used conventional medical therapy on ten of them, and ECMO on nine of them. It was found that six of the ten in the control group survived while all in the treatment group survived. @ware1989investigating used randomized consent whereby only the parents of infants randomly selected to be treated with ECMO were asked to consent. 
 
-@ware1989investigating is concerned with 'equipoise', by which they refer to a situation in which there is genuine uncertainty about whether the treatment is more effective than existing procedures. They further note that in medical settings even if there is initial equipoise it could be undermined if the treatment is found to be effective early in the study. @ware1989investigating describe how after the results of these first 19 patients, randomization stopped and only ECMO was used. The recruiters and those treating the patients were initially not told that randomization had stopped. It was decided that this complete allocation to ECMO would continue 'until either the 28th survivor or the 4th death was observed'. After 19 of 20 additional patients survived the trial was terminated. So the actual result of the experiment was divided into two phases: in the first there was randomized use of ECMO, and in the second only ECMO was used.
+@ware1989investigating is concerned with 'equipoise', by which they refer to a situation in which there is genuine uncertainty about whether the treatment is more effective than existing procedures. They further note that in medical settings even if there is initial equipoise it could be undermined if the treatment is found to be effective early in the study. @ware1989investigating describe how after the results of these first 19 patients, randomization stopped and only ECMO was used. The recruiters and those treating the patients were initially not told that randomization had stopped. It was decided that this complete allocation to ECMO would continue 'until either the 28th survivor or the 4th death was observed'. After 19 of 20 additional patients survived the trial was terminated. So, the actual result of the experiment was divided into two phases: in the first there was randomized use of ECMO, and in the second only ECMO was used.
 
 One approach in these settings is a 'randomized play-the-winner' rule following @wei1978randomized. Treatment is still randomized, but the weight of probability shifts with each successful treatment to make treatment more likely, and there is some stopping rule. But @berry1989investigating argues that far from the need for a more sophisticated stopping rule, there was actually no need for the study at all, because equipoise never existed. @berry1989investigating re-visits the literature mentioned by @ware1989investigating and finds extensive evidence that ECMO was known to be effective. @berry1989investigating points out that there is almost never complete consensus and so one could almost always argue, inappropriately, for the existence of equipoise even in the face of a substantial weight of evidence. @berry1989investigating further criticizes @ware1989investigating for the use of randomized consent because of the potential that there may have been different outcomes for the infants subject to conventional therapy had their parents known there were other options. And instead, @berry1989investigating argues for the need for comprehensive patient registries, enabling the analysis of large datasets.
 
-The Tuskegee Syphilis Study and ECMO experiments may seem quite far from our present circumstances. While it may be illegal to do this exact research these days, it does not mean that unethical research does not still happen. For instance, we see it in machine learning applications in health and other areas; while we are not meant to explicitly discriminate and we are meant to get consent, it does not mean that we cannot implicitly discriminate without any type of buy-in at all. For instance, @obermeyer2019dissecting describes how US health care systems use algorithms to score the severity of how sick a patient is. They show that for the same score, Black patients are actually sicker, and that if Black patients were scored in the same way as White patients, then they would receive considerably more care. They find that the discrimination occurs because the algorithm is based on health care costs, rather than sickness. But because access to healthcare is unequally distributed between Black and White patients, the algorithm, however inadvertently, perpetuates racial bias.
+The Tuskegee Syphilis Study and ECMO experiments may seem quite far from our present circumstances. While it may be illegal to do this exact research these days, it does not mean that unethical research does not still happen. For instance, we see it in machine learning applications in health and other areas; while we are not meant to explicitly discriminate and we are meant to get consent, it does not mean that we cannot implicitly discriminate without any type of buy-in at all. For instance, @obermeyer2019dissecting describes how US health care systems use algorithms to score the severity of how sick a patient is. They show that for the same score, Black patients are sicker, and that if Black patients were scored in the same way as White patients, then they would receive considerably more care. They find that the discrimination occurs because the algorithm is based on health care costs, rather than sickness. But because access to healthcare is unequally distributed between Black and White patients, the algorithm, however inadvertently, perpetuates racial bias.
 
 
 ## Surveys
 
-Having decided what to measure, one common way to get values is to use a survey. This is especially challenging, and there is an entire field, survey research, focused on this. There are many ways to implement surveys, and this choice really matters. For some time, the only choice was face-to-face surveys, where an enumerator would be tasked with actually conducting the survey with a respondent. Eventually surveys began to be conducted over the telephone, again by an enumerator. One issue is that it was found that in both these settings there were considerable interviewer effects [@anchoringmethod]. The internet brought about a third era of survey research, characterized by low participation rates and increased options for data collection [@Groves2011]. The use of surveys remains popular and an invaluable way to get data. While face-to-face and telephone surveys are still used and have an important role to play, we now focus on designing internet-based surveys and introduce one way to implement them.
+Having decided what to measure, one common way to get values is to use a survey. This is especially challenging, and there is an entire field, survey research, focused on this. There are many ways to implement surveys, and this choice really matters. For some time, the only choice was face-to-face surveys, where an enumerator would be tasked with conducting the survey with a respondent. Eventually surveys began to be conducted over the telephone, again by an enumerator. One issue is that it was found that in both these settings there were considerable interviewer effects [@anchoringmethod]. The internet brought about a third era of survey research, characterized by low participation rates and increased options for data collection [@Groves2011]. The use of surveys remains popular and an invaluable way to get data. While face-to-face and telephone surveys are still used and have an important role to play, we now focus on designing internet-based surveys and introduce one way to implement them.
 
 We focus on internet-based surveys. There are many dedicated survey platforms, such as Survey Monkey and Qualtrics, that are largely internet-based. In general, the focus of those platforms is on putting together the survey form and they expect that we already have contact details for the sample of interest. Some other platforms, such as Mechanical Turk and Prolific, focus on providing that audience, and we can then ask that audience to do more than just take a survey. When using platforms like those, and other providers, it is vital to be aware of who is in the sample [@Levay2016; @whereyoursurveycomesfrom]. While it is a useful feature, it usually comes with higher costs. Finally, platforms such as Facebook also provide the ability to run a survey. One especially common approach, because it is free, is to use Google Forms.
 
-The survey form needs to be considered within the context of the broader research and with special concern for the respondent. The most important aspect is to test the survey before releasing it more broadly. The fundamental rule of surveys is that if you do not have time, or budget, to test the survey, then do not bother doing the survey. The wording of a survey is crucial [@tourangeau2000, p. 23]. When designing the survey, we need to have survey questions that are conversational and flow from one to the next, grouped within topics [@elson2016question]. However we should also consider the cognitive load that we place on the respondent, and vary the difficulty of the questions. 
+The survey form needs to be considered within the context of the broader research and with special concern for the respondent. The most important aspect is to test the survey before releasing it more broadly. The fundamental rule of surveys is that if you do not have time, or budget, to test the survey, then do not bother doing the survey. The wording of a survey is crucial [@tourangeau2000, p. 23]. When designing the survey, we need to have survey questions that are conversational and flow from one to the next, grouped within topics [@elson2016question]. But we should also consider the cognitive load that we place on the respondent, and vary the difficulty of the questions. 
 
 When designing a survey, the critical task is to keep the respondent front-of-mind [@surveystailored, p. 94]. Drawing on @surveydesign, all questions need to be relevant and able to be answered by the respondent. The wording of the questions should be based on what the respondent would be comfortable with. The decision between different question types turns on minimizing error and the burden that we impose on the respondent. In general, if there are a small number of clear options then multiple-choice questions are appropriate. In that case, the responses should usually be mutually exclusive and collectively exhaustive. If they are not mutually exclusive, then this needs to be signaled in the text of the question. It is also important that units are specified, and that standard concepts are used, to the extent possible. 
 
@@ -428,7 +444,7 @@ Open text boxes may be appropriate if there are a lot of potential answers, alth
 
 All surveys need to have an introduction that specifies a title for the survey, who is conducting it, and their contact details, and the purpose. It should also include a statement about protecting confidentiality and ethics review board permission, if appropriate.
 
-When doing surveys, it is critical to ask the right person. For instance, @Lichand2022 consider child labor, the extent of which is typically based on surveys of parents. When questions were instead asked of children themselves, a considerable under-reporting by parents was found. Finally, one especially exciting area of research is making better use of surveys delivered on smartphones. In particular using voice, rather than text, to allow open-ended survey questions. @gavras2022innovating find that collecting voice responses in this way, compared with typed answers, is associated with responses that are more "intuitive and spontaneous".
+When doing surveys, it is critical to ask the right person. For instance, @Lichand2022 consider child labor, the extent of which is typically based on surveys of parents. When questions were instead asked of children themselves, a considerable under-reporting by parents was found. Finally, one especially exciting area of research is making better use of surveys delivered on smartphones. In particular, using voice, rather than text, to allow open-ended survey questions. @gavras2022innovating find that collecting voice responses in this way, compared with typed answers, is associated with responses that are more "intuitive and spontaneous".
 
 Finally, returning to the reason for doing surveys in the first place, while doing all this, it is important to also keep what we are interested in measuring in mind.
 
@@ -526,19 +542,21 @@ library(tidyverse)
 
 wallet_data <- read_csv(here::here("inputs/data/behavioral_data.csv"))
 
-wallet_data |> 
-  filter(cond %in% c(0, 1)) |> 
-  count(Country, cond, response) |> 
+wallet_data |>
+  filter(cond %in% c(0, 1)) |>
+  count(Country, cond, response) |>
   group_by(Country, cond) %>%
-  mutate(freq = n / sum(n) * 100) |> 
-  filter(response == 100) |> 
-  mutate(cond = if_else(cond == 0, "No", "Yes")) |> 
-  mutate(cond = factor(cond)) |> 
+  mutate(freq = n / sum(n) * 100) |>
+  filter(response == 100) |>
+  mutate(cond = if_else(cond == 0, "No", "Yes")) |>
+  mutate(cond = factor(cond)) |>
   ggplot() +
-  geom_point(aes(x=reorder(Country, -freq, FUN=mean), y = freq, color = cond)) +
-  labs(x = "Country",
-       y = "Reporting rate (%)",
-       color = "Contained money?") +
+  geom_point(aes(x = reorder(Country, -freq, FUN = mean), y = freq, color = cond)) +
+  labs(
+    x = "Country",
+    y = "Reporting rate (%)",
+    color = "Contained money?"
+  ) +
   scale_color_brewer(palette = "Set1") +
   coord_flip() +
   theme_classic()
@@ -621,10 +639,10 @@ upworthy <- read_csv(here::here("dont_push/upworthy-archive-exploratory-packages
 #| message: false
 #| warning: false
 
-upworthy |> 
+upworthy |>
   names()
 
-upworthy |> 
+upworthy |>
   head()
 ```
 
@@ -641,13 +659,15 @@ There are a variety of variables. We will focus on:
 Within each batch of tests, we are interested in the effect of the varied headlines on impressions and clicks.
 
 ```{r}
-upworthy_restricted <- 
-  upworthy |> 
-  select(created_at, 
-         clickability_test_id, 
-         headline, 
-         impressions, 
-         clicks)
+upworthy_restricted <-
+  upworthy |>
+  select(
+    created_at,
+    clickability_test_id,
+    headline,
+    impressions,
+    clicks
+  )
 
 head(upworthy_restricted)
 ```
@@ -657,11 +677,15 @@ We will focus on the text contained in headlines, and look at whether headlines 
 ```{r}
 upworthy_restricted <-
   upworthy_restricted |>
-  mutate(asks_question = 
-           str_detect(string = headline, 
-                      pattern = "\\?"))
+  mutate(
+    asks_question =
+      str_detect(
+        string = headline,
+        pattern = "\\?"
+      )
+  )
 
-upworthy_restricted |> 
+upworthy_restricted |>
   count(asks_question)
 ```
 
@@ -670,24 +694,29 @@ For every test, and for every picture, we want to know whether asking a question
 ```{r}
 #| message: false
 
-to_question_or_not_to_question <- 
-  upworthy_restricted |> 
-  group_by(clickability_test_id, asks_question) |> 
-  summarize(ave_clicks = mean(clicks)) |> 
+to_question_or_not_to_question <-
+  upworthy_restricted |>
+  group_by(clickability_test_id, asks_question) |>
+  summarize(ave_clicks = mean(clicks)) |>
   ungroup()
 
-look_at_differences <- 
-  to_question_or_not_to_question |> 
-  pivot_wider(id_cols = clickability_test_id,
-              names_from = asks_question,
-              values_from = ave_clicks) |> 
-  rename(ave_clicks_not_question = `FALSE`,
-         ave_clicks_is_question = `TRUE`) |> 
+look_at_differences <-
+  to_question_or_not_to_question |>
+  pivot_wider(
+    id_cols = clickability_test_id,
+    names_from = asks_question,
+    values_from = ave_clicks
+  ) |>
+  rename(
+    ave_clicks_not_question = `FALSE`,
+    ave_clicks_is_question = `TRUE`
+  ) |>
   filter(!is.na(ave_clicks_not_question)) |>
-  filter(!is.na(ave_clicks_is_question)) |> 
-  mutate(difference_in_clicks = 
-           ave_clicks_is_question - ave_clicks_not_question
-         )
+  filter(!is.na(ave_clicks_is_question)) |>
+  mutate(
+    difference_in_clicks =
+      ave_clicks_is_question - ave_clicks_not_question
+  )
 
 look_at_differences$difference_in_clicks |> mean()
 ```
@@ -700,8 +729,10 @@ We could also consider a cross-tab (@tbl-datasummaryupworthy).
 
 library(modelsummary)
 
-datasummary(ave_clicks ~ Mean * asks_question,
-            data = to_question_or_not_to_question)
+datasummary(
+  ave_clicks ~ Mean * asks_question,
+  data = to_question_or_not_to_question
+)
 ```
 
 We find that in general, having a question in the headline may slightly decrease the number of clicks on a headline, although if there is an effect it does not appear to be very large (@fig-upworthy).
@@ -713,15 +744,18 @@ We find that in general, having a question in the headline may slightly decrease
 #| message: false
 #| warning: false
 
-to_question_or_not_to_question |> 
-  ggplot(aes(x = ave_clicks, 
-             fill = asks_question)
-         ) +
+to_question_or_not_to_question |>
+  ggplot(aes(
+    x = ave_clicks,
+    fill = asks_question
+  )) +
   geom_histogram() +
-  labs(x = "Row number",
-       y = "Average number of clicks",
-       fill = "Has a question mark?") +
-  theme_classic() 
+  labs(
+    x = "Row number",
+    y = "Average number of clicks",
+    fill = "Has a question mark?"
+  ) +
+  theme_classic()
 ```
 
 
@@ -760,14 +794,30 @@ to_question_or_not_to_question |>
 
 ```{r}
 library(tidyverse)
-netflix_data <- 
-  tibble(person = c("Ian", "Ian", "Roger", "Roger", "Roger", 
-                    "Patricia", "Patricia", "Helen"),
-         tv_show = c("Broadchurch", "Duty-Shame", "Broadchurch", 
-                     "Duty-Shame", "Shetland", "Broadchurch", 
-                     "Shetland", "Duty-Shame"),
-         hours = c(6.8, 8.0, 0.8, 9.2, 3.2, 4.0, 0.2, 10.2)
-         )
+netflix_data <-
+  tibble(
+    person = c(
+      "Ian",
+      "Ian",
+      "Roger",
+      "Roger",
+      "Roger",
+      "Patricia",
+      "Patricia",
+      "Helen"
+    ),
+    tv_show = c(
+      "Broadchurch",
+      "Duty-Shame",
+      "Broadchurch",
+      "Duty-Shame",
+      "Shetland",
+      "Broadchurch",
+      "Shetland",
+      "Duty-Shame"
+    ),
+    hours = c(6.8, 8.0, 0.8, 9.2, 3.2, 4.0, 0.2, 10.2)
+  )
 ```
 
 12. In the context of randomization, what does stratification mean to you (write a paragraph or two)?
@@ -796,7 +846,7 @@ netflix_data <-
     d. Unknown numbers that determine a statistical model.
 20. @ware1989investigating [p. 298] mentions 'a randomized play the winner design'. What is it?
 21. @ware1989investigating [p. 299] mentions 'adaptive randomization'. What is it, in your own words?
-22. @ware1989investigating [p. 299] mentions 'randomized-consent' and continues that it was 'attractive in this setting because a standard approach to informed consent would require that parents of infants near death be approached to give informed consent for an invasive surgical procedure that would then, in some instances, not be administered. Those familiar with the agonizing experience of having a child in a neonatal intensive care unit can appreciate that the process of obtaining informed consent would be both frightening and stressful to parents'. To what extent do you agree with this position, especially given, as  @ware1989investigating [p. 305], mentions 'the need to withhold information about the study from parents of infants receiving CMT'?
+22. @ware1989investigating [p. 299] mentions 'randomized-consent' and continues that it was 'attractive in this setting because a standard approach to informed consent would require that parents of infants near death be approached to give informed consent for an invasive surgical procedure that would then, in some instances, not be administered. Those familiar with the agonizing experience of having a child in a neonatal intensive care unit can appreciate that the process of obtaining informed consent would be both frightening and stressful to parents'. To what extent do you agree with this position, especially given, as @ware1989investigating [p. 305], mentions 'the need to withhold information about the study from parents of infants receiving CMT'?
 23. @ware1989investigating [p. 300] mentions 'equipoise'. In your own words, please define and discuss it, using an example from your own experience.
 
 
@@ -809,4 +859,4 @@ Please build a website using `postcards` [@citepostcards]. Add Google Analytics.
 
 ### Paper {.unnumbered}
 
-At about this point, Paper Three, in Appendix [-@sec-papers] would be appropriate.
+At about this point, Paper Three, in [Appendix -@sec-papers] would be appropriate.

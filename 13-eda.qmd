@@ -88,9 +88,9 @@ library(janitor)
 
 us_populations <-
   state.x77 |>
-  as_tibble() |> 
-  clean_names() |> 
-  mutate(state = rownames(state.x77)) |> 
+  as_tibble() |>
+  clean_names() |>
+  mutate(state = rownames(state.x77)) |>
   select(state, population)
 ```
 
@@ -99,13 +99,13 @@ us_populations <-
 We want to get a quick sense of the data. The first step is to have a look at the top and bottom of it with `head()` and `tail()`, and to focus on the variables and their class with `glimpse()`.
 
 ```{r}
-us_populations |> 
+us_populations |>
   head()
 
-us_populations |> 
+us_populations |>
   tail()
 
-us_populations |> 
+us_populations |>
   glimpse()
 ```
 
@@ -114,10 +114,10 @@ We are then interested in understanding key statistics, such as the minimum, med
 ```{r}
 library(skimr)
 
-us_populations |> 
+us_populations |>
   summary()
 
-us_populations |> 
+us_populations |>
   skim()
 ```
 
@@ -142,8 +142,7 @@ library(tidyverse)
 all_2021_ttc_data <-
   list_package_resources(
     "996cfe8d-fb35-40ce-b569-698d51fc683b"
-
-    ) |>
+  ) |>
   filter(name == "ttc-subway-delay-data-2021") |>
   get_resource() |>
   bind_rows() |>
@@ -185,7 +184,8 @@ The dataset has a variety of columns, and we can find out more about each of the
 # Data codebook
 delay_codebook <-
   list_package_resources(
-    "996cfe8d-fb35-40ce-b569-698d51fc683b") |>
+    "996cfe8d-fb35-40ce-b569-698d51fc683b"
+  ) |>
   filter(name == "ttc-subway-delay-data-readme") |>
   get_resource() |>
   clean_names()
@@ -195,7 +195,8 @@ write_csv(delay_codebook, "delay_codebook.csv")
 # Explanation for delay codes
 delay_codes <-
   list_package_resources(
-    "996cfe8d-fb35-40ce-b569-698d51fc683b") |>
+    "996cfe8d-fb35-40ce-b569-698d51fc683b"
+  ) |>
   filter(name == "ttc-subway-delay-codes") |>
   get_resource() |>
   clean_names()
@@ -266,8 +267,10 @@ Exploring missing data could be a course in itself, but the presence, or lack, o
 
 library(visdat)
 
-vis_dat(x = all_2021_ttc_data_filtered_lines,
-        palette = "cb_safe")
+vis_dat(
+  x = all_2021_ttc_data_filtered_lines,
+  palette = "cb_safe"
+)
 ```
 
 In this case we have many missing values in "bound" and two in "line". For these known-unknowns, as discussed in @sec-farm-data, we are interested in whether the they are missing at random. We want to, ideally, show that data happened to just drop out. This is unlikely, and so we are usually trying to look at what is systematic about how our data are missing.
@@ -295,7 +298,7 @@ all_2021_ttc_data_no_dupes <-
 The station names are a mess.
 
 ```{r}
-all_2021_ttc_data_no_dupes |> 
+all_2021_ttc_data_no_dupes |>
   count(station)
 ```
 
@@ -310,8 +313,8 @@ all_2021_ttc_data_no_dupes <-
   mutate(station_clean = if_else(
     str_starts(station, "ST"),
     word(station, 1, 2),
-    word(station, 1))
-    )
+    word(station, 1)
+  ))
 
 all_2021_ttc_data_no_dupes
 ```
@@ -323,7 +326,7 @@ We need to see the data in its original state to understand it and we use bar ch
 #| include: true
 
 all_2021_ttc_data_no_dupes |>
-  ggplot(aes(x = min_delay)) + 
+  ggplot(aes(x = min_delay)) +
   geom_histogram(bins = 30)
 ```
 
@@ -336,7 +339,7 @@ The largely empty graph suggests the presence of outliers. There are a variety o
 #| warning: false
 
 all_2021_ttc_data_no_dupes |>
-  ggplot(aes(x = min_delay)) + 
+  ggplot(aes(x = min_delay)) +
   geom_histogram(bins = 30) +
   scale_x_log10()
 ```
@@ -351,8 +354,10 @@ all_2021_ttc_data_no_dupes <-
   all_2021_ttc_data_no_dupes |>
   left_join(
     delay_codes |>
-      rename(code = sub_rmenu_code, 
-             code_desc = code_description_3) |>
+      rename(
+        code = sub_rmenu_code,
+        code_desc = code_description_3
+      ) |>
       select(code, code_desc),
     by = "code"
   )
@@ -370,7 +375,7 @@ all_2021_ttc_data_no_dupes <-
     code = ifelse(code_srt == "NA", code, code_srt),
     code_desc = ifelse(is.na(code_desc_srt), code_desc, code_desc_srt)
   ) |>
-  select(-code_srt,-code_desc_srt)
+  select(-code_srt, -code_desc_srt)
 
 all_2021_ttc_data_no_dupes
 ```
@@ -383,8 +388,8 @@ And so we can see that the 450 minute delay was due to "Transit Control Related 
 
 all_2021_ttc_data_no_dupes |>
   left_join(delay_codes |>
-              rename(code = sub_rmenu_code, code_desc = code_description_3) |>
-              select(code, code_desc)) |>
+    rename(code = sub_rmenu_code, code_desc = code_description_3) |>
+    select(code, code_desc)) |>
   arrange(-min_delay) |>
   select(date, time, station, line, min_delay, code, code_desc)
 ```
@@ -403,11 +408,15 @@ Another thing that we are looking for is various groupings of the data, especial
 
 all_2021_ttc_data_no_dupes |>
   ggplot() +
-  geom_histogram(aes(x = min_delay,
-                     y = ..density..,
-                     fill = line),
-                 position = "dodge",
-                 bins = 10) + 
+  geom_histogram(
+    aes(
+      x = min_delay,
+      y = ..density..,
+      fill = line
+    ),
+    position = "dodge",
+    bins = 10
+  ) +
   scale_x_log10()
 ```
 
@@ -423,9 +432,11 @@ all_2021_ttc_data_no_dupes |>
 
 all_2021_ttc_data_no_dupes |>
   ggplot() +
-  geom_histogram(aes(x = min_delay, fill = line),
-                 position = "dodge",
-                 bins = 10) +
+  geom_histogram(
+    aes(x = min_delay, fill = line),
+    position = "dodge",
+    bins = 10
+  ) +
   scale_x_log10()
 ```
 
@@ -441,8 +452,10 @@ To group by another variable, we can add facets (@fig-delayfreqfacet).
 
 all_2021_ttc_data_no_dupes |>
   ggplot() +
-  geom_density(aes(x = min_delay, color = line),
-               bw = .08) +
+  geom_density(
+    aes(x = min_delay, color = line),
+    bw = .08
+  ) +
   scale_x_log10() +
   facet_wrap(vars(day))
 ```
@@ -456,14 +469,16 @@ We can now plot the top five stations by mean delay.
 all_2021_ttc_data_no_dupes |>
   group_by(line, station_clean) |>
   summarise(mean_delay = mean(min_delay), n_obs = n()) |>
-  filter(n_obs>1) |>
+  filter(n_obs > 1) |>
   arrange(line, -mean_delay) |>
   slice(1:5) |>
-  ggplot(aes(station_clean, mean_delay)) + 
-    geom_col() + 
-    coord_flip() + 
-    facet_wrap(vars(line), 
-               scales = "free_y")
+  ggplot(aes(station_clean, mean_delay)) +
+  geom_col() +
+  coord_flip() +
+  facet_wrap(
+    vars(line),
+    scales = "free_y"
+  )
 ```
 
 #### Dates
@@ -488,9 +503,10 @@ all_2021_ttc_data_no_dupes |>
   ggplot(aes(week, mean_delay, color = line)) +
   geom_point() +
   geom_smooth() +
-  facet_wrap(vars(line),
-              scales = "free_y"
-             )
+  facet_wrap(
+    vars(line),
+    scales = "free_y"
+  )
 ```
 
 Now let us look at the proportion of delays that were greater than 10 minutes (@fig-longdelaybyweek).
@@ -506,13 +522,14 @@ Now let us look at the proportion of delays that were greater than 10 minutes (@
 all_2021_ttc_data_no_dupes |>
   mutate(week = week(date)) |>
   group_by(week, line) |>
-  summarise(prop_delay = sum(min_delay>10)/n()) |>
-  ggplot(aes(week, prop_delay, color = line)) + 
-    geom_point() + 
-    geom_smooth() + 
-      facet_wrap(vars(line),
-              scales = "free_y"
-             )
+  summarise(prop_delay = sum(min_delay > 10) / n()) |>
+  ggplot(aes(week, prop_delay, color = line)) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(
+    vars(line),
+    scales = "free_y"
+  )
 ```
 
 These figures, tables, and analysis have no place in a final paper. Instead, they allow us to become comfortable with the data. We note aspects about each that stand out, as well as the warnings and any implications or aspects to return to.
@@ -552,12 +569,16 @@ all_2021_ttc_data_no_dupes |>
   summarise(mean_delay = mean(min_delay)) |>
   arrange(-mean_delay) |>
   slice(1:5) |>
-  ggplot(aes(x = code_desc,
-             y = mean_delay)) +
-  geom_col() + 
-  facet_wrap(vars(line), 
-             scales = "free_y",
-             nrow = 4) +
+  ggplot(aes(
+    x = code_desc,
+    y = mean_delay
+  )) +
+  geom_col() +
+  facet_wrap(
+    vars(line),
+    scales = "free_y",
+    nrow = 4
+  ) +
   coord_flip()
 ```
 
@@ -727,15 +748,17 @@ As the original data is not ours, we should not make that public without first g
 
 library(tidyverse)
 
-url <- 
-  paste0("http://data.insideairbnb.com/united-kingdom/england/",
-         "london/2022-06-07/data/listings.csv.gz"
+url <-
+  paste0(
+    "http://data.insideairbnb.com/united-kingdom/england/",
+    "london/2022-06-07/data/listings.csv.gz"
   )
 
 airbnb_data <-
   read_csv(
     file = url,
-    guess_max = 20000)
+    guess_max = 20000
+  )
 
 write_csv(airbnb_data, "airbnb_data.csv")
 
@@ -762,8 +785,10 @@ write_csv(airbnb_data, "dont_push/2022-06-07-london-airbnblistings.csv")
 library(tidyverse)
 
 airbnb_data <-
-  read_csv(here::here("dont_push/2022-06-07-london-airbnblistings.csv"), 
-           guess_max = 20000)
+  read_csv(
+    here::here("dont_push/2022-06-07-london-airbnblistings.csv"),
+    guess_max = 20000
+  )
 
 airbnb_data
 ```
@@ -781,29 +806,30 @@ names(airbnb_data) |>
 
 airbnb_data_selected <-
   airbnb_data |>
-  select(host_id, 
-         host_since, 
-         host_response_time, 
-         host_is_superhost, 
-         host_listings_count,
-         host_total_listings_count,
-         host_neighbourhood, 
-         host_listings_count, 
-         neighbourhood_cleansed, 
-         room_type, 
-         bathrooms, 
-         bedrooms, 
-         price, 
-         number_of_reviews, 
-         has_availability, 
-         review_scores_rating, 
-         review_scores_accuracy, 
-         review_scores_cleanliness, 
-         review_scores_checkin, 
-         review_scores_communication, 
-         review_scores_location, 
-         review_scores_value
-         )
+  select(
+    host_id,
+    host_since,
+    host_response_time,
+    host_is_superhost,
+    host_listings_count,
+    host_total_listings_count,
+    host_neighbourhood,
+    host_listings_count,
+    neighbourhood_cleansed,
+    room_type,
+    bathrooms,
+    bedrooms,
+    price,
+    number_of_reviews,
+    has_availability,
+    review_scores_rating,
+    review_scores_accuracy,
+    review_scores_cleanliness,
+    review_scores_checkin,
+    review_scores_communication,
+    review_scores_location,
+    review_scores_value
+  )
 
 airbnb_data_selected
 ```
@@ -816,7 +842,10 @@ First we might be interested in price. It is a character at the moment and so we
 
 airbnb_data_selected$price |> head()
 
-airbnb_data_selected$price |> str_split("") |> unlist() |> unique()
+airbnb_data_selected$price |>
+  str_split("") |>
+  unlist() |>
+  unique()
 
 airbnb_data_selected |>
   select(price) |>
@@ -824,10 +853,11 @@ airbnb_data_selected |>
 
 airbnb_data_selected <-
   airbnb_data_selected |>
-  mutate(price = str_remove(price, "\\$"),
-         price = str_remove(price, ","),
-         price = as.integer(price)
-         )
+  mutate(
+    price = str_remove(price, "\\$"),
+    price = str_remove(price, ","),
+    price = as.integer(price)
+  )
 ```
 
 Now we can have a look at the distribution of prices (@fig-airbnbpricesfirst-1). There are outliers, so again we might like to consider it on the log scale (@fig-airbnbpricesfirst-2). 
@@ -839,7 +869,7 @@ Now we can have a look at the distribution of prices (@fig-airbnbpricesfirst-1).
 #| message: false
 #| label: fig-airbnbpricesfirst
 #| fig-cap: "Distribution of prices of London Airbnb rentals in June 2022"
-#| fig-subcap: 
+#| fig-subcap:
 #|   - "Regular scale"
 #|   - "Log scale"
 #| layout-ncol: 2
@@ -848,16 +878,20 @@ airbnb_data_selected |>
   ggplot(aes(x = price)) +
   geom_histogram(binwidth = 10) +
   theme_classic() +
-  labs(x = "Price per night",
-       y = "Number of properties")
+  labs(
+    x = "Price per night",
+    y = "Number of properties"
+  )
 
 airbnb_data_selected |>
   filter(price > 1000) |>
   ggplot(aes(x = price)) +
   geom_histogram(binwidth = 10) +
   theme_classic() +
-  labs(x = "Price per night",
-       y = "Number of properties") +
+  labs(
+    x = "Price per night",
+    y = "Number of properties"
+  ) +
   scale_y_log10()
 ```
 
@@ -870,7 +904,7 @@ If we focus on prices that are less than \$1,000 then we see that most propertie
 #| message: false
 #| label: fig-airbnbpricesbunch
 #| fig-cap: "Distribution of prices less than $1000 for London Airbnb rentals in June 2022 shows bunching"
-#| fig-subcap: 
+#| fig-subcap:
 #|   - "Prices less than $1,000"
 #|   - "Prices between $90 and $120"
 #| layout-ncol: 2
@@ -880,8 +914,10 @@ airbnb_data_selected |>
   ggplot(aes(x = price)) +
   geom_histogram(binwidth = 10) +
   theme_classic() +
-  labs(x = "Price per night",
-       y = "Number of properties")
+  labs(
+    x = "Price per night",
+    y = "Number of properties"
+  )
 
 airbnb_data_selected |>
   filter(price > 90) |>
@@ -889,8 +925,10 @@ airbnb_data_selected |>
   ggplot(aes(x = price)) +
   geom_histogram(binwidth = 1) +
   theme_classic() +
-  labs(x = "Price per night",
-       y = "Number of properties")
+  labs(
+    x = "Price per night",
+    y = "Number of properties"
+  )
 ```
 
 For now, we will just remove all prices that are more than $999.
@@ -924,8 +962,10 @@ airbnb_data_less_1000 <-
   airbnb_data_less_1000 |>
   filter(!is.na(host_is_superhost)) |>
   mutate(host_is_superhost_binary = if_else(
-    host_is_superhost == TRUE, 1, 0)
-    )
+    host_is_superhost == TRUE,
+    1,
+    0
+  ))
 ```
 
 On Airbnb, guests can give 1-5 star ratings across a variety of different aspects, including cleanliness, accuracy, value, and others. But when we look at the reviews in our dataset, it is less clear how this is being constructed, because it appears to be a rating between 20 and 100 and there are also NA values (@fig-airbnbreviews).
@@ -942,8 +982,10 @@ airbnb_data_less_1000 |>
   ggplot(aes(x = review_scores_rating)) +
   geom_bar() +
   theme_classic() +
-  labs(x = "Reviews scores rating",
-       y = "Number of properties")
+  labs(
+    x = "Reviews scores rating",
+    y = "Number of properties"
+  )
 ```
 
 We would like to deal with the NAs in "review_scores_rating", but this is more complicated as there are a lot of them. It may be that this is just because they do not have any reviews.
@@ -971,13 +1013,15 @@ So these properties do not have a review rating yet because they do not have eno
 library(visdat)
 
 airbnb_data_less_1000 |>
-  select(review_scores_rating, 
-         review_scores_accuracy, 
-         review_scores_cleanliness, 
-         review_scores_checkin, 
-         review_scores_communication, 
-         review_scores_location, 
-         review_scores_value) |>
+  select(
+    review_scores_rating,
+    review_scores_accuracy,
+    review_scores_cleanliness,
+    review_scores_checkin,
+    review_scores_communication,
+    review_scores_location,
+    review_scores_value
+  ) |>
   vis_miss()
 ```
 
@@ -996,8 +1040,10 @@ airbnb_data_less_1000 |>
   ggplot(aes(x = review_scores_rating)) +
   geom_histogram(binwidth = 1) +
   theme_classic() +
-  labs(x = "Average review score",
-       y = "Number of properties")
+  labs(
+    x = "Average review score",
+    y = "Number of properties"
+  )
 ```
 
 For now, we will remove anyone with an NA in their main review score, even though this will remove roughly 20 per cent of observations. If we ended up using this dataset for actual analysis, then we would want to justify this decision in an appendix or similar.
@@ -1029,10 +1075,13 @@ It is unclear a host could have a response time of NA. It may be that they are r
 
 airbnb_data_has_reviews <-
   airbnb_data_has_reviews |>
-  mutate(host_response_time = if_else(host_response_time == "N/A", 
-                                      NA_character_, 
-                                      host_response_time),
-         host_response_time = factor(host_response_time)
+  mutate(
+    host_response_time = if_else(
+      host_response_time == "N/A",
+      NA_character_,
+      host_response_time
+    ),
+    host_response_time = factor(host_response_time)
   )
 ```
 
@@ -1051,8 +1100,10 @@ airbnb_data_has_reviews |>
   ggplot(aes(x = review_scores_rating)) +
   geom_histogram(binwidth = 1) +
   theme_classic() +
-  labs(x = "Average review score",
-       y = "Number of properties")
+  labs(
+    x = "Average review score",
+    y = "Number of properties"
+  )
 ```
 
 Usually missing values are dropped by `ggplot2`. We can use `geom_miss_point()` from `naniar` [@naniar] to include them in the graph (@fig-visualisemissing).
@@ -1067,9 +1118,11 @@ Usually missing values are dropped by `ggplot2`. We can use `geom_miss_point()` 
 
 library(naniar)
 
-airbnb_data_has_reviews |> 
-  ggplot(aes(x = host_response_time, 
-             y = review_scores_accuracy)) + 
+airbnb_data_has_reviews |>
+  ggplot(aes(
+    x = host_response_time,
+    y = review_scores_accuracy
+  )) +
   geom_miss_point()
 ```
 
@@ -1156,11 +1209,13 @@ Look at the relationship between price and reviews, and whether they are a super
 
 airbnb_data_selected |>
   ggplot(aes(x = price, y = review_scores_rating, color = host_is_superhost)) +
-  geom_point(size = 1, alpha = 0.1) + 
+  geom_point(size = 1, alpha = 0.1) +
   theme_classic() +
-  labs(x = "Price per night",
-       y = "Average review score",
-       color = "Super host") +
+  labs(
+    x = "Price per night",
+    y = "Average review score",
+    color = "Super host"
+  ) +
   scale_color_brewer(palette = "Set1")
 ```
 
@@ -1172,8 +1227,10 @@ One of the aspects that may make someone a super host is how quickly they respon
 
 airbnb_data_selected |>
   count(host_is_superhost) |>
-  mutate(proportion = n / sum(n),
-         proportion = round(proportion, digits = 2))
+  mutate(
+    proportion = n / sum(n),
+    proportion = round(proportion, digits = 2)
+  )
 ```
 
 Fortunately, it looks like when we removed the reviews rows we removed any NAs from whether they were a super host, but if we go back and look into that we may need to check again. 
@@ -1229,12 +1286,13 @@ We estimate the model using `glm` in the R language [@citeR].
 #| include: true
 
 logistic_reg_superhost_response_review <-
-  glm(host_is_superhost ~
-        host_response_time +
-        review_scores_rating,
-      data = airbnb_data_selected,
-      family = binomial
-      )
+  glm(
+    host_is_superhost ~
+      host_response_time +
+      review_scores_rating,
+    data = airbnb_data_selected,
+    family = binomial
+  )
 ```
 
 We can have a quick look at the results using `modelsummary()` from `modelsummary` [@citemodelsummary]
