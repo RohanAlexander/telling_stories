@@ -8,6 +8,7 @@ engine: knitr
 
 - Read *Impact evaluation in practice*, Chapters 3 and 4, [@gertler2016impact]
 - Read *Inventing the randomized double-blind trial: the Nuremberg salt test of 1835*, [@stolberg2006inventing]
+- Read *The Psychology of Survey Response*, Chapter 2 "Respondents' Understanding of Survey Questions", [@tourangeau2000]
 - Read *Statistics and causal inference*, Parts 1-3, [@holland1986statistics]
 - Read *Big tech is testing you*, [@fry2020big]
 - Watch *Causal Inference Challenges in Industry: A perspective from experiences at LinkedIn*, [@yaxu]
@@ -78,7 +79,7 @@ We usually consider a default of there being no effect and we look for evidence 
 
 1. divide the dataset in two---treated and not treated---and have a binary effect column;
 2. sum the column, then divide it by the length of the column; and
-3. look at the value of this division.
+3. compare the value of this division in the two groups.
 
 This is an estimator, introduced in @sec-on-writing, which is a way of putting together a guess of something of interest. The estimand is the thing of interest, in this case the average effect, and the estimate is whatever our guess turns out to be. We can simulate data to illustrate the situation.
 
@@ -93,7 +94,8 @@ set.seed(853)
 
 treat_control <- 
   tibble(
-    binary_effect = sample(x = c(0, 1), size = 10, replace = TRUE)
+    group = sample(x = c("Treatment", "Control"), size = 100, replace = TRUE),
+    binary_effect = sample(x = c(0, 1), size = 100, replace = TRUE)
   )
 
 treat_control
@@ -105,12 +107,14 @@ treat_control
 #| warning: false
 #| message: false
 
-estimate <-
-  sum(treat_control$binary_effect) / length(treat_control$binary_effect)
-estimate
+effect_of_being_treated <- 
+  treat_control |> 
+  group_by(group) |> 
+  summarise(
+    result_of_being_treated = sum(binary_effect) / length(binary_effect))
 ```
 
-In this case, we draw either 0 or 1, 10 times, and then estimate that the average is 0.4.
+In this case, we draw either 0 or 1, 100 times, for each the treatment and control group, and then the estimate of the effect of being treated is 0.22.
 
 More broadly, to tell causal stories we need to bring together both theory and a detailed knowledge of what we are interested in [@Cunningham2021, p. 4]. In @sec-gather-data we discussed gathering data that we observed about the world. In this chapter we are going to be more active about turning the world into the data that we need. As the researcher, we will decide what to measure and how, and we will need to define what we are interested in. We will be active participants in the data generating process. That is, if we want to use this data, then as researchers we must go out and hunt it.
 
@@ -154,7 +158,7 @@ population <-
     noise = sample(1:10, size = 1),
     prefers_dogs_to_cats =
       if_else(
-        noise <= 8,
+        noise <= 8, # No special reason for using 8 as cut-off
         prefers_dogs_to_cats,
         sample(c("Yes", "No"), 
                size = 1)
@@ -255,7 +259,7 @@ sample |>
 
 It is exciting to have a representative share on 'unobservables' (In this case, we do 'observe' them---to illustrate the point---but we did not select on them). We get this because the variables were correlated. But it will break down in several ways that we will discuss. It also assumes large enough groups. For instance, if we considered specific dog breeds, instead of dogs as an entity, we may not find ourselves in this situation. To check that the two groups are the same, we look to see if we can identify a difference between the two groups based on observables, theory, experience, and expert opinion. In this case we looked at the mean, but we could look at other aspects as well. 
 
-This would traditionally bring us to Analysis of Variation (ANOVA). ANOVA\index{ANOVA} was introduced around one hundred years ago by Fisher while he was working on statistical problems in agriculture. (@Stolley1991 provides additional interesting background on Fisher.) This is less unexpected than it may seem because historically agricultural research was closely tied to statistical innovation. In particular, often statistical methods were designed to answer agricultural questions such as 'does fertilizer work?' and were only later adapted to clinical trials [@yoshioka1998use]. It was relatively easily to divide a field into 'treated' and 'non-treated', and the magnitude of any effect was large. While appropriate for that context, often these same statistical approaches are still taught today in introductory material, even when they are being applied to very different circumstances to those they were designed for. For instance, these days, many researchers worry more about data quantity than data quality, and effect sizes may be small, which creates issues for these approaches [@Bradley2021]. It almost always pays to take a step back and think about what is being done and whether it is appropriate to these circumstances. We mention ANOVA here because of its importance historically, but it is a variant of linear regression and, in general, we would usually not use ANOVA day-to-day these days. There is nothing wrong with it in the right circumstances. But it is more than one-hundred years old and the number of modern use-cases where it is the best option is small. A better option, in many cases, would be to build a hierarchical model, which we cover in @sec-its-just-a-linear-model. Nonetheless, if we were to use ANOVA here, we would approach it with the expectation that the groups are from the same distribution and could conduct it using `aov()`.
+This would traditionally bring us to Analysis of Variance (ANOVA). ANOVA\index{ANOVA} was introduced around one hundred years ago by Fisher while he was working on statistical problems in agriculture. (@Stolley1991 provides additional interesting background on Fisher.) This is less unexpected than it may seem because historically agricultural research was closely tied to statistical innovation. In particular, often statistical methods were designed to answer agricultural questions such as 'does fertilizer work?' and were only later adapted to clinical trials [@yoshioka1998use]. It was relatively easily to divide a field into 'treated' and 'non-treated', and the magnitude of any effect was large. While appropriate for that context, often these same statistical approaches are still taught today in introductory material, even when they are being applied to different circumstances to those they were designed for. For instance, these days, many researchers worry more about data quantity than data quality, and effect sizes may be small, which creates issues for these approaches [@Bradley2021]. It almost always pays to take a step back and think about what is being done and whether it is appropriate to these circumstances. We mention ANOVA here because of its importance historically, but it is a variant of linear regression and, in general, we would usually not directly use ANOVA day-to-day these days. There is nothing wrong with it in the right circumstances. But it is more than one-hundred years old and the number of modern use-cases where it is the best option is small. A better option, in many cases, would be to actually build the model that underpins it ourselves, which we cover in @sec-its-just-a-linear-model.
 
 ### Treatment and control
 
@@ -369,7 +373,7 @@ Fisher introduced an experiment designed to see if a person can distinguish betw
 
 One of the nice aspects of this experiment is that we can do it ourselves. There are a few things to be careful of in practice, including that: the quantities of milk and tea are consistent; the groups are marked in some way that the taster cannot see; and the order is randomized. 
 
-Another nice aspect of this experiment is that we can calculate the chance that Ian is able to randomly get the groupings correct. To decide if his groupings were likely to have occurred at random, we need to calculate the probability this could happen. First, we count the number of successes out of the four that were chosen. @fisherdesignofexperiments [p. 14] says there are: ${8 \choose 4} = \frac{8!}{4!(8-4)!}=70$ possible outcomes. This notation means there are eight items in the set and we are choosing four of them, and is used when the order of choice does not matter.
+Another nice aspect of this experiment is that we can calculate the chance that Ian is able to randomly get the groupings correct. To decide if his groupings were likely to have occurred at random, we need to calculate the probability this could happen. First, we count the number of successes out of the four that were chosen. There are: ${8 \choose 4} = \frac{8!}{4!(8-4)!}=70$ possible outcomes [@fisherdesignofexperiments, p. 14]. This notation means there are eight items in the set and we are choosing four of them, and is used when the order of choice does not matter.
 
 We are asking Ian to group the cups, not to identify which is which, and so there are two ways for him to be perfectly correct. He could either correctly identify all the ones that were milk-first (one outcome out of 70) or correctly identify all the ones that were tea-first (one outcome out of 70). This means the probability of this event is: $\frac{2}{70} \approx 0.028$ or about 3 per cent. 
 
@@ -392,6 +396,8 @@ The effect of the Tuskegee Syphilis Study was felt not just by the men in the st
 
 > In retrospect the Tuskegee Study revealed more about the pathology of racism than the pathology of syphilis; more about the nature of scientific inquiry than the nature of the disease process... [T]he notion that science is a value-free discipline must be rejected. The need for greater vigilance in assessing the specific ways in which social values and attitudes affect professional behavior is clearly indicated.
 
+@hellertuskegee provides further background on the Tuskegee Syphilis Study.
+
 :::{.callout-note}
 ## Shoulders of giants
 
@@ -405,7 +411,28 @@ Turning to the evaluation of extracorporeal membrane oxygenation (ECMO), @ware19
 
 One approach in these settings is a 'randomized play-the-winner' rule following @wei1978randomized. Treatment is still randomized, but the weight of probability shifts with each successful treatment to make treatment more likely, and there is some stopping rule. But @berry1989investigating argues that far from the need for a more sophisticated stopping rule, there was actually no need for the study at all, because equipoise never existed. @berry1989investigating re-visits the literature mentioned by @ware1989investigating and finds extensive evidence that ECMO was known to be effective. @berry1989investigating points out that there is almost never complete consensus and so one could almost always argue, inappropriately, for the existence of equipoise even in the face of a substantial weight of evidence. @berry1989investigating further criticizes @ware1989investigating for the use of randomized consent because of the potential that there may have been different outcomes for the infants subject to conventional therapy had their parents known there were other options. And instead, @berry1989investigating argues for the need for comprehensive patient registries, enabling the analysis of large datasets.
 
-While the Tuskegee Syphilis Study and ECMO experiments may seem quite far from our present circumstances, Dr Monica Alexander, Assistant Professor, University of Toronto explains that while it may be illegal to do this exact research these days, it does not mean that unethical research does not still happen. She says that we see it in machine learning applications in health and other areas and while we are not meant to explicitly discriminate and we are meant to get consent, it does not mean that we cannot implicitly discriminate without any type of buy-in at all. For instance, @obermeyer2019dissecting describes how US health care systems use algorithms to score the severity of how sick a patient is. They show that for the same score, Black patients are actually sicker, and that if Black patients were scored in the same way as White patients, then they would receive considerably more care. They find that the discrimination occurs because the algorithm is based on health care costs, rather than sickness. But because access to healthcare is unequally distributed between Black and White patients, the algorithm, however inadvertently, perpetuates racial bias.
+The Tuskegee Syphilis Study and ECMO experiments may seem quite far from our present circumstances. While it may be illegal to do this exact research these days, it does not mean that unethical research does not still happen. For instance, we see it in machine learning applications in health and other areas; while we are not meant to explicitly discriminate and we are meant to get consent, it does not mean that we cannot implicitly discriminate without any type of buy-in at all. For instance, @obermeyer2019dissecting describes how US health care systems use algorithms to score the severity of how sick a patient is. They show that for the same score, Black patients are actually sicker, and that if Black patients were scored in the same way as White patients, then they would receive considerably more care. They find that the discrimination occurs because the algorithm is based on health care costs, rather than sickness. But because access to healthcare is unequally distributed between Black and White patients, the algorithm, however inadvertently, perpetuates racial bias.
+
+
+## Surveys
+
+Having decided what to measure, one common way to get values is to use a survey. This is especially challenging, and there is an entire field, survey research, focused on this. There are many ways to implement surveys, and this choice really matters. For some time, the only choice was face-to-face surveys, where an enumerator would be tasked with actually conducting the survey with a respondent. Eventually surveys began to be conducted over the telephone, again by an enumerator. One issue is that it was found that in both these settings there were considerable interviewer effects [@anchoringmethod]. The internet brought about a third era of survey research, characterized by low participation rates and increased options for data collection [@Groves2011]. The use of surveys remains popular and an invaluable way to get data. While face-to-face and telephone surveys are still used and have an important role to play, we now focus on designing internet-based surveys and introduce one way to implement them.
+
+We focus on internet-based surveys. There are many dedicated survey platforms, such as Survey Monkey and Qualtrics, that are largely internet-based. In general, the focus of those platforms is on putting together the survey form and they expect that we already have contact details for the sample of interest. Some other platforms, such as Mechanical Turk and Prolific, focus on providing that audience, and we can then ask that audience to do more than just take a survey. When using platforms like those, and other providers, it is vital to be aware of who is in the sample [@Levay2016; @whereyoursurveycomesfrom]. While it is a useful feature, it usually comes with higher costs. Finally, platforms such as Facebook also provide the ability to run a survey. One especially common approach, because it is free, is to use Google Forms.
+
+The survey form needs to be considered within the context of the broader research and with special concern for the respondent. The most important aspect is to test the survey before releasing it more broadly. The fundamental rule of surveys is that if you do not have time, or budget, to test the survey, then do not bother doing the survey. The wording of a survey is crucial [@tourangeau2000, p. 23]. When designing the survey, we need to have survey questions that are conversational and flow from one to the next, grouped within topics [@elson2016question]. However we should also consider the cognitive load that we place on the respondent, and vary the difficulty of the questions. 
+
+When designing a survey, the critical task is to keep the respondent front-of-mind [@surveystailored, p. 94]. Drawing on @surveydesign, all questions need to be relevant and able to be answered by the respondent. The wording of the questions should be based on what the respondent would be comfortable with. The decision between different question types turns on minimizing error and the burden that we impose on the respondent. In general, if there are a small number of clear options then multiple-choice questions are appropriate. In that case, the responses should usually be mutually exclusive and collectively exhaustive. If they are not mutually exclusive, then this needs to be signaled in the text of the question. It is also important that units are specified, and that standard concepts are used, to the extent possible. 
+
+Open text boxes may be appropriate if there are a lot of potential answers, although this will increase the time the respondent spends completing the survey and increase the time it will take to analyze the answers. It is important that only one question is asked at a time and that all questions be asked in a neutral way that does not lead to one particular response. We want to avoid ambiguous or double-barreled questions. The subject-matter of the survey will also affect the appropriate choice of question type. For instance, potentially "threatening" topics may be better considered through the use of open-ended questions [@blair1977ask].
+
+All surveys need to have an introduction that specifies a title for the survey, who is conducting it, and their contact details, and the purpose. It should also include a statement about protecting confidentiality and ethics review board permission, if appropriate.
+
+When doing surveys, it is critical to ask the right person. For instance, @Lichand2022 consider child labor, the extent of which is typically based on surveys of parents. When questions were instead asked of children themselves, a considerable under-reporting by parents was found. Finally, one especially exciting area of research is making better use of surveys delivered on smartphones. In particular using voice, rather than text, to allow open-ended survey questions. @gavras2022innovating find that collecting voice responses in this way, compared with typed answers, is associated with responses that are more "intuitive and spontaneous".
+
+Finally, returning to the reason for doing surveys in the first place, while doing all this, it is important to also keep what we are interested in measuring in mind.
+
+
 
 
 ## RCT examples
@@ -478,7 +505,7 @@ Similar to earlier studies such as @randhealth, @finkelstein2012oregon found tha
 
 Trust is not something that we think regularly about, but it is actually fairly fundamental to most interactions, both economic and personal. For instance, many of us get paid after we do some work--we are trusting our employer will make good, and vice versa. If you get paid in advance then they are trusting you. In a strictly naive, one-shot, transaction-cost-less world, this does not make sense. If you get paid in advance, the incentive is for you to take the money and run in the last pay period before you quit, and through backward induction everything falls apart. We do not live in such a world. For one thing there are transaction costs, for another, generally, we have repeated interactions, and finally, the world usually ends up being fairly small.
 
-Understanding the extent of honesty in different countries may help us to explain economic development and other aspects of interest such as tax compliance, but it is hard to measure. We cannot ask people how honest they are--the liars would lie, resulting in a lemons problem [@akerlof1970market]. To get around this @cohn2019civic conduct an experiment in 355 cities across 40 countries where they 'turn in' a wallet that is either empty or contains the local equivalent of US$13.45. They are interested in whether the 'recipient' attempts to return the wallet. They find that generally wallets with money were more likely to be returned [@cohn2019civic, p. 1].
+Understanding the extent of honesty in different countries may help us to explain economic development and other aspects of interest such as tax compliance, but it is hard to measure. We cannot ask people how honest they are--the liars would lie, resulting in a lemons problem [@akerlof1970market]. This is a situation of adverse selection, where the liars know they are liars, but others do not. To get around this @cohn2019civic conduct an experiment in 355 cities across 40 countries where they 'turn in' a wallet that is either empty or contains the local equivalent of US$13.45. They are interested in whether the 'recipient' attempts to return the wallet. They find that generally wallets with money were more likely to be returned [@cohn2019civic, p. 1].
 
 In total @cohn2019civic 'turn in' 17,303 wallets to various institutions including banks, museums, hotels, and police stations. The importance of such institutions to an economy is generally well-accepted [@acemoglu2001colonial] and they are common across most countries. Importantly, for the experiment, they usually have a reception area where the wallet could be turned in [@cohn2019civic, p. 1].
 
@@ -517,36 +544,17 @@ wallet_data |>
   theme_classic()
 ```
 
-In addition to the experiments, @cohn2019civic conducted surveys that allowed them to understand some reasons for their findings. During the survey, participants were given one of the scenarios and then asked to answer questions. The use of surveys also allowed them to be specific about the respondents. The survey involved 2,525 respondents (829 in the UK, 809 in Poland, and 887 in the US) [@cohn2019civicaddendum, p. 36].  Participants were chosen using attention checks and demographic quotas based on age, gender, and residence, and they received US $4.00 for their participation [@cohn2019civicaddendum, p. 36]. 
+In addition to the experiments, @cohn2019civic conducted surveys that allowed them to understand some reasons for their findings. During the survey, participants were given one of the scenarios and then asked to answer questions. The use of surveys also allowed them to be specific about the respondents. The survey involved 2,525 respondents (829 in the UK, 809 in Poland, and 887 in the US) [@cohn2019civicaddendum, p. 36].  Participants were chosen using attention checks and demographic quotas based on age, gender, and residence, and they received US $4.00 for their participation [@cohn2019civicaddendum, p. 36]. The survey did not find that larger rewards were expected for turning in a wallet with more money. But it did find that failure to turn in a wallet with more money caused the respondent to feel more like they had stolen money.
 
 
-
-
-## Surveys
-
-### Designing surveys
-
-Having decided what to measure, one common way to get values is to use a survey. Again, this is especially challenging, and there is an entire field, survey research, focused on this. While we are in the third era of survey research, characterized by low participation rates and increased options for data collection [@Groves2011], the use of surveys remains popular and invaluable to hunt data. We now discuss designing surveys and introduce one way to implement them.
-
-The survey form needs to be considered within the context of the broader research and with special concern for the respondent. The most important aspect is to test the survey before releasing it more broadly. If you do not have time, or budget, to test the survey, then do not bother doing the survey. 
-
-Drawing on @surveydesign, all questions need to be relevant and able to be answered to by the respondent. The wording of the questions should be based on what the respondent would be comfortable with. The decision between different question types turns on minimizing error and the burden that we impose on the respondent. In general, if there are a small number of clear options then MCQ is appropriate. In that case, the responses should usually be mutually exclusive and collectively exhaustive. If they are not mutually exclusive, then this needs to be signaled in the text of the question. It is also important that units are specified, and that standard concepts are used, to the extent possible. 
-
-Open text boxes may be appropriate if there are a lot of potential answers, although this will increase the time the respondent spends completing the survey, and increase the time it will take to analyze the answers. It is important that only one question is asked at a time and that all questions be asked in a neutral way that does not lead to one particular response.
-
-All surveys need to have an introduction that specifies a title for the survey, who is conducting it, and their contact details, and the purpose. It should also include a statement about protecting confidentiality and ethics review board permission, if appropriate.
-
-When doing surveys it is critical to ask the right person. For instance, @Lichand2022 consider child labor, the extent of which is typically based on surveys of parents. When questions were instead asked of children themselves, a considerable under-reporting by parents was found.
-
-### Implementing surveys
-
-There are many ways to implement surveys, and this choice really matters. For instance, there are dedicated survey platforms such as Survey Monkey and Qualtrics. In general, the focus of those platforms is on putting together the survey form and they expect that we already have contact details for the sample of interest. Some other platforms, such as Mechanical Turk and Prolific, focus on providing that audience, and we can then ask that audience to do more than just take a survey. When using platforms like those, and other providers, it is vital to be  aware of who is in the sample [@Levay2016; @whereyoursurveycomesfrom] While that is useful, it usually comes with higher costs. Finally, platforms such as Facebook also provide the ability to run a survey. One especially common approach, because it is free, is to use Google Forms. 
 
 
 
 ## A/B testing
 
-The past two decades has probably seen the most experiments ever run, likely by several orders of magnitude. This is because of the extensive use of A/B testing at tech firms [@Kohavi2012]. For a long time decisions such as what font to use were based on the Highest Paid Person's Opinion (HIPPO) [@abtestswired]. These days, many large tech companies have extensive infrastructure for experiments, and they term them A/B tests because of the comparison of two groups: one that gets treatment A and the other that either gets treatment B or does not see any change [@Salganik2018 p. 185]. Every time you are online you are probably subject to tens, hundreds, or potentially thousands, of different A/B tests. This is especially the case if you use apps like TikTok. While, at their heart, they are just experiments that use sensors to measure data that need to be analyzed, they have many special features that are interesting in their own light. For instance, @kohavi [p. 3] discuss the example of Microsoft's search engine Bing. They used A/B testing to examine how to display an ad. Based on these tests, they ended up lengthening the title on the ad. They found this caused revenue to increase by 12 per cent, or around $100 million annually, without any significant trade-off being measured.
+The past two decades has probably seen the most experiments ever run, likely by several orders of magnitude. This is because of the extensive use of A/B testing at tech firms [@Kohavi2012] for many aspects and especially around push notifications [@boykisabtesting]. For a long time decisions such as what font to use were based on the Highest Paid Person's Opinion (HIPPO) [@abtestswired]. These days, many large tech companies have extensive infrastructure for experiments, and they term them A/B tests because of the comparison of two groups: one that gets treatment A and the other that either gets treatment B or does not see any change [@Salganik2018, p. 185]. We could additionally consider more than two options, in which we typically change to using the terminology of 'arms' of the experiment.
+
+Every time you are online you are probably subject to tens, hundreds, or potentially thousands, of different A/B tests. This is especially the case if you use apps like TikTok. While, at their heart, they are just experiments that use sensors to measure data that need to be analyzed, they have many special features that are interesting in their own light. For instance, @kohavi [p. 3] discuss the example of Microsoft's search engine Bing. They used A/B testing to examine how to display an advertisement. Based on these tests, they ended up lengthening the title on the advertisement. They found this caused revenue to increase by 12 per cent, or around $100 million annually, without any significant trade-off being measured. That all said, sometimes the hardest part of A/B testing is ensuring design enables suitable randomness, rather than the actual calculation of ATE.
 
 We use the term A/B test to strictly refer to the situation in which we are primarily implementing an experiment through a technology stack about something that is primarily of the internet, for instance a change to a website or similar and measured with sensors rather than a survey. While at their heart they are just experiments, A/B testing has a range of specific concerns. There is something different about doing tens of thousands of small experiments all the time, compared with the RCT set-up of conducting one experiment over the course of months. RCTs are often, though not exclusively, done in academia or by government agencies, but much of A/B testing occurs in industry. This means that if you are in industry and want to introduce A/B testing to your firm there can be aspects such as culture, relationship building, and nuance, that become important. It can be difficult to convince a manager to run an experiment. Indeed, sometimes it can be easier to experiment by not delivering, or delaying, a change that has been decided to create a control group rather than a treatment group [@Salganik2018 p. 188]. This may especially be the case where there is a particularly incorrigible HIPPO. Sometimes the most difficult aspect of A/B testing, and conducting experiments more generally, is not the statistics, it is the politics. This is not unique to A/B testing and looking at the history of biology, we see that even aspects such as germ theory were not resolved through experiment, but instead on ideology, social standing [@morange, p. 124], that is to say, politics.
 
@@ -554,9 +562,9 @@ When conducting A/B testing, as with all experiments, we need to be concerned wi
 
 In the case of the effect of conducting the experiment, it is relatively easy and normal to update a website all the time. This means that small changes can be easily implemented if the experiment is conducted server-side. But in the case of a client-side implementation of an app, conducting an experiment becomes a bigger deal. For instance, the release may need to go through an app store, and so would need to be part of a regular release cycle. There is also a selection concern because some users will not update their app and there is the possibility that they are different to those that do regularly update the app. 
 
-Turning to the effect of the delivery decision on our ability to gather data from the experiment. Again, server-side is less of a big deal because we get the data anyway as part of the user interacting with the website. But in the case of an app, the user may use the app offline or with limited data upload, which then requires a data transmission protocol or caching, but this then could affect user experience, especially as some phones place limits are various aspects.
+Now turning to the effect of the delivery decision on our ability to gather data from the experiment. Again, server-side is less of a big deal because we get the data anyway as part of the user interacting with the website. But in the case of an app, the user may use the app offline or with limited data upload, which then requires a data transmission protocol or caching, but this then could affect user experience, especially as some phones place limits are various aspects.
 
-The effect of all this is that we need to plan. For instance, results are unlikely to be available the day after a change to an app, whereas they are likely available the day after a change to a website. Further, we may need to consider our results in the context of different devices and platforms, potentially using, say, multilevel regression which will be covered in @sec-its-just-a-linear-model.
+The effect of all this is that we need to plan. For instance, results are unlikely to be available the day after a change to an app, whereas they are likely available the day after a change to a website. Further, we may need to consider our results in the context of different devices and platforms, potentially using, say, regression which will be covered in @sec-its-just-a-linear-model.
 
 The second aspect of concern is instrumentation. When we conduct a traditional experiment then we might, for instance, ask respondents to fill out a survey. But this is usually not done with A/B testing, and we usually use various sensors [@kohavi, p. 162]. One approach is to put a cookie on the user's device, but different users will clear these at different rates. Another approach is to use a beacon, such as forcing the user to download a tiny image from a server, so that we know when they have completed some action. For instance, this is a commonly used approach to know when a user has opened an email. There are practical concerns around when the beacon loads, for instance, if it is before the main content loads then the user experience may be worse, but if it is after then our sample may be biased.
 
@@ -572,7 +580,8 @@ One of the interesting aspects of A/B testing is that we are usually running the
 
 To illustrate this, pretend that we work at a food delivery app and we are concerned with driver retention. Say we do some A/B tests and find that drivers are always more likely to be retained when they can deliver food to the customer faster. Our finding is that faster is better, for driver retention, always. But one way to achieve faster deliveries, is for them to not put the food into a hot box that would maintain the food's temperature. Something like that might save 30 seconds, which is significant on a 10-15 minute delivery. Unfortunately, although we would decide to encourage that on the basis of A/B tests designed to optimize driver-retention, such a decision would likely make the customer experience worse. If customers receive cold food when it is meant to be hot, then they may stop using the app, which would ultimately be very bad for the business.
 
-This trade-off may be obvious when we run the driver experiment if we were to look at customer complaints. It is possible that on a small team we would be exposed to those tickets, but on a larger team we may not be. Ensuring that A/B tests are not resulting in false optimization is especially important. And not something that we typically have to worry about in normal experiments.
+This trade-off may be obvious when we run the driver experiment if we were to look at customer complaints. It is possible that on a small team we would be exposed to those tickets, but on a larger team we may not be. Ensuring that A/B tests are not resulting in false optimization is especially important. And not something that we typically have to worry about in normal experiments. As an example of this in a real setting @duolingo describes testing a feature of Duolingo, a language learning application. The feature was found to be positive for Duolingo's revenue, but negative for customer learning habits and so was not rolled out. 
+
 
 
 :::{.callout-note}
@@ -693,7 +702,6 @@ library(modelsummary)
 
 datasummary(ave_clicks ~ Mean * asks_question,
             data = to_question_or_not_to_question)
-
 ```
 
 We find that in general, having a question in the headline may slightly decrease the number of clicks on a headline, although if there is an effect it does not appear to be very large (@fig-upworthy).
@@ -715,6 +723,8 @@ to_question_or_not_to_question |>
        fill = "Has a question mark?") +
   theme_classic() 
 ```
+
+
 
 
 
