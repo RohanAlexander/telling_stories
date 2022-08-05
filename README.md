@@ -28,3 +28,10 @@ Change:
 - and also -> and
 - a large number of -> many
 - take advantage of -> use
+
+
+### Styler
+
+- https://github.com/gadenbuie/grkstyle
+- https://styler.r-lib.org/articles/styler.html
+- Use build from here: https://issuehint.com/issue/r-lib/styler/913

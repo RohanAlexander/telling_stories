@@ -11,7 +11,7 @@ engine: knitr
 
 **Key concepts and skills**
 
-- Exploratory data analysis is the process of quickly coming to terms with a new dataset by constructing graphs and tables. We want to explore and understand three critical aspects: 1) individual variables; 2) individual and multiple relationships between variables; 3) considering what is not there.
+- Exploratory data analysis is the process of quickly coming to terms with a new dataset by constructing graphs and tables. We want to explore and understand three critical aspects: 1) each individual variable by itself; 2) each individual in the context of other, relevant, variables; and 3) the data that are not there.
 - During the EDA process we want to come to understand the issues and features of the dataset and how this may affect analysis decisions. We are especially concerned about missing values and outliers.
 
 **Key packages and functions**
@@ -66,15 +66,15 @@ engine: knitr
 
 Exploratory data analysis is never finished, you just die. It is the active process of exploring and becoming familiar with our data. Like a farmer with their hands in the earth, we need to know every contour and aspect of our data. We need to know how it changes, what it shows, hides, and what are its limits. Exploratory data analysis (EDA) is the unstructured process of doing this.
 
-EDA is a means to an end. While it will inform the entire paper, especially the data section, it is not typically something that ends up in the final paper. The way to proceed is to make a separate Quarto document and add code as well as brief notes on-the-go. Do not delete previous code, just add to it. By the end of it we will have created a useful notebook that captures our exploration of the dataset. This is a document that will guide the subsequent analysis and modelling.
+EDA is a means to an end. While it will inform the entire paper, especially the data section, it is not typically something that ends up in the final paper. The way to proceed is to make a separate Quarto document. Add code and brief notes on-the-go. Do not delete previous code, just add to it. By the end of it we will have created a useful notebook that captures our exploration of the dataset. This is a document that will guide the subsequent analysis and modelling.
 
-EDA draws on a variety of skills and there are a lot of options for EDA [@staniak2019landscape]. Every tool should be considered. Look at the data and scroll through it. Make tables, plots, summary statistics, even some models. The key is to iterate, move quickly rather than perfectly, and come to a thorough understanding of the data.
+EDA draws on a variety of skills and there are a lot of options when understanding EDA [@staniak2019landscape]. Every tool should be considered. Look at the data and scroll through it. Make tables, plots, summary statistics, even some models. The key is to iterate, move quickly rather than perfectly, and come to a thorough understanding of the data.
 
-We are interested in coming to thoroughly understand the data that we have, which will help us understand what we do not have. We are interested in the following process:
+Interestingly, coming to thoroughly understand the data that we have, often helps us understand what we do not have. We are interested in the following process:
 
-- Understand distribution and properties of individual variables.
+- Understand the distribution and properties of individual variables.
 - Understand relationships between variables.
-- Consider what is not there.
+- Understand what is not there.
 
 In this chapter we will go through various examples of EDA including US state populations, subway delays in Toronto, and Airbnb listings in London.
 
@@ -127,9 +127,9 @@ Finally, it is especially important to understand the behavior of these key summ
 
 ## TTC subway delays 
 
-As a second, and much more involved, example of EDA we use `opendatatoronto` [@citeSharla], introduced in @sec-fire-hose, and the `tidyverse` [@tidyverse] to obtain and explore data about the Toronto subway system. We are especially interested in getting a sense of the delays that have occurred.
+As a second, and more involved, example of EDA we use `opendatatoronto` [@citeSharla], introduced in @sec-fire-hose, and the `tidyverse` [@tidyverse] to obtain and explore data about the Toronto subway system. We are especially interested in getting a sense of the delays that have occurred.
 
-To begin, we download the data on Toronto Transit Commission (TTC) subway delays in 2021. The data are available as a separate dataset for each month. We are interested in 2021, so we create a column that of the year, and then filter the resources to just those months that were in 2021. We download them using `get_resource()`, iterating through each month using `map_dfr` from `purrr` [@citepurrr] which brings each of the twelve datasets together, and then save them.
+To begin, we download the data on Toronto Transit Commission (TTC) subway delays in 2021. The data are available as an Excel file with a separate sheet for each month. We are interested in 2021 so we filter to just that year then download it using `get_resource()` and bring the months together with `bind_rows()`.
 
 ```{r}
 #| eval: false
@@ -140,9 +140,7 @@ library(opendatatoronto)
 library(tidyverse)
 
 all_2021_ttc_data <-
-  list_package_resources(
-    "996cfe8d-fb35-40ce-b569-698d51fc683b"
-  ) |>
+  list_package_resources("996cfe8d-fb35-40ce-b569-698d51fc683b") |>
   filter(name == "ttc-subway-delay-data-2021") |>
   get_resource() |>
   bind_rows() |>
@@ -164,7 +162,7 @@ write_csv(all_2021_ttc_data, "inputs/data/all_2021_ttc_data.csv")
 
 ```{r}
 #| eval: true
-#| include: false
+#| echo: false
 
 library(janitor)
 library(opendatatoronto)
@@ -228,10 +226,10 @@ delay_codes
 There is no one way to explore a dataset while conducting EDA, but we are usually especially interested in: 
 
 - What should the variables look like? For instance, what is their type, what are the values, and what does the distribution of these look like?
-- What aspects are surprising, both in terms of data that are there that we do not expect, such as outliers, but also in terms of data that we may expect here but do not have such as missing data.
-- Developing a goal for our analysis. For instance, in this case, it might be understanding the factors such as stations and the time of day, that are associated with delays.
+- What aspects are surprising, both in terms of data that are there that we do not expect, such as outliers, but also in terms of data that we may expect but do not have, such as missing data.
+- Developing a goal for our analysis. For instance, in this case, it might be understanding the factors such as stations and the time of day, that are associated with delays. While we would not answer these questions formally here, we might explore what an answer could look like.
 
-It is important to document all aspects as we go through and make note of anything surprising. We are looking to create a record of the steps and assumptions that we made as we were going because these will be important when we come to modelling. 
+It is important to document all aspects as we go through and note of anything surprising. We are looking to create a record of the steps and assumptions that we made as we were going because these will be important when we come to modelling. Indeed in the natural sciences, a research notebook of this type, can be a legal document [@nihtalk]. 
 
 ### Distribution and properties of individual variables
 
@@ -257,7 +255,7 @@ all_2021_ttc_data_filtered_lines <-
   filter(line %in% c("BD", "YU", "SHP", "SRT"))
 ```
 
-Exploring missing data could be a course in itself, but the presence, or lack, of missing values can haunt an analysis. To get started we could look at known-unknowns, which are the NAs for each variable. It can be useful to use `vis_dat()` from `visdat` [@citevisdat] to get a feel for how the missing values are distributed across variables.
+Entire careers are spent understanding missing data, and the presence, or lack, of missing values can haunt an analysis. To get started we could look at known-unknowns, which are the NAs for each variable. It can be useful to use `vis_dat()` from `visdat` [@citevisdat] to get a feel for how the missing values are distributed across variables.
 
 ```{r}
 #| eval: true
@@ -302,7 +300,7 @@ all_2021_ttc_data_no_dupes |>
   count(station)
 ```
 
-We could try to quickly bring a little order to the chaos by just taking just the first word (or, the first two if it starts with "ST"). Again, we are just trying to get a sense of the data, not necessarily make binding decisions here. We use `word()` from `stringr` here to extract specific words from the station names.
+We could try to quickly bring a little order to the chaos by just taking just the first word (or, the first two if it starts with "ST"). Again, we are just trying to get a sense of the data, not necessarily make binding decisions here. We use `word()` from `stringr` to extract specific words from the station names.
 
 ```{r}
 #| eval: true
@@ -330,7 +328,7 @@ all_2021_ttc_data_no_dupes |>
   geom_histogram(bins = 30)
 ```
 
-The largely empty graph suggests the presence of outliers. There are a variety of ways to try to understand what could be going on, but one quick way to proceed it to use logarithms, remembering that we would expect values of 0 to drop away.
+The largely empty graph suggests the presence of outliers. There are a variety of ways to try to understand what could be going on, but one quick way to proceed is to use logarithms, remembering that we would expect values of 0 to drop away.
 
 ```{r}
 #| eval: true
@@ -344,11 +342,13 @@ all_2021_ttc_data_no_dupes |>
   scale_x_log10()
 ```
 
-This initial exploration hints at an issue that we might like to explore further. We will join this dataset with "delay_codes" to understand what is going on. 
+This initial exploration hints at an issue, which is there are a small number of incredibly large delays, that we might like to explore further. We will join this dataset with "delay_codes" to understand what is going on. 
 
 ```{r}
 #| eval: true
 #| include: true
+
+# WHAT IS HAPPENING HERE? REWRITE THIS OMG
 
 all_2021_ttc_data_no_dupes <-
   all_2021_ttc_data_no_dupes |>
@@ -380,7 +380,9 @@ all_2021_ttc_data_no_dupes <-
 all_2021_ttc_data_no_dupes
 ```
 
-And so we can see that the 450 minute delay was due to "Transit Control Related Problems", the 446 minute delay was due to "Miscellaneous Other", they seem to be outliers, even among the outliers.
+**NEED TO FILTER TO JUST THE BIG ONES TO SEE THIS**
+
+From this we can see that the 450 minute delay was due to "Transit Control Related Problems", the 446 minute delay was due to "Miscellaneous Other", they seem to be outliers, even among the outliers.
 
 ```{r}
 #| eval: true
@@ -394,17 +396,18 @@ all_2021_ttc_data_no_dupes |>
   select(date, time, station, line, min_delay, code, code_desc)
 ```
 
-#### Groups of small counts
 
 Another thing that we are looking for is various groupings of the data, especially where sub-groups may end up with only a small number of observations in them. This is because any analysis could be especially influenced by them. One quick way to do this is to group the data by a variable that is of interest, for instance, "line", using color.
 
 ```{r}
 #| eval: true
-#| fig-cap: "Density of the distribution of delay, in minutes"
 #| include: true
-#| label: fig-delaydensity
 #| message: false
 #| warning: false
+#| fig-cap: "Distribution of delay, in minutes"
+#| label: fig-delaydensity
+#| layout-ncol: 2
+#| fig-subcap: ["Density", "Frequency"]
 
 all_2021_ttc_data_no_dupes |>
   ggplot() +
@@ -418,17 +421,6 @@ all_2021_ttc_data_no_dupes |>
     bins = 10
   ) +
   scale_x_log10()
-```
-
-@fig-delaydensity uses density so that we can look at the distributions more comparably, but we should also be aware of differences in frequency (@fig-delayfreq). In this case, we will see that "SHP" and "SRT" have much smaller counts.
-
-```{r}
-#| eval: true
-#| fig-cap: "Frequency of the distribution of delay, in minutes"
-#| include: true
-#| label: fig-delayfreq
-#| message: false
-#| warning: false
 
 all_2021_ttc_data_no_dupes |>
   ggplot() +
@@ -439,6 +431,8 @@ all_2021_ttc_data_no_dupes |>
   ) +
   scale_x_log10()
 ```
+
+@fig-delaydensity-1 uses density so that we can look at the distributions more comparably, but we should also be aware of differences in frequency (@fig-delaydensity-2). In this case, we will see that "SHP" and "SRT" have much smaller counts.
 
 To group by another variable, we can add facets (@fig-delayfreqfacet).
 
@@ -481,9 +475,7 @@ all_2021_ttc_data_no_dupes |>
   )
 ```
 
-#### Dates
-
-As discussed in @sec-clean-and-prepare dates are often difficult to work with because they are so prone to having issues. For this reason, it is especially important to consider them during EDA. We could create a graph by week, to see if there is any seasonality. When using dates, `lubridate` [@GrolemundWickham2011] is especially useful. For instance, we can look at the average delay, of those that were delayed, by week, using `week()` to construct the weeks (@fig-delaybyweek).
+As discussed in @sec-clean-and-prepare, dates are often difficult to work with because they are so prone to having issues. For this reason, it is especially important to consider them during EDA. We could create a graph by week, to see if there is any seasonality. When using dates, `lubridate` [@GrolemundWickham2011] is especially useful. For instance, we can look at the average delay, of those that were delayed, by week, using `week()` to construct the weeks (@fig-delaybyweek).
 
 ```{r}
 #| eval: true
@@ -535,7 +527,6 @@ all_2021_ttc_data_no_dupes |>
 These figures, tables, and analysis have no place in a final paper. Instead, they allow us to become comfortable with the data. We note aspects about each that stand out, as well as the warnings and any implications or aspects to return to.
 
 ### Relationships between variables
-
 
 We are also interested in looking at the relationship between two variables. Scatter plots are especially useful here for continuous variables, and are a good precursor to modeling. For instance, we may be interested in the relationship between the delay and the gap (@fig-delayvsgap).
 
@@ -732,13 +723,13 @@ all_2021_ttc_data_no_dupes |>
 
 ## Airbnb listings in London
 
-In this case study we look at Airbnb listings in London as at 7 June 2022. The dataset is from Inside Airbnb [@airbnbdata] and we will read it from their website, and then save a local copy. We can give `read_csv()` a link to where the dataset is and it will download it. This helps with reproducibility because the source is clear. But, as that link could change at any time, longer-term reproducibility, as well as wanting to minimize the effect on the Inside Airbnb servers, suggests that we should also save a local copy of the data and then use that. 
+In this case study we look at Airbnb listings in London as at 7 June 2022. The dataset is from [Inside Airbnb](http://insideairbnb.com) [@airbnbdata] and we will read it from their website, and then save a local copy. We can give `read_csv()` a link to where the dataset is and it will download it. This helps with reproducibility because the source is clear. But, as that link could change at any time, longer-term reproducibility, as well as wanting to minimize the effect on the Inside Airbnb servers, suggests that we should also save a local copy of the data and then use that. 
 
-To get the dataset that we need, go to [Inside Airbnb](http://insideairbnb.com), -> "Data" -> "Get the Data", then scroll down to London. We are interested in the listings dataset, and we right click to get the URL that we need (@fig-getairbnb). Inside Airbnb update the data that they make available, and so the particular dataset that you are able to download may be different.
+To get the dataset that we need, go to Inside Airbnb -> "Data" -> "Get the Data", then scroll down to London. We are interested in the "listings dataset", and we right click to get the URL that we need (@fig-getairbnb). Inside Airbnb update the data that they make available, and so the particular dataset that is available will change over time.
 
 ![Obtaining the Airbnb data from Inside Airbnb](figures/inside_airbnb.png){#fig-getairbnb width=95% fig-align="center"}
 
-As the original data is not ours, we should not make that public without first getting written permission. The "guess_max" option in `read_csv()` helps us avoid having to specify the column types. Usually `read_csv()` takes a best guess at the column types based on the first few rows. But sometimes those first ones are misleading and so "guess_max" forces it to look at a larger number of rows to try to work out what is going on. Paste the URL that we copied into the IRL part.
+As the original dataset is not ours, we should not make that public without first getting written permission. For instance, we may want to add it to our inputs folder, but use a .gitignore entry, covered in @sec-reproducible-workflows, to ensure that we do not push it to GitHub. The "guess_max" option in `read_csv()` helps us avoid having to specify the column types. Usually `read_csv()` takes a best guess at the column types based on the first few rows. But sometimes those first ones are misleading and so "guess_max" forces it to look at a larger number of rows to try to work out what is going on. Paste the URL that we copied from Inside Airbnb into the URL part. And once it is downloaded, save a local copy.
 
 ```{r}
 #| include: true
@@ -765,7 +756,7 @@ write_csv(airbnb_data, "airbnb_data.csv")
 airbnb_data
 ```
 
-It is extremely important that we refer to this local copy of our data when run our scripts to explore the data, rather than asking the Inside Airbnb servers for the data each time.
+It is extremely important that we refer to this local copy of our data when we run our scripts to explore the data, rather than asking the Inside Airbnb servers for the data each time. Indeed it might be worth even commenting out this call to their servers to ensure that we do not stress their service.
 
 ```{r}
 #| eval: false
@@ -840,7 +831,8 @@ First we might be interested in price. It is a character at the moment and so we
 #| eval: true
 #| include: true
 
-airbnb_data_selected$price |> head()
+airbnb_data_selected$price |>
+  head()
 
 airbnb_data_selected$price |>
   str_split("") |>
@@ -860,7 +852,7 @@ airbnb_data_selected <-
   )
 ```
 
-Now we can have a look at the distribution of prices (@fig-airbnbpricesfirst-1). There are outliers, so again we might like to consider it on the log scale (@fig-airbnbpricesfirst-2). 
+Now we can look at the distribution of prices (@fig-airbnbpricesfirst-1). There are outliers, so again we might like to consider it on the log scale (@fig-airbnbpricesfirst-2). 
 
 ```{r}
 #| eval: true
@@ -870,8 +862,8 @@ Now we can have a look at the distribution of prices (@fig-airbnbpricesfirst-1).
 #| label: fig-airbnbpricesfirst
 #| fig-cap: "Distribution of prices of London Airbnb rentals in June 2022"
 #| fig-subcap:
-#|   - "Regular scale"
-#|   - "Log scale"
+#|   - "Distribution of prices"
+#|   - "Using the log scale for prices more than $1,000"
 #| layout-ncol: 2
 
 airbnb_data_selected |>
@@ -895,7 +887,7 @@ airbnb_data_selected |>
   scale_y_log10()
 ```
 
-If we focus on prices that are less than \$1,000 then we see that most properties have a nightly price less than \$250 (@fig-airbnbpricesbunch-1). Interestingly it looks like there is some bunching of prices, possible around numbers ending in zero or nine. Let us just zoom in on prices between \$90 and \$210, out of interest, but change the bins to be smaller (@fig-airbnbpricesbunch-2).
+If we focus on prices that are less than \$1,000, then we see that most properties have a nightly price less than \$250 (@fig-airbnbpricesbunch-1). Interestingly it looks like there is some bunching of prices. It might be that this is happening around numbers ending in zero or nine. Let us just zoom in on prices between \$90 and \$210, out of interest, but change the bins to be smaller (@fig-airbnbpricesbunch-2).
 
 ```{r}
 #| eval: true
@@ -906,7 +898,7 @@ If we focus on prices that are less than \$1,000 then we see that most propertie
 #| fig-cap: "Distribution of prices less than $1000 for London Airbnb rentals in June 2022 shows bunching"
 #| fig-subcap:
 #|   - "Prices less than $1,000"
-#|   - "Prices between $90 and $120"
+#|   - "Prices between $90 and $210"
 #| layout-ncol: 2
 
 airbnb_data_selected |>
@@ -942,7 +934,7 @@ airbnb_data_less_1000 <-
   filter(price < 1000)
 ```
 
-Superhosts are especially experienced Airbnb hosts, and we might be interested to learn more about them. For instance, a host either is or is not a superhost, and so we would not expect any NAs. But we can see that there are. It might be that the host removed a listing or similar. For now, we will remove them.
+Superhosts are especially experienced Airbnb hosts, and we might be interested to learn more about them. For instance, a host either is or is not a superhost, and so we would not expect any NAs. But we can see that there are. It might be that the host removed a listing or similar. For now, we will remove them from the dataset.
 
 ```{r}
 #| eval: true
@@ -958,7 +950,7 @@ We will also want to create a binary variable from this. It is true/false at the
 #| eval: true
 #| include: true
 
-airbnb_data_less_1000 <-
+airbnb_data_no_superhost_nas <-
   airbnb_data_less_1000 |>
   filter(!is.na(host_is_superhost)) |>
   mutate(host_is_superhost_binary = if_else(
@@ -968,7 +960,7 @@ airbnb_data_less_1000 <-
   ))
 ```
 
-On Airbnb, guests can give 1-5 star ratings across a variety of different aspects, including cleanliness, accuracy, value, and others. But when we look at the reviews in our dataset, it is less clear how this is being constructed, because it appears to be a rating between 20 and 100 and there are also NA values (@fig-airbnbreviews).
+On Airbnb, guests can give 1-5 star ratings across a variety of different aspects, including cleanliness, accuracy, value, and others. But when we look at the reviews in our dataset, it is clear that it is effectively a binary, and almost entirely the case that either the rating is 5 stars or not (@fig-airbnbreviews).
 
 ```{r}
 #| eval: true
@@ -978,7 +970,7 @@ On Airbnb, guests can give 1-5 star ratings across a variety of different aspect
 #| fig-cap: "Distribution of review scores rating for London Airbnb rentals in June 2022"
 #| label: fig-airbnbreviews
 
-airbnb_data_less_1000 |>
+airbnb_data_no_superhost_nas |>
   ggplot(aes(x = review_scores_rating)) +
   geom_bar() +
   theme_classic() +
@@ -994,11 +986,11 @@ We would like to deal with the NAs in "review_scores_rating", but this is more c
 #| eval: true
 #| include: true
 
-airbnb_data_less_1000 |>
+airbnb_data_no_superhost_nas |>
   filter(is.na(review_scores_rating)) |>
   nrow()
 
-airbnb_data_less_1000 |>
+airbnb_data_no_superhost_nas |>
   filter(is.na(review_scores_rating)) |>
   select(number_of_reviews) |>
   table()
@@ -1012,7 +1004,7 @@ So these properties do not have a review rating yet because they do not have eno
 
 library(visdat)
 
-airbnb_data_less_1000 |>
+airbnb_data_no_superhost_nas |>
   select(
     review_scores_rating,
     review_scores_accuracy,
@@ -1035,7 +1027,7 @@ Given it looks convincing that in almost all cases, the different types of revie
 #| warning: false
 #| message: false
 
-airbnb_data_less_1000 |>
+airbnb_data_no_superhost_nas |>
   filter(!is.na(review_scores_rating)) |>
   ggplot(aes(x = review_scores_rating)) +
   geom_histogram(binwidth = 1) +
@@ -1053,7 +1045,7 @@ For now, we will remove anyone with an NA in their main review score, even thoug
 #| include: true
 
 airbnb_data_has_reviews <-
-  airbnb_data_less_1000 |>
+  airbnb_data_no_superhost_nas |>
   filter(!is.na(review_scores_rating))
 ```
 

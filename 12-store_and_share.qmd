@@ -48,9 +48,7 @@ Just because a dataset is FAIR, it is not necessarily an unbiased representation
 
 One reason for the rise of data science is that humans are at the heart of it. And often the data that we are interested in directly concern humans. This means that there can be tension between sharing a dataset to facilitate reproducibility and maintaining privacy. Medicine developed approaches to this over a long time. And out of that we have seen Health Insurance Portability and Accountability Act (HIPAA) in the US, and then the more general General Data Protection Regulation (GDPR) in Europe. Our concerns in data science tend to be about personally identifying information (PII). We have a variety of ways to protect especially private information, such as emails and home addresses. For instance, we can hash those variables. Sometimes we may simulate data and distribute that instead of sharing the actual dataset. More recently, approaches based on differential privacy are being implemented. The fundamental problem of data privacy is that increased privacy reduces the usefulness of a dataset. The trade-off means the appropriate decision is nuanced and depends on costs and benefits, and we should be especially concerned about differentiated effects on population minorities.
 
-Finally, in this chapter we consider efficiency. As datasets and code bases get larger it becomes more difficult to deal with them, especially if we want them to be shared. We come to concerns around efficiency, not for its own sake, but to enable us to tell stories that could not otherwise be told. 
-
-In particular, we are concerned with more efficient code. This means making it easier for others to both read and contribute to it, by linting and adopting code review. It also means making code faster to run by actively timing how long aspects take, evaluating aspects in parallel, and refactoring. We are also concerned with more efficient data. This might mean moving beyond CSV files to formats with other properties, or even using databases such as SQL.
+Finally, in this chapter we consider efficiency. As datasets and code bases get larger it becomes more difficult to deal with them, especially if we want them to be shared. We come to concerns around efficiency, not for its own sake, but to enable us to tell stories that could not otherwise be told. This might mean moving beyond CSV files to formats with other properties, or even using databases, such as SQL.
 
 
 ## Plan
@@ -183,9 +181,7 @@ Then we create an R file "data.R" in the "R" folder. This file will only contain
 "color_data"
 ```
 
-Finally, add a README that provides a summary of all of this for someone coming to the project for the first time.
-
-HERE ADD README CONTENT
+Finally, add a README that provides a summary of all of this for someone coming to the project for the first time. Examples of packages with excellent READMEs include [`ggplot2`](https://github.com/tidyverse/ggplot2#readme), [`pointblank`](https://github.com/rich-iannone/pointblank#readme), [`modelsummary`](https://github.com/vincentarelbundock/modelsummary#readme), and [`janitor`](https://github.com/sfirke/janitor#readme).
 
 We can now go to the "Build" tab and click "Install and Restart". After this, the package "favcolordata", will be loaded and the data can be accessed locally using "color_data". If we were to push this package to GitHub, then anyone would be able to install the package using `devtools` [@citeDevtools] and use our dataset. Indeed, the following will work.
 
@@ -217,7 +213,45 @@ In general, these options are free and provide a DOI that can be useful for cita
 
 ## Data documentation
 
-Dataset documentation has long consisted of simply a data dictionary. This may be just a list of the variables, a few sentences of description, and ideally a source. For instance, [the data dictionary of the ACS](https://www2.census.gov/programs-surveys/acs/tech_docs/pums/data_dict/PUMS_Data_Dictionary_2016-2020.pdf), which was introduced in @sec-farm-data, is particularly comprehensive. And OSF provides [instructions](https://help.osf.io/article/217-how-to-make-a-data-dictionary) for how to make a data dictionary.
+Dataset documentation has long consisted of a data dictionary. This may be just a list of the variables, a few sentences of description, and ideally a source. For instance, [the data dictionary of the ACS](https://www2.census.gov/programs-surveys/acs/tech_docs/pums/data_dict/PUMS_Data_Dictionary_2016-2020.pdf), which was introduced in @sec-farm-data, is particularly comprehensive. And OSF provides [instructions](https://help.osf.io/article/217-how-to-make-a-data-dictionary) for how to make a data dictionary.
+
+<!-- We can use `codebookr` [] to make a data dictionary for a dataset. -->
+
+<!-- ```{r} -->
+<!-- library(tidyverse) -->
+
+<!-- example_data <-  -->
+<!--   tibble( -->
+<!--     some_data = runif(n = 10), -->
+<!--     more_data = sample(c("Heh", "Hah"), 10, replace = TRUE) -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- library(pointblank) -->
+<!-- informant <-  -->
+<!--   create_informant( -->
+<!--     tbl = example_data, -->
+<!--     tbl_name = "example_data", -->
+<!--     label = "Example No. 1" -->
+<!--   )  |>  -->
+<!--   info_tabular( -->
+<!--     description = "This table is included in the **pointblank** pkg." -->
+<!--   ) %>% -->
+<!--    info_columns( -->
+<!--     columns = "some_data", -->
+<!--     `ℹ️` = "A factor denoting penguin species (*Adélie*, *Chinstrap*, and *Gentoo*)." -->
+<!--   ) -->
+
+<!-- informant -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- get_informant_report(informant) -->
+<!-- ``` -->
+
+
+
 
 Datasheets [@gebru2021datasheets] are an increasingly critical aspect of data science because of the contribution they make to documentation. Datasheets are basically nutrition labels for datasets. The process of creating them enables us to think more carefully about what we will feed our model. More importantly, they enable others to better understand what we fed our model. One important task is going back and putting together datasheets for datasets that are widely used. For instance, researchers went back and wrote a datasheet for one of the most popular datasets in computer science, and they found that around 30 per cent of the data were duplicated [@bandy2021addressing].
 
@@ -268,9 +302,11 @@ There are a variety of ways of protecting PII, while still sharing some data, th
 
 ### Hashing and salting
 
-A hash is a one-way transformation, such that the same input always provides the same output, but given the output, it is not reasonably possible to obtain the input. For instance, a function that doubled its input always gives the same output, for the same input, but is also easy to reverse, so would not work well as a hash. In contrast, the modulo, which is the remainder after division and can be implemented in R using `%%`, would would be difficult to reverse. 
+A cryptographic hash is a one-way transformation, such that the same input always provides the same output, but given the output, it is not reasonably possible to obtain the input. For instance, a function that doubled its input always gives the same output, for the same input, but is also easy to reverse, so would not work well as a hash. In contrast, the modulo, which for a non-negative number, is the remainder after division and can be implemented in R using `%%`, would would be difficult to reverse. 
 
 @knuth [p. 514] relates an interesting etymology for "hash". He first defines "to hash" as relating to chop up or make a mess, and then explaining that hashing relates to scrambling the input and using this partial information to define the output. A collision is when different inputs map to the same output, and one feature of a good hashing algorithm is that collisions are reduced. As mentioned, one simple approach is to rely on the modulo operator. For instance, if we were interested in 10 different groupings for the integers 1 through to 10, then modulo would enable this. A better approach would be for the number of groupings to be a larger number, because this would reduce the number of values with this same hash outcome.
+
+For instance, consider some information that we would like to keep private, such as names and ages of respondents.
 
 ```{r}
 #| message: false
@@ -278,18 +314,76 @@ A hash is a one-way transformation, such that the same input always provides the
 
 library(tidyverse)
 
-hashing <-
+some_private_information <-
   tibble(
-    ppi_data = c(1:10),
-    modulo_ten = ppi_data %% 3,
-    modulo_eleven = ppi_data %% 11,
-    modulo_eightfivethree = ppi_data %% 853
-  )
+    names = c("Rohan", "Monica", "Edward", "Hugo"),
+    ages = c(36, 35, 3, 1)
+    )
 
-hashing
+some_private_information
 ```
 
-Rather than write out own hash functions, we can use crytographic has functions such as `sha512()` and `md5()` from `openssl` [@openssl].
+One option for the names would be to use a function that just took the first letter of each name. And one option for the ages would be to convert them to Roman numerals.
+
+```{r}
+#| message: false
+#| warning: false
+
+some_private_information |> 
+  mutate(
+    names = substring(names, 1, 1),
+    ages = as.roman(ages)
+  )
+```
+
+While the approach for the first variable, names, is good because the names cannot be backed out, the issue is that as the dataset grows there are likely to be lots of "collisions"---situations where different inputs, say "Rohan" and "Robert", both get the same output, in this case "R". It is the opposite situation for the approach for the second variable, ages. In this case, there will never be any collisions---"36" will be the only input that ever maps to "XXXVI". However, it is easy to back out the actual data, for anyone who knows roman numerals.
+
+<!-- One approach is to move to considering the modulo. In this case, we first need to change the names into numbers. For instance, we could convert them to their position on a phone keypad. -->
+
+<!-- ```{r} -->
+<!-- some_private_information |> -->
+<!--   rowwise() |> -->
+<!--   mutate( -->
+<!--     names_as_numbers = letterToNumber(names) |> as.numeric() -->
+<!--   ) |>  -->
+<!--   mutate( -->
+<!--     hashed_names = names_as_numbers %% 11, -->
+<!--     hashed_ages = ages %% 11 -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- We can see that one issue is that this has results in many collisions. We can get around that by using a larger modulo. -->
+
+<!-- ```{r} -->
+<!-- some_private_information |> -->
+<!--   rowwise() |> -->
+<!--   mutate( -->
+<!--     names_as_numbers = letterToNumber(names) |> as.numeric() -->
+<!--   ) |>  -->
+<!--   mutate( -->
+<!--     hashed_names = names_as_numbers %% 30803, -->
+<!--     hashed_ages = ages %% 30803 -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+
+<!-- library(tidyverse) -->
+
+<!-- hashing <- -->
+<!--   tibble( -->
+<!--     ppi_data = c(1:10), -->
+<!--     modulo_ten = ppi_data %% 3, -->
+<!--     modulo_eleven = ppi_data %% 11, -->
+<!--     modulo_eightfivethree = ppi_data %% 853 -->
+<!--   ) -->
+
+<!-- hashing -->
+<!-- ``` -->
+
+Rather than write out own hash functions, we can use crytographic hash functions such as `md5()` from `openssl` [@openssl].
 
 ```{r}
 #| message: false
@@ -297,28 +391,11 @@ Rather than write out own hash functions, we can use crytographic has functions 
 
 library(openssl)
 
-openssl_hashing <-
-  tibble(
-    names =
-      c(
-        "Edward",
-        "Helen",
-        "Hugo",
-        "Ian",
-        "Monica",
-        "Myles",
-        "Patricia",
-        "Roger",
-        "Rohan",
-        "Ruth"
-      )
-  ) |>
+some_private_information |>
   mutate(
-    md5 = md5(names),
-    sha512 = sha512(names)
+    md5_names = md5(names),
+    md5_ages = md5(ages |> as.character())
   )
-
-openssl_hashing
 ```
 
 We could share either of these transformed variables and be comfortable that it would be difficult for someone to use only that information to recover the names of our respondents. That is not to say that it is impossible. If we made a mistake, such as accidentally pushing the original dataset to GitHub then they could be recovered. And it is likely that various governments have the ability to reverse the cryptographic hashes used here.
@@ -329,29 +406,11 @@ One issue that remains is that anyone can take advantage of the key feature of h
 #| message: false
 #| warning: false
 
-openssl_hashing_with_salt <-
-  tibble(
-    names =
-      c(
-        "Edward",
-        "Helen",
-        "Hugo",
-        "Ian",
-        "Monica",
-        "Myles",
-        "Patricia",
-        "Roger",
-        "Rohan",
-        "Ruth"
-      )
-  ) |>
+some_private_information |>
   mutate(names = paste0(names, "_is_a_person")) |>
   mutate(
-    md5 = md5(names),
-    sha512 = sha512(names)
+    md5_of_salt = md5(names)
   )
-
-openssl_hashing_with_salt
 ```
 
 
@@ -365,7 +424,7 @@ For more nuanced situations, @koenecke2020synthetic recommend using the syntheti
 
 ### Differential privacy
 
-Differential privacy is a mathematical definition of privacy [@Dwork2013, p. 6]. It is important to be clear that it is not an algorithm, it is a definition. The main issue it solves is that there are a lot of datasets available. This means there is always the possibility that some combination of them could be combined to identify respondents even if PII were removed from each of these individual datasets. Rather than needing to anticipate how various datasets could be combined to re-identify individuals and adjust variables to remove this possibility, a dataset that is created using a differentially private approach provides assurances that privacy will be maintained. 
+Differential privacy is a mathematical definition of privacy [@Dwork2013, p. 6]. It is important to be clear that it is not only one algorithm, it is a definition that many algorithms implement. The main issue it solves is that there are a lot of datasets available. This means there is always the possibility that some combination of them could be combined to identify respondents even if PII were removed from each of these individual datasets. Rather than needing to anticipate how various datasets could be combined to re-identify individuals and adjust variables to remove this possibility, a dataset that is created using a differentially private approach provides assurances that privacy will be maintained. 
 
 :::{.callout-note}
 ## Shoulders of giants
@@ -384,228 +443,27 @@ $$ {#eq-macroidentity}
 In @eq-macroidentity, from @Asquith2022Assessing, "$M$ is a differentially private algorithm, $d$ and $d'$ are datasets that differ only in terms of one row, $S$ is a set of output from the algorithm" and $\epsilon$ controls the amount of privacy that is provided to respondents. The fundamental problem of data privacy is that we cannot have completely anonymized data that remains useful [@Dwork2013, p. 6]. Instead, we must trade-off utility and privacy.
 
 A dataset is differentially private to different levels of privacy, based on how much it changes when one person's results are included or excluded. This is the key parameter, because at the same time as deciding how much of an individual's information we are prepared to give up, or "leak", we are deciding how much random noise to add. The choice of this level is a nuanced one and should involve extensive consideration of the costs of undesired disclosures, compared with the benefits of additional research. For public data that will be released under differential privacy, this *ratio decidendi* must be public because of the costs that are being imposed. Indeed, @differentialprivacyatapple argue that even in the case of private companies, such as Apple, users should have a choice about the level of privacy loss. 
-A variant of differential privacy has recently been implemented by the US census. This has been shown to not universally protect respondent privacy, and yet it is expected to have a significant effect on redistricting [@kenny2021impact] even though redistricting is considered a high priority use case [@Hawes2020Implementing]. @Suriyakumar2021 found that such model will be disproportionately affected by large demographic groups. The implementation of differential privacy is expected to result in some publicly available data that are unusable in the social sciences [@ruggles2019differential]. And even the ACS, introduced in @sec-farm-data may be replaced with synthetic content. The issue with this approach is that it is fine for what is of interest and known now but cannot account for the unknowable answers to questions that we do not even think to ask. 
 
-The implementation of differential privacy is a costs and benefits issue. Stronger privacy protection fundamentally must mean less information [@clairemckaybowen, p. 39]. The costs of this have been convincingly shown, while the benefits have not. As always in data science, it is important to consider who this benefits. For instance, one can imagine that in the 1970s it would have been rare to evaluate whether the proportion of gay people was accurate. And given recent policy changes one can imagine that soon abortion will be similarly overlooked in much of the US. At issue, with all privacy enhancing approaches, but especially differential privacy given how much it changes the data, is concerns around our ability to answer questions, that we cannot even think to ask today.
+A variant of differential privacy has recently been implemented by the US census. This has been shown to not universally protect respondent privacy, and yet it is expected to have a significant effect on redistricting [@kenny2021impact] even though redistricting is considered a high priority use case [@Hawes2020Implementing]. @Suriyakumar2021 found that such model will be disproportionately affected by large demographic groups. The implementation of differential privacy is expected to result in some publicly available data that are unusable in the social sciences [@ruggles2019differential]. And even the ACS, introduced in @sec-farm-data, may be replaced with synthetic content. The issue with this approach is that even if it is fine for what is of interest and known now, because it is model based, it cannot account for the unknowable answers to questions that we do not even think to ask. 
 
-## Efficiency
+The implementation of differential privacy is a costs and benefits issue [@hotz2022balancing]. Stronger privacy protection fundamentally must mean less information [@clairemckaybowen, p. 39]. The costs of this have been convincingly shown, while the benefits have not. As always in data science, it is important to consider who this affects. For instance, one can imagine that in the 1970s it would have been rare to evaluate whether the proportion of gay people was accurate. And given the 2022 Supreme Court case it is possible that abortion could be similarly overlooked. At issue, with all privacy enhancing approaches, but especially with hurried implementations of differential privacy, is concerns around our ability to answer questions that we cannot even think to ask today.
 
-In general we are, and will continue to be, largely concerned with just getting something done. Not necessarily getting it done in the best or most efficient way. And to a large extent, being worried about getting something done in the best or most efficient way is almost always a waste of time. Until it is not. Eventually inefficient ways of storing data, ugly or slow code, and dogmatic insistence on a particular way of doing things, have an effect. And it is at that point that we need to be open to new approaches to ensure efficiency.
 
-We firstly discuss code efficiency. We start with code linting, which was mentioned in dispatches in  @sec-reproducible-workflows, and enables code review. This does not speed up our code, per se, but we will instead use linters to make out code easier to read, which makes it more efficient when another person comes to it, or we revisit it. We then turn to measurement of run time, and introduce parallel processing, where we allow our computer to run code multiple processes at the same time. Finally we consider code refactoring, which is where we re-write code to make it better, while not changing what it does. After this we turn to ways to be more efficient with data, by using SQL and parquet.
+## Data efficiency
 
-### Code efficiency
+For the most part, done is better than perfect, and unnecessary optimization is a waste of resources. However, at a certain point, we need to adapt new ways of dealing with data, especially as our datasets start to get larger. Here we discuss iterating through multiple files, and then turn to changing data formats, beginning with Apache Arrow, and finally SQL.
 
-By and large, worrying about performance is a waste of time. For the most part we are better off just pushing things into the cloud, letting them run for a reasonable time, and using that time to worry about other aspects of the pipeline. But, eventually this becomes unfeasible. For instance, if something takes more than a day, then it becomes a pain because of the need to completely switch tasks and then return to it. There is rarely a most common area for obvious performance gains. Instead it is important to develop the ability to measure, evaluate, and think.
+### Iteration
 
-The first thing we should do is clean up our code. If we then find that the speed at which code is running is becoming a bottle neck then we should shard. Then we should throw more machines at it. But eventually we should go back and refactor the code.
+There are a number of ways to become more efficient with our data, especially as it becomes larger. The first, and most obvious, is to break larger datasets into smaller pieces. For instance, if we have a dataset for a year, then we could break it into months, or even days. To enable this, we need a way of quickly reading in many different files.
 
-#### Share environment
-
-We have discussed at length the need to share code and data and we have put forward an approach to this. In @sec-fire-hose we discussed how R itself, as well as R packages update from time to time, as new functionality is developed, errors fixed, and other general improvements. And in @sec-r-essentials we described how one advantage of the `tidyverse` is that it can update faster than base, because it is more specific. However this could mean that even if we were to share all the code and data that we use, it is possible that the software versions that are available would mean the code would not run.
-
-The solution to this is to detail the environment that was used. There is a large number of ways to do this, and they can add a great deal of complexity, but the minimum standard is to document the version of R and R packages that were used, and make it easier for others to install that exact version. We use `renv` [@renv] to do this. 
-
-We first use `init()` to get the infrastructure set-up that we will need. In particular we are going to create a file that that will record the packages and versions used. We use `snapshot()` to actually document what we are using. This creates a "lockfile" that records the information. 
-
-If we want to see which packages we are using in the R project, then we can use `dependencies()`. Doing this for the "starter_folder" indicates that the following packages are used: `rmarkdown`, `bookdown`, `knitr`, `rmarkdown`, `bookdown`, `knitr`, `palmerpenguins`, `tidyverse`, `renv`, `haven`, `readr`, and `tidyverse`. 
-
-We could open the lockfile file "renv.lock", to see the exact versions if we wanted. The lockfile also documents all the other packages that were installed and where they were downloaded from. In the case of CRAN, it maintains an archive of all the versions of the packages, and so it is possible to get any version.
-
-Someone coming to this project from outside, could then use `restore()` which would install the exact version of the packages that we used.
-
-#### Code linting and code review
-
-Being fast is valuable but it is mostly about being able to iterate fast, not necessarily having code that runs fast. For almost all applications we will work in teams. @oldlanguages [p. 26] describes how even in 1954 a programmer cost at least as much as a computer, and these days compute is usually much cheaper than a programmer. Hence, it is important to use other people's time efficiently. 
-
-Linting\index{lint} is the process of checking code, mostly for stylistic issues, and re-arranging code to make it easier to read. (There is another aspect of linting, which is programming errors, but here we focus on stylistic issues.) In general, the best efficiency gain that we can make is to make it easier for others to read our code, even if this is just ourselves returning to the code after a break.
-
-We use `lint()` from `lintr` [@lintr] to lint our code. For instance, consider the following R code (saved as linting_example.R).
-
-```{r}
-#| include: true
-#| message: false
-#| warning: false
-#| eval: false
-
-SIMULATED_DATA <-
-  tibble(
-    division = c(1:150, 151),
-    party = sample(
-      x = c("Liberal"),
-      size = 151,
-      replace = T
-    )
-  )
-```
-
-```{r}
-library(lintr)
-lint(filename = "inputs/linting_example.R")
-```
-
-The result is that the file "inputs/linting_example.R" is opened and the issues that `lint()` found are printed in "Markers" (@fig-linter).
-
-![Linting results](figures/linter.png){#fig-linter width=90% fig-align="center"}
-
-Making the recommended changes results in code that is more readable, and importantly consistent with best practice, as documented by @tidyversestyleguide.
-
-```{r}
-#| include: true
-#| message: false
-#| warning: false
-#| eval: false
-
-simulated_data <-
-  tibble(
-    division = c(1:150, 151),
-    party = sample(
-      x = c("Liberal"),
-      size = 151,
-      replace = TRUE
-    )
-  )
-```
-
-At first it may seem that some linting\index{lint} aspects like trailing whitespace and only using double quotes are small and inconsequential. But they distract from being able to fix bigger issues. Further, if we are not able to get small things right, then how could anyone trust that we could get the big things right? Therefore it is important to have dealt with all the small things that a linter identifies.
-
-Having dealt with all of these aspects, we can turn to code review\index{code review}. This is the process of having another person go through and critique the code. Code review is a critical part of writing code, and @researchsoftware [p. 465] describe it as "the most effective way to find bugs". It is especially helpful, although quite daunting, when starting because it is a great way to improve. 
-
-When reviewing another person's code, it is important to go out of the way to be polite. Small aspects to do with style, things like spacing and separation, should have been taken care of by a linter, but if not, then we might make a general recommendation about that. We are more looking for important aspects such as:
-
-1) Are all of the names meaningful?
-2) Do the variables have the right class?
-3) Are there appropriate and sufficient tests?
-4) Can the functions be understood, and are they well-documented?
-5) Are corner solutions dealt with?
-6) Is the structure of the project correct?
-7) Are there any especially hard-to-understand aspects of the code?
-8) Are there defects that have been missed?
-
-Code review ensures that the code can be understood by at least one other person. This is a critical part of building knowledge about the world. At Google, code review is not primarily about finding defects although that may happen but is instead about ensuring readability and maintainability as well as education [@sadowski2018modern]. 
-
-Finally, code review does not have to, and should not, be an onerous days-consuming process of poring over the entire monolith. The best code review is a quick review of just one file, focused on suggesting changes to just a handful of lines.
-
-#### Parallel processing
-
-Sometimes code is slow because the computer needs to do the same thing many times. Sometimes it is possible to take advantage of this and enable these jobs to be done at the same time using parallel processing\index{parallel processing}. This will be especially useful in @sec-its-just-a-linear-model for modelling.
-
-To get started we can use `tic()` and `toc()` from `tictoc` [@Izrailev2014] to time various aspects of our code. This is useful with parallel processing, but also more generally, to help us find out where the largest delays are.
-
-```{r}
-#| message: false
-#| warning: false
-
-library(tictoc)
-tic("First bit of code")
-print("Fast code")
-toc()
-
-tic("Second bit of code")
-Sys.sleep(3)
-print("Slow code")
-toc()
-```
-
-And so we know that there is something slowing down the code; which in this artificial case is `Sys.sleep()` causing a delay of 3 seconds.
-
-We could use `parallel` which is part of base R to run functions in parallel. We could also use `future` [@future] which brings additional features. To get started with `future` we use `plan()` to specify whether we want to run things sequentially "sequential" or in parallel "multisession". We then wrap whatever we want this applied to within `future()`.
-
-To see this in action we will create a dataset and then implement a function on a row-wise basis.
+The need to read in multiple files and combine them into the one tibble is a surprisingly common task. For instance, it may be that the data for a year, are saved into individual CSV files for each month. We can use `purrr` [@citepurrr] and `fs` [@fs] to do this painlessly. To illustrate this situation we will simulate data from the exponential distribution using `rexp()`. Such data may reflect, say, comments on a social media platform, where the vast majority of comments are made by a tiny minority of users. We will use `dir_create()` from `fs` to create a folder, simulate monthly data and save it. We will then illustrate reading it in.
 
 ```{r}
 #| eval: false
+#| echo: false
 
-library(future)
-library(tidyverse)
-library(tictoc)
-
-simulated_data <-
-  tibble(
-    random_draws = runif(
-      n = 1000000,
-      min = 0,
-      max = 1000
-    ) |>
-      round(),
-    more_random_draws = runif(
-      n = 100000,
-      min = 0,
-      max = 1000
-    ) |>
-      round()
-  )
-
-plan(sequential)
-
-tic()
-simulated_data <-
-  simulated_data |>
-  rowwise() |>
-  mutate(
-    which_is_smaller =
-      min(c(
-        random_draws,
-        more_random_draws
-      ))
-  )
-toc()
-
-plan(multisession)
-
-tic()
-simulated_data <-
-  future(
-    simulated_data |>
-      rowwise() |>
-      mutate(
-        which_is_smaller =
-          min(c(
-            random_draws,
-            more_random_draws
-          ))
-      )
-  )
-toc()
-```
-
-#### Code refactoring
-
-To refactor code means to re-write it so that the new code achieves the same outcome as the old code, it is just that the new code does it better. For instance, @refactornature discuss how the code underpinning an important UK COVID model was initially written by scientists, and months later re-written in a better way. This re-write was valuable because it provided more confidence in the model, even though both versions produced the same outputs, given the same inputs.
-
-When we start to refactor our code, we want to make sure that the re-written code achieves the same outcomes as the original code. This means that it is important to have tests written. We generally want to reduce the size of functions, by breaking them into smaller ones. 
-
-We also want to make sure that our code is satisfying best practice. @Trisovic2022 details some core recommendations based on examining 9,000 R scripts, and a refactor is a great opportunity to ensure that these are met. 
-
-1. Removing any absolute paths, and ensuring that only relative paths (in relation to the .rproj file) are used.
-2. Ensuring there is a clear order of execution. We have recommended using numbers in filenames to achieve this, but more sophisticated approaches, such as `targets` [@targets], could be used instead.
-3. Having someone else run everything on their computer.
-
-Additional aspects to consider include:
-
-1. Updating the names that are used to ensure they are consistent, and meaningful.
-2. De-duplicating code.
-3. Addressing any warnings.
-4. Separating large functions into smaller ones.
-5. Move special cases to the top of functions [@researchsoftware, p. 458]
-6. Replace code with data [@researchsoftware, p. 462]. To understand this, consider if we had some code that looked for the names of prime ministers and presidents. When we first wrote this code we likely added the relevant names into the function. Instead, we could create a small dataset of the names, and then have the code lookup that dataset.
-
-
-
-<!-- Start with an example of bad code, and then how it gets fixed. -->
-
-
-
-
-
-### Data efficiency
-
-There are a number of ways to become more efficient with our data. It is surprisingly common to need to read in multiple files and combine them into the one tibble. For instance, it may be that the data for a year, are saved into individual CSV files for each month. We can use `purrr` [@citepurrr] and `fs` [@fs] to do this painlessly.
-
-One of the interesting aspects of real world data is that it is exponential more often than we may expect. So we may simulate some exponential data.
-
-```{r}
-#| eval: false
+# INTERNAL
 
 library(tidyverse)
 library(fs)
@@ -614,90 +472,332 @@ dir_create(path = "inputs/data/user_data")
 
 set.seed(853)
 
-user_comments <-
-  tibble(
-    user = rep(x = 1:1000, times = 12) |> sort(),
-    month = rep(x = month.name, times = 1000),
-    comments = rexp(n = 12000, rate = 0.3) |> round()
-  )
+simulate_and_save_data <- function(month) {
+  number_of_observations <- 1000
+  file_name <- paste0("inputs/data/user_data/", month, ".csv")
+  user_comments <-
+    tibble(
+      user = c(1:number_of_observations),
+      month = rep(x = month, times = number_of_observations),
+      comments = rexp(n = number_of_observations, rate = 0.3) |> round()
+    )
+  write_csv(x = user_comments,
+            file = file_name)
+}
 
-user_comments |>
-  filter(month == "January") |>
-  write_csv(file = "inputs/data/user_data/January.csv")
-
-user_comments |>
-  filter(month == "February") |>
-  write_csv(file = "inputs/data/user_data/February.csv")
+walk(month.name |> tolower(), simulate_and_save_data)
 ```
 
-The first step is to get a list of the files. Assuming that some particular folder contains all, and only, the CSVs that we are interested in, we can return a list of all the CSVs in a folder with `dir_ls()`.
+```{r}
+#| eval: false
+#| echo: true
+
+library(tidyverse)
+library(fs)
+
+dir_create(path = "user_data")
+
+set.seed(853)
+
+simulate_and_save_data <- function(month) {
+  number_of_observations <- 1000
+  file_name <- paste0("user_data/", month, ".csv")
+  user_comments <-
+    tibble(
+      user = c(1:number_of_observations),
+      month = rep(x = month, times = number_of_observations),
+      comments = rexp(n = number_of_observations, rate = 0.3) |> round()
+    )
+  write_csv(x = user_comments,
+            file = file_name)
+}
+
+walk(month.name |> tolower(), simulate_and_save_data)
+```
+
+Having created our dataset with each month saved to a different CSV, we can now read it in. There are a variety of ways to do this. The first step is that we need to get a list of all the CSV files in the directory. We use "glob" here to specify that we are interested only in the ".csv" files, and that could change to whatever files it is that we are interested in.
 
 ```{r}
+#| eval: false
+#| echo: true
+
 library(fs)
+
+files_of_interest <- 
+  dir_ls(path = "user_data/", glob = "*.csv")
+
+files_of_interest
+```
+
+
+```{r}
+#| eval: true
+#| echo: false
+
+library(fs)
+
+files_of_interest <- dir_ls(path = "inputs/data/user_data/", glob = "*.csv") |> 
+  str_remove("inputs/data/user_data/")
+
+files_of_interest
+```
+
+We can pass this list to `read_csv()` and it will read them in and combine them.
+
+```{r}
+#| eval: false
+#| echo: true
+
+year_of_data <- 
+  read_csv(files_of_interest,
+           show_col_types = FALSE)
+
+year_of_data
+```
+
+```{r}
+#| eval: true
+#| echo: false
+
+files_of_interest <- dir_ls(path = "inputs/data/user_data/", glob = "*.csv")
+
+year_of_data <- 
+  read_csv(files_of_interest,
+           show_col_types = FALSE)
+
+year_of_data
+```
+
+This works well when we have CSV files, but we might not always have CSV files and so will need another way, and can use `map_dfr()` to do this. One nice aspect of this approach is that we can include the name of the file alongside the observation using ".id". Here we specify that we would like that column to be called "file", but it could be anything.
+
+```{r}
+#| eval: false
+#| echo: true
+
 library(purrr)
 
-all_files <- dir_ls(path = "inputs/data/user_data")
-
-all_data <-
-  all_files |>
+year_of_data_using_purrr <-
+  files_of_interest |>
   map_dfr(read_csv, .id = "file")
 ```
 
-#### Parquet
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
 
-While the use of CSVs is great because they are widely used, have little overhead, they are also quite minimal. This can lead to issues, especially in terms of class. There are various alternatives, including `arrow` [@arrow] which has the advantage of requiring very little change from us. Where we use `write_csv()` and `read_csv()` we can use `write_parquet()` and `read_parquet()`. One advantage is that it should retain the class between R and Python. It should also be faster than CSVs.
+# INTERNAL
+
+library(fs)
+library(purrr)
+
+year_of_data_using_purrr <-
+  files_of_interest |>
+  map_dfr(read_csv, .id = "file") |> 
+  mutate(file =  str_remove(file, "inputs/data/user_data/"))
+
+year_of_data_using_purrr
+```
+
+### Apache Arrow
+
+While the use of CSVs is great because they are widely used and have little overhead, they are also quite minimal. This can lead to issues, especially in terms of class. There are various alternatives, including the R implementation of Apache Arrow, `arrow` [@arrow]. This has the advantage of requiring very little change from us while delivering significant benefits. This makes two, distinct, file formats available to us: ".arrow", and ".parquet". 
+
+We use ".arrow" when we are actively using the data, for instance, as we clean, prepare, and model. And we use ".parquet" for data storage, for instance, saving a copy of the original data, and making the final dataset available to others. This is because ".parquet" is focused on size, while ".arrow" is focused on efficiency.
+
+For long-term storage, we might replace ".csv" files with ".parquet" files. We can do this by replacing `write_csv()` with `write_parquet()`, and `read_csv()` with `read_parquet()`.
 
 ```{r}
 #| message: false
 #| warning: false
 
 library(arrow)
-library(tictoc)
+library(fs)
 library(tidyverse)
 
-number_of_draws <- 10000000
+number_of_draws <- 1000000
 
-some_data <-
+# Name is homage to: https://www.rand.org/pubs/monograph_reports/MR1418.html
+a_million_random_digits <-
   tibble(
-    first = runif(n = number_of_draws),
-    second = sample(x = LETTERS, size = number_of_draws, replace = TRUE)
+    numbers = runif(n = number_of_draws),
+    letters = sample(x = letters, size = number_of_draws, replace = TRUE),
+    states = sample(x = state.name, size = number_of_draws, replace = TRUE),
   )
 
-tic("CSV")
 write_csv(
-  x = some_data,
-  file = "some_data.csv"
+  x = a_million_random_digits,
+  file = "a_million_random_digits.csv"
 )
-read_csv(file = "some_data.csv")
-toc()
 
-tic("parquet")
 write_parquet(
-  x = some_data,
-  sink = "some_data.parquet"
+  x = a_million_random_digits,
+  sink = "a_million_random_digits.parquet"
 )
-read_parquet(file = "some_data.parquet")
+
+file_size("a_million_random_digits.csv")
+file_size("a_million_random_digits.parquet")
+
+file.remove("a_million_random_digits.csv")
+file.remove("a_million_random_digits.parquet")
+```
+
+We get significant file size improvements when we compare the size of the same datasets saved in each format, especially as they get larger (@tbl-filesize).
+
+```{r}
+#| eval: false
+#| include: false
+#| message: false
+#| warning: false
+
+# INTERNAL
+
+
+library(arrow)
+library(tidyverse)
+
+file_size_comparison <-
+  tibble(draws = c(),
+         csv_size = c(),
+         parquet_size = c())
+
+for (number_of_draws in c(10000,
+                          100000,
+                          1000000,
+                          10000000,
+                          100000000)) {
+  a_million_random_digits <-
+    tibble(
+      numbers = runif(n = number_of_draws),
+      letters = sample(
+        x = letters,
+        size = number_of_draws,
+        replace = TRUE
+      ),
+      states = sample(
+        x = state.name,
+        size = number_of_draws,
+        replace = TRUE
+      ),
+    )
+  
+  write_csv(x = a_million_random_digits,
+            file = "a_million_random_digits.csv")
+  
+  write_parquet(x = a_million_random_digits,
+                sink = "a_million_random_digits.parquet")
+  
+  rm(a_million_random_digits)
+  
+  file_size_comparison <-
+    rbind(
+      file_size_comparison,
+      tibble(
+        draws = number_of_draws,
+        csv_size = file_size("a_million_random_digits.csv"),
+        parquet_size = file_size("a_million_random_digits.parquet")
+      )
+    )
+  
+  file.remove("a_million_random_digits.csv")
+  file.remove("a_million_random_digits.parquet")
+}
+
+file_size_comparison_long <- 
+  file_size_comparison |> 
+  pivot_longer(cols = c(csv_size, parquet_size),
+               names_to = "file_type", values_to = "file_size") |> 
+  mutate(
+    file_type = str_remove(file_type, "_size")
+  ) 
+
+write_csv(file_size_comparison, file = "inputs/data/file_size_comparison.csv")
+write_csv(file_size_comparison_long, file = "inputs/data/file_size_comparison_long.csv")
+```
+
+```{r}
+#| label: tbl-filesize
+#| echo: false
+#| eval: true
+#| message: false
+#| tbl-cap: "Comparing the file sizes of '.csv' and '.parquet', as the file size increases, for CSV and Parquet"
+
+read_csv(
+    "inputs/data/file_size_comparison.csv",
+    show_col_types = FALSE
+  ) |> 
+  mutate(
+    draws = format(draws, scientific = FALSE, big.mark = ','),
+    csv_size = as_fs_bytes(csv_size),
+         parquet_size = as_fs_bytes(parquet_size)
+         ) |> 
+  knitr::kable(
+    col.names = c(
+      "Number of draws",
+      "CSV file size",
+      "Parquet file size"
+    )
+  )
+```
+
+Having considered ".parquet", and explained the benefits, compared with CSVs for large data that we are storing, we now consider ".arrow" and the benefit of this file type for large data that we are actively using. Again, these benefits will be most notable for larger datasets, and so we will simulate ten million observations. For instance, we may have run a survey, stratified by US state, to understand people's favorite numbers and letters.
+
+```{r}
+#| echo: true
+#| eval: false
+
+library(arrow)
+library(tidyverse)
+
+number_of_draws <- 100000000
+
+some_larger_data <-
+  tibble(
+    id = c(1:number_of_draws),
+    state = sample(x = state.name, size = number_of_draws, replace = TRUE),
+    fav_letter = sample(x = letters, size = number_of_draws, replace = TRUE),
+    fav_number = runif(n = number_of_draws, min = 0, max = 100) |> round()
+  )
+
+write_csv(some_larger_data, "some_larger_data.csv")
+
+some_larger_data
+```
+
+We might be interested to understand the average favorite number by state and letter.
+
+```{r}
+#| echo: true
+#| eval: false
+
+library(tictoc)
+tic("CSV - Everything")
+tic("CSV - Reading")
+some_larger_data <- read_csv("some_larger_data.csv")
+class(some_larger_data)
+toc()
+tic("CSV - Doing")
+some_larger_data |> 
+  group_by(state, fav_letter) |> 
+  summarise(average_favorite_number = mean(fav_number))
+toc()
+toc()
+
+tic("arrow - Everything")
+tic("arrow - Reading")
+some_larger_data <- read_csv_arrow("some_larger_data.csv")
+class(some_larger_data)
+toc()
+tic("arrow - Doing")
+some_larger_data |> 
+  group_by(state, fav_letter) |> 
+  summarise(average_favorite_number = mean(fav_number))
+toc()
 toc()
 ```
 
-The size of a Parquet file will also be smaller than a CSV.
 
-```{r}
-#| eval: true
-
-file.size("some_data.parquet")
-file.size("some_data.csv")
-```
-
-
-
-```{r}
-#| include: false
-#| eval: true
-
-file.remove("some_data.parquet")
-file.remove("some_data.csv")
-```
 
 We can see these size and speed benefits more easily in @fig-readwrite which considers a variety of different options.
 
@@ -812,7 +912,7 @@ need_for_speed |>
 Using Parquet may be especially useful with larger files. A common approach to dealing with large files is to separate them into smaller files and then using `map_dfr()` from `purrr` to bring them together when needed, as was illustrated above. This is most useful when there are a large number of observations. But it may be that we have a large number of columns. This is especially likely when using text as data, which we cover in @sec-text-as-data. In this case, it can be useful to take advantage of the "col_select" option in `read_parquet()`. We can pass this either a character vector of the column names that we want read in, or conditions, as was covered in @sec-r-essentials in the context of `select()`.
 
 
-#### SQL
+### SQL
 
 Structured Query Language (SQL) ("see-quell" or "S.Q.L.") is used with relational databases. A relational database is a collection of at least one table, and a table is just some data organized into rows and columns. If there is more than one table in the database, then there should be some column that links them. Using it feels a bit like HTML/CSS in terms of being halfway between markup and programming. One fun aspect is that line spaces mean nothing: include them or do not, but always end a SQL command in a semicolon;
 
