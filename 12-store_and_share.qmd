@@ -515,7 +515,7 @@ simulate_and_save_data <- function(month) {
 walk(month.name |> tolower(), simulate_and_save_data)
 ```
 
-Having created our dataset with each month saved to a different CSV, we can now read it in. There are a variety of ways to do this. The first step is that we need to get a list of all the CSV files in the directory. We use "glob" here to specify that we are interested only in the ".csv" files, and that could change to whatever files it is that we are interested in.
+Having created our dataset with each month saved to a different CSV, we can now read it in. There are a variety of ways to do this. The first step is that we need to get a list of all the CSV files in the directory. We use the "glob" argument here to specify that we are interested only in the ".csv" files, and that could change to whatever files it is that we are interested in.
 
 ```{r}
 #| eval: false
@@ -618,7 +618,7 @@ library(tidyverse)
 
 number_of_draws <- 1000000
 
-# Name is homage to: https://www.rand.org/pubs/monograph_reports/MR1418.html
+# Homage to: https://www.rand.org/pubs/monograph_reports/MR1418.html
 a_million_random_digits <-
   tibble(
     numbers = runif(n = number_of_draws),
@@ -638,6 +638,11 @@ write_parquet(
 
 file_size("a_million_random_digits.csv")
 file_size("a_million_random_digits.parquet")
+```
+
+```{r}
+#| eval: true
+#| include: false
 
 file.remove("a_million_random_digits.csv")
 file.remove("a_million_random_digits.parquet")
@@ -734,14 +739,16 @@ read_csv(
          ) |> 
   knitr::kable(
     col.names = c(
-      "Number of draws",
+      "Number of observations",
       "CSV file size",
       "Parquet file size"
     )
   )
 ```
 
-Having considered ".parquet", and explained the benefits, compared with CSVs for large data that we are storing, we now consider ".arrow" and the benefit of this file type for large data that we are actively using. Again, these benefits will be most notable for larger datasets, and so we will simulate ten million observations. For instance, we may have run a survey, stratified by US state, to understand people's favorite numbers and letters.
+Having considered ".parquet", and explained the benefits, compared with CSVs for large data that we are storing, we now consider ".arrow" and the benefit of this file type for large data that we are actively using. Again, these benefits will be most notable for larger datasets, and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare & Medicaid Services, which is 6.66 GB and available [here](https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016). It is a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using `read_csv()`, with the same task using `read_csv_arrow()`, which will 
+
+For instance, we may have run a survey, stratified by US state, to understand people's favorite numbers and letters.
 
 ```{r}
 #| echo: true
@@ -749,20 +756,34 @@ Having considered ".parquet", and explained the benefits, compared with CSVs for
 
 library(arrow)
 library(tidyverse)
+library(tictoc)
 
-number_of_draws <- 100000000
+tic("CSV - Everything")
+tic("CSV - Reading")
+open_payments_data_csv <- read_csv("~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv")
+class(open_payments_data_csv)
+toc()
+tic("CSV - Group and summarize")
+open_payments_data_csv |> 
+  group_by(Recipient_State) |> 
+  summarise(average_payment = mean(Total_Amount_of_Payment_USDollars, na.rm = TRUE))
+toc()
+toc()
+rm(open_payments_data_csv)
 
-some_larger_data <-
-  tibble(
-    id = c(1:number_of_draws),
-    state = sample(x = state.name, size = number_of_draws, replace = TRUE),
-    fav_letter = sample(x = letters, size = number_of_draws, replace = TRUE),
-    fav_number = runif(n = number_of_draws, min = 0, max = 100) |> round()
-  )
+tic("arrow - Everything")
+tic("arrow - Reading")
+open_payments_data_arrow <- read_csv_arrow("~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv")
+class(open_payments_data_arrow)
+toc()
+tic("arrow - Doing")
+open_payments_data_arrow |> 
+  group_by(Recipient_State) |> 
+  summarise(average_payment = mean(Total_Amount_of_Payment_USDollars, na.rm = TRUE))
+toc()
+toc()
+rm(open_payments_data_arrow)
 
-write_csv(some_larger_data, "some_larger_data.csv")
-
-some_larger_data
 ```
 
 We might be interested to understand the average favorite number by state and letter.
@@ -800,7 +821,6 @@ toc()
 
 
 We can see these size and speed benefits more easily in @fig-readwrite which considers a variety of different options.
-
 
 ```{r}
 #| eval: false
@@ -909,108 +929,141 @@ need_for_speed |>
   scale_y_log10()
 ```
 
+
+
 Using Parquet may be especially useful with larger files. A common approach to dealing with large files is to separate them into smaller files and then using `map_dfr()` from `purrr` to bring them together when needed, as was illustrated above. This is most useful when there are a large number of observations. But it may be that we have a large number of columns. This is especially likely when using text as data, which we cover in @sec-text-as-data. In this case, it can be useful to take advantage of the "col_select" option in `read_parquet()`. We can pass this either a character vector of the column names that we want read in, or conditions, as was covered in @sec-r-essentials in the context of `select()`.
 
 
 ### SQL
 
-Structured Query Language (SQL) ("see-quell" or "S.Q.L.") is used with relational databases. A relational database is a collection of at least one table, and a table is just some data organized into rows and columns. If there is more than one table in the database, then there should be some column that links them. Using it feels a bit like HTML/CSS in terms of being halfway between markup and programming. One fun aspect is that line spaces mean nothing: include them or do not, but always end a SQL command in a semicolon;
+Structured Query Language (SQL) ("see-quell" or "S.Q.L.") is used with relational databases. A relational database is a collection of at least one table, and a table is just some data organized into rows and columns. If there is more than one table in the database, then there should be some column that links them. An example is the `AustralianPoliticians` datasets that were used in @sec-r-essentials. Using SQL feels a bit like HTML/CSS in terms of being halfway between markup and programming. One fun aspect is that, by convention, commands are written in upper case. Another is that line spaces mean nothing: include them or do not, but always end a SQL command in a semicolon;
 
-SQL was developed in the 1970s at IBM. While it may be true that the SQL is never as good as the original, SQL is a popular way of working with data. There are many "flavors" of SQL, including both closed and open options. Here we introduce SQLite, which is open source, and pre-installed on Macs. Windows users can install it from [here](https://www.sqlite.org/download.html).
+SQL was developed in the 1970s at IBM. While it may be true that the SQL is never as good as the original, SQL is an especially popular way of working with data. There are many "flavors" of SQL, including both closed and open options. Here we introduce SQLite, which is open source, and pre-installed on Macs. Windows users can install it from [here](https://www.sqlite.org/download.html).
 
 Advanced SQL users do a lot with it alone, but even just having a working knowledge of SQL increases the number of datasets that we can access. A working knowledge of SQL is especially useful for our efficiency because a large number of datasets are stored on SQL servers, and being able to get data from them ourselves is handy. 
 
-We can use SQL within RStudio, especially drawing on `DBI` [@dbi]. although given the demand for SQL skills, independent of demand for R skills, it may be a better idea, from a career perspective to have a working knowledge of it that is independent of R. We can consider many SQL functions as straightforward variants of the `dplyr` verbs that we have used throughout this book. Indeed `dbplyr` [@dbplyr] would explicitly allow us to use `dplyr` functions and would then automatically translate them into SQL. Having used `mutate()`, `filter()` and `left_join()` in the `tidyverse` means that many of the core SQL commands will be familiar. That means that the main difficulty will be getting on top of the order of operations because SQL can be pedantic.
+We could use SQL within RStudio, especially drawing on `DBI` [@dbi]. although given the demand for SQL skills, independent of demand for R skills, it may be a better idea, from a career perspective to have a working knowledge of it that is independent of RStudio. We can consider many SQL commands as straightforward variants of the `dplyr` verbs that we have used throughout this book. Indeed, if we wanted to stay within R, then `dbplyr` [@dbplyr] would explicitly allow us to use `dplyr` functions and would then automatically translate them into SQL. Having used `mutate()`, `filter()` and `left_join()` in the `tidyverse` means that many of the core SQL commands will be familiar. That means that the main difficulty will be getting on top of the order of operations because SQL can be pedantic.
 
-To get started, open "Terminal" and then type "sqlite3" and then press return. This will invoke SQL (@fig-sql). And we can then enter the following commands in the terminal.
+To get started with SQL, download [DB Browser for SQLite](https://sqlitebrowser.org) (DB4S), which is free and open-source, and open it (@fig-sql). 
 
-![Getting started with SQL in Mac Terminal](figures/sql.png){#fig-sql width=70% fig-align="center"}
+![Opening DB Browser for SQLite](figures/sql_01.png){#fig-sql width=70% fig-align="center"}
 
-We can create an empty table of three columns of type: int, text, int.
+Download "AustralianPoliticians.db" [here](https://www.tellingstorieswithdata.com/inputs/AustralianPoliticians.db) and then open it with "Open Database" and navigate to where you downloaded the database.
 
-```{sql}
-#| include: true
-#| eval: false
-
-CREATE TABLE table_name (
-  column1 INTEGER,
-  column2 TEXT,
-  column3 INTEGER
-);
-```
-
-Add a row of data:
+There are three key SQL commands that we now cover: `SELECT`, `FROM`, and `WHERE.` `SELECT` allows us to specify particular columns of the data, and we can consider `SELECT` in a similar way to `select()`. In the same way that we need to specify a dataset with `select()` and did that using a pipe operator, we specify a dataset with `FROM`. For instance, we could open "Execute SQL", and then type the following, and click "Execute".
 
 ```{sql}
 #| include: true
 #| eval: false
 
-INSERT INTO table_name (column1, column2, column3)
-  VALUES (1234, "Gough Menzies", 32);
+    SELECT
+        surname   
+    FROM
+        politicians;
 ```
 
-Add a column:
+The result is that we obtain the column of surnames. We could select multiple columns by separating them with commas, or all of them by using an asterisk, although this is not best practice because if the dataset were to change without us knowing then our result would differ.
 
 ```{sql}
 #| include: true
 #| eval: false
 
-ALTER TABLE table_name
-  ADD COLUMN column4 TEXT;
+    SELECT
+        uniqueID
+        surname   
+    FROM
+        politicians;
 ```
-
-We can view particular aspects of the data, using SELECT in a similar way to `select()`.
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT column2
-  FROM table_name;
+    SELECT
+        *
+    FROM
+        politicians;
 ```
 
-See two columns:
+And, finally, if there were repeated rows, then we could just look at the unique ones using `DISTINCT`, in a similar way to `distinct()`.
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT column1, column2
-  FROM table_name;
+    SELECT
+        DISTINCT surname   
+    FROM
+        politicians;
 ```
 
-See all columns:
+So far we have used `SELECT` along with `FROM`. The third command that is commonly used is `WHICH`, and this will allow us to focus on particular rows, in a similar way to `filter()`.
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT *
-  FROM table_name;
+    SELECT
+        uniqueID,
+        surname,
+        firstName   
+    FROM
+        politicians     
+    WHERE
+        firstName = "Myles";
 ```
 
-See unique rows in a column (similar to `distinct()`):
+All the usual operators are fine with `WHERE`, such as "=", "!=", ">", "<", ">=", and "<=". We could combine conditions using `AND` and `OR`.
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT DISTINCT column2
-  FROM table_name;
+    SELECT
+        uniqueID,
+        surname,
+        firstName   
+    FROM
+        politicians     
+    WHERE
+        firstName = "Myles" 
+        OR firstName = "Ruth";
 ```
 
-See the rows that match a criteria (similar to `which()` or `filter()`):
+If we have a query that gave a lot of results, then we could limit the number of them with `LIMIT`. 
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT *
-  FROM table_name
-    WHERE column3 > 30;
+    SELECT
+        uniqueID,
+        surname,
+        firstName        
+    FROM
+        politicians          
+    WHERE
+        firstName = "Robert"       LIMIT 5;
 ```
 
-All the usual operators are fine with WHERE: =, !=, >, <, >=, <=. Just make sure the condition evaluates to true/false.
+And we could specify the order of the results with `ORDER`.
+
+```{sql}
+#| include: true
+#| eval: false
+
+    SELECT
+        uniqueID,
+        surname,
+        firstName 
+    FROM
+        politicians 
+    WHERE
+        firstName = "Robert" 
+    ORDER BY
+        surname DESC;
+```
+
 
 See the rows that are pretty close to a criteria:
 
@@ -1018,207 +1071,157 @@ See the rows that are pretty close to a criteria:
 #| include: true
 #| eval: false
 
-SELECT *
-  FROM table_name
-    WHERE column2 LIKE  "_ough Menzies";
+    SELECT
+        uniqueID,
+        surname,
+        firstName      
+    FROM
+        politicians      
+    WHERE
+        firstName LIKE "Ma__";
 ```
 
-The "_" above is a wildcard that matches to any character e.g. "Cough Menzies" would be matched here, as would "Gough Menzies". LIKE is not case-sensitive: "Gough Menzies" and "gough menzies" would both match here.
+The "_" above is a wildcard that matches to any character. So this provides results that include "Mary", and "Mark". `LIKE` is not case-sensitive: "Ma__" and "ma__" both return the same results.
 
-We can use "%" as an anchor to matches pieces:
+Focusing on missing data is possible using "NULL" or "NOT NULL". 
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT *
-  FROM table_name
-    WHERE column2 LIKE  "%Menzies";
+    SELECT
+        uniqueID,
+        surname,
+        firstName,
+        comment
+    FROM
+        politicians      
+    WHERE
+        comment     IS NULL;
 ```
 
-That matches anything ending with "Menzies", so "Cough Menzies", "Gough Menzies", "Sir Menzies" etc, would all be matched here. Use surrounding percentages to match within, e.g. %Menzies% would also match "Sir Menzies Jr" whereas %Menzies would not.
-
-NULL values (True/False/NULL) are possible, not just True/False, but they need to be explicitly matched for.
+There is an underlying ordering build into number, date and text fields that means we can use `BETWEEN` on all those, not just numeric. For instance, we could look for all surnames that starts with a letter between X and Z (not including Z).
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT *
-  FROM table_name
-    WHERE column2 IS NOT NULL;
+    SELECT
+        uniqueID,
+        surname,
+        firstName
+    FROM
+        politicians      
+    WHERE
+        surname     BETWEEN "X" AND "Z";
 ```
 
-There is an underlying ordering build into number, date and text fields that allows you to use BETWEEN on all those, not just numeric. The following looks for text that starts with a letter between A and M (not including M) so would match "Gough Menzies", but not "Sir Gough Menzies".
+Using `WHERE` with a numeric variable means that `BETWEEN` is inclusive, compared with the example with letters that was not.
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT *
-  FROM table_name
-    WHERE column2 BETWEEN "A" AND "M";
+    SELECT
+        uniqueID,
+        surname,
+        firstName,
+        birthYear
+    FROM
+        politicians      
+    WHERE
+        birthYear     BETWEEN 1980 AND 1990;
 ```
 
-If you look for a numeric (as opposed to text) then BETWEEN is inclusive.
-
-We can combine conditions with AND (both must be true to be returned) or OR (at least one must be true).
+In addition to providing us with dataset observations that match what we asked for, we can modify the dataset. For instance, we could edit a value using `UPDATE` and `SET`.
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT *
-  FROM table_name
-    WHERE column2 BETWEEN "A" AND "M"
-    AND column3 = 32;
+    UPDATE
+        politicians   
+    SET
+        surname = "Alexanderrrrrrrr"
+    WHERE
+        uniqueID = "Alexander1951";
 ```
 
-And we can order the result with ORDER.
+We can integrate if-else logic with `CASE` and `ELSE`. For instance, where we add a column called "wasTreasurer", which is "Yes" in the case of "Josh Frydenberg", and "No" in the case of "Kevin Rudd", anad "Unsure" for all other cases.
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT *
-  FROM table_name
-    ORDER BY column3;
+    SELECT
+        uniqueID,
+        surname,
+        firstName,
+        birthYear,
+        CASE                  
+            WHEN uniqueID = "Frydenberg1971" THEN "Yes"                  
+            WHEN surname = "Rudd" THEN "No"                  
+            ELSE "Unsure"            
+        END AS "wasTreasurer"        
+    FROM
+        politicians;
 ```
 
-Ascending is the default, add DESC for alternative:
+We can create summary statistics using commands such as `COUNT`, `SUM`, `MAX`, `MIN`, `AVG`, and `ROUND` in the place of `summarize()`. `COUNT` counts the number of rows that are not empty for some column by passing the column name, and this is similarly how `MIN`, etc, work.
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT *
-  FROM table_name
-    ORDER BY column3 DESC;
+    SELECT
+        COUNT(uniqueID)   
+    FROM
+        politicians;
 ```
-
-Restrict the return to a certain number of values by adding LIMIT at the end:
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT *
-  FROM table_name
-    ORDER BY column3 DESC
-    LIMIT 1;
+    SELECT
+        MIN(birthYear)   
+    FROM
+        politicians;
 ```
 
-(This doesn't work all the time - only certain SQL databases.)
-
-We can modify data and use logic. For instance we can edit a value.
+We can get results on the basis of different groups in our dataset using `GROUP BY`, in a similar manner to `group_by` in R.
 
 ```{sql}
 #| include: true
 #| eval: false
 
-UPDATE table_name
-  SET column3 = 33
-    WHERE column1 = 1234;
+    SELECT
+        COUNT(uniqueID)   
+    FROM
+        politicians     
+    GROUP BY
+        gender;
 ```
 
-Implement if/else logic:
+And finally, we can combine two tables using `LEFT JOIN`. We need to be careful to specify the matching columns using dot notation. 
 
 ```{sql}
 #| include: true
 #| eval: false
 
-SELECT *,
-  CASE
-    WHEN column2 = "Gough Whitlam" THEN "Labor"
-    WHEN column2 = "Robert Menzies" THEN "Liberal"
-    ELSE "Who knows"
-  END AS "Party"
-  FROM table_name;
+    SELECT
+        politicians.uniqueID,
+        politicians.firstName,
+        politicians.surname,
+        party.partySimplifiedName   
+    FROM
+        politicians 
+    LEFT JOIN
+        party     
+            ON politicians.uniqueID = party.uniqueID;
 ```
 
-This returns a column called "Party" that looks at the name of the person to return a party.
-
-Delete some rows:
-
-```{sql}
-#| include: true
-#| eval: false
-
-DELETE FROM table_name
-  WHERE column3 IS NULL;
-```
-
-Add an alias to a column name (this just shows in the output):
-
-```{sql}
-#| include: true
-#| eval: false
-
-SELECT column2 AS "Names"
-  FROM table_name;
-```
-
-We can use COUNT, SUM, MAX, MIN, AVG and ROUND in the place of `summarize()`. COUNT counts the number of rows that are not empty for some column by passing the column name, or for all using *.
-
-```{sql}
-#| include: true
-#| eval: false
-
-SELECT COUNT(*)
-  FROM table_name;
-```
-
-Similarly, we can pass a column to SUM, MAX, MIN, and AVG.
-
-```{sql}
-#| include: true
-#| eval: false
-
-SELECT SUM(column1)
-  FROM table_name;
-```
-
-ROUND takes a column and an integer to specify how many decimal places.
-
-```{sql}
-#| include: true
-#| eval: false
-
-SELECT ROUND(column1, 0)
-  FROM table_name;
-```
-
-SELECT and GROUP BY is similar to group_by in R.
-
-```{sql}
-#| include: true
-#| eval: false
-
-SELECT column3, COUNT(*)
-  FROM table_name
-    GROUP BY column3;
-```
-
-We can GROUP BY column number instead of name e.g. 1 instead of column3 in the GROUP BY line or 2 instead of COUNT(*) if that was of interest.
-
-HAVING for aggregates, is similar to filter in R or the WHERE for rows from earlier. Use it after GROUP BY and before ORDER BY and LIMIT.
-
-We can combine two tables using JOIN or LEFT JOIN.
-
-```{sql}
-#| include: true
-#| eval: false
-
-SELECT *
-  FROM table1_name
-  JOIN table2_name
-    ON table1_name.colum1 = table2_name.column1;
-```
-
-Be careful to specify the matching columns using dot notation. Primary key columns uniquely identify rows and are: 1) never NULL; 2) unique; 3) only one column per table. A primary key can be primary in one table and foreign in another. Unique columns have a different value for every row and there can be many in one table.
-
-UNION is the equivalent of `cbind()` if the tables are already fairly similar.
-
+As SQL is not our focus we have only provided a brief overview of some essential commands. From a career perspective it is important to develop a comfort with SQL. It is so integrated into data science that it would be "difficult to get too far without it" [@robinsonnolis2020, p. 8] and that "almost any" data science interview will include questions about SQL [@robinsonnolis2020, p. 110].
 
 
 ## Exercises and tutorial
