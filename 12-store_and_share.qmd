@@ -10,14 +10,13 @@ engine: knitr
 - Read *Transparent and reproducible social science research*, Chapter 10 "Data Sharing", [@christensen2019transparent]
 - Read *Datasheets for datasets*, [@gebru2021datasheets]
 - Read *Data and its (dis)contents: A survey of dataset development and use in machine learning research*, [@Paullada2021]
-- Watch *Code smells and feels*, [@codesmells]
 
 **Key concepts and skills**
 
 - The FAIR principles provide the foundation from which we consider data sharing and storage. These specify that data should be findable, accessible, interoperable, and reusable. 
 - The most important step is the first one, and that is to get the data off our local computer, and to then make it accessible by others. After that, we build documentation, and datasheets, to make it easier for others to understand and use it. Finally, we ideally enable access without our involvement.
-- At the same time as wanting to share our datasets are widely as possible, we must respect those whose data are contained in them. For instance, protect, to a reasonable extent, personally identifying information through selective disclosure, hashing, data simulation, and differential privacy.
-- Finally, as our data get larger, approaches that were viable when they were smaller start to break down. We need to consider efficiency with regard to both our code and our data.
+- At the same time as wanting to share our datasets are widely as possible, we must respect those whose information are contained in them. This means, for instance, protecting, to a reasonable extent, and informed by costs and benefits, personally identifying information through selective disclosure, hashing, data simulation, and differential privacy.
+- Finally, as our data get larger, approaches that were viable when they were smaller start to break down. We need to consider efficiency with regard to our data, and explore other approaches, formats, and languages.
 
 **Key packages and functions**
 
@@ -658,7 +657,6 @@ We get significant file size improvements when we compare the size of the same d
 
 # INTERNAL
 
-
 library(arrow)
 library(tidyverse)
 
@@ -746,192 +744,283 @@ read_csv(
   )
 ```
 
-Having considered ".parquet", and explained the benefits, compared with CSVs for large data that we are storing, we now consider ".arrow" and the benefit of this file type for large data that we are actively using. Again, these benefits will be most notable for larger datasets, and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare & Medicaid Services, which is 6.66 GB and available [here](https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016). It is a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using `read_csv()`, with the same task using `read_csv_arrow()`, which will 
-
-For instance, we may have run a survey, stratified by US state, to understand people's favorite numbers and letters.
+Having considered ".parquet", and explained the benefits, compared with CSVs for large data that we are storing, we now consider ".arrow" and the benefit of this file type for large data that we are actively using. Again, these benefits will be most notable for larger datasets, and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare & Medicaid Services, which is 6.66 GB and available [here](https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016). It is available as a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using `read_csv()`, with the same task using `read_csv_arrow()`. We find a considerable speed-up when using `read_csv_arrow()` (@tbl-needforspeedpropublica).
 
 ```{r}
-#| echo: true
+#| echo: false
 #| eval: false
+
+# INTERNAL
 
 library(arrow)
 library(tidyverse)
 library(tictoc)
+
+tic.clearlog()
 
 tic("CSV - Everything")
 tic("CSV - Reading")
 open_payments_data_csv <- read_csv("~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv")
 class(open_payments_data_csv)
-toc()
-tic("CSV - Group and summarize")
+toc(log = TRUE, quiet = TRUE)
+tic("CSV - Manipulate and summarise")
 open_payments_data_csv |> 
-  group_by(Recipient_State) |> 
-  summarise(average_payment = mean(Total_Amount_of_Payment_USDollars, na.rm = TRUE))
-toc()
-toc()
+  rename(state = Recipient_State, 
+         total_payment_USD = Total_Amount_of_Payment_USDollars) |> 
+  filter(state %in% c("CA", "OR", "WA")) |>
+  mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
+  group_by(state) |> 
+  summarise(average_payment = mean(total_payment_USD, na.rm = TRUE))
+toc(log = TRUE, quiet = TRUE)
+toc(log = TRUE, quiet = TRUE)
 rm(open_payments_data_csv)
 
 tic("arrow - Everything")
 tic("arrow - Reading")
 open_payments_data_arrow <- read_csv_arrow("~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv")
+
 class(open_payments_data_arrow)
-toc()
-tic("arrow - Doing")
+toc(log = TRUE, quiet = TRUE)
+tic("arrow - Manipulate and summarise")
 open_payments_data_arrow |> 
-  group_by(Recipient_State) |> 
-  summarise(average_payment = mean(Total_Amount_of_Payment_USDollars, na.rm = TRUE))
-toc()
-toc()
+  rename(state = Recipient_State, 
+         total_payment_USD = Total_Amount_of_Payment_USDollars) |> 
+  filter(state %in% c("CA", "OR", "WA")) |>
+  mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
+  group_by(state) |> 
+  summarise(average_payment = mean(total_payment_USD, na.rm = TRUE))
+toc(log = TRUE, quiet = TRUE)
+toc(log = TRUE, quiet = TRUE)
 rm(open_payments_data_arrow)
-
-```
-
-We might be interested to understand the average favorite number by state and letter.
-
-```{r}
-#| echo: true
-#| eval: false
-
-library(tictoc)
-tic("CSV - Everything")
-tic("CSV - Reading")
-some_larger_data <- read_csv("some_larger_data.csv")
-class(some_larger_data)
-toc()
-tic("CSV - Doing")
-some_larger_data |> 
-  group_by(state, fav_letter) |> 
-  summarise(average_favorite_number = mean(fav_number))
-toc()
-toc()
-
-tic("arrow - Everything")
-tic("arrow - Reading")
-some_larger_data <- read_csv_arrow("some_larger_data.csv")
-class(some_larger_data)
-toc()
-tic("arrow - Doing")
-some_larger_data |> 
-  group_by(state, fav_letter) |> 
-  summarise(average_favorite_number = mean(fav_number))
-toc()
-toc()
-```
-
-
-
-We can see these size and speed benefits more easily in @fig-readwrite which considers a variety of different options.
-
-```{r}
-#| eval: false
-#| include: false
-#| message: false
-#| warning: false
-
-# INTERNAL
-
-library(arrow)
-library(tictoc)
-library(tidyverse)
-
-tic.clearlog()
-for (number_of_draws in c(
-  10000,
-  100000,
-  1000000,
-  10000000,
-  100000000,
-  1000000000
-)) {
-  some_data <-
-    tibble(
-      first = runif(n = number_of_draws),
-      second = sample(
-        x = LETTERS,
-        size = number_of_draws,
-        replace = TRUE
-      )
-    )
-
-  tic(paste("CSV write", number_of_draws))
-  write_csv(
-    x = some_data,
-    file = "some_data.csv"
-  )
-  toc(log = TRUE, quiet = TRUE)
-
-  tic(paste("CSV read", number_of_draws))
-  the_data <- read_csv(
-    file = "some_data.csv",
-    show_col_types = FALSE
-  )
-  toc(log = TRUE, quiet = TRUE)
-  rm(the_data)
-
-  tic(paste("Parquet write", number_of_draws))
-  write_parquet(
-    x = some_data,
-    sink = "some_data.parquet"
-  )
-  toc(log = TRUE, quiet = TRUE)
-
-  tic(paste("Parquet read", number_of_draws))
-  the_data <- read_parquet(file = "some_data.parquet")
-  toc(log = TRUE, quiet = TRUE)
-  rm(some_data)
-  rm(the_data)
-
-  file.remove("some_data.csv")
-  file.remove("some_data.parquet")
-}
 
 log_txt <- tic.log(format = TRUE)
 tic.clearlog()
 
-writeLines(unlist(log_txt))
-
-need_for_speed <-
+need_for_speed_propublica <-
   tibble(
     raw = unlist(log_txt)
   )
 
-need_for_speed <-
-  need_for_speed |>
+need_for_speed_propublica <-
+  need_for_speed_propublica |>
   separate(raw, into = c("thing", "time"), sep = ": ") |>
   mutate(
     time = str_remove(time, " sec elapsed"),
     time = as.numeric(time)
   ) |>
-  separate(thing, into = c("file_type", "task", "num_rows"), sep = " ")
+  separate(thing, into = c("file_type", "task"), sep = " - ")
 
-write_csv(need_for_speed, file = "inputs/data/need_for_speed.csv")
+write_csv(need_for_speed_propublica, file = "inputs/data/need_for_speed_propublica.csv")
 ```
-
- 
 
 ```{r}
+#| echo: true
+#| eval: false
+
+
+library(arrow)
+library(tidyverse)
+
+open_payments_data_csv <-
+  read_csv("OP_DTL_GNRL_PGYR2016_P01172018.csv")
+toc(log = TRUE, quiet = TRUE)
+open_payments_data_csv |>
+  rename(state = Recipient_State,
+         total_payment_USD = Total_Amount_of_Payment_USDollars) |>
+  filter(state %in% c("CA", "OR", "WA")) |>
+  mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
+  group_by(state) |>
+  summarise(average_payment = mean(total_payment_USD, na.rm = TRUE))
+rm(open_payments_data_csv)
+
+open_payments_data_arrow <-
+  read_csv_arrow("OP_DTL_GNRL_PGYR2016_P01172018.csv")
+open_payments_data_arrow |>
+  rename(state = Recipient_State,
+         total_payment_USD = Total_Amount_of_Payment_USDollars) |>
+  filter(state %in% c("CA", "OR", "WA")) |>
+  mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
+  group_by(state) |>
+  summarise(average_payment = mean(total_payment_USD, na.rm = TRUE))
+rm(open_payments_data_arrow)
+```
+
+
+```{r}
+#| label: tbl-needforspeedpropublica
 #| echo: false
 #| eval: true
-#| fig-cap: "Read and write time, as the file size increases, for CSV and Parquet"
-#| label: fig-readwrite
+#| message: false
+#| tbl-cap: "Comparing the speed of reading and manipulating using 'read_csv()' and 'read_csv_arrow()'"
 
-need_for_speed <-
-  read_csv(
-    "inputs/data/need_for_speed.csv",
+read_csv(
+    "inputs/data/need_for_speed_propublica.csv",
     show_col_types = FALSE
+  ) |> 
+  knitr::kable(
+    col.names = c(
+      "Which function",
+      "Task",
+      "Time (seconds)"
+    )
   )
-
-need_for_speed |>
-  ggplot(aes(x = num_rows, y = time, color = file_type)) +
-  geom_point() +
-  facet_wrap(facets = vars(task)) +
-  scale_x_log10() +
-  scale_y_log10()
 ```
 
 
 
-Using Parquet may be especially useful with larger files. A common approach to dealing with large files is to separate them into smaller files and then using `map_dfr()` from `purrr` to bring them together when needed, as was illustrated above. This is most useful when there are a large number of observations. But it may be that we have a large number of columns. This is especially likely when using text as data, which we cover in @sec-text-as-data. In this case, it can be useful to take advantage of the "col_select" option in `read_parquet()`. We can pass this either a character vector of the column names that we want read in, or conditions, as was covered in @sec-r-essentials in the context of `select()`.
+
+
+
+<!-- For instance, we may have run a survey, stratified by US state, to understand people's favorite numbers and letters. -->
+
+<!-- We might be interested to understand the average favorite number by state and letter. -->
+
+<!-- ```{r} -->
+<!-- #| echo: true -->
+<!-- #| eval: false -->
+
+<!-- library(tictoc) -->
+
+<!-- tic.clearlog() -->
+
+<!-- tic("CSV - Everything") -->
+<!-- tic("CSV - Reading") -->
+<!-- some_larger_data <- read_csv("some_larger_data.csv") -->
+<!-- class(some_larger_data) -->
+<!-- toc() -->
+<!-- tic("CSV - Doing") -->
+<!-- some_larger_data |>  -->
+<!--   group_by(state, fav_letter) |>  -->
+<!--   summarise(average_favorite_number = mean(fav_number)) -->
+<!-- toc() -->
+<!-- toc() -->
+
+<!-- tic("arrow - Everything") -->
+<!-- tic("arrow - Reading") -->
+<!-- some_larger_data <- read_csv_arrow("some_larger_data.csv") -->
+<!-- class(some_larger_data) -->
+<!-- toc() -->
+<!-- tic("arrow - Doing") -->
+<!-- some_larger_data |>  -->
+<!--   group_by(state, fav_letter) |>  -->
+<!--   summarise(average_favorite_number = mean(fav_number)) -->
+<!-- toc() -->
+<!-- toc() -->
+
+<!-- ``` -->
+
+
+
+<!-- We can see these size and speed benefits more easily in @fig-readwrite which considers a variety of different options. -->
+
+<!-- ```{r} -->
+<!-- #| eval: false -->
+<!-- #| include: false -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+
+<!-- # INTERNAL -->
+
+<!-- library(arrow) -->
+<!-- library(tictoc) -->
+<!-- library(tidyverse) -->
+
+<!-- tic.clearlog() -->
+<!-- for (number_of_draws in c( -->
+<!--   10000, -->
+<!--   100000, -->
+<!--   1000000, -->
+<!--   10000000, -->
+<!--   100000000, -->
+<!--   1000000000 -->
+<!-- )) { -->
+<!--   some_data <- -->
+<!--     tibble( -->
+<!--       first = runif(n = number_of_draws), -->
+<!--       second = sample( -->
+<!--         x = LETTERS, -->
+<!--         size = number_of_draws, -->
+<!--         replace = TRUE -->
+<!--       ) -->
+<!--     ) -->
+
+<!--   tic(paste("CSV write", number_of_draws)) -->
+<!--   write_csv( -->
+<!--     x = some_data, -->
+<!--     file = "some_data.csv" -->
+<!--   ) -->
+<!--   toc(log = TRUE, quiet = TRUE) -->
+
+<!--   tic(paste("CSV read", number_of_draws)) -->
+<!--   the_data <- read_csv( -->
+<!--     file = "some_data.csv", -->
+<!--     show_col_types = FALSE -->
+<!--   ) -->
+<!--   toc(log = TRUE, quiet = TRUE) -->
+<!--   rm(the_data) -->
+
+<!--   tic(paste("Parquet write", number_of_draws)) -->
+<!--   write_parquet( -->
+<!--     x = some_data, -->
+<!--     sink = "some_data.parquet" -->
+<!--   ) -->
+<!--   toc(log = TRUE, quiet = TRUE) -->
+
+<!--   tic(paste("Parquet read", number_of_draws)) -->
+<!--   the_data <- read_parquet(file = "some_data.parquet") -->
+<!--   toc(log = TRUE, quiet = TRUE) -->
+<!--   rm(some_data) -->
+<!--   rm(the_data) -->
+
+<!--   file.remove("some_data.csv") -->
+<!--   file.remove("some_data.parquet") -->
+<!-- } -->
+
+<!-- log_txt <- tic.log(format = TRUE) -->
+<!-- tic.clearlog() -->
+
+<!-- writeLines(unlist(log_txt)) -->
+
+<!-- need_for_speed <- -->
+<!--   tibble( -->
+<!--     raw = unlist(log_txt) -->
+<!--   ) -->
+
+<!-- need_for_speed <- -->
+<!--   need_for_speed |> -->
+<!--   separate(raw, into = c("thing", "time"), sep = ": ") |> -->
+<!--   mutate( -->
+<!--     time = str_remove(time, " sec elapsed"), -->
+<!--     time = as.numeric(time) -->
+<!--   ) |> -->
+<!--   separate(thing, into = c("file_type", "task", "num_rows"), sep = " ") -->
+
+<!-- write_csv(need_for_speed, file = "inputs/data/need_for_speed.csv") -->
+<!-- ``` -->
+
+
+
+<!-- ```{r} -->
+<!-- #| echo: false -->
+<!-- #| eval: true -->
+<!-- #| fig-cap: "Read and write time, as the file size increases, for CSV and Parquet" -->
+<!-- #| label: fig-readwrite -->
+
+<!-- need_for_speed <- -->
+<!--   read_csv( -->
+<!--     "inputs/data/need_for_speed.csv", -->
+<!--     show_col_types = FALSE -->
+<!--   ) -->
+
+<!-- need_for_speed |> -->
+<!--   ggplot(aes(x = num_rows, y = time, color = file_type)) + -->
+<!--   geom_point() + -->
+<!--   facet_wrap(facets = vars(task)) + -->
+<!--   scale_x_log10() + -->
+<!--   scale_y_log10() -->
+<!-- ``` -->
+
+
 
 
 ### SQL

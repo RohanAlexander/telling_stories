@@ -12,6 +12,7 @@ engine: knitr
 - Watch *Overcoming barriers to sharing code*, [@monicatalks]
 - Watch *Make a reprex... Please*, [@sharlatalks]
 - Read *The tidyverse style guide*, [@tidyversestyleguide]
+- Watch *Code smells and feels*, [@codesmells]
 
 **Key concepts and skills**
 
@@ -570,7 +571,7 @@ If you write code, then you are a programmer, regardless of how you do it, what 
 
 ### Code comments and style
 
-Code must be commented. Comments should focus on why certain code was written, (and to a lesser extent, why a common option is not selected).
+Code must be commented. Comments should focus on why certain code was written, (and to a lesser extent, why a common option is not selected). Indeed, it can be a good idea to write the comments before you write the code, explaining what you want to do and why, and then returning to write the code [@refactoringbook, p. 59].
 
 There is no one way to write code, especially in R. However, there are some general guidelines that will make it easier for you even if you are just working on your own. It is important to recognize that most projects will evolve over time, and one purpose served by code comments are as "[m]essages left for your future self (or near-future others) [that] help retrace and justify your decisions" [@bowers2016improve].
 
@@ -612,27 +613,41 @@ raw_data <- readr::read_csv("inputs/data/raw_data.csv")
 ```
 
 
-Examples of nicely commented code include those from: [Bob Nystrom](https://github.com/wren-lang/wren/blob/46c1ba92492e9257aba6418403161072d640cb29/src/wren_value.h), @AhadyDolatsara2021, [Mathew Hauer and James Byars](https://github.com/mathewhauer/IRS-migration-data/tree/master/R), and [Burton, Jason W and Cruz, Nicole and Hahn, Ulrike](https://osf.io/zgdfr/) [@burton2021reconsidering].
+Examples of nicely commented code include those from: [Bob Nystrom](https://github.com/wren-lang/wren/blob/46c1ba92492e9257aba6418403161072d640cb29/src/wren_value.h), @AhadyDolatsara2021, [Mathew Hauer and James Byars](https://github.com/mathewhauer/IRS-migration-data/tree/master/R), and [Jason Burton, Nicole Cruz, and Ulrike Hahn](https://osf.io/zgdfr/) [@burton2021reconsidering].
+
+Finally, never rely on a user commenting and uncommenting code, or any other manual step, such as directory specification, for code to work. This will preclude the use of automated code checking and testing.
 
 
-Another important aspect of style is the use of a linter. This helps address stylistic issues or errors. The best way to proceed is to use `styler` [@styler]. What this does is change the code to follow a provided style guide.
+### Tests
 
+Tests need to be written throughout the code, and we need to write them as we go, not all at the end. Will this slow you down? Yes. But it will help you to think, and to fix mistakes, which will make your code better and lead to better overall productivity. Code without tests needs to be viewed with suspicious and never given the benefit of the doubt. The need for other people, and ideally, automated processes, to run tests on code is one reason that we emphasize reproducibility, as well as smaller aspects such as not hardcoding file-paths, and not having spaces in file names.
+
+It is difficult to define a complete and general, suite of tests, but broadly we want to test:
+
+1) boundary conditions, 
+2) classes, 
+3) missing data, 
+4) the number of observations and variables, 
+5) duplicates, and 
+6) regression results. 
+
+We do all this initially on our simulated data and then move to the real data. It is of course possible to write an infinite number of tests, but a smaller number of high-quality tests is much better than many thoughtless tests.
+
+Assertions are written throughout the code. They check whether something is true and stop the code from running if not [@researchsoftware, p. 272]. In writing tests for data science, they will typically be used in data cleaning and preparation scripts. We have more to say about these in @sec-clean-and-prepare. Unit tests check some complete aspect of code [@researchsoftware, p. 274]. We will consider them more in @sec-its-just-a-linear-model when we consider modelling.
 
 
 
 ## Efficiency
 
-In general we are, and will continue to be, largely concerned with just getting something done. Not necessarily getting it done in the best or most efficient way. And to a large extent, being worried about getting something done in the best or most efficient way is almost always a waste of time. Until it is not. Eventually ugly or slow code, and dogmatic insistence on a particular way of doing things, have an effect. And it is at that point that we need to be open to new approaches to ensure efficiency. These are sometimes derided as matters of taste. They are not. They are critical aspects of writing code as a professional.
+In general, we are, and will continue to be, largely concerned with just getting something done. Not necessarily getting it done in the best or most efficient way. And to a large extent, being worried about getting something done in the best or most efficient way is almost always a waste of time. Until it is not. Until it is not, by and large, worrying about performance is a waste of time. For the most part we are better off just pushing things into the cloud, letting them run for a reasonable time, and using that time to worry about other aspects of the pipeline, except that becomes unfeasible. At a certain point, and this widely differs, efficiency becomes very important. Eventually ugly or slow code, and dogmatic insistence on a particular way of doing things, have an effect. And it is at that point that we need to be open to new approaches to ensure efficiency. These are sometimes derided as matters of taste. They are not. They are critical aspects of writing code as a professional, which is something every data scientist does. There is rarely a most common area for obvious performance gains. Instead, it is important to develop the ability to measure, evaluate, and think.
 
-We firstly discuss code efficiency. We start with code linting, which was mentioned in dispatches in  @sec-reproducible-workflows, and enables code review. This does not speed up our code, per se, but we will instead use linters to make out code easier to read, which makes it more efficient when another person comes to it, or we revisit it. We then turn to measurement of run time, and introduce parallel processing, where we allow our computer to run code multiple processes at the same time. Finally we consider code refactoring, which is where we re-write code to make it better, while not changing what it does. After this we turn to ways to be more efficient with data, by using SQL and parquet.
+We start with code linting and styling. This does not speed up our code, per se, but we will instead use linters to make out code easier to read, which makes it more efficient when another person comes to it, or we revisit it. This enables code review and refactoring, which is where we re-write code to make it better, while not changing what it does. We then turn to measurement of run time, and introduce parallel processing, where we allow our computer to run code multiple processes at the same time. 
 
-By and large, worrying about performance is a waste of time, until it is not. For the most part we are better off just pushing things into the cloud, letting them run for a reasonable time, and using that time to worry about other aspects of the pipeline, except that becomes unfeasible. At a certain point, and this widely differs, efficiency becomes very important. There is rarely a most common area for obvious performance gains. Instead it is important to develop the ability to measure, evaluate, and think.
+The first step to improving the efficiency of our code is to bring in a second pair of eyes. To make the most of their time, it is important that our code is first consistently styled and aligned with a style guide. After this, we can go through a formal process of code review. One common area to find efficiency is by running code in parallel. We may also re-write the code so that it does the same thing, but in a different way.
 
-The first step to improving the efficiency of our code is to bring in a second-pair of eyes. To make the most of their time, it is important that our code is first consistently styled and aligned with a style guide. After this, we can go through a formal process of code review. One common area to find efficiency is by running code in parallel. We may also re-write the code so that it does the same thing, but in a different way.
+### Sharing a code environment
 
-#### Sharing a code environment
-
-We have discussed at length the need to share code and data, and we have put forward an approach to this. However, there is another requirement to enable other people to run our code. In @sec-fire-hose we discussed how R itself, as well as R packages update from time to time, as new functionality is developed, errors fixed, and other general improvements. And in @sec-r-essentials we described how one advantage of the `tidyverse` is that it can update faster than base, because it is more specific. However this could mean that even if we were to share all the code and data that we use, it is possible that the software versions that are available would mean the code would not run.
+We have discussed at length the need to share code, and we have put forward an approach to this using GitHub. And in @sec-store-and-share, we will discuss sharing data. But, there is another requirement to enable other people to run our code. In @sec-fire-hose we discussed how R itself, as well as R packages update from time to time, as new functionality is developed, errors fixed, and other general improvements. And in @sec-r-essentials we described how one advantage of the `tidyverse` is that it can update faster than base, because it is more specific. However this could mean that even if we were to share all the code and data that we use, it is possible that the software versions that are available would mean the code would not run.
 
 The solution to this is to detail the environment that was used. There is a large number of ways to do this, and they can add a great deal of complexity, but the minimum standard is to document the version of R and R packages that were used, and make it easier for others to install that exact version. We use `renv` [@renv] to do this. 
 
@@ -644,11 +659,11 @@ We could open the lockfile file "renv.lock", to see the exact versions if we wan
 
 Someone coming to this project from outside, could then use `restore()` which would install the exact version of the packages that we used.
 
-#### Code linting and styling
+### Code linting and styling
 
-Being fast is valuable but it is mostly about being able to iterate fast, not necessarily having code that runs fast. For almost all applications we will work in teams. @oldlanguages [p. 26] describes how even in 1954 a programmer cost at least as much as a computer, and these days compute is usually much cheaper than a programmer. Hence, it is important to use other people's time efficiently. 
+Being fast is valuable but it is mostly about being able to iterate fast, not necessarily having code that runs fast. @oldlanguages [p. 26] describes how even in 1954 a programmer cost at least as much as a computer, and these days compute is usually much cheaper than a programmer. Hence, it is important to use other people's time efficiently. 
 
-Linting\index{lint} is the process of checking code, mostly for stylistic issues, and re-arranging code to make it easier to read. (There is another aspect of linting, which is programming errors, but here we focus on stylistic issues.) In general, the best efficiency gain that we can make is to make it easier for others to read our code, even if this is just ourselves returning to the code after a break. Jane Street, the US proprietary trading firm mentioned in @@sec-clean-and-prepare, focus on ensuring their code is readable, as a core part of risk mitigation [@minsky2011ocaml]. While we may not all have billions of dollars under management, we all would likely prefer that our code does not produce errors.
+Linting\index{lint} and styling is the process of checking code, mostly for stylistic issues, and re-arranging code to make it easier to read. (There is another aspect of linting, which is dealing with programming errors, such as forgetting a closing bracket, but here we focus on stylistic issues.) In general, the best efficiency gain that we can make is to make it easier for others to read our code, even if this is just ourselves returning to the code after a break. Jane Street, the US proprietary trading firm, place a very strong focus on ensuring their code is readable, as a core part of risk mitigation [@minsky2011ocaml]. While we may not all have billions of dollars under the mecurial management of our code, we all would likely prefer that our code does not produce errors.
 
 We use `lint()` from `lintr` [@lintr] to lint our code. For instance, consider the following R code (saved as "linting_example.R").
 
@@ -660,9 +675,9 @@ We use `lint()` from `lintr` [@lintr] to lint our code. For instance, consider t
 
 SIMULATED_DATA <-
   tibble(
-    division = c(1:150, 151),
+    division = c(1:150,151),
     party = sample(
-      x = c("Liberal"),
+      x = c('Liberal'),
       size = 151,
       replace = T
     ))
@@ -673,14 +688,15 @@ SIMULATED_DATA <-
 #| eval: false
 
 library(lintr)
-lint(filename = "inputs/linting_example.R")
+
+lint(filename = "linting_example.R")
 ```
 
-The result is that the file "inputs/linting_example.R" is opened and the issues that `lint()` found are printed in "Markers" (@fig-linter).
+The result is that the file "linting_example.R" is opened and the issues that `lint()` found are printed in "Markers" (@fig-linter). It is then up to you to deal with the issues.
 
 ![Linting results](figures/linter.png){#fig-linter width=90% fig-align="center"}
 
-Making the recommended changes results in code that is more readable, and importantly consistent with best practice, as documented by @tidyversestyleguide.
+Making the recommended changes results in code that is more readable, and consistent with best practice, as defined by @tidyversestyleguide.
 
 ```{r}
 #| include: true
@@ -699,30 +715,64 @@ simulated_data <-
   )
 ```
 
-At first it may seem that some linting\index{lint} aspects like trailing whitespace and only using double quotes are small and inconsequential. But they distract from being able to fix bigger issues. Further, if we are not able to get small things right, then how could anyone trust that we could get the big things right? Therefore it is important to have dealt with all the small things that a linter identifies.
+At first it may seem that some aspects that the linter\index{lint} is identifying, like trailing whitespace and only using double quotes are small and inconsequential. But they distract from being able to fix bigger issues. Further, if we are not able to get small things right, then how could anyone trust that we could get the big things right? Therefore, it is important to have dealt with all the small things that a linter identifies.
 
-In addition to `lintr`, we also use a styler, `styler`. This will adjust more minor aspects, such as formatting. To 
+In addition to `lintr`, we also use a styler, `styler` [@styler]. This will automatically adjust style issues, in contrast to the linter, which gave us a list of issues to look at. To run this we use `style_file()`.
 
-#### Code review
+```{r}
+#| echo: true
+#| eval: false
 
-Having dealt with all of these aspects, we can turn to code review\index{code review}. This is the process of having another person go through and critique the code. Code review is a critical part of writing code, and @researchsoftware [p. 465] describe it as "the most effective way to find bugs". It is especially helpful, although quite daunting, when starting because it is a great way to improve. 
+library(styler)
 
-When reviewing another person's code, it is important to go out of the way to be polite. Small aspects to do with style, things like spacing and separation, should have been taken care of by a linter, but if not, then we might make a general recommendation about that. We are more looking for important aspects such as:
+style_file(path = "linting_example.R")
+```
 
-1) Are all of the names meaningful?
-2) Do the variables have the right class?
-3) Are there appropriate and sufficient tests?
-4) Can the functions be understood, and are they well-documented?
-5) Are corner solutions dealt with?
-6) Is the structure of the project correct?
-7) Are there any especially hard-to-understand aspects of the code?
-8) Are there defects that have been missed?
+This will automatically make changes, such as spacing and indentation, so it is important to do this regularly, rather than only once at the end of a project, so as to be able to review the changes.
 
-Code review ensures that the code can be understood by at least one other person. This is a critical part of building knowledge about the world. At Google, code review is not primarily about finding defects although that may happen but is instead about ensuring readability and maintainability as well as education [@sadowski2018modern]. 
+### Code review and refactoring
 
-Finally, code review does not have to, and should not, be an onerous days-consuming process of poring over the entire monolith. The best code review is a quick review of just one file, focused on suggesting changes to just a handful of lines.
+Having dealt with all of these aspects of style, we can turn to code review\index{code review}. This is the process of having another person go through and critique the code. Code review is a critical part of writing code, and @researchsoftware [p. 465] describe it as "the most effective way to find bugs". It is especially helpful, although quite daunting, when learning to code because getting feedback is a great way to improve.
 
-#### Parallel processing
+When reviewing another person's code, it is important to go out of the way to be polite. Small aspects to do with style, things like spacing and separation, should have been taken care of by a linter and styler, but if not, then we might make a general recommendation about that. We are more looking for important aspects such as:
+
+1) Are there any magic numbers that could be changed to variables and explained?
+2) Are all the names consistent and meaningful?
+3) Is there any duplicated code?
+4) Are there sufficient comments?
+5) Are there appropriate and sufficient tests?
+6) Can the functions be understood, and are they well-documented?
+7) Are corner solutions considered? Are there any other corner solutions or edge cases that have been missed?
+8) Is the structure of the project appropriate?
+9) Are there any especially hard-to-understand aspects of the code?
+10) Are there defects that have been missed?
+11) Is there any code that is being copy-pasted?
+12) Can we change any of the code to data [@researchsoftware, p. 462]? To understand this, consider if we had some code that looked for the names of prime ministers and presidents. When we first wrote this code we likely added the relevant names into the function. Instead, we could create a small dataset of the names, and then have the code lookup that dataset.
+13) Are there any outstanding warnings?
+14) Can large functions be separated into smaller ones?
+
+Code review ensures that the code can be understood by at least one other person. This is a critical part of building knowledge about the world. At Google, code review is not primarily about finding defects although that may happen but is instead about ensuring readability and maintainability as well as education [@sadowski2018modern]. This is also the case at Jane Street, where they use code review to catch bugs, share institutional knowledge through ensure what is known by one programmer is also known by others, assist with training, and oblige staff to write code that can be read [@ocamlyaronpodcast].
+
+Finally, code review does not have to, and should not, be an onerous days-consuming process of reading all the code. The best code review is a quick review of just one file, focused on suggesting changes to just a handful of lines. Indeed, it may be better to have a review done by a small team of people rather than one individual.
+
+Having had code reviewed, then we may need to refactor it. To refactor code means to re-write it so that the new code achieves the same outcome as the old code, it is just that the new code does it better. For instance, @refactornature discuss how the code underpinning an important UK COVID model was initially written by epidemiologists, and months later clarified and cleaned-up by a team from the Royal Society, Microsoft, and GitHub. This was valuable because it provided more confidence in the model, even though both versions produced the same outputs, given the same inputs.
+
+When we start to refactor our code, we want to make sure that the re-written code achieves the same outcomes as the original code. This means that it is important to have an extensive suite of appropriate tests written. We rewrite to make it easier for others to understand, which in turn allows more confidence in our conclusions. Go through the checklist, and address all comments. 
+
+We also want to make sure that our code is satisfying best practice. @Trisovic2022 details some core recommendations based on examining 9,000 R scripts, and a refactor is a great opportunity to ensure that these are met. 
+
+1. Removing any absolute paths, and ensuring that only relative paths (in relation to the ".rproj" file) are used.
+2. Ensuring there is a clear order of execution. We have recommended using numbers in filenames to achieve this, but more sophisticated approaches, such as `targets` [@targets], could be used instead.
+3. Having someone else run everything on their computer.
+
+
+
+
+<!-- Start with an example of bad code, and then how it gets fixed. -->
+
+
+
+### Parallel processing
 
 Sometimes code is slow because the computer needs to do the same thing many times. Sometimes it is possible to take advantage of this and enable these jobs to be done at the same time using parallel processing\index{parallel processing}. This will be especially useful in @sec-its-just-a-linear-model for modelling.
 
@@ -804,31 +854,6 @@ simulated_data <-
   )
 toc()
 ```
-
-#### Code refactoring
-
-To refactor code means to re-write it so that the new code achieves the same outcome as the old code, it is just that the new code does it better. For instance, @refactornature discuss how the code underpinning an important UK COVID model was initially written by scientists, and months later re-written in a better way. This re-write was valuable because it provided more confidence in the model, even though both versions produced the same outputs, given the same inputs.
-
-When we start to refactor our code, we want to make sure that the re-written code achieves the same outcomes as the original code. This means that it is important to have tests written. We generally want to reduce the size of functions, by breaking them into smaller ones. 
-
-We also want to make sure that our code is satisfying best practice. @Trisovic2022 details some core recommendations based on examining 9,000 R scripts, and a refactor is a great opportunity to ensure that these are met. 
-
-1. Removing any absolute paths, and ensuring that only relative paths (in relation to the .rproj file) are used.
-2. Ensuring there is a clear order of execution. We have recommended using numbers in filenames to achieve this, but more sophisticated approaches, such as `targets` [@targets], could be used instead.
-3. Having someone else run everything on their computer.
-
-Additional aspects to consider include:
-
-1. Updating the names that are used to ensure they are consistent, and meaningful.
-2. De-duplicating code.
-3. Addressing any warnings.
-4. Separating large functions into smaller ones.
-5. Move special cases to the top of functions [@researchsoftware, p. 458]
-6. Replace code with data [@researchsoftware, p. 462]. To understand this, consider if we had some code that looked for the names of prime ministers and presidents. When we first wrote this code we likely added the relevant names into the function. Instead, we could create a small dataset of the names, and then have the code lookup that dataset.
-
-
-
-<!-- Start with an example of bad code, and then how it gets fixed. -->
 
 
 

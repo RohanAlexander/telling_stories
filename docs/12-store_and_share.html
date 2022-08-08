@@ -298,7 +298,7 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./14-ijalm.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">It’s Just A Linear Model</span></a>
+  <a href="./14-ijalm.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Linear models</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -427,14 +427,13 @@ div.csl-indent {
 <li>Read <em>Transparent and reproducible social science research</em>, Chapter 10 “Data Sharing”, <span class="citation" data-cites="christensen2019transparent">(<a href="99-references.html#ref-christensen2019transparent" role="doc-biblioref">Christensen, Freese, and Miguel 2019</a>)</span></li>
 <li>Read <em>Datasheets for datasets</em>, <span class="citation" data-cites="gebru2021datasheets">(<a href="99-references.html#ref-gebru2021datasheets" role="doc-biblioref">Gebru et al. 2021</a>)</span></li>
 <li>Read <em>Data and its (dis)contents: A survey of dataset development and use in machine learning research</em>, <span class="citation" data-cites="Paullada2021">(<a href="99-references.html#ref-Paullada2021" role="doc-biblioref">Paullada et al. 2021</a>)</span></li>
-<li>Watch <em>Code smells and feels</em>, <span class="citation" data-cites="codesmells">(<a href="99-references.html#ref-codesmells" role="doc-biblioref">Bryan 2018</a>)</span></li>
 </ul>
 <p><strong>Key concepts and skills</strong></p>
 <ul>
 <li>The FAIR principles provide the foundation from which we consider data sharing and storage. These specify that data should be findable, accessible, interoperable, and reusable.</li>
 <li>The most important step is the first one, and that is to get the data off our local computer, and to then make it accessible by others. After that, we build documentation, and datasheets, to make it easier for others to understand and use it. Finally, we ideally enable access without our involvement.</li>
-<li>At the same time as wanting to share our datasets are widely as possible, we must respect those whose data are contained in them. For instance, protect, to a reasonable extent, personally identifying information through selective disclosure, hashing, data simulation, and differential privacy.</li>
-<li>Finally, as our data get larger, approaches that were viable when they were smaller start to break down. We need to consider efficiency with regard to both our code and our data.</li>
+<li>At the same time as wanting to share our datasets are widely as possible, we must respect those whose information are contained in them. This means, for instance, protecting, to a reasonable extent, and informed by costs and benefits, personally identifying information through selective disclosure, hashing, data simulation, and differential privacy.</li>
+<li>Finally, as our data get larger, approaches that were viable when they were smaller start to break down. We need to consider efficiency with regard to our data, and explore other approaches, formats, and languages.</li>
 </ul>
 <p><strong>Key packages and functions</strong></p>
 <ul>
@@ -1013,78 +1012,204 @@ Shoulders of giants
 </div>
 </div>
 </div>
-<p>Having considered “.parquet”, and explained the benefits, compared with CSVs for large data that we are storing, we now consider “.arrow” and the benefit of this file type for large data that we are actively using. Again, these benefits will be most notable for larger datasets, and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare &amp; Medicaid Services, which is 6.66 GB and available <a href="https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016">here</a>. It is a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using <code>read_csv()</code>, with the same task using <code>read_csv_arrow()</code>, which will</p>
-<p>For instance, we may have run a survey, stratified by US state, to understand people’s favorite numbers and letters.</p>
+<p>Having considered “.parquet”, and explained the benefits, compared with CSVs for large data that we are storing, we now consider “.arrow” and the benefit of this file type for large data that we are actively using. Again, these benefits will be most notable for larger datasets, and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare &amp; Medicaid Services, which is 6.66 GB and available <a href="https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016">here</a>. It is available as a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using <code>read_csv()</code>, with the same task using <code>read_csv_arrow()</code>. We find a considerable speed-up when using <code>read_csv_arrow()</code> (<a href="#tbl-needforspeedpropublica">Table&nbsp;<span>12.2</span></a>).</p>
+<div class="cell">
+
+</div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tictoc)</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"CSV - Everything"</span>)</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"CSV - Reading"</span>)</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>open_payments_data_csv <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv"</span>)</span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(open_payments_data_csv)</span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"CSV - Group and summarize"</span>)</span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>open_payments_data_csv <span class="sc">|&gt;</span> </span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Recipient_State) <span class="sc">|&gt;</span> </span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">average_payment =</span> <span class="fu">mean</span>(Total_Amount_of_Payment_USDollars, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(open_payments_data_csv)</span>
-<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"arrow - Everything"</span>)</span>
-<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"arrow - Reading"</span>)</span>
-<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>open_payments_data_arrow <span class="ot">&lt;-</span> <span class="fu">read_csv_arrow</span>(<span class="st">"~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv"</span>)</span>
-<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(open_payments_data_arrow)</span>
-<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"arrow - Doing"</span>)</span>
-<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>open_payments_data_arrow <span class="sc">|&gt;</span> </span>
-<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Recipient_State) <span class="sc">|&gt;</span> </span>
-<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">average_payment =</span> <span class="fu">mean</span>(Total_Amount_of_Payment_USDollars, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
-<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(open_payments_data_arrow)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>open_payments_data_csv <span class="ot">&lt;-</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(<span class="st">"OP_DTL_GNRL_PGYR2016_P01172018.csv"</span>)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>(<span class="at">log =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>open_payments_data_csv <span class="sc">|&gt;</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">state =</span> Recipient_State,</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">total_payment_USD =</span> Total_Amount_of_Payment_USDollars) <span class="sc">|&gt;</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(state <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"CA"</span>, <span class="st">"OR"</span>, <span class="st">"WA"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_payment_USD_thousands =</span> total_payment_USD <span class="sc">/</span> <span class="dv">1000</span>) <span class="sc">|&gt;</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(state) <span class="sc">|&gt;</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">average_payment =</span> <span class="fu">mean</span>(total_payment_USD, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(open_payments_data_csv)</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>open_payments_data_arrow <span class="ot">&lt;-</span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv_arrow</span>(<span class="st">"OP_DTL_GNRL_PGYR2016_P01172018.csv"</span>)</span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>open_payments_data_arrow <span class="sc">|&gt;</span></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">state =</span> Recipient_State,</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>         <span class="at">total_payment_USD =</span> Total_Amount_of_Payment_USDollars) <span class="sc">|&gt;</span></span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(state <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"CA"</span>, <span class="st">"OR"</span>, <span class="st">"WA"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_payment_USD_thousands =</span> total_payment_USD <span class="sc">/</span> <span class="dv">1000</span>) <span class="sc">|&gt;</span></span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(state) <span class="sc">|&gt;</span></span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">average_payment =</span> <span class="fu">mean</span>(total_payment_USD, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(open_payments_data_arrow)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>We might be interested to understand the average favorite number by state and letter.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tictoc)</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"CSV - Everything"</span>)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"CSV - Reading"</span>)</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>some_larger_data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"some_larger_data.csv"</span>)</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(some_larger_data)</span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"CSV - Doing"</span>)</span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>some_larger_data <span class="sc">|&gt;</span> </span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(state, fav_letter) <span class="sc">|&gt;</span> </span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">average_favorite_number =</span> <span class="fu">mean</span>(fav_number))</span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"arrow - Everything"</span>)</span>
-<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"arrow - Reading"</span>)</span>
-<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>some_larger_data <span class="ot">&lt;-</span> <span class="fu">read_csv_arrow</span>(<span class="st">"some_larger_data.csv"</span>)</span>
-<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(some_larger_data)</span>
-<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"arrow - Doing"</span>)</span>
-<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>some_larger_data <span class="sc">|&gt;</span> </span>
-<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(state, fav_letter) <span class="sc">|&gt;</span> </span>
-<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">average_favorite_number =</span> <span class="fu">mean</span>(fav_number))</span>
-<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>We can see these size and speed benefits more easily in <a href="#fig-readwrite">Figure&nbsp;<span>12.2</span></a> which considers a variety of different options.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-readwrite" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="12-store_and_share_files/figure-html/fig-readwrite-1.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">Figure 12.2: Read and write time, as the file size increases, for CSV and Parquet</figcaption><p></p>
-</figure>
+<div id="tbl-needforspeedpropublica" class="anchored">
+<table class="table table-sm table-striped">
+<caption>Table 12.2: Comparing the speed of reading and manipulating using ‘read_csv()’ and ‘read_csv_arrow()’</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Which function</th>
+<th style="text-align: left;">Task</th>
+<th style="text-align: right;">Time (seconds)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">CSV</td>
+<td style="text-align: left;">Reading</td>
+<td style="text-align: right;">152.950</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CSV</td>
+<td style="text-align: left;">Manipulate and summarise</td>
+<td style="text-align: right;">1.511</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CSV</td>
+<td style="text-align: left;">Everything</td>
+<td style="text-align: right;">154.467</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">arrow</td>
+<td style="text-align: left;">Reading</td>
+<td style="text-align: right;">27.257</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">arrow</td>
+<td style="text-align: left;">Manipulate and summarise</td>
+<td style="text-align: right;">75.051</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">arrow</td>
+<td style="text-align: left;">Everything</td>
+<td style="text-align: right;">102.317</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
-<p>Using Parquet may be especially useful with larger files. A common approach to dealing with large files is to separate them into smaller files and then using <code>map_dfr()</code> from <code>purrr</code> to bring them together when needed, as was illustrated above. This is most useful when there are a large number of observations. But it may be that we have a large number of columns. This is especially likely when using text as data, which we cover in <a href="17-text.html"><span>Chapter&nbsp;17</span></a>. In this case, it can be useful to take advantage of the “col_select” option in <code>read_parquet()</code>. We can pass this either a character vector of the column names that we want read in, or conditions, as was covered in <a href="03-r_essentials.html"><span>Chapter&nbsp;3</span></a> in the context of <code>select()</code>.</p>
+<!-- For instance, we may have run a survey, stratified by US state, to understand people's favorite numbers and letters. -->
+<!-- We might be interested to understand the average favorite number by state and letter. -->
+<!-- ```{r} -->
+<!-- #| echo: true -->
+<!-- #| eval: false -->
+<!-- library(tictoc) -->
+<!-- tic.clearlog() -->
+<!-- tic("CSV - Everything") -->
+<!-- tic("CSV - Reading") -->
+<!-- some_larger_data <- read_csv("some_larger_data.csv") -->
+<!-- class(some_larger_data) -->
+<!-- toc() -->
+<!-- tic("CSV - Doing") -->
+<!-- some_larger_data |>  -->
+<!--   group_by(state, fav_letter) |>  -->
+<!--   summarise(average_favorite_number = mean(fav_number)) -->
+<!-- toc() -->
+<!-- toc() -->
+<!-- tic("arrow - Everything") -->
+<!-- tic("arrow - Reading") -->
+<!-- some_larger_data <- read_csv_arrow("some_larger_data.csv") -->
+<!-- class(some_larger_data) -->
+<!-- toc() -->
+<!-- tic("arrow - Doing") -->
+<!-- some_larger_data |>  -->
+<!--   group_by(state, fav_letter) |>  -->
+<!--   summarise(average_favorite_number = mean(fav_number)) -->
+<!-- toc() -->
+<!-- toc() -->
+<!-- ``` -->
+<!-- We can see these size and speed benefits more easily in @fig-readwrite which considers a variety of different options. -->
+<!-- ```{r} -->
+<!-- #| eval: false -->
+<!-- #| include: false -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+<!-- # INTERNAL -->
+<!-- library(arrow) -->
+<!-- library(tictoc) -->
+<!-- library(tidyverse) -->
+<!-- tic.clearlog() -->
+<!-- for (number_of_draws in c( -->
+<!--   10000, -->
+<!--   100000, -->
+<!--   1000000, -->
+<!--   10000000, -->
+<!--   100000000, -->
+<!--   1000000000 -->
+<!-- )) { -->
+<!--   some_data <- -->
+<!--     tibble( -->
+<!--       first = runif(n = number_of_draws), -->
+<!--       second = sample( -->
+<!--         x = LETTERS, -->
+<!--         size = number_of_draws, -->
+<!--         replace = TRUE -->
+<!--       ) -->
+<!--     ) -->
+<!--   tic(paste("CSV write", number_of_draws)) -->
+<!--   write_csv( -->
+<!--     x = some_data, -->
+<!--     file = "some_data.csv" -->
+<!--   ) -->
+<!--   toc(log = TRUE, quiet = TRUE) -->
+<!--   tic(paste("CSV read", number_of_draws)) -->
+<!--   the_data <- read_csv( -->
+<!--     file = "some_data.csv", -->
+<!--     show_col_types = FALSE -->
+<!--   ) -->
+<!--   toc(log = TRUE, quiet = TRUE) -->
+<!--   rm(the_data) -->
+<!--   tic(paste("Parquet write", number_of_draws)) -->
+<!--   write_parquet( -->
+<!--     x = some_data, -->
+<!--     sink = "some_data.parquet" -->
+<!--   ) -->
+<!--   toc(log = TRUE, quiet = TRUE) -->
+<!--   tic(paste("Parquet read", number_of_draws)) -->
+<!--   the_data <- read_parquet(file = "some_data.parquet") -->
+<!--   toc(log = TRUE, quiet = TRUE) -->
+<!--   rm(some_data) -->
+<!--   rm(the_data) -->
+<!--   file.remove("some_data.csv") -->
+<!--   file.remove("some_data.parquet") -->
+<!-- } -->
+<!-- log_txt <- tic.log(format = TRUE) -->
+<!-- tic.clearlog() -->
+<!-- writeLines(unlist(log_txt)) -->
+<!-- need_for_speed <- -->
+<!--   tibble( -->
+<!--     raw = unlist(log_txt) -->
+<!--   ) -->
+<!-- need_for_speed <- -->
+<!--   need_for_speed |> -->
+<!--   separate(raw, into = c("thing", "time"), sep = ": ") |> -->
+<!--   mutate( -->
+<!--     time = str_remove(time, " sec elapsed"), -->
+<!--     time = as.numeric(time) -->
+<!--   ) |> -->
+<!--   separate(thing, into = c("file_type", "task", "num_rows"), sep = " ") -->
+<!-- write_csv(need_for_speed, file = "inputs/data/need_for_speed.csv") -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- #| echo: false -->
+<!-- #| eval: true -->
+<!-- #| fig-cap: "Read and write time, as the file size increases, for CSV and Parquet" -->
+<!-- #| label: fig-readwrite -->
+<!-- need_for_speed <- -->
+<!--   read_csv( -->
+<!--     "inputs/data/need_for_speed.csv", -->
+<!--     show_col_types = FALSE -->
+<!--   ) -->
+<!-- need_for_speed |> -->
+<!--   ggplot(aes(x = num_rows, y = time, color = file_type)) + -->
+<!--   geom_point() + -->
+<!--   facet_wrap(facets = vars(task)) + -->
+<!--   scale_x_log10() + -->
+<!--   scale_y_log10() -->
+<!-- ``` -->
 </section>
 <section id="sql" class="level3" data-number="12.6.3">
 <h3 data-number="12.6.3" class="anchored" data-anchor-id="sql"><span class="header-section-number">12.6.3</span> SQL</h3>
@@ -1092,43 +1217,54 @@ Shoulders of giants
 <p>SQL was developed in the 1970s at IBM. While it may be true that the SQL is never as good as the original, SQL is an especially popular way of working with data. There are many “flavors” of SQL, including both closed and open options. Here we introduce SQLite, which is open source, and pre-installed on Macs. Windows users can install it from <a href="https://www.sqlite.org/download.html">here</a>.</p>
 <p>Advanced SQL users do a lot with it alone, but even just having a working knowledge of SQL increases the number of datasets that we can access. A working knowledge of SQL is especially useful for our efficiency because a large number of datasets are stored on SQL servers, and being able to get data from them ourselves is handy.</p>
 <p>We could use SQL within RStudio, especially drawing on <code>DBI</code> <span class="citation" data-cites="dbi">(<a href="99-references.html#ref-dbi" role="doc-biblioref">R Special Interest Group on Databases (R-SIG-DB), Wickham, and Müller 2022</a>)</span>. although given the demand for SQL skills, independent of demand for R skills, it may be a better idea, from a career perspective to have a working knowledge of it that is independent of RStudio. We can consider many SQL commands as straightforward variants of the <code>dplyr</code> verbs that we have used throughout this book. Indeed, if we wanted to stay within R, then <code>dbplyr</code> <span class="citation" data-cites="dbplyr">(<a href="99-references.html#ref-dbplyr" role="doc-biblioref">Wickham, Girlich, and Ruiz 2022</a>)</span> would explicitly allow us to use <code>dplyr</code> functions and would then automatically translate them into SQL. Having used <code>mutate()</code>, <code>filter()</code> and <code>left_join()</code> in the <code>tidyverse</code> means that many of the core SQL commands will be familiar. That means that the main difficulty will be getting on top of the order of operations because SQL can be pedantic.</p>
-<p>To get started with SQL, download <a href="https://sqlitebrowser.org">DB Browser for SQLite</a> (DB4S), which is free and open-source, and open it (<a href="#fig-sql">Figure&nbsp;<span>12.3</span></a>).</p>
+<p>To get started with SQL, download <a href="https://sqlitebrowser.org">DB Browser for SQLite</a> (DB4S), which is free and open-source, and open it (<a href="#fig-sql">Figure&nbsp;<span>12.2</span></a>).</p>
 <div id="fig-sql" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="figures/sql_01.png" class="img-fluid figure-img" style="width:70.0%"></p>
-<p></p><figcaption class="figure-caption">Figure 12.3: Opening DB Browser for SQLite</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure 12.2: Opening DB Browser for SQLite</figcaption><p></p>
 </figure>
 </div>
 <p>Download “AustralianPoliticians.db” <a href="https://www.tellingstorieswithdata.com/inputs/AustralianPoliticians.db">here</a> and then open it with “Open Database” and navigate to where you downloaded the database.</p>
 <p>There are three key SQL commands that we now cover: <code>SELECT</code>, <code>FROM</code>, and <code>WHERE.</code> <code>SELECT</code> allows us to specify particular columns of the data, and we can consider <code>SELECT</code> in a similar way to <code>select()</code>. In the same way that we need to specify a dataset with <code>select()</code> and did that using a pipe operator, we specify a dataset with <code>FROM</code>. For instance, we could open “Execute SQL”, and then type the following, and click “Execute”.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>        surname   </span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>        surname   </span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The result is that we obtain the column of surnames. We could select multiple columns by separating them with commas, or all of them by using an asterisk, although this is not best practice because if the dataset were to change without us knowing then our result would differ.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>        uniqueID</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>        surname   </span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>        uniqueID</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>        surname   </span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>        <span class="op">*</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>        <span class="op">*</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>And, finally, if there were repeated rows, then we could just look at the unique ones using <code>DISTINCT</code>, in a similar way to <code>distinct()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>        <span class="kw">DISTINCT</span> surname   </span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>        <span class="kw">DISTINCT</span> surname   </span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>So far we have used <code>SELECT</code> along with <code>FROM</code>. The third command that is commonly used is <code>WHICH</code>, and this will allow us to focus on particular rows, in a similar way to <code>filter()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>        uniqueID,</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>        surname,</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>        firstName   </span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>        politicians     </span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>        firstName <span class="op">=</span> <span class="ot">"Myles"</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>All the usual operators are fine with <code>WHERE</code>, such as “=”, “!=”, “&gt;”, “&lt;”, “&gt;=”, and “&lt;=”. We could combine conditions using <code>AND</code> and <code>OR</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>        uniqueID,</span>
@@ -1137,149 +1273,138 @@ Shoulders of giants
 <span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
 <span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>        politicians     </span>
 <span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>        firstName <span class="op">=</span> <span class="ot">"Myles"</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>        firstName <span class="op">=</span> <span class="ot">"Myles"</span> </span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">OR</span> firstName <span class="op">=</span> <span class="ot">"Ruth"</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>All the usual operators are fine with <code>WHERE</code>, such as “=”, “!=”, “&gt;”, “&lt;”, “&gt;=”, and “&lt;=”. We could combine conditions using <code>AND</code> and <code>OR</code>.</p>
+<p>If we have a query that gave a lot of results, then we could limit the number of them with <code>LIMIT</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>        uniqueID,</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>        surname,</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>        firstName   </span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>        firstName        </span>
 <span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>        politicians     </span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>        politicians          </span>
 <span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>        firstName <span class="op">=</span> <span class="ot">"Myles"</span> </span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">OR</span> firstName <span class="op">=</span> <span class="ot">"Ruth"</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>        firstName <span class="op">=</span> <span class="ot">"Robert"</span>       <span class="kw">LIMIT</span> <span class="dv">5</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>If we have a query that gave a lot of results, then we could limit the number of them with <code>LIMIT</code>.</p>
+<p>And we could specify the order of the results with <code>ORDER</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb34"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>        uniqueID,</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>        surname,</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>        firstName        </span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>        firstName </span>
 <span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>        politicians          </span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>        politicians </span>
 <span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>        firstName <span class="op">=</span> <span class="ot">"Robert"</span>       <span class="kw">LIMIT</span> <span class="dv">5</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>        firstName <span class="op">=</span> <span class="ot">"Robert"</span> </span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">ORDER</span> <span class="kw">BY</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>        surname <span class="kw">DESC</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>And we could specify the order of the results with <code>ORDER</code>.</p>
+<p>See the rows that are pretty close to a criteria:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>        uniqueID,</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>        surname,</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>        firstName </span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>        firstName      </span>
 <span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>        politicians </span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>        politicians      </span>
 <span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>        firstName <span class="op">=</span> <span class="ot">"Robert"</span> </span>
-<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">ORDER</span> <span class="kw">BY</span></span>
-<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>        surname <span class="kw">DESC</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>See the rows that are pretty close to a criteria:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>        uniqueID,</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>        surname,</span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>        firstName      </span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>        politicians      </span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>        firstName <span class="kw">LIKE</span> <span class="ot">"Ma__"</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>        firstName <span class="kw">LIKE</span> <span class="ot">"Ma__"</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The “_” above is a wildcard that matches to any character. So this provides results that include “Mary”, and “Mark”. <code>LIKE</code> is not case-sensitive: “Ma<strong>” and “ma</strong>” both return the same results.</p>
 <p>Focusing on missing data is possible using “NULL” or “NOT NULL”.</p>
 <div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>        uniqueID,</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>        surname,</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>        firstName,</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>        <span class="kw">comment</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>        politicians      </span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">comment</span>     <span class="kw">IS</span> <span class="kw">NULL</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>There is an underlying ordering build into number, date and text fields that means we can use <code>BETWEEN</code> on all those, not just numeric. For instance, we could look for all surnames that starts with a letter between X and Z (not including Z).</p>
+<div class="cell">
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>        uniqueID,</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>        surname,</span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>        firstName,</span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>        <span class="kw">comment</span></span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>        politicians      </span>
-<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
-<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">comment</span>     <span class="kw">IS</span> <span class="kw">NULL</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>        firstName</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>        politicians      </span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>        surname     <span class="kw">BETWEEN</span> <span class="ot">"X"</span> <span class="kw">AND</span> <span class="ot">"Z"</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>There is an underlying ordering build into number, date and text fields that means we can use <code>BETWEEN</code> on all those, not just numeric. For instance, we could look for all surnames that starts with a letter between X and Z (not including Z).</p>
+<p>Using <code>WHERE</code> with a numeric variable means that <code>BETWEEN</code> is inclusive, compared with the example with letters that was not.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>        uniqueID,</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>        surname,</span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>        firstName</span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>        politicians      </span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>        surname     <span class="kw">BETWEEN</span> <span class="ot">"X"</span> <span class="kw">AND</span> <span class="ot">"Z"</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Using <code>WHERE</code> with a numeric variable means that <code>BETWEEN</code> is inclusive, compared with the example with letters that was not.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>        uniqueID,</span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>        surname,</span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>        firstName,</span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>        birthYear</span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>        politicians      </span>
-<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
-<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>        birthYear     <span class="kw">BETWEEN</span> <span class="dv">1980</span> <span class="kw">AND</span> <span class="dv">1990</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>        firstName,</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>        birthYear</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>        politicians      </span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>        birthYear     <span class="kw">BETWEEN</span> <span class="dv">1980</span> <span class="kw">AND</span> <span class="dv">1990</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>In addition to providing us with dataset observations that match what we asked for, we can modify the dataset. For instance, we could edit a value using <code>UPDATE</code> and <code>SET</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">UPDATE</span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>        politicians   </span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SET</span></span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>        surname <span class="op">=</span> <span class="ot">"Alexanderrrrrrrr"</span></span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
-<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>        uniqueID <span class="op">=</span> <span class="ot">"Alexander1951"</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">UPDATE</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>        politicians   </span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SET</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>        surname <span class="op">=</span> <span class="ot">"Alexanderrrrrrrr"</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>        uniqueID <span class="op">=</span> <span class="ot">"Alexander1951"</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We can integrate if-else logic with <code>CASE</code> and <code>ELSE</code>. For instance, where we add a column called “wasTreasurer”, which is “Yes” in the case of “Josh Frydenberg”, and “No” in the case of “Kevin Rudd”, anad “Unsure” for all other cases.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>        uniqueID,</span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>        surname,</span>
-<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>        firstName,</span>
-<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>        birthYear,</span>
-<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">CASE</span>                  </span>
-<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>            <span class="cf">WHEN</span> uniqueID <span class="op">=</span> <span class="ot">"Frydenberg1971"</span> <span class="cf">THEN</span> <span class="ot">"Yes"</span>                  </span>
-<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>            <span class="cf">WHEN</span> surname <span class="op">=</span> <span class="ot">"Rudd"</span> <span class="cf">THEN</span> <span class="ot">"No"</span>                  </span>
-<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">ELSE</span> <span class="ot">"Unsure"</span>            </span>
-<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">END</span> <span class="kw">AS</span> <span class="ot">"wasTreasurer"</span>        </span>
-<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>        uniqueID,</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>        surname,</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>        firstName,</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>        birthYear,</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">CASE</span>                  </span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>            <span class="cf">WHEN</span> uniqueID <span class="op">=</span> <span class="ot">"Frydenberg1971"</span> <span class="cf">THEN</span> <span class="ot">"Yes"</span>                  </span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>            <span class="cf">WHEN</span> surname <span class="op">=</span> <span class="ot">"Rudd"</span> <span class="cf">THEN</span> <span class="ot">"No"</span>                  </span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">ELSE</span> <span class="ot">"Unsure"</span>            </span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">END</span> <span class="kw">AS</span> <span class="ot">"wasTreasurer"</span>        </span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We can create summary statistics using commands such as <code>COUNT</code>, <code>SUM</code>, <code>MAX</code>, <code>MIN</code>, <code>AVG</code>, and <code>ROUND</code> in the place of <code>summarize()</code>. <code>COUNT</code> counts the number of rows that are not empty for some column by passing the column name, and this is similarly how <code>MIN</code>, etc, work.</p>
 <div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">COUNT</span>(uniqueID)   </span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">COUNT</span>(uniqueID)   </span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">MIN</span>(birthYear)   </span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
 <span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">MIN</span>(birthYear)   </span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>        politicians;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
 <p>We can get results on the basis of different groups in our dataset using <code>GROUP BY</code>, in a similar manner to <code>group_by</code> in R.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">COUNT</span>(uniqueID)   </span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>        politicians     </span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">GROUP</span> <span class="kw">BY</span></span>
-<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>        gender;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">COUNT</span>(uniqueID)   </span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>        politicians     </span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">GROUP</span> <span class="kw">BY</span></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>        gender;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>And finally, we can combine two tables using <code>LEFT JOIN</code>. We need to be careful to specify the matching columns using dot notation.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>        politicians.uniqueID,</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>        politicians.firstName,</span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>        politicians.surname,</span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>        party.partySimplifiedName   </span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>        politicians </span>
-<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">LEFT</span> <span class="kw">JOIN</span></span>
-<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>        party     </span>
-<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>            <span class="kw">ON</span> politicians.uniqueID <span class="op">=</span> party.uniqueID;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>        politicians.uniqueID,</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>        politicians.firstName,</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>        politicians.surname,</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>        party.partySimplifiedName   </span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span></span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>        politicians </span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">LEFT</span> <span class="kw">JOIN</span></span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>        party     </span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>            <span class="kw">ON</span> politicians.uniqueID <span class="op">=</span> party.uniqueID;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>As SQL is not our focus we have only provided a brief overview of some essential commands. From a career perspective it is important to develop a comfort with SQL. It is so integrated into data science that it would be “difficult to get too far without it” <span class="citation" data-cites="robinsonnolis2020">(<a href="99-references.html#ref-robinsonnolis2020" role="doc-biblioref">Robinson and Nolis 2020, 8</a>)</span> and that “almost any” data science interview will include questions about SQL <span class="citation" data-cites="robinsonnolis2020">(<a href="99-references.html#ref-robinsonnolis2020" role="doc-biblioref">Robinson and Nolis 2020, 110</a>)</span>.</p>
 </section>
@@ -1375,9 +1500,6 @@ Borghi, John, and Ana Van Gulick. 2022. <span>“Promoting Open Science Through 
 </div>
 <div id="ref-clairemckaybowen" class="csl-entry" role="doc-biblioentry">
 Bowen, Claire McKay. 2022. <em><span class="nocase">Protecting Your Privacy in a Data-Driven World</span></em>. Chapman; Hall/CRC.
-</div>
-<div id="ref-codesmells" class="csl-entry" role="doc-biblioentry">
-Bryan, Jenny. 2018. <span>“Code Smells and Feels.”</span> <em>YouTube</em>, July. <a href="https://youtu.be/7oyiPBjLAWY">https://youtu.be/7oyiPBjLAWY</a>.
 </div>
 <div id="ref-buolamwini2018gender" class="csl-entry" role="doc-biblioentry">
 Buolamwini, Joy, and Timnit Gebru. 2018. <span>“Gender Shades: Intersectional Accuracy Disparities in Commercial Gender Classification.”</span> In <em>Conference on Fairness, Accountability and Transparency</em>, 77–91. PMLR.

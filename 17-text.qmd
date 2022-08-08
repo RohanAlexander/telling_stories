@@ -7,7 +7,7 @@ engine: knitr
 **Required material**
 
 - Read *The Naked Truth: How the names of 6,816 complexion products can reveal bias in beauty*, [@thenakedtruth].
-- Read *Supervised Machine Learning for Text Analysis in R*, Chapters 2 'Tokenization', 3 'Stop words', 6 'Regression', and 7 'Classification', [@hvitfeldt2021supervised].
+- Read *Supervised Machine Learning for Text Analysis in R*, Chapters 2 "Tokenization", 3 "Stop words", 6 "Regression", and 7 "Classification", [@hvitfeldt2021supervised]
 
 **Key concepts and skills**
 
@@ -15,15 +15,16 @@ engine: knitr
 
 **Key packages and functions**
 
+- `glmnet` [@glmnet]
+  - `glmnet()`
 - `gutenbergr` [@gutenbergr]
-- `janitor` [@janitor].
-- `tidytext` [@SilgeRobinson2016].
+  - `gutenberg_download()`
+- `janitor` [@janitor]
+- `tidytext` [@SilgeRobinson2016]
+  - `bind_tf_idf()`
+  - `cast_dtm()`
 
 
-- `glmnet::glmnet()`
-- `gutenbergr::gutenberg_download()`
-- `tidytext::bind_tf_idf()`
-- `tidytext::cast_dtm()`
 
 ## Introduction
 
@@ -74,7 +75,7 @@ makeup <-
 makeup
 ```
 
-We will focus on 'product', which provides the name of the item, and 'lightness' which is a value between 0 and 1. We are interested in whether products with lightness values that are less than 0.5, typically use different words to those with lightness values that are at least 0.5.
+We will focus on "product", which provides the name of the item, and "lightness" which is a value between 0 and 1. We are interested in whether products with lightness values that are less than 0.5, typically use different words to those with lightness values that are at least 0.5.
 
 
 
@@ -87,7 +88,7 @@ makeup <-
 table(makeup$lightness_above_half)
 ```
 
-In this example we are going to split everything into separate words. When we do this, it is just searching for a space. And so, it will be the case that more than just words will be considered 'words', for instance, numbers. We use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016] to do this.
+In this example we are going to split everything into separate words. When we do this, it is just searching for a space. And so, it will be the case that more than just words will be considered "words", for instance, numbers. We use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016] to do this.
 
 ```{r}
 #| message: false
@@ -122,7 +123,7 @@ makeup_by_words |>
   slice(1:5)
 ```
 
-We can see that the most popular words appear to be similar between the two categories. At this point, we could use the data in a variety of ways. We might be interested to know which words characterize each group---that is to say, which words are commonly used only in each group. We can do that by first looking at a word's term frequency (tf), which is how many times a word is used in the product name. The issue is that there are a lot of words that are commonly used regardless of context. As such, we may also like to look at the inverse document frequency (idf) in which we 'penalize' words that occur in both groups. For instance, we have seen that 'foundation' occurs in both products with high and low lightness values. And so, its idf would be lower than another word which only occurred in products that did not have a lightness value above half. The term frequency–inverse document frequency (tf-idf) is then the product of these.
+We can see that the most popular words appear to be similar between the two categories. At this point, we could use the data in a variety of ways. We might be interested to know which words characterize each group---that is to say, which words are commonly used only in each group. We can do that by first looking at a word's term frequency (tf), which is how many times a word is used in the product name. The issue is that there are a lot of words that are commonly used regardless of context. As such, we may also like to look at the inverse document frequency (idf) in which we "penalize" words that occur in both groups. For instance, we have seen that "foundation" occurs in both products with high and low lightness values. And so, its idf would be lower than another word which only occurred in products that did not have a lightness value above half. The term frequency–inverse document frequency (tf-idf) is then the product of these.
 
 We can create this value using `bind_tf_idf()` from `tidytext`. It will create a bunch of new columns, one for each word and star combination.
 
@@ -270,7 +271,7 @@ alice_and_jane_by_word <-
   select(-number_of_words_in_line)
 ```
 
-We'll create a test/training split, and load in `tidymodels`.
+We will create a test/training split, and load in `tidymodels`.
 
 ```{r}
 #| message: false
@@ -376,18 +377,18 @@ Perhaps unsurprisingly, if a line mentions Alice then it is likely to be a Alice
 
 ## Topic models
 
-Sometimes we have a statement and we want to know what it is about. Sometimes this will be easy, but we do not always have titles for statements, and even when we do, sometimes we do not have titles that define topics in a well-defined and consistent way. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA) method of @Blei2003latent, as implemented by the R package 'topicmodels' by @Grun2011. 
+Sometimes we have a statement and we want to know what it is about. Sometimes this will be easy, but we do not always have titles for statements, and even when we do, sometimes we do not have titles that define topics in a well-defined and consistent way. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA) method of @Blei2003latent, as implemented by `topicmodels` [@Grun2011]. 
 
-The key assumption behind the LDA method is that each statement, 'a document', is made by a person who decides the topics they would like to talk about in that document, and then chooses words, 'terms', that are appropriate to those topics. A topic could be thought of as a collection of terms, and a document as a collection of topics. The topics are not specified *ex ante*; they are an outcome of the method. Terms are not necessarily unique to a particular topic, and a document could be about more than one topic. This provides more flexibility than other approaches such as a strict word count method. The goal is to have the words found in documents group themselves to define topics.
+The key assumption behind the LDA method is that each statement, "a document", is made by a person who decides the topics they would like to talk about in that document, and then chooses words, "terms", that are appropriate to those topics. A topic could be thought of as a collection of terms, and a document as a collection of topics. The topics are not specified *ex ante*; they are an outcome of the method. Terms are not necessarily unique to a particular topic, and a document could be about more than one topic. This provides more flexibility than other approaches such as a strict word count method. The goal is to have the words found in documents group themselves to define topics.
 
-LDA considers each statement to be a result of a process where a person first chooses the topics they want to speak about. After choosing the topics, the person then chooses appropriate words to use for each of those topics. More generally, the LDA topic model works by considering each document as having been generated by some probability distribution over topics. For instance, if there were five topics and two documents, then the first document may be comprised mostly of the first few topics; the other document may be mostly about the final few topics (Figure @fig-topicsoverdocuments).
+LDA considers each statement to be a result of a process where a person first chooses the topics they want to speak about. After choosing the topics, the person then chooses appropriate words to use for each of those topics. More generally, the LDA topic model works by considering each document as having been generated by some probability distribution over topics. For instance, if there were five topics and two documents, then the first document may be comprised mostly of the first few topics; the other document may be mostly about the final few topics (@fig-topicsoverdocuments).
 
 ```{r}
 #| echo: false
 #| fig-cap: "Probability distributions over topics"
-#| fig.show: 'hold'
-#| out.width: "50%"
 #| label: fig-topicsoverdocuments
+#| layout-ncol: 2
+#| fig-subcap: ["Distribution for Document 1", "Distribution for Document 2"] 
 
 document_1 <- tibble(
   Topics = c(
@@ -424,15 +425,14 @@ ggplot(document_2, aes(Topics, Probability)) +
   coord_cartesian(ylim = c(0, 0.4))
 ```
 
-Similarly, each topic could be considered a probability distribution over terms. To choose the terms used in each document the speaker picks terms from each topic in the appropriate proportion. For instance, if there were ten terms, then one topic could be defined by giving more weight to terms related to immigration; and some other topic may give more weight to terms related to the economy (Figure @fig-topicsoverterms).
+Similarly, each topic could be considered a probability distribution over terms. To choose the terms used in each document the speaker picks terms from each topic in the appropriate proportion. For instance, if there were ten terms, then one topic could be defined by giving more weight to terms related to immigration; and some other topic may give more weight to terms related to the economy (@fig-topicsoverterms).
 
 ```{r}
 #| echo: false
 #| fig-cap: "Probability distributions over terms"
 #| label: fig-topicsoverterms
-
-# fig.show: 'hold'
-# out.width: "50%"
+#| layout-ncol: 2
+#| fig-subcap: ["Distribution for Topic 1", "Distribution for Topic 2"] 
 
 topic_1 <- tibble(
   Terms = c(
@@ -493,14 +493,14 @@ $$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}) = \prod^{K}_{i=1}p(\b
 
 Based on this document generation process the analysis problem, discussed in the next section, is to compute a posterior over $\beta_{1:K}$ and $\theta_{1:D}$, given $w_{1:D, 1:N}$. This is intractable directly, but can be approximated (@GriffithsSteyvers2004 and @blei2012).
 
-After the documents are created, they are all that we have to analyze. The term usage in each document, $w_{1:D, 1:N}$, is observed, but the topics are hidden, or 'latent'. We do not know the topics of each document, nor how terms defined the topics. That is, we do not know the probability distributions of Figures @fig-topicsoverdocuments or @fig-topicsoverterms. In a sense we are trying to reverse the document generation process -- we have the terms and we would like to discover the topics.
+After the documents are created, they are all that we have to analyze. The term usage in each document, $w_{1:D, 1:N}$, is observed, but the topics are hidden, or "latent". We do not know the topics of each document, nor how terms defined the topics. That is, we do not know the probability distributions of Figures @fig-topicsoverdocuments or @fig-topicsoverterms. In a sense we are trying to reverse the document generation process -- we have the terms and we would like to discover the topics.
 
 If the earlier process around how the documents were generated is assumed and we observe the terms in each document, then we can obtain estimates of the topics (@SteyversGriffiths2006). The outcomes of the LDA process are probability distributions and these define the topics. Each term will be given a probability of being a member of a particular topic, and each document will be given a probability of being about a particular topic. That is, we are trying to calculate the posterior distribution of the topics given the terms observed in each document (@blei2012, p.7): 
 $$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N} | w_{1:D, 1:N}) = \frac{p\left(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}\right)}{p(w_{1:D, 1:N})}.$$
 
-The initial practical step when implementing LDA given a corpus of documents is to remove 'stop words'. These are words that are common, but that do not typically help to define topics. There is a general list of stop words such as: "a"; "a's"; "able"; "about"; "above"... We also remove punctuation and capitalization. The documents need to then be transformed into a document-term-matrix. This is essentially a table with a column of the number of times each term appears in each document.
+The initial practical step when implementing LDA given a corpus of documents is to remove "stop words". These are words that are common, but that do not typically help to define topics. There is a general list of stop words such as: "a"; "a's"; "able"; "about"; "above"... We also remove punctuation and capitalization. The documents need to then be transformed into a document-term-matrix. This is essentially a table with a column of the number of times each term appears in each document.
 
-After the dataset is ready, the R package 'topicmodels' by @Grun2011 can be used to implement LDA and approximate the posterior. It does this using Gibbs sampling or the variational expectation-maximization algorithm. Following @SteyversGriffiths2006 and @Darling2011, the Gibbs sampling process attempts to find a topic for a particular term in a particular document, given the topics of all other terms for all other documents. Broadly, it does this by first assigning every term in every document to a random topic, specified by Dirichlet priors with $\alpha = \frac{50}{K}$ and $\eta = 0.1$  (@SteyversGriffiths2006 recommends $\eta = 0.01$), where $\alpha$ refers to the distribution over topics and $\eta$ refers to the distribution over terms (@Grun2011, p.7). It then selects a particular term in a particular document and assigns it to a new topic based on the conditional distribution where the topics for all other terms in all documents are taken as given (@Grun2011, p.6):
+After the dataset is ready, `topicmodels` [@Grun2011] can be used to implement LDA and approximate the posterior. It does this using Gibbs sampling or the variational expectation-maximization algorithm. Following @SteyversGriffiths2006 and @Darling2011, the Gibbs sampling process attempts to find a topic for a particular term in a particular document, given the topics of all other terms for all other documents. Broadly, it does this by first assigning every term in every document to a random topic, specified by Dirichlet priors with $\alpha = \frac{50}{K}$ and $\eta = 0.1$  (@SteyversGriffiths2006 recommends $\eta = 0.01$), where $\alpha$ refers to the distribution over topics and $\eta$ refers to the distribution over terms (@Grun2011, p.7). It then selects a particular term in a particular document and assigns it to a new topic based on the conditional distribution where the topics for all other terms in all documents are taken as given (@Grun2011, p.6):
 $$p(z_{d, n}=k | w_{1:D, 1:N}, z'_{d, n}) \propto \frac{\lambda'_{n\rightarrow k}+\eta}{\lambda'_{.\rightarrow k}+V\eta} \frac{\lambda'^{(d)}_{n\rightarrow k}+\alpha}{\lambda'^{(d)}_{-i}+K\alpha} $$
 where $z'_{d, n}$ refers to all other topic assignments; $\lambda'_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$; $\lambda'_{.\rightarrow k}$ is a count of how many other times that any term has been assigned to topic $k$; $\lambda'^{(d)}_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$ in that particular document; and $\lambda'^{(d)}_{-i}$ is a count of how many other times that term has been assigned in that document. Once $z_{d,n}$ has been estimated, then estimates for the distribution of words into topics and topics into documents can be backed out.
 
@@ -509,7 +509,7 @@ This conditional distribution assigns topics depending on how often a term has b
 
 The choice of the number of topics, *k*, affects the results, and must be specified *a priori*. If there is a strong reason for a particular number, then this can be used. Otherwise, one way to choose an appropriate number is to use a test and training set process. Essentially, this means running the process on a variety of possible values for *k* and then picking an appropriate value that performs well.
 
-One weakness of the LDA method is that it considers a 'bag of words' where the order of those words does not matter (@blei2012). It is possible to extend the model to reduce the impact of the bag-of-words assumption and add conditionality to word order. Additionally, alternatives to the Dirichlet distribution can be used to extend the model to allow for correlation. For instance, in Hansard topics related the army may be expected to be more commonly found with topics related to the navy, but less commonly with topics related to banking.
+One weakness of the LDA method is that it considers a "bag of words" where the order of those words does not matter (@blei2012). It is possible to extend the model to reduce the impact of the bag-of-words assumption and add conditionality to word order. Additionally, alternatives to the Dirichlet distribution can be used to extend the model to allow for correlation. For instance, in Hansard topics related the army may be expected to be more commonly found with topics related to the navy, but less commonly with topics related to banking.
 
 
 
