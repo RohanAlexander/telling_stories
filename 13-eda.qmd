@@ -18,13 +18,13 @@ engine: knitr
 
 - `janitor` [@janitor]
   - `adorn_ns()`
-	- `adorn_pct_formatting()`
-	- `adorn_percentages()`
-	- `adorn_title()`
-	- `adorn_totals()`
-	- `clean_names()`
-	- `get_dupes()`
-	- `tabyl()`
+  - `adorn_pct_formatting()`
+  - `adorn_percentages()`
+  - `adorn_title()`
+  - `adorn_totals()`
+  - `clean_names()`
+  - `get_dupes()`
+  - `tabyl()`
 - `modelsummary` [@citemodelsummary]
 	- `modelsummary()`
 - `naniar` [@naniar]
@@ -78,9 +78,9 @@ Interestingly, coming to thoroughly understand the data that we have, often help
 
 In this chapter we will go through various examples of EDA including US state populations, subway delays in Toronto, and Airbnb listings in London.
 
-## US state populations
+## 1975 US states data
 
-As a first example we consider US state populations at at 1975. This dataset is built into R with `state.x77`
+As a first example we consider US state populations at at 1975. This dataset is built into R with `state.x77`.
 
 ```{r}
 #| message: false
@@ -94,7 +94,9 @@ us_populations <-
   as_tibble() |>
   clean_names() |>
   mutate(state = rownames(state.x77)) |>
-  select(state, population)
+  select(state, everything())
+
+us_populations
 ```
 
 ### Distribution and properties of individual variables
@@ -124,8 +126,174 @@ us_populations |>
   skim()
 ```
 
-Finally, it is especially important to understand the behavior of these key summary statistics at the limits. In particular, one approach is to randomly remove some observations and compare what happens to them.
+Finally, it is especially important to understand the behavior of these key summary statistics at the limits. In particular, one approach is to randomly remove some observations and compare what happens to them. For instance, we can randomly create five datasets that differ on the basis of which rows are knocked out. We can then compare the summary statistics. If any of them are especially different then we might want to look at the rows that were knocked out as they may contain observations with high-influence.
 
+```{r}
+#| echo: true
+#| label: tbl-summarystatesrandom
+#| tbl-cap: "Comparing the summary statistics when different states are randomly knocked out"
+#| message: false
+#| warning: false
+
+library(tidyverse)
+
+sample_means <-
+  tibble(seed = c(),
+         mean = c(),
+         states_ignored = c())
+
+for (i in c(1:5)) {
+  set.seed(i)
+  
+  dont_get <- c(sample(x = state.name, size = 5))
+  
+  sample_means <-
+    sample_means |>
+    rbind(tibble(
+      seed = i,
+      mean =
+        us_populations |>
+        filter(!state %in% dont_get) |>
+        summarise(mean = mean(population)) |>
+        pull(),
+      states_ignored = str_c(dont_get, collapse = ", ")
+    ))
+}
+
+sample_means  |>
+  knitr::kable(
+    col.names = c(
+      "Seed",
+      "Mean",
+      "Ignored states"
+    ),
+    digits = 0,
+    format.args = list(big.mark = ",")
+  )
+```
+
+In the case of the populations of US states, we know that larger states, such as California and New York, will have an out-sized effect on our estimate of the mean, and @tbl-summarystatesrandom supports that.
+
+
+### Missing data
+
+We have discussed missing data a lot throughout this book, and understanding missing data is something that is a substantial focus of EDA. One tempting strategy is to either remove rows that have missing data, or to infill the missing data, say with a average of the column, or using multiple imputation to fill it based on a few different options. These approaches have their place, but need to be used with humility, and extensively communicated. To understand why, we will consider the US populations data, knock out various aspects, and look at the effect on summary statistics.
+
+We can start by knocking out the population data for three, randomly selected, states. 
+
+```{r}
+set.seed(853)
+
+remove_these_states <- 
+  sample(
+    x = state.name,
+    size = 3,
+    replace = FALSE
+    )
+
+remove_these_states
+
+us_states_with_missing_observations <- 
+  us_populations |> 
+  mutate(population = 
+           if_else(state %in% remove_these_states , NA_real_, population)
+         )
+
+us_states_with_missing_observations
+```
+
+Having generated a dataset with some missing data, we can now consider a few common approaches for dealing with missing data, and compare the implied values for each state, and the overall US mean population. We consider the following options:
+
+1) Drop the observation with missing data.
+2) Impute the mean for the observations with missing data.
+3) Use multiple-imputation.
+
+To drop the observations with missing data, we can use `mean()` because by default it will remove observations with missing values. 
+
+To impute the mean, we construct a second dataset with the observations with missing data removed. We then compute the mean of the population column, and impute that into the missing values in the original dataset.
+
+And finally, we can implement multiple-imputation with `mice()` from `mice` [@mice].
+
+```{r}
+#| message: false
+#| warning: false
+
+library(mice)
+
+multiple_imputation <-
+  mice(us_states_with_missing_observations,
+       print = FALSE)
+
+mice_estimates <-
+  complete(multiple_imputation) |>
+  as_tibble()
+
+mice_estimates
+```
+
+
+```{r}
+#| echo: false
+#| label: tbl-imputationoptions
+#| tbl-cap: "Comparing the imputed values of population for three US states and the overall mean population"
+#| message: false
+#| warning: false
+
+actual_us_mean <-
+  us_populations |>
+  summarise(mean = mean(population)) |> 
+  pull()
+
+us_mean_with_missing_dropped <-
+  us_states_with_missing_observations |>
+  summarise(mean = mean(population, na.rm = TRUE)) |> 
+  pull()
+
+us_states_with_missing_observations_mean_imputation <-
+  us_states_with_missing_observations |>
+  mutate(population = if_else(is.na(us_states_with_missing_observations$population),
+                              us_mean_with_missing_dropped,
+                              population))
+
+mean_imputation_overall <-
+  mean(us_states_with_missing_observations_mean_imputation$population)
+
+tibble(
+  observation = c("Florida", "Montana", "New Hampshire", "Overall"),
+  dropped = c(NA, NA, NA, us_mean_with_missing_dropped),
+  impute_mean = c(
+    us_mean_with_missing_dropped,
+    us_mean_with_missing_dropped,
+    us_mean_with_missing_dropped,
+    mean_imputation_overall
+  ),
+  multiple_imputation = c(
+    mice_estimates |> filter(state == "Florida") |> select(population)|> pull(),
+    mice_estimates |> filter(state == "Montana") |> select(population)|> pull(),
+    mice_estimates |> filter(state == "New Hampshire") |> select(population)|> pull(),
+    mice_estimates |> summarise(mean = mean(population)) |> pull()
+  ),
+  actual = c(
+    us_populations |> filter(state == "Florida") |> select(population)|> pull(),
+    us_populations |> filter(state == "Montana") |> select(population)|> pull(),
+    us_populations |> filter(state == "New Hampshire") |> select(population)|> pull(),
+    actual_us_mean
+  )
+) |>
+  knitr::kable(
+    col.names = c(
+      "Observation",
+      "Drop missing rows",
+      "Input the mean",
+      "Multiple imputation",
+      "Actual value"
+    ),
+    digits = 0,
+    format.args = list(big.mark = ",")
+  )
+```
+
+@tbl-imputationoptions makes it clear that none of these approaches should be blindly imposed. If imputation is the answer, it is likely that the question is wrong. Nothing can make up for missing data [@manskiwow]. The conditions under which it makes sense to impute the mean, or the prediction based on multiple imputation are not common, and even more rare is our ability to verify them. Missing data are not a nuisance to be papered over, they are our entire reason for being.
 
 
 ## TTC subway delays 
@@ -235,8 +403,6 @@ There is no one way to explore a dataset while conducting EDA, but we are usuall
 It is important to document all aspects as we go through and note of anything surprising. We are looking to create a record of the steps and assumptions that we made as we were going because these will be important when we come to modelling. Indeed in the natural sciences, a research notebook of this type, can be a legal document [@nihtalk]. 
 
 ### Distribution and properties of individual variables
-
-#### Checking data
 
 We should check that the variables are what they say they are. If they are not, then we need to work out what to do, for instance, should we change them, or possibly even remove them? It is also important to ensure that the class of the variables is as we expect. For instance, variables that should be a factor are a factor and those that should be a character are a character. And that we do not accidentally have, say, factors as numbers, or vice versa. One way to do this is to use `unique()`, and another is to use `table()`.
 
@@ -351,55 +517,33 @@ This initial exploration hints at an issue, which is there are a small number of
 #| eval: true
 #| include: true
 
-# WHAT IS HAPPENING HERE? REWRITE THIS OMG
-
-all_2021_ttc_data_no_dupes <-
-  all_2021_ttc_data_no_dupes |>
-  left_join(
+fix_organization_of_codes <- 
+  rbind(
     delay_codes |>
-      rename(
-        code = sub_rmenu_code,
-        code_desc = code_description_3
-      ) |>
-      select(code, code_desc),
-    by = "code"
+      select(sub_rmenu_code, code_description_3) |> 
+      mutate(type = "sub") |> 
+      rename(code = sub_rmenu_code,
+             code_desc = code_description_3),
+    delay_codes |>
+      select(srt_rmenu_code, code_description_7) |> 
+      mutate(type = "srt") |> 
+      rename(code = srt_rmenu_code,
+             code_desc = code_description_7)
   )
-
-all_2021_ttc_data_no_dupes <-
-  all_2021_ttc_data_no_dupes |>
-  mutate(code_srt = ifelse(line == "SRT", code, "NA")) |>
-  left_join(
-    delay_codes |>
-      rename(code_srt = sub_rmenu_code, code_desc_srt = code_description_7) |>
-      select(code_srt, code_desc_srt),
-    by = "code_srt"
-  ) |>
-  mutate(
-    code = ifelse(code_srt == "NA", code, code_srt),
-    code_desc = ifelse(is.na(code_desc_srt), code_desc, code_desc_srt)
-  ) |>
-  select(-code_srt, -code_desc_srt)
-
+  
+all_2021_ttc_data_no_dupes_with_explanation <- 
 all_2021_ttc_data_no_dupes |> 
+  mutate(type = if_else(line == "SRT", "srt", "sub")) |> 
+  left_join(
+    fix_organization_of_codes,
+    by = c("type", "code")
+  ) 
+
+all_2021_ttc_data_no_dupes_with_explanation |> 
   arrange(-min_delay)
 ```
 
-**NEED TO FILTER TO JUST THE BIG ONES TO SEE THIS**
-
-From this we can see that the 450 minute delay was due to "Transit Control Related Problems", the 446 minute delay was due to "Miscellaneous Other", they seem to be outliers, even among the outliers.
-
-```{r}
-#| eval: true
-#| include: true
-
-all_2021_ttc_data_no_dupes |>
-  left_join(delay_codes |>
-    rename(code = sub_rmenu_code, code_desc = code_description_3) |>
-    select(code, code_desc)) |>
-  arrange(-min_delay) |>
-  select(date, time, station, line, min_delay, code, code_desc)
-```
-
+From this we can see that the 348 minute delay was due to "Traction Power Rail Related", the 343 minute delay was due to "Signals - Track Circuit Problems", and so on.
 
 Another thing that we are looking for is various groupings of the data, especially where sub-groups may end up with only a small number of observations in them. This is because any analysis could be especially influenced by them. One quick way to do this is to group the data by a variable that is of interest, for instance, "line", using color.
 
@@ -413,7 +557,7 @@ Another thing that we are looking for is various groupings of the data, especial
 #| layout-ncol: 2
 #| fig-subcap: ["Density", "Frequency"]
 
-all_2021_ttc_data_no_dupes |>
+all_2021_ttc_data_no_dupes_with_explanation |>
   ggplot() +
   geom_histogram(
     aes(
@@ -426,7 +570,7 @@ all_2021_ttc_data_no_dupes |>
   ) +
   scale_x_log10()
 
-all_2021_ttc_data_no_dupes |>
+all_2021_ttc_data_no_dupes_with_explanation |>
   ggplot() +
   geom_histogram(
     aes(x = min_delay, fill = line),
@@ -448,7 +592,7 @@ To group by another variable, we can add facets (@fig-delayfreqfacet).
 #| message: false
 #| warning: false
 
-all_2021_ttc_data_no_dupes |>
+all_2021_ttc_data_no_dupes_with_explanation |>
   ggplot() +
   geom_density(
     aes(x = min_delay, color = line),
@@ -464,7 +608,7 @@ We can now plot the top five stations by mean delay.
 #| eval: true
 #| include: true
 
-all_2021_ttc_data_no_dupes |>
+all_2021_ttc_data_no_dupes_with_explanation |>
   group_by(line, station_clean) |>
   summarise(mean_delay = mean(min_delay), n_obs = n()) |>
   filter(n_obs > 1) |>
@@ -491,7 +635,7 @@ As discussed in @sec-clean-and-prepare, dates are often difficult to work with b
 
 library(lubridate)
 
-all_2021_ttc_data_no_dupes |>
+all_2021_ttc_data_no_dupes_with_explanation |>
   filter(min_delay > 0) |>
   mutate(week = week(date)) |>
   group_by(week, line) |>
@@ -515,7 +659,7 @@ Now let us look at the proportion of delays that were greater than 10 minutes (@
 #| message: false
 #| warning: false
 
-all_2021_ttc_data_no_dupes |>
+all_2021_ttc_data_no_dupes_with_explanation |>
   mutate(week = week(date)) |>
   group_by(week, line) |>
   summarise(prop_delay = sum(min_delay > 10) / n()) |>
@@ -542,7 +686,7 @@ We are also interested in looking at the relationship between two variables. Sca
 #| message: false
 #| warning: false
 
-all_2021_ttc_data_no_dupes |>
+all_2021_ttc_data_no_dupes_with_explanation |>
   ggplot(aes(x = min_delay, y = min_gap)) +
   geom_point() +
   scale_x_log10() +
@@ -559,7 +703,7 @@ The relationship between categorical variables takes more work, but we could als
 #| message: false
 #| warning: false
 
-all_2021_ttc_data_no_dupes |>
+all_2021_ttc_data_no_dupes_with_explanation |>
   group_by(line, code_desc) |>
   summarise(mean_delay = mean(min_delay)) |>
   arrange(-mean_delay) |>
@@ -1470,7 +1614,7 @@ modelsummary(logistic_reg_superhost_response_review)
 13. Name three geoms that produce graphs that have bars on them `ggplot()`.
 14. Consider a dataset 10,000 observations and 27 variables. For each observation, there is at least one missing variable. Please discuss, in a paragraph or two, the steps that you would take to understand what is going on.
 15. Known missing data, are those that leave holes in your dataset. But what about data that were never collected? Please look at @mcclelland2019lock and @luscombe2020policing. Look into how they gathered their dataset and what it took to put this together. What is in the dataset and why? What is missing and why? How could this affect the results? How might similar biases enter into other datasets that you have used or read about? 
-
+16. Repeat the missing data exercise conducted for the US states and population, but for the "bill_length_mm" variable in the `penguins()` dataset available from `palmerpenguins` [@palmerpenguins].
 
 
 ### Tutorial {.unnumbered}

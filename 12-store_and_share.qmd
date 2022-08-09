@@ -760,37 +760,60 @@ tic.clearlog()
 
 tic("CSV - Everything")
 tic("CSV - Reading")
-open_payments_data_csv <- read_csv("~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv")
+open_payments_data_csv <-
+  read_csv(
+    "~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv",
+    col_types =
+      cols(
+        "Teaching_Hospital_ID" = col_double(),
+        "Physician_Profile_ID" = col_double(),
+        "Applicable_Manufacturer_or_Applicable_GPO_Making_Payment_ID" = col_double(),
+        "Total_Amount_of_Payment_USDollars" = col_double(),
+        "Date_of_Payment" = col_date(format = "%m/%d/%Y"),
+        "Number_of_Payments_Included_in_Total_Amount" = col_double(),
+        "Record_ID" = col_double(),
+        "Program_Year" = col_double(),
+        "Payment_Publication_Date" = col_date(format = "%m/%d/%Y"),
+        .default = col_character()
+      )
+  )
 class(open_payments_data_csv)
 toc(log = TRUE, quiet = TRUE)
 tic("CSV - Manipulate and summarise")
-open_payments_data_csv |> 
-  rename(state = Recipient_State, 
-         total_payment_USD = Total_Amount_of_Payment_USDollars) |> 
+summary_spend_by_state_csv <-
+  open_payments_data_csv |>
+  rename(state = Recipient_State,
+         total_payment_USD = Total_Amount_of_Payment_USDollars) |>
   filter(state %in% c("CA", "OR", "WA")) |>
   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
-  group_by(state) |> 
+  group_by(state) |>
   summarise(average_payment = mean(total_payment_USD, na.rm = TRUE))
+summary_spend_by_state_csv
 toc(log = TRUE, quiet = TRUE)
 toc(log = TRUE, quiet = TRUE)
 rm(open_payments_data_csv)
 
 tic("arrow - Everything")
 tic("arrow - Reading")
-open_payments_data_arrow <- read_csv_arrow("~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv")
-
+open_payments_data_arrow <-
+  read_csv_arrow("~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv",
+                 as_data_frame = FALSE)
 class(open_payments_data_arrow)
 toc(log = TRUE, quiet = TRUE)
 tic("arrow - Manipulate and summarise")
-open_payments_data_arrow |> 
-  rename(state = Recipient_State, 
-         total_payment_USD = Total_Amount_of_Payment_USDollars) |> 
+summary_spend_by_state_arrow <-
+  open_payments_data_arrow |>
+  rename(state = Recipient_State,
+         total_payment_USD = Total_Amount_of_Payment_USDollars) |>
   filter(state %in% c("CA", "OR", "WA")) |>
   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
-  group_by(state) |> 
-  summarise(average_payment = mean(total_payment_USD, na.rm = TRUE))
+  group_by(state) |>
+  summarise(average_payment = mean(total_payment_USD, na.rm = TRUE)) |>
+  collect()
+summary_spend_by_state_arrow
 toc(log = TRUE, quiet = TRUE)
 toc(log = TRUE, quiet = TRUE)
+
 rm(open_payments_data_arrow)
 
 log_txt <- tic.log(format = TRUE)
@@ -820,29 +843,69 @@ write_csv(need_for_speed_propublica, file = "inputs/data/need_for_speed_propubli
 
 library(arrow)
 library(tidyverse)
+library(tictoc)
 
+tic.clearlog()
+
+tic("CSV - Everything")
+tic("CSV - Reading")
 open_payments_data_csv <-
-  read_csv("OP_DTL_GNRL_PGYR2016_P01172018.csv")
-toc(log = TRUE, quiet = TRUE)
-open_payments_data_csv |>
-  rename(state = Recipient_State,
-         total_payment_USD = Total_Amount_of_Payment_USDollars) |>
-  filter(state %in% c("CA", "OR", "WA")) |>
-  mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
-  group_by(state) |>
-  summarise(average_payment = mean(total_payment_USD, na.rm = TRUE))
-rm(open_payments_data_csv)
+  read_csv(
+    "OP_DTL_GNRL_PGYR2016_P01172018.csv",
+    col_types =
+      cols(
+        "Teaching_Hospital_ID" = col_double(),
+        "Physician_Profile_ID" = col_double(),
+        "Applicable_Manufacturer_or_Applicable_GPO_Making_Payment_ID" = col_double(),
+        "Total_Amount_of_Payment_USDollars" = col_double(),
+        "Date_of_Payment" = col_date(format = "%m/%d/%Y"),
+        "Number_of_Payments_Included_in_Total_Amount" = col_double(),
+        "Record_ID" = col_double(),
+        "Program_Year" = col_double(),
+        "Payment_Publication_Date" = col_date(format = "%m/%d/%Y"),
+        .default = col_character()
+      )
+  )
 
-open_payments_data_arrow <-
-  read_csv_arrow("OP_DTL_GNRL_PGYR2016_P01172018.csv")
-open_payments_data_arrow |>
+toc(log = TRUE, quiet = TRUE)
+
+tic("CSV - Manipulate and summarise")
+summary_spend_by_state_csv <-
+  open_payments_data_csv |>
   rename(state = Recipient_State,
          total_payment_USD = Total_Amount_of_Payment_USDollars) |>
   filter(state %in% c("CA", "OR", "WA")) |>
   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
   group_by(state) |>
   summarise(average_payment = mean(total_payment_USD, na.rm = TRUE))
-rm(open_payments_data_arrow)
+
+summary_spend_by_state_csv
+
+toc(log = TRUE, quiet = TRUE)
+toc(log = TRUE, quiet = TRUE)
+
+tic("arrow - Everything")
+tic("arrow - Reading")
+open_payments_data_arrow <-
+  read_csv_arrow("OP_DTL_GNRL_PGYR2016_P01172018.csv",
+                 as_data_frame = FALSE)
+toc(log = TRUE, quiet = TRUE)
+
+tic("arrow - Manipulate and summarise")
+summary_spend_by_state_arrow <-
+  open_payments_data_arrow |>
+  rename(state = Recipient_State,
+         total_payment_USD = Total_Amount_of_Payment_USDollars) |>
+  filter(state %in% c("CA", "OR", "WA")) |>
+  mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
+  group_by(state) |>
+  summarise(average_payment = mean(total_payment_USD, na.rm = TRUE)) |>
+  collect()
+
+summary_spend_by_state_arrow
+
+toc(log = TRUE, quiet = TRUE)
+toc(log = TRUE, quiet = TRUE)
 ```
 
 
@@ -866,7 +929,7 @@ read_csv(
   )
 ```
 
-
+@arrowcookbook provides further information about specific tasks and @navarro2021getting provides helpful examples of implementation.
 
 
 
@@ -1045,10 +1108,10 @@ There are three key SQL commands that we now cover: `SELECT`, `FROM`, and `WHERE
 #| include: true
 #| eval: false
 
-    SELECT
-        surname   
-    FROM
-        politicians;
+SELECT
+    surname   
+FROM
+    politicians;
 ```
 
 The result is that we obtain the column of surnames. We could select multiple columns by separating them with commas, or all of them by using an asterisk, although this is not best practice because if the dataset were to change without us knowing then our result would differ.
@@ -1057,21 +1120,21 @@ The result is that we obtain the column of surnames. We could select multiple co
 #| include: true
 #| eval: false
 
-    SELECT
-        uniqueID
-        surname   
-    FROM
-        politicians;
+SELECT
+    uniqueID
+    surname   
+FROM
+    politicians;
 ```
 
 ```{sql}
 #| include: true
 #| eval: false
 
-    SELECT
-        *
-    FROM
-        politicians;
+SELECT
+    *
+FROM
+    politicians;
 ```
 
 And, finally, if there were repeated rows, then we could just look at the unique ones using `DISTINCT`, in a similar way to `distinct()`.
@@ -1080,10 +1143,10 @@ And, finally, if there were repeated rows, then we could just look at the unique
 #| include: true
 #| eval: false
 
-    SELECT
-        DISTINCT surname   
-    FROM
-        politicians;
+SELECT
+    DISTINCT surname   
+FROM
+    politicians;
 ```
 
 So far we have used `SELECT` along with `FROM`. The third command that is commonly used is `WHICH`, and this will allow us to focus on particular rows, in a similar way to `filter()`.
@@ -1092,14 +1155,14 @@ So far we have used `SELECT` along with `FROM`. The third command that is common
 #| include: true
 #| eval: false
 
-    SELECT
-        uniqueID,
-        surname,
-        firstName   
-    FROM
-        politicians     
-    WHERE
-        firstName = "Myles";
+SELECT
+    uniqueID,
+    surname,
+    firstName   
+FROM
+    politicians     
+WHERE
+    firstName = "Myles";
 ```
 
 All the usual operators are fine with `WHERE`, such as "=", "!=", ">", "<", ">=", and "<=". We could combine conditions using `AND` and `OR`.
@@ -1108,15 +1171,15 @@ All the usual operators are fine with `WHERE`, such as "=", "!=", ">", "<", ">="
 #| include: true
 #| eval: false
 
-    SELECT
-        uniqueID,
-        surname,
-        firstName   
-    FROM
-        politicians     
-    WHERE
-        firstName = "Myles" 
-        OR firstName = "Ruth";
+SELECT
+    uniqueID,
+    surname,
+    firstName   
+FROM
+    politicians     
+WHERE
+    firstName = "Myles" 
+    OR firstName = "Ruth";
 ```
 
 If we have a query that gave a lot of results, then we could limit the number of them with `LIMIT`. 
@@ -1125,14 +1188,14 @@ If we have a query that gave a lot of results, then we could limit the number of
 #| include: true
 #| eval: false
 
-    SELECT
-        uniqueID,
-        surname,
-        firstName        
-    FROM
-        politicians          
-    WHERE
-        firstName = "Robert"       LIMIT 5;
+SELECT
+    uniqueID,
+    surname,
+    firstName        
+FROM
+    politicians          
+WHERE
+    firstName = "Robert"       LIMIT 5;
 ```
 
 And we could specify the order of the results with `ORDER`.
@@ -1141,18 +1204,17 @@ And we could specify the order of the results with `ORDER`.
 #| include: true
 #| eval: false
 
-    SELECT
-        uniqueID,
-        surname,
-        firstName 
-    FROM
-        politicians 
-    WHERE
-        firstName = "Robert" 
-    ORDER BY
-        surname DESC;
+SELECT
+    uniqueID,
+    surname,
+    firstName 
+FROM
+    politicians 
+WHERE
+    firstName = "Robert" 
+ORDER BY
+    surname DESC;
 ```
-
 
 See the rows that are pretty close to a criteria:
 
@@ -1160,14 +1222,14 @@ See the rows that are pretty close to a criteria:
 #| include: true
 #| eval: false
 
-    SELECT
-        uniqueID,
-        surname,
-        firstName      
-    FROM
-        politicians      
-    WHERE
-        firstName LIKE "Ma__";
+SELECT
+    uniqueID,
+    surname,
+    firstName      
+FROM
+    politicians      
+WHERE
+    firstName LIKE "Ma__";
 ```
 
 The "_" above is a wildcard that matches to any character. So this provides results that include "Mary", and "Mark". `LIKE` is not case-sensitive: "Ma__" and "ma__" both return the same results.
@@ -1178,15 +1240,15 @@ Focusing on missing data is possible using "NULL" or "NOT NULL".
 #| include: true
 #| eval: false
 
-    SELECT
-        uniqueID,
-        surname,
-        firstName,
-        comment
-    FROM
-        politicians      
-    WHERE
-        comment     IS NULL;
+SELECT
+    uniqueID,
+    surname,
+    firstName,
+    comment
+FROM
+    politicians      
+WHERE
+    comment     IS NULL;
 ```
 
 There is an underlying ordering build into number, date and text fields that means we can use `BETWEEN` on all those, not just numeric. For instance, we could look for all surnames that starts with a letter between X and Z (not including Z).
@@ -1195,14 +1257,14 @@ There is an underlying ordering build into number, date and text fields that mea
 #| include: true
 #| eval: false
 
-    SELECT
-        uniqueID,
-        surname,
-        firstName
-    FROM
-        politicians      
-    WHERE
-        surname     BETWEEN "X" AND "Z";
+SELECT
+    uniqueID,
+    surname,
+    firstName
+FROM
+    politicians      
+WHERE
+    surname     BETWEEN "X" AND "Z";
 ```
 
 Using `WHERE` with a numeric variable means that `BETWEEN` is inclusive, compared with the example with letters that was not.
@@ -1211,15 +1273,15 @@ Using `WHERE` with a numeric variable means that `BETWEEN` is inclusive, compare
 #| include: true
 #| eval: false
 
-    SELECT
-        uniqueID,
-        surname,
-        firstName,
-        birthYear
-    FROM
-        politicians      
-    WHERE
-        birthYear     BETWEEN 1980 AND 1990;
+SELECT
+    uniqueID,
+    surname,
+    firstName,
+    birthYear
+FROM
+    politicians      
+WHERE
+    birthYear     BETWEEN 1980 AND 1990;
 ```
 
 In addition to providing us with dataset observations that match what we asked for, we can modify the dataset. For instance, we could edit a value using `UPDATE` and `SET`.
@@ -1228,12 +1290,12 @@ In addition to providing us with dataset observations that match what we asked f
 #| include: true
 #| eval: false
 
-    UPDATE
-        politicians   
-    SET
-        surname = "Alexanderrrrrrrr"
-    WHERE
-        uniqueID = "Alexander1951";
+UPDATE
+    politicians   
+SET
+    surname = "Alexanderrrrrrrr"
+WHERE
+    uniqueID = "Alexander1951";
 ```
 
 We can integrate if-else logic with `CASE` and `ELSE`. For instance, where we add a column called "wasTreasurer", which is "Yes" in the case of "Josh Frydenberg", and "No" in the case of "Kevin Rudd", anad "Unsure" for all other cases.
@@ -1242,18 +1304,18 @@ We can integrate if-else logic with `CASE` and `ELSE`. For instance, where we ad
 #| include: true
 #| eval: false
 
-    SELECT
-        uniqueID,
-        surname,
-        firstName,
-        birthYear,
-        CASE                  
-            WHEN uniqueID = "Frydenberg1971" THEN "Yes"                  
-            WHEN surname = "Rudd" THEN "No"                  
-            ELSE "Unsure"            
-        END AS "wasTreasurer"        
-    FROM
-        politicians;
+SELECT
+    uniqueID,
+    surname,
+    firstName,
+    birthYear,
+    CASE                  
+        WHEN uniqueID = "Frydenberg1971" THEN "Yes"                  
+        WHEN surname = "Rudd" THEN "No"                  
+        ELSE "Unsure"            
+    END AS "wasTreasurer"        
+FROM
+    politicians;
 ```
 
 We can create summary statistics using commands such as `COUNT`, `SUM`, `MAX`, `MIN`, `AVG`, and `ROUND` in the place of `summarize()`. `COUNT` counts the number of rows that are not empty for some column by passing the column name, and this is similarly how `MIN`, etc, work.
@@ -1262,20 +1324,20 @@ We can create summary statistics using commands such as `COUNT`, `SUM`, `MAX`, `
 #| include: true
 #| eval: false
 
-    SELECT
-        COUNT(uniqueID)   
-    FROM
-        politicians;
+SELECT
+    COUNT(uniqueID)   
+FROM
+    politicians;
 ```
 
 ```{sql}
 #| include: true
 #| eval: false
 
-    SELECT
-        MIN(birthYear)   
-    FROM
-        politicians;
+SELECT
+    MIN(birthYear)   
+FROM
+    politicians;
 ```
 
 We can get results on the basis of different groups in our dataset using `GROUP BY`, in a similar manner to `group_by` in R.
@@ -1284,12 +1346,12 @@ We can get results on the basis of different groups in our dataset using `GROUP 
 #| include: true
 #| eval: false
 
-    SELECT
-        COUNT(uniqueID)   
-    FROM
-        politicians     
-    GROUP BY
-        gender;
+SELECT
+    COUNT(uniqueID)   
+FROM
+    politicians     
+GROUP BY
+    gender;
 ```
 
 And finally, we can combine two tables using `LEFT JOIN`. We need to be careful to specify the matching columns using dot notation. 
@@ -1298,16 +1360,16 @@ And finally, we can combine two tables using `LEFT JOIN`. We need to be careful 
 #| include: true
 #| eval: false
 
-    SELECT
-        politicians.uniqueID,
-        politicians.firstName,
-        politicians.surname,
-        party.partySimplifiedName   
-    FROM
-        politicians 
-    LEFT JOIN
-        party     
-            ON politicians.uniqueID = party.uniqueID;
+SELECT
+    politicians.uniqueID,
+    politicians.firstName,
+    politicians.surname,
+    party.partySimplifiedName   
+FROM
+    politicians 
+LEFT JOIN
+    party     
+        ON politicians.uniqueID = party.uniqueID;
 ```
 
 As SQL is not our focus we have only provided a brief overview of some essential commands. From a career perspective it is important to develop a comfort with SQL. It is so integrated into data science that it would be "difficult to get too far without it" [@robinsonnolis2020, p. 8] and that "almost any" data science interview will include questions about SQL [@robinsonnolis2020, p. 110].
@@ -1318,9 +1380,9 @@ As SQL is not our focus we have only provided a brief overview of some essential
 
 ### Exercises {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: **TBD**. Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
-2. *(Simulate)* Please further consider the scenario described and simulate the situation with every variable independent of each other.
-3. *(Acquire)* Please describe three possible sources of such a dataset.
+1. *(Plan)* Consider the following scenario: **You work for a large news media company and focus on subscriber management. Over the course of a year most subscribers will never post a comment beneath a news article, but a few post an awful lot.**. Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+2. *(Simulate)* Please further consider the scenario described and simulate the situation.
+3. *(Acquire)* Please describe one possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
 5. *(Communicate)* Please write two paragraphs about what you did.
 6. Following @wilkinson2016fair, which of the following are FAIR principles (please select all that apply)?
