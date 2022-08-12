@@ -130,13 +130,12 @@ Using observational data in sophisticated ways is what this chapter is about. Ho
 When we are discussing causality, it can help to be very specific about what we mean. It is easy to get caught up in observational data and trick ourselves. It is important to think hard, and to use all the tools available to us. For instance, in that earlier example, @dagan2021bnt162b2 were able to use experimental data as a guide. Most of the time, we will not be so lucky as to have both experimental data and observational data available to us. But one framework that can help with thinking hard about our data is the use of directed acyclic graph (DAG). DAGs are a fancy name for a flow diagram and involves drawing arrows and lines between the variables to indicate the relationship between them. Following @citeerik we use `DiagrammeR` [@citeDiagrammeR] to build them here, because we can use the same skills outside of just DAGs and `DiagrammeR` provides quite a lot of control (@fig-firstdag). But `ggdag` is also useful [@citeggdag].
 
 ```{r}
-#| out-width: "75%"
 #| fig-cap: "Using a DAG to illustrate perceived relationships"
 #| label: fig-firstdag
 
 library(DiagrammeR)
 
-DiagrammeR::grViz("
+grViz("
 digraph {
   graph [ranksep = 0.2]
   node [shape = plaintext, fontsize = 10, fontname = Helvetica]
@@ -149,86 +148,87 @@ digraph {
 ", height = 200)
 ```
 
-In @fig-firstdag, we think that *x* causes *y*. We could build another DAG where the situation is less clear. To make the examples a little easier to follow, we will switch to fruits (@fig-carrotasconfounder).
+In @fig-firstdag, we think that *x* causes *y*. We could build another DAG where the situation is less clear. To make the examples a little easier to follow, we will switch to thinking about a hypothetical relationship between income, education, and fertility intention (@fig-educationasconfounder).
 
 ```{r}
-#| out-width: "75%"
-#| fig-cap: "A DAG showing Carrot as a confounder"
-#| label: fig-carrotasconfounder
+#| fig-cap: "A DAG showing education as a confounder"
+#| label: fig-educationasconfounder
 
-DiagrammeR::grViz("
+grViz("
 digraph {
   graph [ranksep = 0.2]
   node [shape = plaintext, fontsize = 10, fontname = Helvetica]
-    Apple
-    Banana
-    Carrot
+    a [label = 'Income']
+    b [label = 'Fertility intentions']
+    c [label = 'Education']
   edge [minlen = 2, arrowhead = vee]
-    Apple->Banana
-    Carrot->Apple
-    Carrot->Banana
-  { rank = same; Apple; Banana }
+    a->b
+    c->a
+    c->b
+  { rank = same; a; b }
 }
 ", height = 300)
 ```
 
-In @fig-carrotasconfounder, we think *Apple* causes *Banana*. But we also think that *Carrot* causes *Banana*, and that *Carrot* also causes *Apple*. That relationship is a "backdoor path", and would create spurious correlation in our analysis. We may think that changes in *Apple* are causing changes in *Banana*, but it could be that *Carrot* is changing them both. That variable, in this case, *Carrot*, is called a "confounder".
+In @fig-educationasconfounder, we think income causes fertility intentions. But we also think that education causes fertility intentions, and that education also causes income. That relationship is a "backdoor path", and failing to adjust for education in a regression could create a spurious, or potentially overstate the extent of a, relationship between income and fertility intentions in our analysis. We may think that changes in income are causing changes in fertility intentions, but it could be that education is changing them both. That variable, in this case, education, is called a "confounder".
 
 @hernanrobins2020 [p. 83] discuss an interesting case where a researcher was interested in whether one person looking up at the sky makes others look up at the sky also. There was a clear relationship between the responses of both people. But it was also the case that there was noise in the sky. So, it was unclear whether the second person looked up because the first person looked up, or they both looked up because of the noise. When using experimental data, randomization allows us to avoid this concern, but with observational data we cannot rely on that. It is also not the case that bigger data necessarily get around this problem for us. Instead, it is important to think carefully about the situation. 
 
 If there are confounders, but we are still interested in causal effects, then we need to adjust for them. One way is to include them in the regression. But the validity of this requires several assumptions. In particular, @gelmanandhill [p. 169] warn that our estimate will only correspond to the average causal effect in the sample if we include all of the confounders and have the right model. Putting the second requirement to one side, and focusing only on the first, if we do not think about and observe a confounder, then it can be difficult to adjust for it. And this is an area where both domain expertise and theory can bring a lot to an analysis. 
 
-In @fig-carrotasmediator we have a similar situation where again, we may think that *Apple* causes *Banana*. But in @fig-carrotasmediator *Apple* also causes *Carrot*, which itself causes *Banana*.
+In @fig-luxuryasmediator we have a similar situation where again, we may think that income causes fertility intentions. But in @fig-luxuryasmediator income also causes luxury tastes, which itself causes fertility intentions.
 
 ```{r}
-#| out-width: "75%"
-#| fig-cap: "A DAG showing Carrot as a mediator"
-#| label: fig-carrotasmediator
+#| fig-cap: "A DAG showing luxury tastes as a mediator"
+#| label: fig-luxuryasmediator
 
-DiagrammeR::grViz("
+grViz("
 digraph {
   graph [ranksep = 0.2]
   node [shape = plaintext, fontsize = 10, fontname = Helvetica]
-    Apple
-    Banana
-    Carrot
+    a [label = 'Income']
+    b [label = 'Fertility intentions']
+    c [label = 'Luxury tastes']
   edge [minlen = 2, arrowhead = vee]
-    Apple->Banana
-    Apple->Carrot
-    Carrot->Banana
-  { rank = same; Apple; Banana }
+    a->b
+    a->c
+    c->b
+  { rank = same; a; b }
 }
 ", height = 300)
 ```
 
-In @fig-carrotasmediator, *Carrot* is called a "mediator" and we would not adjust for it if we were interested in the effect of *Apple* on *Banana*. If we were to adjust for it, then some of what we are attributing to *Apple*, would be due to *Carrot*.
+In @fig-luxuryasmediator, luxury tastes is called a "mediator" and we would not adjust for it if we were interested in the effect of income on fertility intentions. If we were to adjust for it, then some of what we are attributing to income, would be due to luxury tastes.
 
-Finally, in @fig-carrotascollider we have yet another similar situation, where we again, think that *Apple* causes *Banana*. But this time both *Apple* and *Banana* also cause *Carrot*.
+Finally, in @fig-residenceascollider we have yet another similar situation, where we think that income causes fertility intentions. But this time both income and fertility intentions also cause place of residence.
 
 ```{r}
-#| out-width: "75%"
-#| fig-cap: "A DAG showing Carrot as a collider"
-#| label: fig-carrotascollider
+#| fig-cap: "A DAG showing residence as a collider"
+#| label: fig-residenceascollider
 
-DiagrammeR::grViz("
+library(DiagrammeR)
+
+grViz("
 digraph {
   graph [ranksep = 0.2]
   node [shape = plaintext, fontsize = 10, fontname = Helvetica]
-    Apple
-    Banana
-    Carrot
+    a [label = 'Income']
+    b [label = 'Fertility intentions']
+    c [label = 'Place of residence']
   edge [minlen = 2, arrowhead = vee]
-    Apple->Banana
-    Apple->Carrot
-    Banana->Carrot
-  { rank = same; Apple; Banana }
+    a->b
+    a->c
+    b->c
+  { rank = same; a; b }
 }
 ", height = 300)
 ```
 
-In this case, *Carrot* is called a "collider" and if we were to condition on it, then we would create a misleading relationship.
+In this case, place of residence is called a "collider" and if we were to condition on it, then we would create a misleading relationship. Income influences where people live, but their fertility intentions also affect this. place of residence is then a collider because both the independent and dependent variable of interest influence it.
 
 It is important to be clear about this: we must create the DAG ourselves, in the same way that we must put together the model ourselves. There is nothing that will create it for us. This means that we need to think carefully about the situation. Because it is one thing to see something in the DAG and then do something about it. But it is another to not even know that it is there. @citemcelreath [p. 180] describes these as haunted DAGs. DAGs are helpful, but they are just a tool to help us think deeply about our situation. 
+
+When we are building models, it can be tempting to include as many independent variables as possible. DAGs show clearly why we need to be more thoughtful. For instance, if a variable is a confounder then we would want to adjust for it, whereas if a variable was a collider then we would not. We can never know the truth, and we are informed by aspects such as theory, what we are interested in, research design, limitations of the data, or our own limitations as researchers, to name a few. Knowing the limits is as important as reporting the model. Data and models with flaws are still useful, as long as you acknowledge those flaws. The work of thinking about a situation is never done, and relies on others, which is why we need to make all of our work as reproducible as possible.
 
 ## Two common paradoxes
 
@@ -329,7 +329,7 @@ penguins |>
 
 ### Berkson's paradox
 
-Berkson's paradox occurs when we estimate some relationship based on the dataset that we have. But because the dataset is so selected, the relationship is different in a more general dataset [@citeberkson]. For instance, if we have a dataset of professional cyclists then we might find there is no relationship between their VO2 max and their chance of winning a bike race. But if we had a dataset of the general population then we might find a relationship between these two variables. The professional dataset has just been so selected that the relationship disappears; one cannot become a professional cyclist unless one has a good-enough VO2 max. Again, we can simulate some data to show this more clearly (@fig-berksonsparadox).
+Berkson's paradox occurs when we estimate some relationship based on the dataset that we have. But because the dataset is so selected, the relationship is different in a more general dataset [@citeberkson]. For instance, if we have a dataset of professional cyclists then we might find there is no relationship between their VO2 max and their chance of winning a bike race [@vomaxpaper; @anothernicevomaxpaper]. But if we had a dataset of the general population then we might find a relationship between these two variables. The professional dataset has just been so selected that the relationship disappears; one cannot become a professional cyclist unless one has a good-enough VO2 max. Again, we can simulate some data to show this more clearly (@fig-berksonsparadox).
 
 ```{r}
 #| eval: true
@@ -473,7 +473,8 @@ simulated_difference_in_differences |>
     y = "Serve speed",
     color = "Person got a new racket"
   ) +
-  scale_color_brewer(palette = "Set1")
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
 ```
 
 As it is a straight-forward example, we can obtain our estimate manually, by looking at the average difference of the differences. When we do that, we find that we estimate the effect of the new tennis racket to be 5.06, which is similar to what we simulated.
@@ -497,7 +498,7 @@ average_differences$average_difference[2] - average_differences$average_differen
 ```
 
 And we can use linear regression to get the same result. The equation that we are interested in is:
-$$Y_{i,t} = \beta_0 + \beta_1\mbox{Treatment binary}_i + \beta_2\mbox{Time binary}_t + \beta_3(\mbox{Treatment binary} \times\mbox{Time binary})_{i,t} + \epsilon_{i,t}$$
+$$Y_{i,t} = \beta_0 + \beta_1\mbox{Treatment}_i + \beta_2\mbox{Time}_t + \beta_3(\mbox{Treatment} \times\mbox{Time})_{i,t} + \epsilon_{i,t}$$
 
 While we should include the separate aspects as well, it is the estimate of the interaction that we are interested in. In this case it is $\beta_3$. And we find that our estimated effect is 5.06.
 
@@ -505,13 +506,15 @@ While we should include the separate aspects as well, it is the estimate of the 
 #| eval: true
 #| include: true
 
+library(modelsummary)
+
 diff_in_diff_example_regression <-
   lm(
     serve_speed ~ treatment_group * time,
     data = simulated_difference_in_differences
   )
 
-summary(diff_in_diff_example_regression)
+modelsummary(diff_in_diff_example_regression)
 ```
 
 
@@ -537,7 +540,7 @@ There are four main threats to validity when we use difference in differences, a
 
 
 
-### Case study: French newspaper prices between 1960 and 1974
+### French newspaper prices between 1960 and 1974
 
 In this case study we introduce @angelucci2019newspapers, and replicate its main findings. 
 
@@ -899,6 +902,8 @@ purchase_data
 We use `matchit()` from `MatchIt` [@MatchIt] to implement logistic regression and create matched groups. We then use `match.data()` to get the data of matches containing both all 371 people who were actually treated with free shipping and the untreated person who is considered as similar to them, based on propensity score, as possible. The result is a dataset of 742 observations.
 
 ```{r}
+#| message: false
+
 library(MatchIt)
 
 matched_groups <- matchit(
@@ -923,7 +928,7 @@ propensity_score_regression <- lm(
   data = matched_dataset
 )
 
-propensity_score_regression
+modelsummary(propensity_score_regression)
 ```
 
 We cover propensity score matching because it is widely used. But there are many issues with propensity score matching that mean that propensity scores should not be used for matching [@king2019propensity]. These include:
@@ -1019,7 +1024,7 @@ rdd_example_data <-
   mutate(mark_80_and_over = if_else(mark < 80, 0, 1))
 
 lm(income ~ mark + mark_80_and_over, data = rdd_example_data) |>
-  summary()
+  modelsummary()
 ```
 
 There are various caveats to this estimate that we will discuss, but the essentials of RDD are here. Given an appropriate set-up, and model, an RDD can compare favorably to randomized trials [@bloombellreiman2020].
@@ -1078,9 +1083,14 @@ It may be possible to deal with fuzzy RDD settings with appropriate choice of mo
 
 We want as "sharp" an effect as possible, but if the thresholds are known, then they will be gamed. For instance, there is a lot of evidence that people run for certain marathon times, and we know that people aim for certain grades. Similarly, from the other side, it is a lot easier for an instructor to just give out As than it is to have to justify Bs. One way to look at this is to consider how "balanced" the sample is on either side of the threshold. We can do this using histograms with appropriate bins. For instance, think of the age-heaping that we found in the cleaned Kenyan census data in @sec-gather-data.
 
-Another key factor for RDD is the possible effect of the decision around the choice of model. To see this, consider the difference between a linear and polynomial.
+Another key factor for RDD is the possible effect of the decision around the choice of model. For instance, @fig-rddissuperconcerning illustrates the difference between linear (@fig-rddissuperconcerning-1) and polynomial (@fig-rddissuperconcerning-2).
 
 ```{r}
+#| layout-ncol: 2
+#| label: fig-rddissuperconcerning
+#| fig-cap: "Comparing the result of considering the same situation with different functions"
+#| fig-subcap: ["Linear", "Polynomial"]
+
 some_data <-
   tibble(
     outcome = rnorm(n = 100, mean = 1, sd = 1),
@@ -1101,12 +1111,14 @@ both <-
 both |>
   ggplot(aes(x = running_variable, y = outcome, color = location)) +
   geom_point(alpha = 0.5) +
-  geom_smooth(formula = y ~ x, method = "lm")
+  geom_smooth(formula = y ~ x, method = "lm") +
+  theme_minimal() 
 
 both |>
   ggplot(aes(x = running_variable, y = outcome, color = location)) +
   geom_point(alpha = 0.5) +
-  geom_smooth(formula = y ~ poly(x, 3), method = "lm")
+  geom_smooth(formula = y ~ poly(x, 3), method = "lm") +
+  theme_minimal() 
 ```
 
 The result is that our estimate is dependent on the choice of model. We see this issue occur often in RDD [@gelmanonrdd].
@@ -1371,7 +1383,7 @@ smoker_on_tax <- lm(smoker ~ tax, data = iv_example_data)
 coef(health_on_tax)["tax"] / coef(smoker_on_tax)["tax"]
 ```
 
-So we find, luckily, that if you smoke then your health is likely to be worse than if you do not smoke.
+So we find that if you smoke then your health is likely to be worse than if you do not smoke.
 
 Equivalently, we can think of instrumental variables in a two-stage regression context. 
 
@@ -1380,7 +1392,7 @@ first_stage <- lm(smoker ~ tax, data = iv_example_data)
 health_hat <- first_stage$fitted.values
 second_stage <- lm(health ~ health_hat, data = iv_example_data)
 
-summary(second_stage)
+modelsummary(second_stage)
 ```
 
 We can use `iv_robust()` from `estimatr` [@estimatr] to estimate IV. One nice reason for doing this is that it can help to keep everything organised and adjust the standard errors.
@@ -1388,7 +1400,7 @@ We can use `iv_robust()` from `estimatr` [@estimatr] to estimate IV. One nice re
 ```{r}
 library(estimatr)
 iv_robust(health ~ smoker | tax, data = iv_example_data) |>
-  summary()
+  modelsummary()
 ```
 
 ### Assumptions
