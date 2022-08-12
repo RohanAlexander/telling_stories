@@ -34,4 +34,4 @@ Change:
 
 - https://github.com/gadenbuie/grkstyle
 - https://styler.r-lib.org/articles/styler.html
-- Use build from here: https://issuehint.com/issue/r-lib/styler/913
+- Use build from here because quarto: https://issuehint.com/issue/r-lib/styler/913
