@@ -786,11 +786,11 @@ In general, we are able to replicate the main results of @angelucci2019newspaper
 
 Difference in differences is a powerful analysis framework. But it can be tough to identify appropriate treatment and control groups. @alexander2018age compare migrant brothers, where one brother had most of their education in a different country, and the other brother had most of their education in the US. Given the data that are available, this match provides a reasonable treatment and control group. But other matches could have given different results, for instance friends or cousins.
 
-We can match based on observable variables. For instance, age-group or education. At two different times we compare smoking rates in 18-year-olds in one city with smoking rates in 18-year-olds in another city. This would be a coarse match because we know that there are many differences between 18-year-olds, even in terms of the variables that we commonly observe, say gender and education. One way to deal with this would be to create sub-groups: 18-year-old males with a high school education, etc. But then the sample sizes quickly become small. We also have the issue of how to deal with continuous variables. And, are an 18-year-old and a 19-year-old really so different? Why not also compare with them?
+We can match based on observable variables. For instance, age-group or education. At two different times we compare smoking rates in 18-year-olds in one city with smoking rates in 18-year-olds in another city. This would be a coarse match because we know that there are many differences between 18-year-olds, even in terms of the variables that we commonly observe, say gender and education. One way to deal with this would be to create sub-groups: 18-year-old males with a high school education, etc. But then the sample sizes quickly become small. We also have the issue of how to deal with continuous variables. And, is a 18-year-old really that different to a 19-year-old? Why not also compare with them?
 
 One way to proceed is to consider a nearest neighbor approach. But there can be limited concern for uncertainty with this approach. There can also be an issue with having many variables because we end up with a high-dimension graph. This leads to propensity score matching. Here we will explain the process of propensity score matching, but it is not something that should be widely used [@king2019propensity], and we will then go through why that is the case.
 
-Propensity score matching involves assigning some probability to each observation. We construct that probability based on the observation's values for the independent variables, at their values before the treatment. That probability is our best guess at the probability of the observation being treated, regardless of whether it was treated or not. For instance, if 18-year-old males were treated but 19-year-old males were not, then as there is not much difference between 18-year-old males and 19-year-old males our assigned probability would be similar. We can then compare the outcomes of observations with similar propensity scores.
+Propensity score matching involves assigning some probability to each observation. We construct that probability based on the observation's values for the independent variables, before treatment. That probability is our best guess at the probability of the observation being treated, regardless of whether it was treated or not. For instance, if 18-year-old males were treated but 19-year-old males were not, then as there is not much difference between 18-year-old males and 19-year-old males our assigned probability would be similar. We can then compare the outcomes of observations with similar propensity scores.
 
 One advantage of propensity score matching is that is allows us to easily consider many independent variables at once, and it can be constructed using logistic regression.
 
@@ -829,6 +829,8 @@ purchase_data <-
       sdlog = 1
     )
   )
+
+purchase_data
 ```
 
 Then we need to add some probability of being treated with free shipping. We will say that it depends on our variables and that younger, higher-income, male and Toronto-based individuals make this treatment slightly more likely.
@@ -931,24 +933,18 @@ propensity_score_regression <- lm(
 modelsummary(propensity_score_regression)
 ```
 
-We cover propensity score matching because it is widely used. But there are many issues with propensity score matching that mean that propensity scores should not be used for matching [@king2019propensity]. These include:
+We cover propensity score matching because it is widely used. But there are many issues with propensity score matching that mean that humility is needed [@king2019propensity]. These include:
 
-1. Matching. Propensity score matching cannot match on unobserved variables. This may be fine in a classroom setting, but in more realistic settings it will likely cause issues. 
-2. Modelling. The results tend to be specific to the model that is used.
-3. Statistically. We are using the data twice. 
+1. Unobservables. Propensity score matching cannot match on unobserved variables. This may be fine in a classroom setting, but in more realistic settings it will likely cause issues. It is very difficult to understand why individuals that appear to be so similar, would have received different treatments, unless there is something unobserved that causes the difference. As propensity score matching cannot account for these, it is difficult to know which features are actually being brought together.
+2. Modelling. The results of propensity score matching, tend to be specific to the model that is used. As there is considerable flexibility as to which model is used, this enables researchers to pick through matches to find that suits. Additionally, because the two regression steps (the matching and the analysis) are conducted separately, there is no propagation of uncertainty.
 
-
-
+The fundamental problem of unobservables can never be shown to be inconsequential because that would require the unobserved data. Those who want to use propensity score matching, and other matching methods, need to be able to argue convincingly that it is appropriate. @mckenzieforthedefence presents a few cases where this is possible, for instance, when there are capacity limits. As is the common theme of this book, such cases will require focusing, with extreme zeal, on the data and a deep understanding of the situation that produced it.
 
 ## Regression discontinuity design
-
 
 Regression discontinuity design (RDD) was established by @thistlethwaite1960regression and is a popular way to get causality when there is a continuous variable with cut-offs that determine treatment. Is there a difference between a student who gets 79 per cent and a student who gets 80 per cent? Probably not much, but one may get an A-, while the other may get a B+, and seeing that on a transcript could affect who gets a job which could affect income. In this case the percentage is a "forcing variable" and the cut-off for an A- is a "threshold". As the treatment is determined by the forcing variable we need to control for that variable. And, these seemingly arbitrary cut-offs can be seen all the time. Hence, there has been a great deal of work using RDD.
 
 There is sometimes slightly different terminology used when it comes to RDD. For instance, @Cunningham2021 refers to the forcing function as a running variable. The exact terminology that is used does not matter provided we use it consistently.  
-
-
-
 
 ### Simulated example
 
@@ -1262,13 +1258,7 @@ Following the language of [@gelmanandhill, p. 216] when we use instrumental vari
 - Monotonicity.
 - Exclusion restriction.
 
-<!-- To summarize exactly what instrumental variables is about, I cannot do better than recommend the first few pages of the "Instrumental Variables" chapter in @Cunningham2021, and this key paragraph in particular (by way of background, Cunningham has explained why it would have been impossible to randomly allocate "clean" and "dirty" water through a randomized controlled trial and then continues...): -->
-
-<!-- > Snow would need a way to trick the data such that the allocation of clean and dirty water to people was not associated with the other determinants of cholera mortality, such as hygiene and poverty. He just would need for someone or something to be making this treatment assignment for him. -->
-<!-- >  -->
-<!-- > Fortunately for Snow, and the rest of London, that someone or something existed. In the London of the 1800s, there were many different water companies serving different areas of the city. Some were served by more than one company. Several took their water from the Thames, which was heavily polluted by sewage. The service areas of such companies had much higher rates of cholera. The Chelsea water company was an exception, but it had an exceptionally good filtration system. That’s when Snow had a major insight. In 1849, Lambeth water company moved the intake point upstream along the Thames, above the main sewage discharge point, giving its customers purer water. Southwark and Vauxhall water company, on the other hand, left their intake point downstream from where the sewage discharged. Insofar as the kinds of people that each company serviced were approximately the same, then comparing the cholera rates between the two houses could be the experiment that Snow so desperately needed to test his hypothesis. -->
-
-The history of instrumental variables is intriguing, and @stock2003retrospectives provide a brief overview. The method was first published in @wright1928tariff. This is a book about the effect of tariffs on animal and vegetable oil. So why might instrumental variables be important in a book about tariffs on animal and vegetable oil? The fundamental problem is that the effect of tariffs depends on both supply and demand. But we only know prices and quantities, so we do not know what is driving the effect. We can use instrumental variables to pin down causality. The intriguing aspect is that the instrumental variables discussion is only in Appendix B. It would seem odd to relegate a major statistical break-through to an appendix. Further, Philip G. Wright, the book's author, had a son Sewall Wright, who had considerable expertise in statistics and the specific method used in Appendix B. Hence the mystery of Appendix B: did Philip or Sewall write it? Both @Cunningham2021 and @stock2003retrospectives go into more detail, but on balance feel that it is likely that Philip did actually author the work.
+As an aside, the history of instrumental variables is intriguing, and @stock2003retrospectives, via @Cunningham2021, provide a brief overview. The method was first published in @wright1928tariff. This is a book about the effect of tariffs on animal and vegetable oil. So why might instrumental variables be important in a book about tariffs on animal and vegetable oil? The fundamental problem is that the effect of tariffs depends on both supply and demand. But we only know prices and quantities, so we do not know what is driving the effect. We can use instrumental variables to pin down causality. The intriguing aspect is that the instrumental variables discussion is only in Appendix B. It would seem odd to relegate a major statistical break-through to an appendix. Further, Philip G. Wright, the book's author, had a son Sewall Wright, who had considerable expertise in statistics and the specific method used in Appendix B. Hence the mystery of Appendix B: did Philip or Sewall write it? Both @Cunningham2021 and @stock2003retrospectives go into more detail, but on balance feel that it is likely that Philip did actually author the work.
 
 
 ### Simulated example
@@ -1415,6 +1405,8 @@ There is typically a trade-off between these two. There are plenty of variables 
 Relevance can be tested using regression and other tests for correlation. The exclusion restriction cannot be tested. We need to present evidence and convincing arguments. The difficult aspect is that the instrument needs to seem irrelevant because that is the implication of the exclusion restriction [@Cunningham2021 p. 225].
 
 Instrumental variables is a useful approach because one can obtain causal estimates even without explicit randomization. Finding instrumental variables used to be a bit of a white whale, especially in academia. But there has been increased use of IV approaches downstream of A/B tests [@taddy2019, p. 162].
+
+For a long time, the canonical instrumental variable was rainfall, or more generally, the weather. However, the issue is that if the instrumental variable is correlated with other, potentially unobserved, variables, then they could be correlated with the variable of interest. This is a similar criticism to that above of propensity score matching. @mellontakingourtoys found a large number of variables have been linked to weather in instrumental variable papers. It would seem that the likelihood of incorrectly estimated effects in some of them is quite high.
 
 <!-- ### Case study: Effect of Police on Crime -->
 

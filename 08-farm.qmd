@@ -763,7 +763,8 @@ illustrative_sampling |>
 illustrative_sampling
 ```
 
-At this point we can illustrate the differences between our approaches (@fig-samplingexamples). We could also consider it visually, by pretending that we randomly sample using the different methods from different parts of the world (@fig-samplingexamplesfrance).
+At this point we can illustrate the differences between our approaches (@fig-samplingexamples). We could also consider it visually, by pretending that we randomly sample using the different methods from different parts of the world (@fig-samplingexamplesworld).
+<!-- France (@fig-samplingexamplesfrance). -->
 
 ```{r}
 #| fig-cap: "Illustrative example of simple random sampling, systematic sampling, stratified sampling, and cluster sampling over the numbers from 1 to 100"
@@ -820,6 +821,118 @@ illustrative_sampling_long |>
 
 
 
+<!-- ```{r} -->
+<!-- #| fig-cap: "Illustrative example of simple random sampling, systematic sampling, stratified sampling, and cluster sampling across different parts of France" -->
+<!-- #| fig-subcap: -->
+<!-- #|   - "France" -->
+<!-- #|   - "Systematic sampling" -->
+<!-- #|   - "Stratified sampling" -->
+<!-- #|   - "Cluster sampling" -->
+<!-- #| label: fig-samplingexamplesfrance -->
+<!-- #| layout-ncol: 2 -->
+<!-- #| echo: false -->
+
+<!-- set.seed(853) -->
+
+<!-- library(tidyverse) -->
+<!-- library(maps) -->
+
+<!-- france <- map_data(map = "france") -->
+
+<!-- french_cities <- -->
+<!--   world.cities |> -->
+<!--   filter(country.etc == "France") -->
+
+<!-- systematic_sample <- -->
+<!--   tibble( -->
+<!--     type = rep("systematic", 7), -->
+<!--     x = c(-4, -2, 0, 2, 4, 6, 8), -->
+<!--     y = c(40, 42, 44, 46, 48, 50, 52) -->
+<!--   ) -->
+
+<!-- stratified_sample <- -->
+<!--   tibble( -->
+<!--     type = rep("stratified", 8), -->
+<!--     x = c(-5, -4, 0, 1, 4, 5, 8, 9), -->
+<!--     y = c(40, 41, 45, 46, 47, 50, 52, 53) -->
+<!--   ) -->
+
+<!-- cluster_sample <- -->
+<!--   tibble( -->
+<!--     type = rep("cluster", 12), -->
+<!--     x = c(-5:1, 6, 6:8, 9), -->
+<!--     y = c(40:43, 43, 45:48, 52, 52.5, 53) -->
+<!--   ) -->
+
+<!-- base <- -->
+<!--   ggplot() + -->
+<!--   geom_polygon( -->
+<!--     data = france, -->
+<!--     aes( -->
+<!--       x = long, -->
+<!--       y = lat, -->
+<!--       group = group -->
+<!--     ), -->
+<!--     fill = "white", -->
+<!--     colour = "grey" -->
+<!--   ) + -->
+<!--   coord_map() + -->
+<!--   geom_point( -->
+<!--     aes( -->
+<!--       x = french_cities$long, -->
+<!--       y = french_cities$lat -->
+<!--     ), -->
+<!--     alpha = 0.3, -->
+<!--     color = "black" -->
+<!--   ) + -->
+<!--   theme_classic() + -->
+<!--   labs( -->
+<!--     x = "Longitude", -->
+<!--     y = "Latitude" -->
+<!--   ) + -->
+<!--   xlim(-5, 10) + -->
+<!--   ylim(40, 52.5) -->
+
+<!-- base -->
+
+<!-- base + -->
+<!--   geom_hline( -->
+<!--     data = systematic_sample, -->
+<!--     aes(yintercept = y), -->
+<!--     size = 9 -->
+<!--   ) + -->
+<!--   geom_vline( -->
+<!--     data = systematic_sample, -->
+<!--     aes(xintercept = x), -->
+<!--     size = 9 -->
+<!--   ) -->
+
+<!-- base + -->
+<!--   geom_hline( -->
+<!--     data = stratified_sample, -->
+<!--     aes(yintercept = y), -->
+<!--     size = 9 -->
+<!--   ) + -->
+<!--   geom_vline( -->
+<!--     data = stratified_sample, -->
+<!--     aes(xintercept = x), -->
+<!--     size = 9 -->
+<!--   ) -->
+
+<!-- base + -->
+<!--   geom_hline( -->
+<!--     data = cluster_sample, -->
+<!--     aes(yintercept = y), -->
+<!--     size = 9 -->
+<!--   ) + -->
+<!--   geom_vline( -->
+<!--     data = cluster_sample, -->
+<!--     aes(xintercept = x), -->
+<!--     size = 9 -->
+<!--   ) -->
+<!-- ``` -->
+
+
 ```{r}
 #| fig-cap: "Illustrative example of simple random sampling, systematic sampling, stratified sampling, and cluster sampling across different parts of the world"
 #| fig-subcap:
@@ -827,73 +940,58 @@ illustrative_sampling_long |>
 #|   - "Systematic sampling"
 #|   - "Stratified sampling"
 #|   - "Cluster sampling"
-#| label: fig-samplingexamplesfrance
+#| label: fig-samplingexamplesworld
 #| layout-ncol: 2
 #| echo: false
-
+#| message: false
+#| warning: false
 
 set.seed(853)
 
 library(tidyverse)
 library(maps)
 
-# world <- map_data("world")
-# ggplot() +
-#   geom_map(
-#     data = world, map = world,
-#     aes(long, lat, map_id = region),
-#     color = "white", fill = "lightgray", size = 0.1
-#   ) +
-#   geom_vline(
-#     data = systematic_sample,
-#     aes(xintercept = x),
-#     size = 1) +
-#   
-#   theme_void() +
-#   theme(legend.position = "none")
-# 
-# 
-# 
-# systematic_sample <-
-#   tibble(
-#     # type = rep("systematic", 7),
-#     x = seq(from = -180, to = 0, by = 5)
-#   )
-
-
-######
-
-france <- map_data(map = "france")
-
-french_cities <-
-  world.cities |>
-  filter(country.etc == "France")
+cluster_sample <-
+  tibble(
+    x = c(
+      seq(from = -180, to = -130, by = 1), # No samples
+      seq(from = -130, to = -60, by = 5), # Lots of samples from Canada
+      seq(from = -60, to = 110, by = 1), # No samples
+      seq(from = 110, to = 155, by = 5), # Lots of samples from Australia
+      seq(from = 155, to = 180, by = 1) # No samples
+    ),
+    type = rep("Cluster", length(x))
+  )
 
 systematic_sample <-
   tibble(
-    type = rep("systematic", 7),
-    x = c(-4, -2, 0, 2, 4, 6, 8),
-    y = c(40, 42, 44, 46, 48, 50, 52)
+    x = c(
+      seq(from = -180, to = 180, by = 3) # Some samples from everywhere
+    ),
+    type = rep("Systematic", length(x))
   )
 
 stratified_sample <-
   tibble(
-    type = rep("stratified", 8),
-    x = c(-5, -4, 0, 1, 4, 5, 8, 9),
-    y = c(40, 41, 45, 46, 47, 50, 52, 53)
+    x = c(
+      seq(from = -180, to = -130, by = 1), # No samples
+      seq(from = -130, to = -60, by = 3), # Some samples from the US
+      seq(from = -60, to = 0, by = 1), # No samples
+      seq(from = 0, to = 60, by = 3), # Some samples from Europe/Africa
+      seq(from = 60, to = 110, by = 1), # No samples
+      seq(from = 110, to = 155, by = 3), # Some samples from Australia
+      seq(from = 155, to = 180, by = 1) # No samples
+
+    ),
+    type = rep("Stratified", length(x))
   )
 
-cluster_sample <-
-  tibble(
-    type = rep("cluster", 12),
-    x = c(-5:1, 6, 6:8, 9),
-    y = c(40:43, 43, 45:48, 52, 52.5, 53)
-  )
+world <- map_data(map = "world")
 
 base <-
   ggplot() +
   geom_polygon(
-    data = france,
+    data = world,
     aes(
       x = long,
       y = lat,
@@ -902,60 +1000,32 @@ base <-
     fill = "white",
     colour = "grey"
   ) +
-  coord_map() +
-  geom_point(
-    aes(
-      x = french_cities$long,
-      y = french_cities$lat
-    ),
-    alpha = 0.3,
-    color = "black"
-  ) +
+  coord_map(xlim = c(-180, 180), ylim = c(-70, 80)) + # https://stackoverflow.com/a/23659405
   theme_classic() +
   labs(
     x = "Longitude",
     y = "Latitude"
-  ) +
-  xlim(-5, 10) +
-  ylim(40, 52.5)
+  ) 
 
 base
 
 base +
-  geom_hline(
-    data = systematic_sample,
-    aes(yintercept = y),
-    size = 9
-  ) +
-  geom_vline(
-    data = systematic_sample,
-    aes(xintercept = x),
-    size = 9
-  )
+   geom_vline(
+     data = systematic_sample,
+     aes(xintercept = x),
+     size = 1)
 
 base +
-  geom_hline(
-    data = stratified_sample,
-    aes(yintercept = y),
-    size = 9
-  ) +
-  geom_vline(
-    data = stratified_sample,
-    aes(xintercept = x),
-    size = 9
-  )
-
+   geom_vline(
+     data = stratified_sample,
+     aes(xintercept = x),
+     size = 1)
+  
 base +
-  geom_hline(
-    data = cluster_sample,
-    aes(yintercept = y),
-    size = 9
-  ) +
-  geom_vline(
-    data = cluster_sample,
-    aes(xintercept = x),
-    size = 9
-  )
+   geom_vline(
+     data = cluster_sample,
+     aes(xintercept = x),
+     size = 1)
 ```
 
 The best way to appreciate the differences between these approaches is to consider them in practice and @thatrandyaupersonagain provides a number of examples. In particular, @raptors provides a fascinating comparison of simple random sampling, stratified sampling, systematic sampling and cluster sampling, as well as additional considerations, in the context of counting raptors.
