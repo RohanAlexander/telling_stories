@@ -6,20 +6,17 @@ engine: knitr
 
 **Required material**
 
+- Read *Causal design patterns for data analysts*, [@riedererdesignpatterns]
 - Read *BNT162b2 mRNA Covid-19 Vaccine in a Nationwide Mass Vaccination Setting*, [@dagan2021bnt162b2]
 - Read *The Effect: An Introduction to Research Design and Causality*, Chapters 18 "Difference-in-Differences", 19 "Instrumental Variables", and 20 "Regression Discontinuity", [@theeffect]
 - Read *Understanding regression discontinuity designs as observational studies*, [@sekhon2017understanding]
 
 **Key concepts and skills**
 
-- Being able to put together DAGs.
-- Essential matching methods and the weaknesses of matching.
-- Implementing difference in differences.
-- Identifying opportunities for instrumental variables and implementing it.
-- Challenges to the validity of instrumental variables.
-- Reading in foreign data.
-- Understanding regression discontinuity and implementing it both manually and using packages.
-- Appreciating the threats to the validity of regression discontinuity.
+- Running an experiment is not always possible, but we can use various approaches to nonetheless be able to speak to causality to some extent. The first step is to be clear about the relationships that we expect by building a DAG.
+- We need to be careful of common paradoxes including Simpson's paradox and Berkson's paradox, and be aware of pitfalls from matching.
+- We can use difference in differences when we have data on both treated and untreated units at both time periods. Regression discontinuity is useful when a group is either treated or not, but apart from the treatment, they are very similar. And instrumental variables is an approach used to estimate causality indirectly through another variable.
+- In general, these approaches need to be used with humilty and concern for weaknesses and assumptions, both those that we can test and those that we cannot.
 
 **Key packages and functions**
 
@@ -43,25 +40,6 @@ engine: knitr
   - `dollar_format()`
 - `tidyverse` [@Wickham2017]
 
-
-
-
-<!-- https://declaredesign.org/blog/2019-02-05-instrumental-variables.html -->
-
-<!-- https://raw.githack.com/edrubin/EC421W19/master/LectureNotes/11InstrumentalVariables/11_instrumental_variables.html#41 -->
-
-<!-- https://www.cambridge.org/core/journals/political-science-research-and-methods/article/estimating-slimmajority-effects-in-us-state-legislatures-with-a-regression-discontinuity-design-under-local-randomization-assumptions/33581FB74160166FF29E49DE64497F3C#fndtn-information -->
-
-
-<!-- **Required reading** -->
-
-<!-- - Better Evaluation, "Regression Discontinuity", https://www.betterevaluation.org/en/evaluation-options/regressiondiscontinuity -->
-<!-- - Eggers, Andrew C., Anthony Fowler, Jens Hainmueller, Andrew B. Hall, and James M. Snyder Jr, 2015, ‘On the validity of the regression discontinuity design for estimating electoral effects: New evidence from over 40,000 close races’, American Journal of Political Science, 59 (1), pp. 259-274 -->
-<!-- - Gelman, Andrew, 2019, "Another Regression Discontinuity Disaster and what can we learn from it", 25 June, https://statmodeling.stat.columbia.edu/2019/06/25/another-regression-discontinuity-disaster-and-what-can-we-learn-from-it/.  -->
-<!-- - Gelman, Andrew, Jennifer Hill and Aki Vehtari, 2020, Regression and Other Stories, Cambridge University Press, Chs 18 - 21. -->
-<!-- - Gertler, Paul, Sebastian Martinez, Patrick Premand, Laura Rawlings, and Christel Vermeersch, "Impact Evaluation in Practice", Chapter 5 - 8. -->
-<!-- - McElreath, Richard, 2020, Statistical Rethinking, 2nd Edition, CRC Press, Ch 14. -->
-<!-- - Meng, Xiao-Li, 2021, "What Are the Values of Data, Data Science, or Data Scientists?", *Harvard Data Science Review*, https://doi.org/10.1162/99608f92.ee717cf7, https://hdsr.mitpress.mit.edu/pub/bj2dfcwg/release/2. -->
 <!-- - Riederer, Emily, 2021, "Causal design patterns for data analysts", 30 January, https://emilyriederer.netlify.app/post/causal-design-patterns/ -->
 <!-- - Wong, Jeffrey, and Colin McFarland, 2020, ‘Computational Causal Inference at Netflix’, Netflix Technology Blog, 11 Aug, https://netflixtechblog.com/computational-causal-inference-at-netflix-293591691c62. -->
 
@@ -1121,35 +1099,66 @@ both |>
 The result is that our estimate is dependent on the choice of model. We see this issue occur often in RDD [@gelmanonrdd] and it is especially recommended that higher order polynomials not be used, and instead a the choice of models be either linear, quadratic, or some other smooth function [@gelmanimbensrdd].
 
 
-<!-- ### US House election -->
+### Minimum legal drinking age and crime
 
-<!-- There are many opportunities to implement regression discontinuity. Elections are a common area of application for regression discontinuity because if the election is close then *prima facie* one may expect there is not much difference between the candidates. @caugheysekhon2011 showed that there is actual considerable difference between bare winners and bare losers in US House elections between 1942 an 2008, and highlight the fact that one of the advantages of regression discontinuity is the fact that the assumptions can be tests.  -->
+There are many opportunities to use regression discontinuity design. For instance, we often see it used in elections where one candidate barely wins. In US House elections between 1942 an 2008 @caugheysekhon2011 showed that there is actually considerable difference between bare winners and bare losers, and highlight the fact that one of the advantages of regression discontinuity is the fact that the assumptions can be tested. Another common use is where there is a somewhat arbitrary cut-off. For instance, in much of the USA the legal drinking age is 21. @carpenterdobkin consider the possible effect of alcohol on crime by comparing arrest and other records of those who are either side of 21 in California. They find those who are slightly over 21 are slightly more likely to be arrested than those slightly under 21. We will revisit their data and approach.
 
-<!-- In this example, following X, we will revisit their data. -->
+We can obtain their replication data [@carpenterdobkinreplicationdata] from [here](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/27070). @carpenterdobkin consider a large number of variables and construct a rate, and average this rate over a fortnight, but for simplicity, we will just consider numbers for a few variables: assault, aggravated_assault, DUI, and traffic violations (@fig-californiaarrests).
 
-<!-- We can obtain their data from [here](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/8EYYA2). -->
+```{r}
+#| label: fig-californiaarrests
+#| fig-cap: "Comparing the number of arrests either side of turning 21 for selected reasons"
 
+library(haven)
+library(tidyverse)
 
+carpenter_dobkin <-
+  read_dta(here::here("inputs/data/P01 Age Profile of Arrest Rates 1979-2006.dta"))
 
+carpenter_dobkin_prepared <- 
+  carpenter_dobkin |>
+  mutate(age = 21 + days_to_21 / 365) |>
+  select(age,
+         assault,
+         aggravated_assault,
+         dui,
+         traffic_violations) |>
+  pivot_longer(
+    cols = c(assault, aggravated_assault, dui, traffic_violations),
+    names_to = "arrested_for",
+    values_to = "number"
+  )
 
-<!-- The model that George, 2019, estimates is (p. 19: -->
-<!-- $$y_i = \alpha_{\mbox{district}} + \beta \times \mbox{Years descendant rule}_i + f(\mbox{Descendant margin}) + \gamma X_i + \epsilon_{i,t}.$$ -->
-<!-- In this model, $y_i$ is various development outcomes in village $i$; $\mbox{Years descendant rule}_i$ is the number of years a dynastic descendant has represented village $i$ in the national or state parliament; $\mbox{Descendant margin}$ is the vote share difference between the dynastic descendant and non-dynast; and $\gamma X_i$ is a vector of village-level adjustments. -->
+carpenter_dobkin_prepared |> 
+  mutate(arrested_for =
+           case_when(arrested_for == "assault" ~ "Assault",
+                     arrested_for == "aggravated_assault" ~ "Aggravated assault",
+                     arrested_for == "dui" ~ "DUI",
+                     arrested_for == "traffic_violations" ~ "Traffic violations")
+         ) |> 
+  ggplot(aes(x = age, y = number)) +
+  geom_point(alpha = 0.1) +
+  facet_wrap(facets = vars(arrested_for),
+             scales = "free_y") +
+  theme_minimal()
+```
 
-<!-- George, 2019, then conducts a whole bunch of tests of the validity of the regression discontinuity design (p. 19). These are critical in order for the results to be believed. There are a lot of different results but one is shown in @fig-descendantsinindia). -->
+```{r}
+library(rdrobust)
 
-<!-- 
-#| fig-cap: "George, 2019, descendant effects identified using close elections RD design (p. 41)."} --
-#| echo: false
-#| label: descendantsinindia
-<!-- ![](figures/descendantsinindia.png") --{#fig- width=95% fig-align="center"}
-# out-width: "90"
+carpenter_dobkin_aggravated_assault_only <- 
+  carpenter_dobkin_prepared |> 
+  filter(arrested_for == "aggravated_assault")
 
-<!-- ``` -->
-
-
-
-
+rdrobust(
+  y = carpenter_dobkin_aggravated_assault_only$number,
+  x = carpenter_dobkin_aggravated_assault_only$age,
+  c = 21,
+  h = 2,
+  all = TRUE
+) |>
+  summary()
+```
 
 
 
@@ -1189,7 +1198,7 @@ Following the language of [@gelmanandhill, p. 216] when we use instrumental vari
 - Monotonicity.
 - Exclusion restriction.
 
-As an aside, the history of instrumental variables is intriguing, and @stock2003retrospectives, via @Cunningham2021, provide a brief overview. The method was first published in @wright1928tariff. This is a book about the effect of tariffs on animal and vegetable oil. So why might instrumental variables be important in a book about tariffs on animal and vegetable oil? The fundamental problem is that the effect of tariffs depends on both supply and demand. But we only know prices and quantities, so we do not know what is driving the effect. We can use instrumental variables to pin down causality. The intriguing aspect is that the instrumental variables discussion is only in Appendix B. It would seem odd to relegate a major statistical break-through to an appendix. Further, Philip G. Wright, the book's author, had a son Sewall Wright, who had considerable expertise in statistics and the specific method used in Appendix B. Hence the mystery of Appendix B: did Philip or Sewall write it? Both @Cunningham2021 and @stock2003retrospectives go into more detail, but on balance feel that it is likely that Philip did actually author the work.
+As an aside, the history of instrumental variables is intriguing, and @stock2003retrospectives, via @Cunningham2021, provide a brief overview. The method was first published in @wright1928tariff. This is a book about the effect of tariffs on animal and vegetable oil. So why might instrumental variables be important in a book about tariffs on animal and vegetable oil? The fundamental problem is that the effect of tariffs depends on both supply and demand. But we only know prices and quantities, so we do not know what is driving the effect. We can use instrumental variables to pin down causality. The intriguing aspect is that the instrumental variables discussion is only in Appendix B. It would seem odd to relegate a major statistical break-through to an appendix. Further, Philip G. Wright, the book's author, had a son Sewall Wright, who had considerable expertise in statistics and the specific method used in Appendix B. Hence the mystery of Appendix B: did Philip or Sewall write it? @Cunningham2021, @stock2003retrospectives, and @angristkrueger, all go into more detail, but on balance feel that it is likely that Philip did actually author the work.
 
 
 ### Simulated example
@@ -1326,6 +1335,30 @@ iv_robust(health ~ smoker | tax, data = iv_example_data) |>
 
 ### Assumptions
 
+The set-up of instrumental variables is described in (@fig-taxrebateasiv), which shows education as a confounder between income and fertility intentions. A tax rebate likely only affects income, not education, and could be used as an instrumental variable.
+
+```{r}
+#| fig-cap: "Education as a confounder for the relationship between income and fertility intentions with tax rebate as an instrumental variable"
+#| label: fig-taxrebateasiv
+
+grViz("
+digraph {
+  graph [ranksep = 0.2]
+  node [shape = plaintext, fontsize = 10, fontname = Helvetica]
+    a [label = 'Income']
+    b [label = 'Fertility intentions']
+    c [label = 'Education']
+    d [label = 'Tax rebate']
+  edge [minlen = 2, arrowhead = vee]
+    a->b
+    c->a
+    c->b
+    d->a
+  { rank = same; a; b }
+}
+", height = 300)
+```
+
 As discussed earlier, there are a variety of assumptions that are made when using instrumental variables. The two most important are:
 
 1. Exclusion Restriction. This assumption is that the instrumental variable only affects the dependent variable through the independent variable of interest.
@@ -1339,68 +1372,7 @@ Instrumental variables is a useful approach because one can obtain causal estima
 
 For a long time, the canonical instrumental variable was rainfall, or more generally, the weather. However, the issue is that if the instrumental variable is correlated with other, potentially unobserved, variables, then they could be correlated with the variable of interest. This is a similar criticism to that above of propensity score matching. @mellontakingourtoys found a large number of variables have been linked to weather in instrumental variable papers. It would seem that the likelihood of incorrectly estimated effects in some of them is quite high.
 
-<!-- ### Case study: Effect of Police on Crime -->
-
-<!-- Here we will use an example of @levitt2002using that looks at the effect of police on crime. This is interesting because you might think, that more police is associated with lower crime. But, it could actually be the opposite, if more crime causes more police to be hired - how many police would a hypothetical country with no crime need? Hence there is a need to find some sort of instrumental variable that affects crime only through its relationship with the number of police (that is, not in and of itself, related to crime), and yet is also correlated with police numbers. @levitt2002using suggests the number of firefighters in a city. -->
-
-<!-- @levitt2002using argues that firefighters are appropriate as an instrument, because "(f)actors such as the power of public sector unions, citizen tastes for government services, affirmative action initiatives, or a mayor's desire to provide spoils might all be expected to jointly influence the number of firefighters and police.". @levitt2002using also argues that the relevance assumption is met by showing that "changes in the number of police officers and firefighters within a city are highly correlated over time". -->
-
-<!-- In terms of satisfying the exclusion restriction, @levitt2002using argues that the number of firefighters should not have a "direct impact on crime." However, it may be that there are common factors, and so @levitt2002using adjusts for this in the regression. -->
-
-
-
-<!-- The dataset is based on 122 US cities between 1975 and 1995. Summary statistics are provided in @fig-levittcrime). -->
-
-<!-- ```{r}fig.cap="Summary statistics for Levitt 2002."} -->
-<!-- #| echo: false-->
-<!-- #| label: levittcrime-->
-<!-- ![](figures/levitt_summary_stats{#fig- width=95% fig-align="center"}-->
-<!-- # out-width: "90"-->
-<!-- png") -->
-<!-- ``` -->
-<!-- Source: @levitt2002using p. 1,246. -->
-
-
-
-
-<!-- In the first stage @levitt2002using looks at police as a function of firefighters, and a bunch of adjustment variables: -->
-<!-- $$\ln(\mbox{Police}_{ct}) = \gamma \ln(\mbox{Fire}_{ct}) + X'_{ct}\Gamma + \lambda_t + \phi_c + \epsilon_{ct}.$$ -->
-<!-- The important part of this is the police and firefighters numbers which are on a per capita basis. There are a bunch of adjustment variables in $X$ which includes things like state prisoners per capita, the unemployment rate, etc, as well as year binary variables and fixed-effects for each city. -->
-
-<!-- Having established the relationship between police and firefights, @levitt2002using can then use the estimates of the number of police, based on the number of firefighters, to explain crime rates: -->
-<!-- $$\Delta\ln(\mbox{Crime}_{ct}) = \beta_1 \ln(\mbox{Police}_{ct-1}) + X'_{ct}\Gamma + \Theta_c + \mu_{ct}.$$ -->
-
-<!-- The typical way to present instrumental variable results is to show both stages. @fig-levittcrimefirst) shows the relationship between police and firefighters. -->
-
-<!-- ```{r}fig.cap="The relationship between firefighters, police and crime."} -->
-<!-- #| echo: false -->
-<!-- #| label: levittcrimefirst -->
-<!-- ![](figures/levitt_first.png") --{#fig- width=95% fig-align="center"}
-# out-width: "90"
-
-<!-- ``` -->
-<!-- Source: @levitt2002using p. 1,247. -->
-
-<!-- And then @fig-levittcrimesecond) shows the relationship between police and crime, where is it the IV results that are the ones of interest. -->
-
-<!-- ```{r}fig.cap="The impact of police on crime."} -->
-<!-- #| echo: false -->
-<!-- #| label: levittcrimesecond -->
-<!-- ![](figures/levitt_second.p{#fig- width=95% fig-align="center"}
-# out-width: "90"
-g") -->
-<!-- ``` -->
-<!-- Source: @levitt2002using p. 1,248. -->
-
-
-
-<!-- The key finding of @levitt2002using is that there is a negative effect of the number of police on the amount of crime. -->
-
-<!-- There are a variety of points that I want to raise in regard to this paper. They will come across as a little negative, but this is mostly just because this a paper from 2002, that I am reading today, and so the standards have changed. -->
-
-<!-- 1. It is fairly remarkable how reliant on various model specifications the results are. The results bounce around a fair bit and that's just the ones that are reported. Chances are there are a bunch of other results that were not reported, but it would be of interest to see their impact. -->
-<!-- 2. On that note, there is fairly limited model validation. This is probably something that I am more aware of these days, but it seems likely that there is a fair degree of over-fitting here.  -->
-<!-- 3. @levitt2002using is actually a response, after another researcher, @mccrary2002using, found some issues with the original paper: @levitt87using. While Levitt appears quite decent about it, it is jarring to see that Levitt was thanked by @mccrary2002using for providing 'both the data and computer code.' What if Levitt had not been decent about providing the data and code? Or what if the code was unintelligible? In some ways it is nice to see how far that we have come - the author of a similar paper these days would be forced to make their code and data available as part of the paper, we wouldn't have to ask them for it. But it reinforces the importance of open data and reproducible science. -->
+When considering an instrumental variable approach, it is vital to spend considerable amounts of time on both of these assumptions. Considering @fig-taxrebateasiv, @mellontakingourtoys shows that we are especially concerned that this particular tax rebate only affects income and no other variable, which could itself be linked with our variables of interest. Approaches based on instrumental variables provide extensive freedom for the researcher, and @brodeurcookheyes find they are more associated with p-hacking and selection reporting compared with RCTs and RDD. We recommend caution when using IV.
 
 
 
@@ -1409,9 +1381,9 @@ g") -->
 
 ### Exercises {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: **TBD**. Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
-2. *(Simulate)* Please further consider the scenario described and simulate the situation with every variable independent of each other.
-3. *(Acquire)* Please describe three possible sources of such a dataset.
+1. *(Plan)* Consider the following scenario: *Two children will both look when an ambulance passes, but only the older one will look if a street car passes, and only the younger one will look when a bike passes.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+2. *(Simulate)* Please further consider the scenario described and simulate the situation.
+3. *(Acquire)* Please describe a possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
 5. *(Communicate)* Please write two paragraphs about what you did.
 1. For three months Sharla Gelfand shared two functions each day: one that was new to them and another that they already knew and love. Please go the "Two Functions Most Days" GitHub [repo](https://github.com/sharlagelfand/twofunctionsmostdays), and find a package that they mention that you have never used. Find the relevant website for the package, and then in a paragraph or two, describe what the package does and a context in which it could be useful to you.
@@ -1425,7 +1397,6 @@ g") -->
 9. What are the conditions that are needed in order for regression discontinuity design to be able to be used?
 10. Can you think of a situation in your own life where regression discontinuity design may be useful?
 11. What are some threats to the validity of regression discontinuity design estimates?
-14. Please read and reproduce the main findings from Eggers, Fowler, Hainmueller, Hall, Snyder, 2015.
 15. What is an instrumental variable?
 16. What are some circumstances in which instrumental variables might be useful?
 17. What conditions must instrumental variables satisfy?
@@ -1468,22 +1439,22 @@ g") -->
     b. processing and analysis
     c. the honest interpretation and communication of findings
     d. large sample sizes
-28. According to Reiderer, 2021, if I have "disjoint treated and untreated groups partitioned by a sharp cut-off" then which method should I use to measure the local treatment effect at the juncture between groups (pick one)?
+28. According to @riedererdesignpatterns if I have "disjoint treated and untreated groups partitioned by a sharp cut-off" then which method should I use to measure the local treatment effect at the juncture between groups (pick one)?
     a. regression discontinuity
     b. matching
     c. difference in differences
     d. event study methods
-29. According to Reiderer, 2021, "Causal inference requires investment in" (pick all that apply):
+29. According to @riedererdesignpatterns (pick all that apply):
     a. data management
     b. domain knowledge
     c. probabilistic reasoning
     d. data science
-30. I am an Australian 30-39 year old male living in Toronto with one child and a PhD. Which of the following do you think I would match most closely with and why (please explain in a paragraph or two)?
+30. Consider an Australian 30-39 year old male living in Toronto with two children and a PhD. Which of the following do you think they would match most closely with and why (please explain in a paragraph or two)?
     a. An Australian 30-39 year old male living in Toronto with one child and a bachelors degree
     b. A Canadian 30-39 year old male living in Toronto with one child and a PhD
     c. An Australian 30-39 year old male living in Ottawa with one child and a PhD
     d. A Canadian 18-29 year old male living in Toronto with one child and a PhD
-31. In your most disdainful tone (jokes, I love DAGs), what is a DAG (in your own words please)?
+31. What is a DAG (in your own words please)?
 32. What is a confounder (please select one answer)?
     a. A variable, z, that causes both x and y, where x also causes y.
     b. A variable, z, that is caused by both x and y, where x also causes y.
@@ -1504,8 +1475,4 @@ g") -->
 ### Tutorial {.unnumbered}
 
 
-
-<!-- ### Paper -->
-
-<!-- At about this point, Paper Five (Appendix \@ref(paper-five)) would be appropriate. -->
 
