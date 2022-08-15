@@ -1099,9 +1099,44 @@ both |>
 The result is that our estimate is dependent on the choice of model. We see this issue occur often in RDD [@gelmanonrdd] and it is especially recommended that higher order polynomials not be used, and instead a the choice of models be either linear, quadratic, or some other smooth function [@gelmanimbensrdd].
 
 
-### Minimum legal drinking age and crime
+### Alcohol and crime in California
 
-There are many opportunities to use regression discontinuity design. For instance, we often see it used in elections where one candidate barely wins. In US House elections between 1942 an 2008 @caugheysekhon2011 showed that there is actually considerable difference between bare winners and bare losers, and highlight the fact that one of the advantages of regression discontinuity is the fact that the assumptions can be tested. Another common use is where there is a somewhat arbitrary cut-off. For instance, in much of the USA the legal drinking age is 21. @carpenterdobkin consider the possible effect of alcohol on crime by comparing arrest and other records of those who are either side of 21 in California. They find those who are slightly over 21 are slightly more likely to be arrested than those slightly under 21. We will revisit their data and approach.
+<!-- Voting and political interest in Ghent;  -->
+
+There are many opportunities to use regression discontinuity design. For instance, we often see it used in elections where one candidate barely wins. In US House elections between 1942 an 2008 @caugheysekhon2011 showed that there is actually considerable difference between bare winners and bare losers, and highlight the fact that one of the advantages of regression discontinuity is the fact that the assumptions can be tested. Another common use is where there is a somewhat arbitrary cut-off. For instance, in much of the USA the legal drinking age is 21. @carpenterdobkin consider the possible effect of alcohol on crime by comparing arrest and other records of those who are either side of 21 in California. They find those who are slightly over 21 are slightly more likely to be arrested than those slightly under 21. We will 
+<!-- first revisit X in the context of elections in Ghent, and  -->
+revisit @carpenterdobkin in the context of crime in California.
+
+
+<!-- ```{r} -->
+<!-- #| label: fig-californiaarrests -->
+<!-- #| fig-cap: "Comparing the number of arrests either side of turning 21 for selected reasons" -->
+<!-- # -->
+<!-- library(haven) -->
+<!-- library(tidyverse) -->
+<!-- # -->
+<!-- stiers_hooghe_dassonneville <- -->
+<!-- #   read_dta(here::here("inputs/data/Data_for_replication.dta")) -->
+<!-- # -->
+<!-- stiers_hooghe_dassonneville |> -->
+<!--   filter(Age_16 < 100, -->
+<!--          Age_16 > -100) |>  -->
+<!--   ggplot(aes(x = Age_16, y = Attention_politics_general)) + -->
+<!--   geom_point() -->
+
+<!-- stiers_hooghe_dassonneville |> -->
+<!--   filter(Age_16 < 100, -->
+<!--          Age_16 > -100) |>  -->
+<!--   group_by(Birthdate) |>  -->
+<!--   mutate(mean = mean(Attention_politics_general)) |>  -->
+<!--   ggplot(aes(x = Age_16, y = mean)) + -->
+<!--   geom_point() -->
+
+
+<!-- # rdplot Attention_politics_general Age_16 if Age_16>-102&Age_16<102 , c(0) ci(95) shade nbins(102 102) /// -->
+
+<!-- ``` -->
+
 
 We can obtain their replication data [@carpenterdobkinreplicationdata] from [here](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/27070). @carpenterdobkin consider a large number of variables and construct a rate, and average this rate over a fortnight, but for simplicity, we will just consider numbers for a few variables: assault, aggravated_assault, DUI, and traffic violations (@fig-californiaarrests).
 
@@ -1372,7 +1407,48 @@ Instrumental variables is a useful approach because one can obtain causal estima
 
 For a long time, the canonical instrumental variable was rainfall, or more generally, the weather. However, the issue is that if the instrumental variable is correlated with other, potentially unobserved, variables, then they could be correlated with the variable of interest. This is a similar criticism to that above of propensity score matching. @mellontakingourtoys found a large number of variables have been linked to weather in instrumental variable papers. It would seem that the likelihood of incorrectly estimated effects in some of them is quite high.
 
-When considering an instrumental variable approach, it is vital to spend considerable amounts of time on both of these assumptions. Considering @fig-taxrebateasiv, @mellontakingourtoys shows that we are especially concerned that this particular tax rebate only affects income and no other variable, which could itself be linked with our variables of interest. Approaches based on instrumental variables provide extensive freedom for the researcher, and @brodeurcookheyes find they are more associated with p-hacking and selection reporting compared with RCTs and RDD. We recommend caution when using IV.
+When considering an instrumental variable approach, it is vital to spend considerable amounts of time on both of these assumptions. Considering @fig-taxrebateasiv, @mellontakingourtoys shows that we are especially concerned that this particular tax rebate only affects income and no other variable, which could itself be linked with our variables of interest. Approaches based on instrumental variables provide extensive freedom for the researcher, and @brodeurcookheyes find they are more associated with p-hacking and selection reporting compared with RCTs and RDD. As with multiple-imputation, and propensity score matching, we recommend caution when using IV, and that it is never blindly turned to. Indeed, @betzcookhollenbach2018 go further and say that spatial instruments are rarely valid.
+
+<!-- ### Concentration and buyer power in online advertising -->
+
+<!-- Internet advertising is a remarkably opaque business, with clients sometimes making decisions on the basis of metrics provided by the company that they are unable to verify, and that turn out to be wrong [@dodgyfacebookadmetrics]. X are interested in whether there is a relationship between how concentrated a market is, and how much power buyers have. They consider concentration based on the market share of the largest firms, as measured by the Herfindahl-Hirschman Index (HHI). Buyer power is measured based on Y.   -->
+
+<!-- They use an instrumental variables approach because of measurement error and the potential for omitted variables. -->
+
+
+<!-- ```{r} -->
+<!-- #| label: fig-californiaarrests -->
+<!-- #| fig-cap: "Comparing the number of arrests either side of turning 21 for selected reasons" -->
+
+<!-- library(haven) -->
+<!-- library(tidyverse) -->
+
+<!-- decarolis_rovigatti <- -->
+<!--   read_dta(here::here("inputs/data/replication_sample.dta")) -->
+
+<!-- decarolis_rovigatti_reduced <-  -->
+<!--   decarolis_rovigatti |>  -->
+<!--   select(logr_hat, numberofresults, HHI_hat, sim, year, branded, long_tail) -->
+
+
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- library(estimatr) -->
+<!-- library(modelsummary) -->
+
+<!-- # global iv4 "logr_hat numberofresults branded long_tail (HHI_hat=sim), absorb(cluster year) savefirst savefprefix(FSiv4) saverf  -->
+
+<!-- iv_robust( -->
+<!--   logr_hat ~ HHI_hat | sim,  -->
+<!--           data = decarolis_rovigatti_reduced) |> -->
+<!--   modelsummary() -->
+
+<!-- decarolis_rovigatti_reduced |>  -->
+<!-- ``` -->
+
+
+
 
 
 

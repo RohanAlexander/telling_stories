@@ -118,10 +118,10 @@ library(tidyverse)
 
 set.seed(853)
 
-normal_distribution_draws <-
+normal_example <-
   tibble(draws = rnorm(n = 20, mean = 0, sd = 1))
 
-normal_distribution_draws |> pull(draws)
+normal_example |> pull(draws)
 ```
 
 Here we specified $n=20$ draws from a Normal distribution with mean of 0 and standard deviation of 1. When we deal with real data, we will not know these parameters and we want to use our data to estimate them. We can estimate the mean, $\bar{x}$, and standard deviation, $\hat{\sigma}_x$, with the following estimators:
@@ -140,17 +140,17 @@ We can implement that in code.
 
 ```{r}
 estimated_mean <-
-  sum(normal_distribution_draws$draws) / nrow(normal_distribution_draws)
+  sum(normal_example$draws) / nrow(normal_example)
 
 estimated_mean
 
-normal_distribution_draws <-
-  normal_distribution_draws |>
+normal_example <-
+  normal_example |>
   mutate(diff_square = (draws - estimated_mean)^2)
 
 estimated_standard_deviation <-
   sqrt(
-    sum(normal_distribution_draws$diff_square) / nrow(normal_distribution_draws)
+    sum(normal_example$diff_square) / nrow(normal_example)
   )
 
 estimated_standard_deviation
@@ -220,14 +220,16 @@ set.seed(853)
 
 number_of_observations <- 100
 expected_relationship <- 8.4
+very_fast_5km_time <- 15
+good_5km_time <- 30
 
 simulated_running_data <-
   tibble(
     five_km_time =
       runif(
         n = number_of_observations,
-        min = 15,
-        max = 30
+        min = very_fast_5km_time,
+        max = good_5km_time
       ),
     noise = rnorm(n = number_of_observations, mean = 0, sd = 20),
     marathon_time = five_km_time * expected_relationship + noise
@@ -307,13 +309,19 @@ We are going to say that function, $f()$, is linear, and so for simple linear re
 
 $$\hat{Y} = \beta_0 + \beta_1 X + \epsilon.$$
 
-There is some "true" relationship between $X$ and $Y$, but we do not know what it is. All we can do is use our sample of data to estimate it. But because our understanding depends on that sample, for every possible sample, we would get a slightly different relationship, as measured by the coefficients. 
+We do not, and cannot, know the "true" relationship between $X$ and $Y$. All we can do is use our sample of data to estimate it. But because our understanding depends on that sample, for every possible sample, we would get a slightly different relationship, as measured by the coefficients. 
 
 That $\epsilon$ is a measure of our error---what does the model not know? There is going to be plenty that the model does not know, but we hope the error does not depend on $X$, and that the error is normally distributed.
 
-We can conduct simple linear regression with `lm()` from base R. We specify the dependent variable first, then `~`, followed by the independent variables. Finally, we specify the dataset. 
+We can conduct simple linear regression with `lm()` from base R. We specify the dependent variable first, then `~`, followed by the independent variables. Finally, we specify the dataset. Before we run a regression we may want to include a quick check of the class of the variables, and the number of observations, just to ensure that it corresponds with what we were expecting.
 
 ```{r}
+stopifnot(
+  class(simulated_running_data$marathon_time) == "numeric",
+  class(simulated_running_data$five_km_time) == "numeric",
+  nrow(simulated_running_data) == 100
+)
+
 simulated_running_data_first_model <-
   lm(
     marathon_time ~ five_km_time,
@@ -339,7 +347,7 @@ modelsummary(
 
 The top half of the table provides our estimated coefficients and standard errors. And the second half provides some useful diagnostics. 
 
-The intercept is the marathon time that we would expect with a five-kilometer time of 0 minutes. Hopefully this example illustrates the need to carefully interpret the intercept coefficient! The coefficient on five-kilometer run time shows how we expect the marathon time to change if the five-kilometer run time changed by one unit. In this case it is about 8.4, which makes sense seeing as a marathon is roughly that many times longer than a five-kilometer run.
+The intercept is the marathon time that we would expect with a five-kilometer time of 0 minutes. Hopefully this example illustrates the need to carefully interpret the intercept coefficient! The coefficient on five-kilometer run time shows how we expect the marathon time to change if the five-kilometer run time changed by one unit. In this case it is about eight, which makes sense seeing as a marathon is roughly that many times longer than a five-kilometer run.
 
 We use `augment()` from `broom` [@broom] to add the fitted values and residuals to our original dataset. This allows us to plot the residuals (@fig-fivekmvsmarathonresids).
 
@@ -400,7 +408,7 @@ ggplot(
   )
 ```
 
-We want our estimate to be unbiased. When we say our estimate is unbiased, we are trying to say that even though with some sample our estimate might be too high, and with another sample our estimate might be too low, eventually if we have a lot of data then our estimate would be the same as the population. An estimator is unbiased if it does not systematically over- or under-estimate [@islr, p. 65].
+We want our estimate to be unbiased. When we say our estimate is unbiased, we are trying to say that even though with some sample our estimate might be too high, and with another sample our estimate might be too low, eventually if we have a lot of data then our estimate would be the same as the population. That is, an estimator is unbiased if it does not systematically over- or under-estimate [@islr, p. 65].
 
 But we want to try to speak to the "true" relationship, so we need to try to capture how much we think our understanding depends on the particular sample that we have to analyze. And this is where standard error comes in. It tells us how off our estimate is compared with the actual (@fig-fivekmvsmarathonses).
 
@@ -437,13 +445,15 @@ In the same way that in @sec-hunt-data we needed to decide how much evidence it 
 
 We compare this standard error with $\hat{\beta}_1$ to get the t-statistic:
 $$t = \frac{\hat{\beta}_1 - 0}{\mbox{SE}(\hat{\beta}_1)}.$$ 
-And we then compare our t-statistic to the t-distribution to compute the probability of getting this absolute t-statistic or a larger one, if it was actually the case that $\beta_1 = 0$. This probability is the p-value. A smaller p-value means it is less likely that we would observe our data due to chance if there was not a relationship.
+And we then compare our t-statistic to the t-distribution to compute the probability of getting this absolute t-statistic or a larger one, if it was actually the case that $\beta_1 = 0$. This probability is the p-value. A smaller p-value means it is less likely that we would observe our data due to chance if there was not an actual relationship.
 
 > Words! Mere words! How terrible they were! How clear, and vivid, and cruel! One could not escape from them. And yet what a subtle magic there was in them! They seemed to be able to give a plastic form to formless things, and to have a music of their own as sweet as that of viol or of lute. Mere words! Was there anything so real as words?
 >
 > *The Picture of Dorian Gray* [@wilde].
 
-We will not make much use of p-values in this book because they are a specific and subtle concept. They are difficult to understand and easy to abuse. Even though they are "little help" for "scientific inference" many disciplines are incorrectly fixated on, and require, them [@nelderdoesntmiss, p. 257]. One issue is that they embody, and assume correct, every assumption of the model, including everything that went into gathering and cleaning the data. While smaller p-values do imply the data are more unusual if all the assumptions were correct; when we consider the full data science workflow there are usually an awful lot of assumptions. And we do not get guidance from p-values about the reasonableness of specific assumptions [@greenland2016statistical p. 339]. A p-value may reject a null hypothesis because the null hypothesis is actually false, but it may also be that some data were incorrectly gathered or prepared. We can only be sure that the p-value speaks to the hypothesis we are interested in testing, if all the other assumptions are correct. There is nothing inherently wrong about using p-values, but it is important to use them in sophisticated and thoughtful ways. @coxtalks provides a lovely discussion of what this requires.
+We will not make much use of p-values in this book because they are a specific and subtle concept. They are difficult to understand and easy to abuse. Even though they are "little help" for "scientific inference" many disciplines are incorrectly fixated on, and require, them [@nelderdoesntmiss, p. 257]. One issue is that they embody, and assume correct, every assumption of the model, including everything that went into gathering and cleaning the data. While smaller p-values do imply the data are more unusual if all the assumptions were correct; when we consider the full data science workflow there are usually an awful lot of assumptions. And we do not get guidance from p-values about the reasonableness of specific assumptions [@greenland2016statistical p. 339]. 
+
+A p-value may reject a null hypothesis because the null hypothesis is actually false, but it may also be that some data were incorrectly gathered or prepared. We can only be sure that the p-value speaks to the hypothesis we are interested in testing, if all the other assumptions are correct. There is nothing inherently wrong about using p-values, but it is important to use them in sophisticated and thoughtful ways. @coxtalks provides a lovely discussion of what this requires.
 
 One application where it is easy to see abuse of p-values is in power analysis. Power, in a statistical sense, refers to probability of rejecting a null hypothesis that is actually false. As power relates to hypothesis testing, it also related to sample size. There is often a worry that a study is "under-powered", meaning there was not a large enough sample, but rarely a worry that, say, the data were inappropriately cleaned, even though we cannot distinguish between these based only on a p-value.
 
@@ -460,6 +470,8 @@ To this point we have just considered one explanatory variable. But we will usua
 We may also like to consider explanatory variables that do not have an inherent ordering. For instance: pregnant or not; day or night. When there are only two options then we can use a binary variable, which is considered either 0 or 1. If we have a column of character values that only has two values, such as: `c("Myles", "Ruth", "Ruth", "Myles", "Myles", "Ruth")`, then using this as an explanatory variable in the usual regression set up, would mean that it is treated as a binary variable. If there are more than two levels then we can use a combination of binary variables, where the "missing" outcome (baseline) gets pushed into the intercept. 
 
 ```{r}
+minutes_slower_in_rain <- 5
+
 simulated_running_data <-
   simulated_running_data |>
   mutate(was_raining = sample(
@@ -468,14 +480,29 @@ simulated_running_data <-
     replace = TRUE,
     prob = c(0.2, 0.8)
   )) |>
+  mutate(
+    marathon_time = if_else(
+      was_raining == "Yes",
+      marathon_time + minutes_slower_in_rain,
+      marathon_time
+    )
+  ) |>
   select(five_km_time, marathon_time, was_raining)
 
 simulated_running_data
 ```
 
-We can add additional explanatory variables to `lm()` with `+` (@tbl-modelsummaryruntimes).
+We can add additional explanatory variables to `lm()` with `+` (@tbl-modelsummaryruntimes). Again, we will include a variety of quick tests for class and the number of observations, and also add another about missing values.
 
 ```{r}
+stopifnot(
+  class(simulated_running_data$marathon_time) == "numeric",
+  class(simulated_running_data$five_km_time) == "numeric",
+  class(simulated_running_data$was_raining) == "character",
+  all(complete.cases(simulated_running_data)),
+  nrow(simulated_running_data) == 100
+)
+
 simulated_running_data_rain_model <-
   lm(
     marathon_time ~ five_km_time + was_raining,
@@ -483,7 +510,7 @@ simulated_running_data_rain_model <-
   )
 ```
 
-The result probably is not too surprising if we look at a plot of the data (@fig-fivekmvsmarathonbinary).
+The result corresponds with what we expect if we look at a plot of the data (@fig-fivekmvsmarathonbinary).
 
 ```{r}
 #| eval: true
@@ -511,9 +538,11 @@ simulated_running_data |>
   scale_color_brewer(palette = "Set1")
 ```
 
-In addition to wanting to include additional explanatory variables, we may think that they are related to each another. For instance, if we were wanting to explain the amount of snowfall, then we may be interested in the humidity and the temperature, but those two variables may also interact. We can do this by using `*` instead of `+` when we specify the model. When we interact variables in this way, then we almost always need to include the individual variables as well and `lm()` will do this by default (@tbl-modelsummaryruntimes).
+In addition to wanting to include additional explanatory variables, we may think that they are related to each another. For instance, maybe rain really matters if it is also very humid that day. So we are then interested in the humidity and the temperature, but also how those two variables interact. We can do this by using `*` instead of `+` when we specify the model. When we interact variables in this way, then we almost always need to include the individual variables as well and `lm()` will do this by default (@tbl-modelsummaryruntimes).
 
 ```{r}
+minutes_slower_in_high_humidity <- 2
+
 simulated_running_data <-
   simulated_running_data |>
   mutate(humidity = sample(
@@ -521,7 +550,14 @@ simulated_running_data <-
     size = number_of_observations,
     replace = TRUE,
     prob = c(0.2, 0.8)
-  ))
+  )) |> 
+  mutate(
+    marathon_time = if_else(
+      humidity == "High",
+      marathon_time + minutes_slower_in_high_humidity,
+      marathon_time
+    )
+  ) 
 
 simulated_running_data
 ```
@@ -530,6 +566,16 @@ simulated_running_data
 #| include: true
 #| label: tbl-modelsummaryruntimes
 #| tbl-cap: "Explaining marathon times based on five-kilometer run times and weather features"
+
+stopifnot(
+  class(simulated_running_data$marathon_time) == "numeric",
+  class(simulated_running_data$five_km_time) == "numeric",
+  class(simulated_running_data$was_raining) == "character",
+  class(simulated_running_data$humidity) == "character",
+  all(complete.cases(simulated_running_data)),
+  nrow(simulated_running_data) == 100,
+  unique(simulated_running_data$humidity) %in% c("Low", "High")
+)
 
 simulated_running_data_rain_and_humidity_model <-
   lm(
@@ -546,7 +592,6 @@ modelsummary(
   fmt = 2
 )
 ```
-
 
 There are a variety of threats to the validity of linear regression estimates, and aspects to think about. We need to address these when we use it, and usually four graphs and associated text are sufficient to assuage most of these. Aspects of concern include:
 
@@ -587,7 +632,7 @@ simulated_running_data_split <-
 simulated_running_data_split
 ```
 
-Having split the data, we then create the training and test datasets.
+Having split the data, we then create the training and test datasets with `training()` and `testing()`.
 
 ```{r}
 simulated_running_data_train <- training(simulated_running_data_split)
@@ -611,7 +656,7 @@ One way to deal with this concern is to split the data in this way. We use the t
 
 ### Inference
 
-We will use `tidymodels` for forecasting. But when we are focused on inference, instead, we will use Bayesian approaches. To do this we use the probabilistic programming language "Stan", and interface with it using `rstanarm` [@citerstanarm]. This is slightly simplistic---we could do forecasting with Bayesian models, and we could  adapting Bayesian approaches within `tidymodels`. But, for the sake of simplicity and clarity, we keep these separated in this way for this book, and it is not a bad idea to be conversant in both ecosystems in any case.
+We will use `tidymodels` when we are interested in prediction. But when we are focused on inference, instead, we will use Bayesian approaches. To do this we use the probabilistic programming language "Stan", and interface with it using `rstanarm` [@citerstanarm]. This is slightly simplistic---we could do prediction. with Bayesian models, and we could use Stan approaches within `tidymodels`. But, for the sake of simplicity and clarity, we keep these separated in this way for this book. It is not a bad idea to be conversant in both ecosystems in any case.
 
 In order to use Bayesian approaches we will need to specify a starting point. This is a guess for what we think the coefficients will be, and is called a "prior". This is another reason for the workflow advocated in this book; the simulate stage leads directly to priors. We will also more thoroughly specify the model that we are interested in.
 
@@ -628,12 +673,13 @@ $$
 On a practical note, one aspect that is different between Bayesian approaches and the way we have been doing modelling to this point, is that Bayesian models will usually take longer to run. Because of this, it can be useful to run the model, either within the Quarto document or in a separate R script, and then save it with `saveRDS()`. With sensible Quarto chunk options (see @sec-reproducible-workflows), the model can then be read into the Quarto document with `readRDS()`. In this way, the model delay is only imposed once for a given model (@tbl-modelsummarybayes). (It can be useful to add `beep()` from `beepr` [@beepr] to the end of the model, to get an audio notification when the model is done, and there are a variety of fun sounds.) 
 
 ```{r}
-#| include: true
+#| echo: true
+#| eval: false
 #| message: false
 #| warning: false
-#| eval: false
 
 library(rstanarm)
+library(beepr)
 
 simulated_running_data_first_model_rstanarm <-
   stan_glm(
@@ -648,13 +694,15 @@ simulated_running_data_first_model_rstanarm <-
 
 saveRDS(simulated_running_data_first_model_rstanarm,
         file = "simulated_running_data_first_model_rstanarm.rds")
+
+beep()
 ```
 
 ```{r}
-#| include: false
+#| echo: false
+#| eval: false
 #| message: false
 #| warning: false
-#| eval: false
 
 # INTERNAL
 saveRDS(
@@ -664,8 +712,18 @@ saveRDS(
 ```
 
 ```{r}
+#| echo: true
+#| eval: false
+#| warning: false
+#| message: false
+
+simulated_running_data_first_model_rstanarm <-
+  readRDS(file = "simulated_running_data_first_model_rstanarm.rds")
+```
+
+```{r}
+#| echo: false
 #| eval: true
-#| include: false
 #| warning: false
 #| message: false
 
@@ -689,14 +747,13 @@ modelsummary(
 )
 ```
 
-The issue of picking priors is a challenging one and the subject of extensive study. For the purposes of this book, just using the `rstanarm` defaults is fine. But even if they are just the default, priors should be explicitly specified in the model and included in the function. This is to make it clear to others what has been done, and ensure that even if the `rstanarm` defaults change the model will not. We can use `default_prior_intercept()` and `default_prior_coef()` to find the default priors in `rstanarm` and then explicitly include them in the model. Getting started by adapting someone else's code is perfectly fine. If they have not specified their priors, then we can use `prior_summary()`, to find out which priors were used.
+The issue of picking priors is a challenging one and the subject of extensive study. For the purposes of this book, just using the `rstanarm` defaults is fine. But even if they are just the default, priors should be explicitly specified in the model and included in the function. This is to make it clear to others what has been done, and ensure that even if the `rstanarm` defaults change the model will not. We can use `default_prior_intercept()` and `default_prior_coef()` to find the default priors in `rstanarm` and then explicitly include them in the model. It is normal to find it difficult to know what prior to specify when getting started. Getting started by adapting someone else's code is perfectly fine. If they have not specified their priors, then we can use `prior_summary()`, to find out which priors were used. And `rstanarm` has a helper available to us that we should use. Specify the prior that you think reasonable, include it in the model, but also include "autoscale = TRUE", and `rstanarm` will adjust the scale.
 
 ```{r}
 prior_summary(simulated_running_data_first_model_rstanarm)
 ```
 
 We will not make much of it in this book, but we will be interested in understanding what the priors imply before we involve any data. We do this by implementing prior predictive checks. In particular, simulating from the priors to look at what they imply about our coefficients.
-
 
 ```{r}
 library(tidyverse)
@@ -718,6 +775,15 @@ priors <-
 ```
 
 ```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-worstmodelever
+#| fig-cap: "Some implications from the priors that were used"
+#| layout-ncol: 2
+#| fig-subcap: ["Distribution of implied marathon times", "Relationship between 5km and marathon times"]
+
 priors |> 
   ggplot(aes(x = marathon_time)) +
   geom_freqpoly(binwidth = 3)
@@ -727,14 +793,144 @@ priors |>
   geom_point()
 ```
 
-Having built a Bayesian model, we may want to look at what the posterior predicts. The idea is that if the model is doing a good job of fitting the data then it the posterior should be able to be used to simulate data that are similar to the actual data [@bayesianworkflow]. We can implement a posterior predictive check with `pp_check()`. And we can compare the posterior with the prior with `posterior_vs_prior()`.
+It is clear from @fig-worstmodelever that our model has been poorly constructed. In particular, not only are there world record marathon times, there are negative marathon times! In particular, our prior for $\beta_1$ does not take in all the information that we know. We know that a marathon is about eight times longer than a 5km run and so we should center it around that. To account for that information, we could change the centering of the prior on our $\beta_1$ coefficient. Our re-specified model is:
+
+$$
+\begin{aligned}
+y_i &\sim \mbox{Normal}(\mu_i, \sigma) \\
+\mu_i &= \beta_0 +\beta_1x_i\\
+\beta_0 &\sim \mbox{Normal}(0, 3) \\
+\beta_1 &\sim \mbox{Normal}(8, 3) \\
+\sigma &\sim \mbox{Exponential}(1) \\
+\end{aligned}
+$$
+And we can see from prior prediction checks that it seems more reasonable (@fig-secondworstmodelever).
 
 ```{r}
+number_of_draws <- 100
+
+updated_priors <-
+  tibble(
+    sigma = rep(rexp(n = number_of_draws, rate = 1), times = 16),
+    beta_0 = rep(rnorm(n = number_of_draws, mean = 0, sd = 3), times = 16),
+    beta_1 = rep(rnorm(n = number_of_draws, mean = 8, sd = 3), times = 16),
+    five_km_time = rep(15:30, each = number_of_draws),
+    mu = beta_0 + beta_1 * five_km_time
+  ) |> 
+  rowwise() |> 
+  mutate(
+    marathon_time = rnorm(n = 1, mean = mu, sd = sigma)
+  )
+```
+
+```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-cap: "Updated priors"
+#| label: fig-secondworstmodelever
+#| layout-ncol: 2
+#| fig-subcap: ["Distribution of implied marathon times","Relationship between 5km and marathon times"]
+
+updated_priors |> 
+  ggplot(aes(x = marathon_time)) +
+  geom_freqpoly(binwidth = 3)
+
+updated_priors |> 
+  ggplot(aes(x = five_km_time, y = marathon_time)) +
+  geom_point()
+```
+
+Then we can re-run our model with these updated priors (@tbl-modelsummarybayesbetter).
+
+```{r}
+#| include: true
+#| message: false
+#| warning: false
+#| eval: false
+
+library(rstanarm)
+
+simulated_running_data_second_model_rstanarm <-
+  stan_glm(
+    formula = marathon_time ~ five_km_time + was_raining,
+    data = simulated_running_data,
+    family = gaussian(),
+    prior = normal(location = 8, scale = 3, autoscale = TRUE),
+    prior_intercept = normal(0, 1, autoscale = TRUE),
+    prior_aux = exponential(rate = 1, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(simulated_running_data_first_model_rstanarm,
+        file = "simulated_running_data_second_model_rstanarm.rds")
+```
+
+```{r}
+#| include: false
+#| message: false
+#| warning: false
+#| eval: false
+
+# INTERNAL
+saveRDS(
+  simulated_running_data_second_model_rstanarm,
+  file = "outputs/model/simulated_running_data_second_model_rstanarm.rds"
+)
+```
+
+```{r}
+#| eval: true
+#| include: false
+#| warning: false
 #| message: false
 
-pp_check(simulated_running_data_first_model_rstanarm)
+library(rstanarm)
 
-posterior_vs_prior(simulated_running_data_first_model_rstanarm)
+simulated_running_data_second_model_rstanarm <-
+  readRDS(file = "outputs/model/simulated_running_data_second_model_rstanarm.rds")
+```
+
+```{r}
+#| label: tbl-modelsummarybayesbetter
+#| tbl-cap: "Forecasting and explanatory models of marathon times based on five-kilometer run times"
+#| warning: false
+
+modelsummary(
+  list(
+    "tidymodels" = simulated_running_data_first_model_tidymodels,
+    "rstanarm" = simulated_running_data_first_model_rstanarm,
+    "rstanarm better priors" = simulated_running_data_second_model_rstanarm
+  ),
+  statistic = 'conf.int'
+)
+```
+
+We used the "auto = TRUE" option, so it can be helpful to look at how they were updated with `prior_summary()`.
+
+```{r}
+prior_summary(simulated_running_data_second_model_rstanarm)
+```
+
+Having built a Bayesian model, we may want to look at what the posterior predicts (@fig-ppcheckandposteriorvsprior). The idea is that if the model is doing a good job of fitting the data then it the posterior should be able to be used to simulate data that are similar to the actual data [@bayesianworkflow]. We can implement a posterior predictive check with `pp_check()`. And we can compare the posterior with the prior with `posterior_vs_prior()`. Helpfully, `pp_check()` and `posterior_vs_prior()` return `ggplot` objects so we can modify the look of them in the normal way we manipulate graphs.
+
+```{r}
+#| eval: true
+#| echo: true
+#| message: false
+#| warning: false
+#| label: fig-ppcheckandposteriorvsprior
+#| layout-ncol: 2
+#| fig-cap: "Examining how the model fits the data"
+#| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"]
+
+pp_check(simulated_running_data_second_model_rstanarm) +
+  theme_classic()
+
+posterior_vs_prior(simulated_running_data_second_model_rstanarm) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1")
 ```
 
 
@@ -872,7 +1068,7 @@ $$
 
 ```{r}
 #| eval: false
-#| include: true
+#| echo: true
 #| message: false
 #| warning: false
 
@@ -881,8 +1077,8 @@ day_or_night_rstanarm <-
     is_night ~ number_of_cars,
     data = day_or_night,
     family = binomial(link = "logit"),
-    prior = normal(0, 3),
-    prior_intercept = normal(0, 3),
+    prior = normal(location = 0, scale = 3, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 3, autoscale = TRUE),
     seed = 853
   )
 
@@ -914,6 +1110,8 @@ saveRDS(
 day_or_night_rstanarm <-
   readRDS(file = "outputs/model/day_or_night_rstanarm.rds")
 ```
+
+We can compare our different models (@tbl-modelsummarylogistic).
 
 ```{r}
 #| label: tbl-modelsummarylogistic
@@ -1014,6 +1212,7 @@ count_of_A_plus <-
 
 count_of_A_plus
 ```
+
 Our simulated dataset has the number of A+ grades awarded by courses, which are structured within departments. We can use `glm()` from base R to quickly get a sense of the data (@tbl-modelsummarypoisson).
 
 ```{r}
@@ -1071,8 +1270,8 @@ count_of_A_plus_rstanarm <-
     number_of_A_plus ~ department,
     data = count_of_A_plus,
     family = poisson(link = "log"),
-    prior = normal(0, 0.5),
-    prior_intercept = normal(0, 0.5),
+    prior = normal(location = 0, scale = 0.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 0.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -1202,8 +1401,8 @@ author_lines_rstanarm <-
     number_of_lines ~ author,
     data = lines_by_author_work,
     family = poisson(link = "log"),
-    prior = normal(0, 0.5),
-    prior_intercept = normal(0, 0.5),
+    prior = normal(location = 0, scale = 0.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 0.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -1587,7 +1786,7 @@ do_deploy_api(
 
 ### Exercises {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: **A person is interested in the heights of all the buildings in London. They walk around the city counting the number of floors for each building.**. Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+1. *(Plan)* Consider the following scenario: *A person is interested in the heights of all the buildings in London. They walk around the city counting the number of floors for each building.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation, along with three independent variables that are associated the count of the number of levels.
 3. *(Acquire)* Please describe one possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
