@@ -138,29 +138,31 @@ Finally, it is especially important to understand the behavior of these key summ
 library(tidyverse)
 
 sample_means <-
-  tibble(seed = c(),
-         mean = c(),
-         states_ignored = c())
+  tibble(
+    seed = c(),
+    mean = c(),
+    states_ignored = c()
+  )
 
 for (i in c(1:5)) {
   set.seed(i)
-  
+
   dont_get <- c(sample(x = state.name, size = 5))
-  
+
   sample_means <-
     sample_means |>
     rbind(tibble(
       seed = i,
       mean =
         us_populations |>
-        filter(!state %in% dont_get) |>
-        summarise(mean = mean(population)) |>
-        pull(),
+          filter(!state %in% dont_get) |>
+          summarise(mean = mean(population)) |>
+          pull(),
       states_ignored = str_c(dont_get, collapse = ", ")
     ))
 }
 
-sample_means  |>
+sample_means |>
   knitr::kable(
     col.names = c(
       "Seed",
@@ -184,20 +186,21 @@ We can start by knocking out the population data for three, randomly selected, s
 ```{r}
 set.seed(853)
 
-remove_these_states <- 
+remove_these_states <-
   sample(
     x = state.name,
     size = 3,
     replace = FALSE
-    )
+  )
 
 remove_these_states
 
-us_states_with_missing_observations <- 
-  us_populations |> 
-  mutate(population = 
-           if_else(state %in% remove_these_states , NA_real_, population)
-         )
+us_states_with_missing_observations <-
+  us_populations |>
+  mutate(
+    population =
+      if_else(state %in% remove_these_states, NA_real_, population)
+  )
 
 us_states_with_missing_observations
 ```
@@ -221,8 +224,10 @@ And finally, we can implement multiple-imputation with `mice()` from `mice` [@mi
 library(mice)
 
 multiple_imputation <-
-  mice(us_states_with_missing_observations,
-       print = FALSE)
+  mice(
+    us_states_with_missing_observations,
+    print = FALSE
+  )
 
 mice_estimates <-
   complete(multiple_imputation) |>
@@ -241,19 +246,21 @@ mice_estimates
 
 actual_us_mean <-
   us_populations |>
-  summarise(mean = mean(population)) |> 
+  summarise(mean = mean(population)) |>
   pull()
 
 us_mean_with_missing_dropped <-
   us_states_with_missing_observations |>
-  summarise(mean = mean(population, na.rm = TRUE)) |> 
+  summarise(mean = mean(population, na.rm = TRUE)) |>
   pull()
 
 us_states_with_missing_observations_mean_imputation <-
   us_states_with_missing_observations |>
-  mutate(population = if_else(is.na(us_states_with_missing_observations$population),
-                              us_mean_with_missing_dropped,
-                              population))
+  mutate(population = if_else(
+    is.na(us_states_with_missing_observations$population),
+    us_mean_with_missing_dropped,
+    population
+  ))
 
 mean_imputation_overall <-
   mean(us_states_with_missing_observations_mean_imputation$population)
@@ -268,15 +275,15 @@ tibble(
     mean_imputation_overall
   ),
   multiple_imputation = c(
-    mice_estimates |> filter(state == "Florida") |> select(population)|> pull(),
-    mice_estimates |> filter(state == "Montana") |> select(population)|> pull(),
-    mice_estimates |> filter(state == "New Hampshire") |> select(population)|> pull(),
+    mice_estimates |> filter(state == "Florida") |> select(population) |> pull(),
+    mice_estimates |> filter(state == "Montana") |> select(population) |> pull(),
+    mice_estimates |> filter(state == "New Hampshire") |> select(population) |> pull(),
     mice_estimates |> summarise(mean = mean(population)) |> pull()
   ),
   actual = c(
-    us_populations |> filter(state == "Florida") |> select(population)|> pull(),
-    us_populations |> filter(state == "Montana") |> select(population)|> pull(),
-    us_populations |> filter(state == "New Hampshire") |> select(population)|> pull(),
+    us_populations |> filter(state == "Florida") |> select(population) |> pull(),
+    us_populations |> filter(state == "Montana") |> select(population) |> pull(),
+    us_populations |> filter(state == "New Hampshire") |> select(population) |> pull(),
     actual_us_mean
   )
 ) |>
@@ -517,29 +524,33 @@ This initial exploration hints at an issue, which is there are a small number of
 #| eval: true
 #| include: true
 
-fix_organization_of_codes <- 
+fix_organization_of_codes <-
   rbind(
     delay_codes |>
-      select(sub_rmenu_code, code_description_3) |> 
-      mutate(type = "sub") |> 
-      rename(code = sub_rmenu_code,
-             code_desc = code_description_3),
+      select(sub_rmenu_code, code_description_3) |>
+      mutate(type = "sub") |>
+      rename(
+        code = sub_rmenu_code,
+        code_desc = code_description_3
+      ),
     delay_codes |>
-      select(srt_rmenu_code, code_description_7) |> 
-      mutate(type = "srt") |> 
-      rename(code = srt_rmenu_code,
-             code_desc = code_description_7)
+      select(srt_rmenu_code, code_description_7) |>
+      mutate(type = "srt") |>
+      rename(
+        code = srt_rmenu_code,
+        code_desc = code_description_7
+      )
   )
-  
-all_2021_ttc_data_no_dupes_with_explanation <- 
-all_2021_ttc_data_no_dupes |> 
-  mutate(type = if_else(line == "SRT", "srt", "sub")) |> 
+
+all_2021_ttc_data_no_dupes_with_explanation <-
+  all_2021_ttc_data_no_dupes |>
+  mutate(type = if_else(line == "SRT", "srt", "sub")) |>
   left_join(
     fix_organization_of_codes,
     by = c("type", "code")
-  ) 
+  )
 
-all_2021_ttc_data_no_dupes_with_explanation |> 
+all_2021_ttc_data_no_dupes_with_explanation |>
   arrange(-min_delay)
 ```
 

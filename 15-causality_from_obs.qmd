@@ -272,7 +272,8 @@ both_departments |>
     color = "Department"
   ) +
   theme_minimal() +
-  scale_color_brewer(palette = "Set1")
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
 ```
 
 Simpson's paradox is often illustrated using real-world data from University of California, Berkeley, on graduate admissions [@bickel1975sex]. @bickel1975sex include what might be one of the greatest sub-titles ever published: "Measuring bias is harder than is usually assumed, and the evidence is sometimes contrary to expectation". More recently, as shown in its documentation, the "penguins" dataset from `palmerpenguins` [@palmerpenguins] provides an example of Simpson's paradox, using real-world data (@fig-simpsonsparadoxinpenguins).
@@ -302,7 +303,8 @@ penguins |>
     color = "Species"
   ) +
   theme_minimal() +
-  scale_color_brewer(palette = "Set1")
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
 ```
 
 ### Berkson's paradox
@@ -362,7 +364,8 @@ professionals_and_public |>
     color = "Type"
   ) +
   theme_minimal() +
-  scale_color_brewer(palette = "Set1")
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
 ```
 
 
@@ -397,7 +400,7 @@ library(tidyverse)
 
 set.seed(853)
 
-simulated_difference_in_differences <-
+simulated_diff_in_diff <-
   tibble(
     person = rep(c(1:1000), times = 2),
     time = c(rep(0, times = 1000), rep(1, times = 1000)),
@@ -416,8 +419,8 @@ simulated_difference_in_differences <-
   )
 
 
-simulated_difference_in_differences <-
-  simulated_difference_in_differences |>
+simulated_diff_in_diff <-
+  simulated_diff_in_diff |>
   rowwise() |>
   mutate(
     serve_speed = case_when(
@@ -428,7 +431,7 @@ simulated_difference_in_differences <-
     )
   )
 
-simulated_difference_in_differences
+simulated_diff_in_diff
 ```
 
 ```{r} 
@@ -439,7 +442,7 @@ simulated_difference_in_differences
 #| message: false
 #| warning: false
 
-simulated_difference_in_differences |>
+simulated_diff_in_diff |>
   ggplot(aes(
     x = time,
     y = serve_speed,
@@ -464,7 +467,7 @@ As it is a straight-forward example, we can obtain our estimate manually, by loo
 #| include: true
 
 average_differences <-
-  simulated_difference_in_differences |>
+  simulated_diff_in_diff |>
   pivot_wider(
     names_from = time,
     values_from = serve_speed,
@@ -491,7 +494,7 @@ library(modelsummary)
 diff_in_diff_example_regression <-
   lm(
     serve_speed ~ treatment_group * time,
-    data = simulated_difference_in_differences
+    data = simulated_diff_in_diff
   )
 
 modelsummary(diff_in_diff_example_regression)
@@ -576,7 +579,7 @@ newspapers <-
     qs_s,
     rs_cst
   ) |> # Reader side dependents
-  mutate(ra_cst_div_qtotal = ra_cst / qtotal) |> # An advertising side dependent needs to be built
+  mutate(ra_cst_div_qtotal = ra_cst / qtotal) |>
   mutate(across(c(id_news, after_national, local, national), as.factor)) |>
   mutate(year = as.integer(year))
 
@@ -609,7 +612,13 @@ newspapers |>
   mutate(type = if_else(local == 1, "Local", "National")) |>
   ggplot(aes(x = year, y = ra_cst)) +
   geom_point(alpha = 0.5) +
-  scale_y_continuous(labels = dollar_format(prefix = "$", suffix = "M", scale = 0.000001)) +
+  scale_y_continuous(
+    labels = dollar_format(
+      prefix = "$",
+      suffix = "M",
+      scale = 0.000001
+    )
+  ) +
   labs(
     x = "Year",
     y = "Advertising revenue"
@@ -665,7 +674,7 @@ Looking at the advertising-side variables (@tbl-frenchnewspapersadvertising) we 
 selected_variables <-
   c(
     "year" = "Year",
-    "after_national1" = "Is after advertising change"
+    "after_national1" = "After change"
   )
 
 advertising_models <- list(
@@ -693,8 +702,8 @@ And looking at the advertising-side variables (@tbl-frenchnewspapersconsumers) w
 consumer_models <- list(
   "Subscription price" = subscription_price,
   "Circulation" = circulation,
-  "Share of subscriptions" = share_of_sub,
-  "Revenue from sales" = revenue_from_sales,
+  "Subscriptions share" = share_of_sub,
+  "Sales revenue" = revenue_from_sales,
   "Unit price" = unit_price
 )
 
@@ -861,7 +870,14 @@ purchase_data <-
 
 purchase_data <-
   purchase_data |>
-  select(-age_num, -city_num, -gender_num, -income_num, -sum_num, -softmax_prob)
+  select(
+    -age_num,
+    -city_num,
+    -gender_num,
+    -income_num,
+    -sum_num,
+    -softmax_prob
+  )
 ```
 
 Finally, we need to have some measure of a person's average spend. We want those with free shipping to be slightly higher than those without.
@@ -1087,13 +1103,13 @@ both |>
   ggplot(aes(x = running_variable, y = outcome, color = location)) +
   geom_point(alpha = 0.5) +
   geom_smooth(formula = y ~ x, method = "lm") +
-  theme_minimal() 
+  theme_minimal()
 
 both |>
   ggplot(aes(x = running_variable, y = outcome, color = location)) +
   geom_point(alpha = 0.5) +
   geom_smooth(formula = y ~ poly(x, 3), method = "lm") +
-  theme_minimal() 
+  theme_minimal()
 ```
 
 The result is that our estimate is dependent on the choice of model. We see this issue occur often in RDD [@gelmanonrdd] and it is especially recommended that higher order polynomials not be used, and instead a the choice of models be either linear, quadratic, or some other smooth function [@gelmanimbensrdd].
@@ -1148,41 +1164,52 @@ library(haven)
 library(tidyverse)
 
 carpenter_dobkin <-
-  read_dta(here::here("inputs/data/P01 Age Profile of Arrest Rates 1979-2006.dta"))
+  read_dta(
+    here::here(
+      "inputs/data/P01 Age Profile of Arrest Rates 1979-2006.dta"
+    )
+  )
 
-carpenter_dobkin_prepared <- 
+carpenter_dobkin_prepared <-
   carpenter_dobkin |>
   mutate(age = 21 + days_to_21 / 365) |>
-  select(age,
-         assault,
-         aggravated_assault,
-         dui,
-         traffic_violations) |>
+  select(
+    age,
+    assault,
+    aggravated_assault,
+    dui,
+    traffic_violations
+  ) |>
   pivot_longer(
     cols = c(assault, aggravated_assault, dui, traffic_violations),
     names_to = "arrested_for",
     values_to = "number"
   )
 
-carpenter_dobkin_prepared |> 
-  mutate(arrested_for =
-           case_when(arrested_for == "assault" ~ "Assault",
-                     arrested_for == "aggravated_assault" ~ "Aggravated assault",
-                     arrested_for == "dui" ~ "DUI",
-                     arrested_for == "traffic_violations" ~ "Traffic violations")
-         ) |> 
+carpenter_dobkin_prepared |>
+  mutate(
+    arrested_for =
+      case_when(
+        arrested_for == "assault" ~ "Assault",
+        arrested_for == "aggravated_assault" ~ "Aggravated assault",
+        arrested_for == "dui" ~ "DUI",
+        arrested_for == "traffic_violations" ~ "Traffic violations"
+      )
+  ) |>
   ggplot(aes(x = age, y = number)) +
-  geom_point(alpha = 0.1) +
-  facet_wrap(facets = vars(arrested_for),
-             scales = "free_y") +
+  geom_point(alpha = 0.05) +
+  facet_wrap(
+    facets = vars(arrested_for),
+    scales = "free_y"
+  ) +
   theme_minimal()
 ```
 
 ```{r}
 library(rdrobust)
 
-carpenter_dobkin_aggravated_assault_only <- 
-  carpenter_dobkin_prepared |> 
+carpenter_dobkin_aggravated_assault_only <-
+  carpenter_dobkin_prepared |>
   filter(arrested_for == "aggravated_assault")
 
 rdrobust(

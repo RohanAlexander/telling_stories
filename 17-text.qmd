@@ -24,37 +24,24 @@ engine: knitr
   - `bind_tf_idf()`
   - `cast_dtm()`
 
-
-
 ## Introduction
+
+Text data are all around us. In many cases they are some of the earliest types of data that we are exposed to. Increases in computational power, the development of new methods, and the enormous availability of text, means that there has been a great deal of interest in using text as data. And they are an exciting option to have. For instance, text analysis of state-run newspapers in African countries can identify manipulation by governments [@Hassan2022]. And analysis of US congressional records indicates just how much women legislators are interrupted than men [@millersutherland2022].
+
+Earlier approaches tend to convert text into numbers. They can then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text and this allows them to draw additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, you can do more by knowing that a crocodile could eat you, and a tree probably would not.
 
 Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with very wide data, insofar as often each column is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with a column of the word and another column of the count.
 
+Here we cover a variety of techniques that enable us to consider text as data. One of the great things about text data is that it is typically not generated for the purposes of our analysis. That removes one of the unobservable variables that we typically must worry about. The trade-off is that we typically have to do a bunch more work to get it into a form that we can work with. And there are a lot of decisions to be made in the data cleaning and preparation stages.
 
+The larger size of text datasets means that it is especially important to simulate, and start small, when it comes to their analysis. Using text as data is exciting because of the quantity and variety of text that is available to us. In general, dealing with text datasets is messy. There is a lot of cleaning and preparation that is typically required. Often text datasets are large. As such, having a workflow in place, in which you work in a reproducible way, simulating data first, and then clearly communicating your findings becomes critical, if only to keep everything organized in your own mind. Nonetheless, it is an exciting area.
+
+In this chapter we first consider preparing text datasets. We then consider logistic and lasso regression. We finally consider topic models and word embedding. 
 
 <!-- @benoit2020text -->
 
 
 
-<!-- Text data is all around us, and in many cases is some of the earliest types of data that we are exposed to. Recent increases in computational power, the development of new methods, and the enormous availability of text, means that there has been a great deal of interest in using text as data. Initial methods tend to focus, essentially, on converting text into numbers and then analyzing them using traditional methods. More recent methods have begun to take advantage of the structure that is inherent in text, to draw additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, you can do more by knowing that a crocodile could eat you, and a tree probably won't. -->
-
-<!-- Here we cover a variety of techniques designed to equip you with the basics of using text as data. One of the great things about text data is that it is typically not generated for the purposes of our analysis. That is great because it removes one of the unobservable variables that we typically have to worry about. The trade-off is that we typically have to do a bunch more work to get it into a form that we can work with. -->
-
-
-The larger size of text datasets means that it is especially important to simulate, and start small, when it comes to their analysis. Using text as data is exciting because of the quantity and variety of text that is available to us. In general, dealing with text datasets is messy. There is a lot of cleaning and preparation that is typically required. Often text datasets are large. As such, having a workflow in place, in which you work in a reproducible way, simulating data first, and then clearly communicating your findings becomes critical, if only to keep everything organized in your own mind. Nonetheless, it is an exciting area.
-
-In terms of next steps there are two, related, concerns: data and analysis. 
-
-In terms of data there are many places to get large amounts of text data relatively easily, from sources that we have already used, including:
-
-- Accessing the Twitter API using `rtweet` [@rtweet].
-- Using the Inside Airbnb, which provides text from reviews. 
-- Getting the text of out-of-copyright books using `gutenbergr` [@gutenbergr].
-- And finally, scraping Wikipedia.
-
-For instance text analysis of state-run newspapers in African countries can identify manipulation by governments [@Hassan2022].
-
-In this chapter we first consider preparing text datasets. We then consider logistic and lasso regression. We finally consider topic models. 
 
 ## TF-IDF
 
@@ -488,28 +475,28 @@ Following @BleiLafferty2009, @blei2012 and @GriffithsSteyvers2004, the process b
     
 The Dirichlet distribution is a variation of the beta distribution that is commonly used as a prior for categorical and multinomial variables. If there are just two categories, then the Dirichlet and the beta distributions are the same. In the special case of a symmetric Dirichlet distribution, $\eta=1$, it is equivalent to a uniform distribution. If $\eta<1$, then the distribution is sparse and concentrated on a smaller number of the values, and this number decreases as $\eta$ decreases. A hyperparameter is a parameter of a prior distribution.
 
-Given this set-up, the joint distribution for the variables is (@blei2012, p.6):
+Given this set-up, the joint distribution for the variables is [@blei2012, p.6]:
 $$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}) = \prod^{K}_{i=1}p(\beta_i) \prod^{D}_{d=1}p(\theta_d) \left(\prod^N_{n=1}p(z_{d,n}|\theta_d)p\left(w_{d,n}|\beta_{1:K},z_{d,n}\right) \right).$$
 
-Based on this document generation process the analysis problem, discussed in the next section, is to compute a posterior over $\beta_{1:K}$ and $\theta_{1:D}$, given $w_{1:D, 1:N}$. This is intractable directly, but can be approximated (@GriffithsSteyvers2004 and @blei2012).
+Based on this document generation process the analysis problem, discussed in the next section, is to compute a posterior over $\beta_{1:K}$ and $\theta_{1:D}$, given $w_{1:D, 1:N}$. This is intractable directly, but can be approximated [@GriffithsSteyvers2004; @blei2012].
 
 After the documents are created, they are all that we have to analyze. The term usage in each document, $w_{1:D, 1:N}$, is observed, but the topics are hidden, or "latent". We do not know the topics of each document, nor how terms defined the topics. That is, we do not know the probability distributions of Figures @fig-topicsoverdocuments or @fig-topicsoverterms. In a sense we are trying to reverse the document generation process -- we have the terms and we would like to discover the topics.
 
-If the earlier process around how the documents were generated is assumed and we observe the terms in each document, then we can obtain estimates of the topics (@SteyversGriffiths2006). The outcomes of the LDA process are probability distributions and these define the topics. Each term will be given a probability of being a member of a particular topic, and each document will be given a probability of being about a particular topic. That is, we are trying to calculate the posterior distribution of the topics given the terms observed in each document (@blei2012, p.7): 
+If the earlier process around how the documents were generated is assumed and we observe the terms in each document, then we can obtain estimates of the topics [@SteyversGriffiths2006]. The outcomes of the LDA process are probability distributions and these define the topics. Each term will be given a probability of being a member of a particular topic, and each document will be given a probability of being about a particular topic. That is, we are trying to calculate the posterior distribution of the topics given the terms observed in each document (@blei2012, p.7): 
 $$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N} | w_{1:D, 1:N}) = \frac{p\left(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}\right)}{p(w_{1:D, 1:N})}.$$
 
 The initial practical step when implementing LDA given a corpus of documents is to remove "stop words". These are words that are common, but that do not typically help to define topics. There is a general list of stop words such as: "a"; "a's"; "able"; "about"; "above"... We also remove punctuation and capitalization. The documents need to then be transformed into a document-term-matrix. This is essentially a table with a column of the number of times each term appears in each document.
 
-After the dataset is ready, `topicmodels` [@Grun2011] can be used to implement LDA and approximate the posterior. It does this using Gibbs sampling or the variational expectation-maximization algorithm. Following @SteyversGriffiths2006 and @Darling2011, the Gibbs sampling process attempts to find a topic for a particular term in a particular document, given the topics of all other terms for all other documents. Broadly, it does this by first assigning every term in every document to a random topic, specified by Dirichlet priors with $\alpha = \frac{50}{K}$ and $\eta = 0.1$  (@SteyversGriffiths2006 recommends $\eta = 0.01$), where $\alpha$ refers to the distribution over topics and $\eta$ refers to the distribution over terms (@Grun2011, p.7). It then selects a particular term in a particular document and assigns it to a new topic based on the conditional distribution where the topics for all other terms in all documents are taken as given (@Grun2011, p.6):
+After the dataset is ready, `topicmodels` [@Grun2011] can be used to implement LDA and approximate the posterior. It does this using Gibbs sampling or the variational expectation-maximization algorithm. Following @SteyversGriffiths2006 and @Darling2011, the Gibbs sampling process attempts to find a topic for a particular term in a particular document, given the topics of all other terms for all other documents. Broadly, it does this by first assigning every term in every document to a random topic, specified by Dirichlet priors with $\alpha = \frac{50}{K}$ and $\eta = 0.1$  (@SteyversGriffiths2006 recommends $\eta = 0.01$), where $\alpha$ refers to the distribution over topics and $\eta$ refers to the distribution over terms (@Grun2011, p.7). It then selects a particular term in a particular document and assigns it to a new topic based on the conditional distribution where the topics for all other terms in all documents are taken as given [@Grun2011, p.6]:
 $$p(z_{d, n}=k | w_{1:D, 1:N}, z'_{d, n}) \propto \frac{\lambda'_{n\rightarrow k}+\eta}{\lambda'_{.\rightarrow k}+V\eta} \frac{\lambda'^{(d)}_{n\rightarrow k}+\alpha}{\lambda'^{(d)}_{-i}+K\alpha} $$
 where $z'_{d, n}$ refers to all other topic assignments; $\lambda'_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$; $\lambda'_{.\rightarrow k}$ is a count of how many other times that any term has been assigned to topic $k$; $\lambda'^{(d)}_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$ in that particular document; and $\lambda'^{(d)}_{-i}$ is a count of how many other times that term has been assigned in that document. Once $z_{d,n}$ has been estimated, then estimates for the distribution of words into topics and topics into documents can be backed out.
 
-This conditional distribution assigns topics depending on how often a term has been assigned to that topic previously, and how common the topic is in that document (@SteyversGriffiths2006). The initial random allocation of topics means that the results of early passes through the corpus of document are poor, but given enough time the algorithm converges to an appropriate estimate. 
+This conditional distribution assigns topics depending on how often a term has been assigned to that topic previously, and how common the topic is in that document [@SteyversGriffiths2006]. The initial random allocation of topics means that the results of early passes through the corpus of document are poor, but given enough time the algorithm converges to an appropriate estimate. 
 
 
 The choice of the number of topics, *k*, affects the results, and must be specified *a priori*. If there is a strong reason for a particular number, then this can be used. Otherwise, one way to choose an appropriate number is to use a test and training set process. Essentially, this means running the process on a variety of possible values for *k* and then picking an appropriate value that performs well.
 
-One weakness of the LDA method is that it considers a "bag of words" where the order of those words does not matter (@blei2012). It is possible to extend the model to reduce the impact of the bag-of-words assumption and add conditionality to word order. Additionally, alternatives to the Dirichlet distribution can be used to extend the model to allow for correlation. For instance, in Hansard topics related the army may be expected to be more commonly found with topics related to the navy, but less commonly with topics related to banking.
+One weakness of the LDA method is that it considers a "bag of words" where the order of those words does not matter [@blei2012]. It is possible to extend the model to reduce the impact of the bag-of-words assumption and add conditionality to word order. Additionally, alternatives to the Dirichlet distribution can be used to extend the model to allow for correlation. For instance, in Hansard topics related the army may be expected to be more commonly found with topics related to the navy, but less commonly with topics related to banking.
 
 
 

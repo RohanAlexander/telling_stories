@@ -317,7 +317,7 @@ some_private_information <-
   tibble(
     names = c("Rohan", "Monica", "Edward", "Hugo"),
     ages = c(36, 35, 3, 1)
-    )
+  )
 
 some_private_information
 ```
@@ -328,7 +328,7 @@ One option for the names would be to use a function that just took the first let
 #| message: false
 #| warning: false
 
-some_private_information |> 
+some_private_information |>
   mutate(
     names = substring(names, 1, 1),
     ages = as.roman(ages)
@@ -480,8 +480,10 @@ simulate_and_save_data <- function(month) {
       month = rep(x = month, times = number_of_observations),
       comments = rexp(n = number_of_observations, rate = 0.3) |> round()
     )
-  write_csv(x = user_comments,
-            file = file_name)
+  write_csv(
+    x = user_comments,
+    file = file_name
+  )
 }
 
 walk(month.name |> tolower(), simulate_and_save_data)
@@ -507,8 +509,10 @@ simulate_and_save_data <- function(month) {
       month = rep(x = month, times = number_of_observations),
       comments = rexp(n = number_of_observations, rate = 0.3) |> round()
     )
-  write_csv(x = user_comments,
-            file = file_name)
+  write_csv(
+    x = user_comments,
+    file = file_name
+  )
 }
 
 walk(month.name |> tolower(), simulate_and_save_data)
@@ -522,7 +526,7 @@ Having created our dataset with each month saved to a different CSV, we can now 
 
 library(fs)
 
-files_of_interest <- 
+files_of_interest <-
   dir_ls(path = "user_data/", glob = "*.csv")
 
 files_of_interest
@@ -535,7 +539,7 @@ files_of_interest
 
 library(fs)
 
-files_of_interest <- dir_ls(path = "inputs/data/user_data/", glob = "*.csv") |> 
+files_of_interest <- dir_ls(path = "inputs/data/user_data/", glob = "*.csv") |>
   str_remove("inputs/data/user_data/")
 
 files_of_interest
@@ -547,9 +551,11 @@ We can pass this list to `read_csv()` and it will read them in and combine them.
 #| eval: false
 #| echo: true
 
-year_of_data <- 
-  read_csv(files_of_interest,
-           show_col_types = FALSE)
+year_of_data <-
+  read_csv(
+    files_of_interest,
+    show_col_types = FALSE
+  )
 
 year_of_data
 ```
@@ -560,9 +566,11 @@ year_of_data
 
 files_of_interest <- dir_ls(path = "inputs/data/user_data/", glob = "*.csv")
 
-year_of_data <- 
-  read_csv(files_of_interest,
-           show_col_types = FALSE)
+year_of_data <-
+  read_csv(
+    files_of_interest,
+    show_col_types = FALSE
+  )
 
 year_of_data
 ```
@@ -593,8 +601,8 @@ library(purrr)
 
 year_of_data_using_purrr <-
   files_of_interest |>
-  map_dfr(read_csv, .id = "file") |> 
-  mutate(file =  str_remove(file, "inputs/data/user_data/"))
+  map_dfr(read_csv, .id = "file") |>
+  mutate(file = str_remove(file, "inputs/data/user_data/"))
 
 year_of_data_using_purrr
 ```
@@ -661,15 +669,19 @@ library(arrow)
 library(tidyverse)
 
 file_size_comparison <-
-  tibble(draws = c(),
-         csv_size = c(),
-         parquet_size = c())
+  tibble(
+    draws = c(),
+    csv_size = c(),
+    parquet_size = c()
+  )
 
-for (number_of_draws in c(10000,
-                          100000,
-                          1000000,
-                          10000000,
-                          100000000)) {
+for (number_of_draws in c(
+  10000,
+  100000,
+  1000000,
+  10000000,
+  100000000
+)) {
   a_million_random_digits <-
     tibble(
       numbers = runif(n = number_of_draws),
@@ -684,15 +696,19 @@ for (number_of_draws in c(10000,
         replace = TRUE
       ),
     )
-  
-  write_csv(x = a_million_random_digits,
-            file = "a_million_random_digits.csv")
-  
-  write_parquet(x = a_million_random_digits,
-                sink = "a_million_random_digits.parquet")
-  
+
+  write_csv(
+    x = a_million_random_digits,
+    file = "a_million_random_digits.csv"
+  )
+
+  write_parquet(
+    x = a_million_random_digits,
+    sink = "a_million_random_digits.parquet"
+  )
+
   rm(a_million_random_digits)
-  
+
   file_size_comparison <-
     rbind(
       file_size_comparison,
@@ -702,18 +718,21 @@ for (number_of_draws in c(10000,
         parquet_size = file_size("a_million_random_digits.parquet")
       )
     )
-  
+
   file.remove("a_million_random_digits.csv")
   file.remove("a_million_random_digits.parquet")
 }
 
-file_size_comparison_long <- 
-  file_size_comparison |> 
-  pivot_longer(cols = c(csv_size, parquet_size),
-               names_to = "file_type", values_to = "file_size") |> 
+file_size_comparison_long <-
+  file_size_comparison |>
+  pivot_longer(
+    cols = c(csv_size, parquet_size),
+    names_to = "file_type",
+    values_to = "file_size"
+  ) |>
   mutate(
     file_type = str_remove(file_type, "_size")
-  ) 
+  )
 
 write_csv(file_size_comparison, file = "inputs/data/file_size_comparison.csv")
 write_csv(file_size_comparison_long, file = "inputs/data/file_size_comparison_long.csv")
@@ -727,14 +746,14 @@ write_csv(file_size_comparison_long, file = "inputs/data/file_size_comparison_lo
 #| tbl-cap: "Comparing the file sizes of '.csv' and '.parquet', as the file size increases, for CSV and Parquet"
 
 read_csv(
-    "inputs/data/file_size_comparison.csv",
-    show_col_types = FALSE
-  ) |> 
+  "inputs/data/file_size_comparison.csv",
+  show_col_types = FALSE
+) |>
   mutate(
-    draws = format(draws, scientific = FALSE, big.mark = ','),
+    draws = format(draws, scientific = FALSE, big.mark = ","),
     csv_size = as_fs_bytes(csv_size),
-         parquet_size = as_fs_bytes(parquet_size)
-         ) |> 
+    parquet_size = as_fs_bytes(parquet_size)
+  ) |>
   knitr::kable(
     col.names = c(
       "Number of observations",
@@ -782,8 +801,10 @@ toc(log = TRUE, quiet = TRUE)
 tic("CSV - Manipulate and summarise")
 summary_spend_by_state_csv <-
   open_payments_data_csv |>
-  rename(state = Recipient_State,
-         total_payment_USD = Total_Amount_of_Payment_USDollars) |>
+  rename(
+    state = Recipient_State,
+    total_payment_USD = Total_Amount_of_Payment_USDollars
+  ) |>
   filter(state %in% c("CA", "OR", "WA")) |>
   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
   group_by(state) |>
@@ -796,15 +817,19 @@ rm(open_payments_data_csv)
 tic("arrow - Everything")
 tic("arrow - Reading")
 open_payments_data_arrow <-
-  read_csv_arrow("~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv",
-                 as_data_frame = FALSE)
+  read_csv_arrow(
+    "~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv",
+    as_data_frame = FALSE
+  )
 class(open_payments_data_arrow)
 toc(log = TRUE, quiet = TRUE)
 tic("arrow - Manipulate and summarise")
 summary_spend_by_state_arrow <-
   open_payments_data_arrow |>
-  rename(state = Recipient_State,
-         total_payment_USD = Total_Amount_of_Payment_USDollars) |>
+  rename(
+    state = Recipient_State,
+    total_payment_USD = Total_Amount_of_Payment_USDollars
+  ) |>
   filter(state %in% c("CA", "OR", "WA")) |>
   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
   group_by(state) |>
@@ -872,8 +897,10 @@ toc(log = TRUE, quiet = TRUE)
 tic("CSV - Manipulate and summarise")
 summary_spend_by_state_csv <-
   open_payments_data_csv |>
-  rename(state = Recipient_State,
-         total_payment_USD = Total_Amount_of_Payment_USDollars) |>
+  rename(
+    state = Recipient_State,
+    total_payment_USD = Total_Amount_of_Payment_USDollars
+  ) |>
   filter(state %in% c("CA", "OR", "WA")) |>
   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
   group_by(state) |>
@@ -887,15 +914,19 @@ toc(log = TRUE, quiet = TRUE)
 tic("arrow - Everything")
 tic("arrow - Reading")
 open_payments_data_arrow <-
-  read_csv_arrow("OP_DTL_GNRL_PGYR2016_P01172018.csv",
-                 as_data_frame = FALSE)
+  read_csv_arrow(
+    "OP_DTL_GNRL_PGYR2016_P01172018.csv",
+    as_data_frame = FALSE
+  )
 toc(log = TRUE, quiet = TRUE)
 
 tic("arrow - Manipulate and summarise")
 summary_spend_by_state_arrow <-
   open_payments_data_arrow |>
-  rename(state = Recipient_State,
-         total_payment_USD = Total_Amount_of_Payment_USDollars) |>
+  rename(
+    state = Recipient_State,
+    total_payment_USD = Total_Amount_of_Payment_USDollars
+  ) |>
   filter(state %in% c("CA", "OR", "WA")) |>
   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
   group_by(state) |>
@@ -917,9 +948,9 @@ toc(log = TRUE, quiet = TRUE)
 #| tbl-cap: "Comparing the speed of reading and manipulating using 'read_csv()' and 'read_csv_arrow()'"
 
 read_csv(
-    "inputs/data/need_for_speed_propublica.csv",
-    show_col_types = FALSE
-  ) |> 
+  "inputs/data/need_for_speed_propublica.csv",
+  show_col_types = FALSE
+) |>
   knitr::kable(
     col.names = c(
       "Which function",
