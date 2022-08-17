@@ -291,109 +291,106 @@ Again, while this is a common step in using text as data, @schofield2017understa
 
 
 
-
-## TF-IDF
-
 <!-- @benoit2020text -->
 
 
 <!-- Take a look at the topics again. Notice that 'growth' is in essentially every topic. So is 'members' and a couple of others. It's not that growth isn't important (insert standard economist joke here), but the fact that 'members' shows up suggests that these may just be due to the way that language is used at the RBA, rather than communicating topics. If you read these minutes, you'll know that the RBA starts a LOT of sentences with 'Members noted...'. What does this mean for our purposes? Essentially, if you look at each topic by itself they seem 'coherent', but taken as a group it seems as though the topics are too similar. Another way to say that is that the words lack 'exclusivity'. This is a common tradeoff, and our results suggest that it may be worthwhile for us to reduce some of the coherence in order to increase the exclusivity. At this point, we'll use a different package for creating topic models - the STM package - because it has a bunch of nice features that you might like to take advantage of in future work. -->
 
-```{r}
-# devtools::install_github("sharlagelfand/astrologer")
+## TF-IDF
 
-astrologer::horoscopes$zodiacsign |> unique()
+We will now use `astrologer` [@astrologer], which is a dataset of horoscopes to explore a real dataset. This package is not on CRAN, so we need to install it.
+
+```{r}
+#| echo: true
+#| eval: false
+
+devtools::install_github("sharlagelfand/astrologer")
 ```
 
-
-Inspired by @sharlasephora and following @thenakedtruth, we will draw on the dataset they put together of makeup names and descriptions from Sephora and Ulta. We are interested in the counts of each word. We can read in the data using `read_csv()`.
+We can then access the "horoscopes" dataset.
 
 ```{r}
-#| message: false
 #| warning: false
+#| message: false
 
+library(astrologer)
 library(tidyverse)
 
-makeup <-
-  read_csv(
-    file =
-      "https://raw.githubusercontent.com/the-pudding/data/master/foundation-names/allNumbers.csv"
-  )
-
-makeup
+horoscopes
 ```
 
-We will focus on "product", which provides the name of the item, and "lightness" which is a value between 0 and 1. We are interested in whether products with lightness values that are less than 0.5, typically use different words to those with lightness values that are at least 0.5.
-
-
+There are four variables: "startdate", "zodiacsign", "horoscope", and "url". We are interested in the words used to distinguish the horoscope of each zodiac sign.
 
 ```{r}
-makeup <-
-  makeup |>
-  select(product, lightness) |>
-  mutate(lightness_above_half = if_else(lightness >= 0.5, "Yes", "No"))
-
-table(makeup$lightness_above_half)
+horoscopes |> 
+  count(zodiacsign)
 ```
 
-In this example we are going to split everything into separate words. When we do this, it is just searching for a space. And so, it will be the case that more than just words will be considered "words", for instance, numbers. We use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016] to do this.
+We can see that there are 106 horoscopes for each zodiac sign. In this example we will tokenize by word. We will use...
 
-```{r}
-#| message: false
-#| warning: false
-
-library(tidytext)
-
-makeup_by_words <-
-  makeup |>
-  unnest_tokens(
-    output = word,
-    input = product,
-    token = "words"
-  )
-
-head(makeup_by_words)
-```
-
-We now want to count the number of times each word is used by each of the lightness classifications.
-
-```{r}
-makeup_by_words <-
-  makeup_by_words |>
-  count(lightness_above_half, word, sort = TRUE)
-
-makeup_by_words |>
-  filter(lightness_above_half == "Yes") |>
-  slice(1:5)
-
-makeup_by_words |>
-  filter(lightness_above_half == "No") |>
-  slice(1:5)
-```
-
-We can see that the most popular words appear to be similar between the two categories. At this point, we could use the data in a variety of ways. We might be interested to know which words characterize each group---that is to say, which words are commonly used only in each group. We can do that by first looking at a word's term frequency (tf), which is how many times a word is used in the product name. The issue is that there are a lot of words that are commonly used regardless of context. As such, we may also like to look at the inverse document frequency (idf) in which we "penalize" words that occur in both groups. For instance, we have seen that "foundation" occurs in both products with high and low lightness values. And so, its idf would be lower than another word which only occurred in products that did not have a lightness value above half. The term frequency–inverse document frequency (tf-idf) is then the product of these.
-
-We can create this value using `bind_tf_idf()` from `tidytext`. It will create a bunch of new columns, one for each word and star combination.
-
-```{r}
-makeup_by_words_tf_idf <-
-  makeup_by_words |>
-  bind_tf_idf(
-    term = word,
-    document = lightness_above_half,
-    n = n
-  ) |>
-  arrange(-tf_idf)
-
-makeup_by_words_tf_idf
-```
+UP TO HERE.
 
 
-```{r}
-makeup_by_words_tf_idf |>
-  group_by(lightness_above_half) |>
-  slice(1:5)
-```
+
+<!-- In this example we are going to split everything into separate words. When we do this, it is just searching for a space. And so, it will be the case that more than just words will be considered "words", for instance, numbers. We use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016] to do this. -->
+
+<!-- ```{r} -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+<!-- #|  -->
+
+<!-- library(tidytext) -->
+
+<!-- makeup_by_words <- -->
+<!--   makeup |> -->
+<!--   unnest_tokens( -->
+<!--     output = word, -->
+<!--     input = product, -->
+<!--     token = "words" -->
+<!--   ) -->
+
+<!-- head(makeup_by_words) -->
+<!-- ``` -->
+
+<!-- We now want to count the number of times each word is used by each of the lightness classifications. -->
+
+<!-- ```{r} -->
+<!-- makeup_by_words <- -->
+<!--   makeup_by_words |> -->
+<!--   count(lightness_above_half, word, sort = TRUE) -->
+
+<!-- makeup_by_words |> -->
+<!--   filter(lightness_above_half == "Yes") |> -->
+<!--   slice(1:5) -->
+
+<!-- makeup_by_words |> -->
+<!--   filter(lightness_above_half == "No") |> -->
+<!--   slice(1:5) -->
+<!-- ``` -->
+
+<!-- We can see that the most popular words appear to be similar between the two categories. At this point, we could use the data in a variety of ways. We might be interested to know which words characterize each group---that is to say, which words are commonly used only in each group. We can do that by first looking at a word's term frequency (tf), which is how many times a word is used in the product name. The issue is that there are a lot of words that are commonly used regardless of context. As such, we may also like to look at the inverse document frequency (idf) in which we "penalize" words that occur in both groups. For instance, we have seen that "foundation" occurs in both products with high and low lightness values. And so, its idf would be lower than another word which only occurred in products that did not have a lightness value above half. The term frequency–inverse document frequency (tf-idf) is then the product of these. -->
+
+<!-- We can create this value using `bind_tf_idf()` from `tidytext`. It will create a bunch of new columns, one for each word and star combination. -->
+
+<!-- ```{r} -->
+<!-- makeup_by_words_tf_idf <- -->
+<!--   makeup_by_words |> -->
+<!--   bind_tf_idf( -->
+<!--     term = word, -->
+<!--     document = lightness_above_half, -->
+<!--     n = n -->
+<!--   ) |> -->
+<!--   arrange(-tf_idf) -->
+
+<!-- makeup_by_words_tf_idf -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- makeup_by_words_tf_idf |> -->
+<!--   group_by(lightness_above_half) |> -->
+<!--   slice(1:5) -->
+<!-- ``` -->
 
 
 
