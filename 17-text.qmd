@@ -26,7 +26,7 @@ engine: knitr
 
 ## Introduction
 
-Text data are all around us. In many cases they are some of the earliest types of data that we are exposed to. Increases in computational power, the development of new methods, and the enormous availability of text, means that there has been a great deal of interest in using text as data. And they are an exciting option to have. For instance, text analysis of state-run newspapers in African countries can identify manipulation by governments [@Hassan2022]. And analysis of US congressional records indicates just how much women legislators are interrupted than men [@millersutherland2022].
+Text data are all around us. In many cases they are some of the earliest types of data that we are exposed to. Increases in computational power, the development of new methods, and the enormous availability of text, means that there has been a great deal of interest in using text as data. And they are an exciting option to have. For instance, text analysis of state-run newspapers in African countries can identify manipulation by governments [@Hassan2022]. The analysis of narrative notes in Electronic Health Records (EHR) can improve the efficiency of disease prediction [@jessgronsbell]. And analysis of US congressional records indicates just how much women legislators are interrupted than men [@millersutherland2022].
 
 Earlier approaches tend to convert text into numbers. They can then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text and this allows them to draw additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, you can do more by knowing that a crocodile could eat you, and a tree probably would not.
 
@@ -40,8 +40,264 @@ In this chapter we first consider preparing text datasets. We then consider logi
 
 ## Text cleaning and preparation
 
+Text modelling is an exciting area of research. But many books assume that you already have a nice dataset, and only cover modelling. This is true more generally, but especially in the case of text, the cleaning and preparation aspect is at least as difficult as the modelling. We will cover some essentials, and provide a foundation that can be built on.
+
+The first step is to get some data. We have discussed data gathering in @sec-gather-data and have mentioned in passing many sources including:
+
+- Accessing the Twitter API using `rtweet` [@rtweet].
+- Using *Inside Airbnb*, which provides text from reviews. 
+- Getting the text from out-of-copyright books using `gutenbergr` [@gutenbergr].
+- Scraping Wikipedia or other websites.
+
+The workhorse packages that we need for text cleaning and preparation are `stringr` [@citestringr], which is part of the `tidyverse` [@tidyverse], and `quanteda` [@quanteda].
+
+For illustrative purposes we will construct a corpus of the first sentences from three books: "Don Quixote", "Beloved", and "Jane Eyre".
+
+```{r}
+#| message: false
+#| warning: false
+
+library(quanteda)
+library(tidyverse)
+
+don_quixote <-
+  "In a village of La Mancha, the name of which I have no desire to call to mind, there lived not long since one of those gentlemen that keep a lance in the lance-rack, an old buckler, a lean hack, and a greyhound for coursing."
+
+beloved <- "124 was spiteful. Full of Baby's venom."
+
+jane_eyre <- "There was no possibility of taking a walk that day."
+
+bookshelf <-
+  tibble(
+    book = c("Don Quixote", "Beloved", "Jane Eyre"),
+    first_sentence = c(don_quixote, beloved, jane_eyre)
+  )
+
+bookshelf
+```
+
+We typically want to construct a document-feature matrix, which has documents in each observation, words in each column, and a count for each combination, along with associated metadata. For instance, if our corpus was the text from Airbnb reviews, then each document may be a review, and typical features could include "The", "Airbnb", "was", "great". Notice here that the sentence has been split into different words. We typically talk of "tokens" to generalize away from words, because of the variety of aspects we may be interested in, but words are commonly used.
+
+```{r}
+books_corpus <- 
+  corpus(bookshelf, docid_field = "book", text_field = "first_sentence")
+
+books_corpus
+```
+
+We use the tokens in the corpus to construct a document-feature matrix using `dfm()` from `quanteda` [@quanteda].
+
+```{r}
+books_dfm <- 
+  books_corpus |> 
+  tokens() |> 
+  dfm()
+
+books_dfm
+```
+
+While this is relatively straightforward, there are a large number of decisions that will need to be made as part of this process, which we now consider. There is no definitive right or wrong answer. Instead we make those decisions based on what we will be using the dataset for. We will cover a variety of possible scenarios.
+
+### Stop words
+
+Stop words are common words, such as "the", "and", and "a", which were thought for a long time to not convey much meaning, and hence should be removed. We now know that stop words do have a great deal of meaning, and so the decision to remove them is a nuanced one that depends on circumstances.
+
+We can get a list of stop words from `quanteda` with `stopwords()`, and could do a crude removal based on `str_replace_all()`.
+
+```{r}
+stopwords(source = "snowball")
+
+stop_word_list <-
+  paste(stopwords(source = "snowball"), collapse = " | ")
+
+bookshelf |>
+  mutate(no_stops = str_replace_all(
+    string = first_sentence,
+    pattern = stop_word_list,
+    replacement = " "
+  )) |> 
+  select(no_stops, first_sentence)
+```
+
+There are a large number of different lists of stop words which have been put together by others. For instance, `stopwords()` can use: "snowball" which is the default, "stopwords-iso" which is much larger, "smart", "marimo", "ancient", and "nltk". More generally, if we decide to use stop words then we will often need to augment such lists with project-specific words. We can do this by creating a count of individual words in the corpus, and then sorting by the most common and adding those to the stop words list as appropriate.
+
+```{r}
+stop_word_list_updated <-
+  paste("village |", "spiteful |", "possibility |", stop_word_list, collapse = " | ")
+
+bookshelf |>
+  mutate(no_stops = str_replace_all(
+    string = first_sentence,
+    pattern = stop_word_list_updated,
+    replacement = " "
+  )) |> 
+  select(no_stops, first_sentence)
+```
+
+We can integrate the removal of stopwords into our construction of the DFM with `dfm_remove()`.
+
+```{r}
+books_dfm |> 
+  dfm_remove(stopwords(source = "snowball"))
+```
+
+But when we remove stop words we artificially adjust our dataset. Sometimes there may be a good reason to do that. But it must never be done without thought. For instance, in @sec-farm-data we discussed how sometimes datasets may need to be censored, truncated, or manipulated in other similar ways, to preserve the privacy of respondents. It is possible that the integration of the removal of stop words as a default step in natural language processing was due to computational power, which may have been more limited when these methods were developed. In any case, @jurafskymartin [p. 62] say that removing stop words does not improve performance for text classification. And @schofield2017 find that inference from topic models is not improved by the removal of anything other than the most frequent words, and that, in any case, it would be better to remove these after constructing the topics rather than before.
+
+### Case, numbers, and punctuation
+
+There are times when all we care about is the word, not the case nor punctuation. There are a variety of circumstances in which this may be appropriate. For instance, if the text corpus was particularly messy, or the existence of particular words was informative. We trade-off the loss of much information, for the benefit of making things a lot more simple. We can convert to lower case with `str_to_lower()`, and use `str_replace_all()` to remove punctuation with "[:punct:]", and numbers with "[:digit:]".
+
+```{r}
+bookshelf |>
+  mutate(lower_sentence = str_to_lower(string = first_sentence)) |>
+  select(first_sentence, lower_sentence)
+```
+
+
+```{r}
+bookshelf |>
+  mutate(no_punctuation = str_replace_all(
+    string = first_sentence,
+    pattern = "[:punct:]",
+    replacement = " "
+  )) |> 
+  select(first_sentence, no_punctuation)
+```
+
+
+```{r}
+bookshelf |>
+  mutate(
+    no_numbers = str_replace_all(
+    string = first_sentence,
+    pattern = "[:digit:]",
+    replacement = " "
+  )) |> 
+  select(first_sentence, no_numbers)
+```
+
+As an aside, we can remove letters, numbers, and punctuation with "[:graph:]" in `str_replace_all()`. While this is rarely needed in textbook examples, it is especially useful with real datasets, because they will typically have a small number of unexpected symbols that we need to identify and then remove. We use it to remove everything that we are used to, leaving only that which we are not.
+
+```{r}
+bookshelf |>
+  mutate(
+    remove_obvious = str_replace_all(
+    string = first_sentence,
+    pattern = "[:graph:]",
+    replacement = " "
+  )) |> 
+  select(first_sentence, remove_obvious)
+```
+
+More generally, we can use arguments in `tokens()` from `quanteda()` to do this. 
+
+```{r}
+books_corpus |> 
+  tokens(remove_numbers = TRUE, remove_punct = TRUE)
+```
+
+### Typos and uncommon words
+
+Then we need to decide what to do about typos and other minor issues. Firstly, every real-world text has typos. Sometimes these should clearly be fixed. But if they are made in a systematic way, for instance, a certain writer always makes the same mistakes, then they would have value if we were interested in grouping by the writer. The use of OCR will introduce common issues as well, as was seen in @sec-gather-data. For instance, "the" is commonly incorrectly changed to "thc".
+
+We could fix typos in the same way that we fixed stop words, i.e. with lists of corrections. When it comes to uncommon words, we can build this into our document-feature matrix creation with `dfm_trim()`. For instance we could use "min_termfreq = 2" to remove any word that does not occur at least twice, or "min_docfreq = 0.05" to remove any word that is not in at least 5 per cent of documents or "max_docfreq = 0.90" to remove any word that is in at least 90 per cent of documents.
+
+```{r}
+books_corpus |> 
+  tokens(remove_numbers = TRUE, remove_punct = TRUE) |>
+  dfm(tolower = TRUE) |> 
+  dfm_trim(min_termfreq = 2)
+```
+
+### Tuples
+
+A tuple is an ordered list of elements, and in the context of text it is a series of words. If it is two words then we term this a "bi-gram", three words is a "tri-gram", etc. These are an issue when it comes to text cleaning and preparation because we will typically need to separate terms based on a space and this would result in inappropriate separation. 
+
+This is a clear issue when it comes to place names. For instance, consider "British Columbia", "New Hampshire", "United Kingdom", and "Port Hedland". One way forward is to create a list of such places and then use `str_replace_all()` to add an underbar, for instance, "British_Columbia", "New_Hampshire", "United_Kingdom", and "Port_Hedland". Another option, is to use `tokens_compound()` from `quanteda`.
+
+```{r}
+some_places <- c("British Columbia", "New Hampshire", "United Kingdom", "Port Hedland")
+a_sentence <- c("Vancouver is in British Columbia and New Hampshire is important for presidential hopefuls")
+
+tokens(a_sentence) |> 
+  tokens_compound(pattern = phrase(some_places))
+```
+
+In that case, we knew what the tuples were. But it might be that we were not sure what the common tuples were in the corpus. We could then use `tokens_ngrams()` to identify them. We could ask for, say, all tri-grams, or specify that we were interested in different groups.
+
+```{r}
+ngrams <- tokens_ngrams(tokens(books_corpus), n = 3)
+
+ngram_counts <- 
+  tibble(ngrams = unlist(ngrams)) %>% 
+  count(ngrams, sort = TRUE)
+```
+
+Having identifying the common tri-grams we could add them to the list to be changed.
+
+### Stemming and lemmatizing
+
+Stemming and lemmatizing words is another common approach for reducing the dimensionality of a text datase. Stemming means to remove the last part of the word, in the expectation that this will result in more general words. For instance, "Canadians", "Canadian", and "Canada" all stem to "Canad". Lemmatizing is similar, but is more involved. It means that changing words, not just on their spelling, but on their canonical form [@textasdata, p. 54]. For instance, "Canadians", "Canadian", "Canucks", and "Canuck", may all be changed to "Canada".
+
+We can do this with `dfm_wordstem()`.
+
+```{r}
+
+char_wordstem(c("Canadians", "Canadian", "Canada"))
+
+books_corpus |> 
+  tokens(remove_numbers = TRUE, remove_punct = TRUE) |>
+  dfm(tolower = TRUE) |> 
+  dfm_wordstem()
+```
+
+
+Again, while this is a common step in using text as data, @schofield2017understanding find that in the context of LDA, which we cover later, stemming has little effect and there is little need to do it.
+
+
+
+<!-- ### Duplication -->
+
+<!-- Duplication is an  -->
+
+
+
+
+
+
+<!-- Now that we have a plausibly clean dataset (of course you'd want to come back and clean it more if you were actually interested in analysing the RBA minutes), we can try a topic model. Topic models are essentially just summaries. Instead of a document becoming a collection of words, they become a collection of topics with some probability associated with each topic.  -->
+
+<!-- ```{r topicsmodelling, eval = FALSE} -->
+<!-- #### First topic modelling #### -->
+<!-- # Convert the corpus to a form that the topic model can work with -->
+<!-- rba_minutes <- quanteda::corpus(text) %>% # Minimum viable conversion -->
+<!--   quanteda::dfm(remove_punct = TRUE, remove = stopwords('en')) %>% # Get rid of -->
+<!--   # punctuation (in case you didn't already do that) and stop words - check  -->
+<!--   # those stop words assumptions -->
+<!--   quanteda::dfm_trim(min_termfreq = 2, # Remove any word that doesn't occur at  -->
+<!--                      # least twice -->
+<!--            min_docfreq = 2) # Get rid of any word that isn't in at least two documents -->
+
+<!-- # Run the topic model with 10 topics -->
+<!-- dtm <- quanteda::convert(rba_minutes, to = "topicmodels") # Getting the dfm  -->
+<!-- # into a form that topicmodels can deal with -->
+<!-- lda_topics <- topicmodels::LDA(dtm, k = 10) # The k is the number of topics -  -->
+<!-- # this decision has a big impact -->
+
+<!-- # Have a look at the terms -->
+<!-- terms(lda_topics, 10) # Top 10 words for each topic. Topics are just  -->
+<!-- # probability distributions over words so you should look at different numbers of words -->
+<!-- ``` -->
+
+
+
+
+## TF-IDF
 
 <!-- @benoit2020text -->
+
+
+<!-- Take a look at the topics again. Notice that 'growth' is in essentially every topic. So is 'members' and a couple of others. It's not that growth isn't important (insert standard economist joke here), but the fact that 'members' shows up suggests that these may just be due to the way that language is used at the RBA, rather than communicating topics. If you read these minutes, you'll know that the RBA starts a LOT of sentences with 'Members noted...'. What does this mean for our purposes? Essentially, if you look at each topic by itself they seem 'coherent', but taken as a group it seems as though the topics are too similar. Another way to say that is that the words lack 'exclusivity'. This is a common tradeoff, and our results suggest that it may be worthwhile for us to reduce some of the coherence in order to increase the exclusivity. At this point, we'll use a different package for creating topic models - the STM package - because it has a bunch of nice features that you might like to take advantage of in future work. -->
 
 ```{r}
 # devtools::install_github("sharlagelfand/astrologer")
@@ -49,9 +305,6 @@ In this chapter we first consider preparing text datasets. We then consider logi
 astrologer::horoscopes$zodiacsign |> unique()
 ```
 
-
-
-## TF-IDF
 
 Inspired by @sharlasephora and following @thenakedtruth, we will draw on the dataset they put together of makeup names and descriptions from Sephora and Ulta. We are interested in the counts of each word. We can read in the data using `read_csv()`.
 
@@ -372,6 +625,8 @@ Perhaps unsurprisingly, if a line mentions Alice then it is likely to be a Alice
 
 ## Topic models
 
+, and `stm` [@stm].
+
 Sometimes we have a statement and we want to know what it is about. Sometimes this will be easy, but we do not always have titles for statements, and even when we do, sometimes we do not have titles that define topics in a well-defined and consistent way. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA) method of @Blei2003latent, as implemented by `topicmodels` [@Grun2011]. 
 
 The key assumption behind the LDA method is that each statement, "a document", is made by a person who decides the topics they would like to talk about in that document, and then chooses words, "terms", that are appropriate to those topics. A topic could be thought of as a collection of terms, and a document as a collection of topics. The topics are not specified *ex ante*; they are an outcome of the method. Terms are not necessarily unique to a particular topic, and a document could be about more than one topic. This provides more flexibility than other approaches such as a strict word count method. The goal is to have the words found in documents group themselves to define topics.
@@ -512,7 +767,9 @@ One weakness of the LDA method is that it considers a "bag of words" where the o
 
 
 
-<!-- ## Word embedding -->
+## Word embedding
+
+Add Python here?
 
 
 
@@ -521,7 +778,7 @@ One weakness of the LDA method is that it considers a "bag of words" where the o
 
 <!-- *Thank you to Josh Harris for discussions that led to this example. The code draws on Alexander and Leslie, 2019.* -->
 
-<!-- To begin with, let's pretend that we work for KOHO - a Toronto-based fintech. One important feature of the KOHO app is that it categorises your spending. For instance, buying a double-double from Tim Hortons could be categorised into "Eating out". This works because each merchant has a unique name, however that uniqueness means that the Tim Hortons at Sid Smith has a slightly different name to the Tim Hortons at Queen and John. Despite this slightly different name, we would like for them both to be classified as "Eating out".  -->
+<!-- To begin with, let's pretend that we work for KOHO - a Toronto-based fintech. One important feature of the KOHO app is that it categorises your spending. For instance, buying a double-double from Tim Hortons could be categorised into "Eating out". This works because each merchant has a unique name, however that uniqueness means that the Tim Hortons at Sid Smith has a slightly different name to the Tim Hortons at Queen and John. Despite this slightly different name, we would like for them both to be classified as "Eating out". -->
 
 <!-- To get started, let's generate some data: -->
 
@@ -539,16 +796,16 @@ One weakness of the LDA method is that it considers a "bag of words" where the o
 <!-- # This is from https://en.wikipedia.org/wiki/List_of_north%E2%80%93south_roads_in_Toronto and https://en.wikipedia.org/wiki/List_of_east%E2%80%93west_roads_in_Toronto. -->
 <!-- list_of_roads <- c("Adelaide St", "Allen Rd", "Annette St", "Ave Rd", "Bathurst St", "Bay St", "Bayview Ave", "Beare Rd", "Bellamy Rd", "Beverley St", "Birchmount Rd", "Black Creek Dr", "Bloor St", "Blythwood Rd", "Bond St", "Brimley Rd", "BRdview Ave", "Browns Line", "Burnhamthorpe Rd", "Caledonia Rd", "Carlingview Dr", "Carlton St", "Centennial Rd", "Christie St", "Church St", "College St", "Conlins Rd", "Coxwell Ave", "Cummer Ave", "Danforth Ave", "Davenport Rd", "Davisville Ave", "Dixon Rd", "Don Mills Rd", "Don Valley Parkway", "Donlands Ave", "Draper St", "Dufferin St", "Dundas St", "Dupont St", "East Ave", "Eastern Ave", "Eglinton Ave", "Ellesmere Rd", "Ellis Ave", "Finch Ave", "Front St", "Galloway Rd", "Gardiner Expressway", "Gerrard St", "Glencairn Ave", "Greenwood Ave", "Harbord St", "Highway 27", "Highway 401", "Highway 404", "Highway 427", "Islington Ave", "Jameson Ave", "Jane St", "Jarvis St", "John St", "Keele St", "Kennedy Rd", "King St", "Kipling Ave", "Laird Dr", "Lake Shore Boulevard", "Lansdowne Ave", "Lawrence Ave", "Leader Lane", "Leslie St", "Main St", "Manse Rd", "Markham Rd", "Marlee Ave", "Martin Grove Rd", "McCowan Rd", "Meadowvale Rd", "Middlefield Rd", "Midland Ave", "Mill St", "Millwood Rd", "Morningside Ave", "Morrish Rd", "Mount Pleasant Rd", "Neilson Rd", "Oakwood Ave", "OConnor Dr", "Ontario Highway 409", "Orfus Rd", "Orton Park Rd", "Ossington Ave", "Pape Ave", "Parkside Dr", "Parliament St", "Pharmacy Ave", "Port Union Rd", "Queen St", "Queens Park", "Queens Quay", "Rathburn Rd", "Rees St", "Reesor Rd", "Reggae Lane", "Renforth Dr", "Richmond St", "Rogers Rd", "Roncesvalles Ave", "Roselawn Ave", "Royal York Rd", "Runnymede Rd", "Scarborough Golf Club Rd", "Scarborough-Pickering Townline", "Scarlett Rd", "Sewells Rd", "Sheppard Ave", "Sherbourne St", "Simcoe St", "Spadina Ave", "St Clair Ave", "St George St", "Steeles Ave", "The Queensway", "University Ave", "Victoria Park Ave", "Warden Ave", "Wellesley St", "Wellington St", "Weston Rd", "Willowdale Ave", "Wilson Ave", "Woodbine Ave", "Yonge St", "York Mills Rd", "York St") -->
 
-<!-- example_spending_data <-  -->
+<!-- example_spending_data <- -->
 <!--   tibble( -->
-<!--     merchant_actual = sample(list_of_retailers,  -->
-<!--                              size = size_of_labelled_data,  -->
+<!--     merchant_actual = sample(list_of_retailers, -->
+<!--                              size = size_of_labelled_data, -->
 <!--                              replace = TRUE), -->
-<!--     merchant_unique_name_noise = sample(list_of_roads,  -->
-<!--                                         size = size_of_labelled_data,  -->
+<!--     merchant_unique_name_noise = sample(list_of_roads, -->
+<!--                                         size = size_of_labelled_data, -->
 <!--                                         replace = TRUE), -->
 <!--     merchant_unique_name = paste(merchant_actual, merchant_unique_name_noise, sep = " ") -->
-<!--     ) |>  -->
+<!--     ) |> -->
 <!--   select(-merchant_unique_name_noise) -->
 
 <!-- head(example_spending_data) -->
@@ -556,12 +813,12 @@ One weakness of the LDA method is that it considers a "bag of words" where the o
 
 <!-- We could pretend that we have these 1,000 data points of the unique names and that we labelled the actual merchant by hand so that we are sure. Let's use this dataset to train a model. We'll then use that trained model on a new dataset. -->
 
-<!-- First make a separate line for every word.  -->
+<!-- First make a separate line for every word. -->
 
 <!-- ```{r} -->
-<!-- all_words <-  -->
+<!-- all_words <- -->
 <!--   example_spending_data |> -->
-<!--   unnest_tokens(word, merchant_unique_name)  -->
+<!--   unnest_tokens(word, merchant_unique_name) -->
 
 <!-- head(all_words) -->
 <!-- ``` -->
@@ -569,16 +826,16 @@ One weakness of the LDA method is that it considers a "bag of words" where the o
 <!-- Now create a document-term matrix. -->
 
 <!-- ```{r} -->
-<!-- example_dtm <-  -->
+<!-- example_dtm <- -->
 <!--   all_words |> -->
-<!--   count(merchant_actual, word, sort = TRUE) |>  -->
+<!--   count(merchant_actual, word, sort = TRUE) |> -->
 <!--   cast_dtm(merchant_actual, word, n) -->
 <!-- ``` -->
 
 
 
 <!-- ```{r} -->
-<!-- predictor <- example_dtm |> as.matrix()  -->
+<!-- predictor <- example_dtm |> as.matrix() -->
 <!-- response <- dimnames(example_dtm)[[1]] -->
 <!-- ``` -->
 
@@ -595,7 +852,7 @@ One weakness of the LDA method is that it considers a "bag of words" where the o
 
 <!-- ### Google Colab -->
 
-<!-- Google Colab is similar to RStudio Cloud, in that it is set-up to allow us to just log in and get started. In this case, we need a Google account. While we can use R on Google Colab, it is designed for Python. Advantages over RStudio Cloud include the ability to use GPUs, not just CPUs.  -->
+<!-- Google Colab is similar to RStudio Cloud, in that it is set-up to allow us to just log in and get started. In this case, we need a Google account. While we can use R on Google Colab, it is designed for Python. Advantages over RStudio Cloud include the ability to use GPUs, not just CPUs. -->
 
 <!-- To get started, while logged into Google, go to [Colab](colab.research.google.com) and select "New notebook". -->
 
