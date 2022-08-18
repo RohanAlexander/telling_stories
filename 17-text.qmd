@@ -6,6 +6,7 @@ engine: knitr
 
 **Required material**
 
+- Read *Text as data: an overview* [@benoit2020text]
 - Read *The Naked Truth: How the names of 6,816 complexion products can reveal bias in beauty*, [@thenakedtruth].
 - Read *Supervised Machine Learning for Text Analysis in R*, Chapters 2 "Tokenization", 3 "Stop words", 6 "Regression", and 7 "Classification", [@hvitfeldt2021supervised]
 
@@ -265,36 +266,6 @@ Again, while this is a common step in using text as data, @schofield2017understa
 
 
 
-<!-- Now that we have a plausibly clean dataset (of course you'd want to come back and clean it more if you were actually interested in analysing the RBA minutes), we can try a topic model. Topic models are essentially just summaries. Instead of a document becoming a collection of words, they become a collection of topics with some probability associated with each topic.  -->
-
-<!-- ```{r topicsmodelling, eval = FALSE} -->
-<!-- #### First topic modelling #### -->
-<!-- # Convert the corpus to a form that the topic model can work with -->
-<!-- rba_minutes <- quanteda::corpus(text) %>% # Minimum viable conversion -->
-<!--   quanteda::dfm(remove_punct = TRUE, remove = stopwords('en')) %>% # Get rid of -->
-<!--   # punctuation (in case you didn't already do that) and stop words - check  -->
-<!--   # those stop words assumptions -->
-<!--   quanteda::dfm_trim(min_termfreq = 2, # Remove any word that doesn't occur at  -->
-<!--                      # least twice -->
-<!--            min_docfreq = 2) # Get rid of any word that isn't in at least two documents -->
-
-<!-- # Run the topic model with 10 topics -->
-<!-- dtm <- quanteda::convert(rba_minutes, to = "topicmodels") # Getting the dfm  -->
-<!-- # into a form that topicmodels can deal with -->
-<!-- lda_topics <- topicmodels::LDA(dtm, k = 10) # The k is the number of topics -  -->
-<!-- # this decision has a big impact -->
-
-<!-- # Have a look at the terms -->
-<!-- terms(lda_topics, 10) # Top 10 words for each topic. Topics are just  -->
-<!-- # probability distributions over words so you should look at different numbers of words -->
-<!-- ``` -->
-
-
-
-<!-- @benoit2020text -->
-
-
-<!-- Take a look at the topics again. Notice that 'growth' is in essentially every topic. So is 'members' and a couple of others. It's not that growth isn't important (insert standard economist joke here), but the fact that 'members' shows up suggests that these may just be due to the way that language is used at the RBA, rather than communicating topics. If you read these minutes, you'll know that the RBA starts a LOT of sentences with 'Members noted...'. What does this mean for our purposes? Essentially, if you look at each topic by itself they seem 'coherent', but taken as a group it seems as though the topics are too similar. Another way to say that is that the words lack 'exclusivity'. This is a common tradeoff, and our results suggest that it may be worthwhile for us to reduce some of the coherence in order to increase the exclusivity. At this point, we'll use a different package for creating topic models - the STM package - because it has a bunch of nice features that you might like to take advantage of in future work. -->
 
 ## TF-IDF
 
@@ -326,31 +297,55 @@ horoscopes |>
   count(zodiacsign)
 ```
 
-We can see that there are 106 horoscopes for each zodiac sign. In this example we will tokenize by word. We will use...
+We can see that there are 106 horoscopes for each zodiac sign. In this example we will tokenize by word, and as we are interested in distinguishing between zodiac signs, we will concatenate each of those 106 to construct a corpus of 12 documents, one for each zodiac sign.
 
-UP TO HERE.
+```{r}
+#| message: false
+#| warning: false
+#| eval: false
+#| echo: false
+
+library(quanteda)
+
+horoscope_corpus <- 
+  horoscopes |> 
+  group_by(zodiacsign) |> 
+  summarise(all = paste0(horoscope, collapse = "; ")) |> 
+  corpus(docid_field = "zodiacsign", 
+         text_field = "all")
+
+horoscope_corpus
+
+horoscope_dfm <- 
+  horoscope_corpus |> 
+  tokens() |> 
+  dfm()
+
+horoscope_dfm
+```
+
+```{r}
+#| eval: false
+#| echo: false
+
+library(quanteda.corpora)
+
+tstat_freq <- textstat_frequency(dfmat_tweets, n = 5, groups = lang)
+head(tstat_freq, 20)
+
+head(dfm_tfidf(horoscope_dfm))[,1:5]
+
+library(quanteda.textstats)
+sdf <- 
+  textstat_frequency(horoscope_dfm,
+                          groups = docs)
+
+tstat_freq <- textstat_frequency(dfmat_tweets, n = 5, groups = lang)
+```
 
 
 
-<!-- In this example we are going to split everything into separate words. When we do this, it is just searching for a space. And so, it will be the case that more than just words will be considered "words", for instance, numbers. We use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016] to do this. -->
 
-<!-- ```{r} -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-<!-- #|  -->
-
-<!-- library(tidytext) -->
-
-<!-- makeup_by_words <- -->
-<!--   makeup |> -->
-<!--   unnest_tokens( -->
-<!--     output = word, -->
-<!--     input = product, -->
-<!--     token = "words" -->
-<!--   ) -->
-
-<!-- head(makeup_by_words) -->
-<!-- ``` -->
 
 <!-- We now want to count the number of times each word is used by each of the lightness classifications. -->
 
@@ -396,219 +391,219 @@ UP TO HERE.
 
 ## Lasso regression
 
-One of the nice aspects of text is that we can adapt our existing methods to use it as an input. Here we are going to use logistic regression, along with text inputs, to forecast. Inspired by @silge2018 we are going to have two different text inputs, train a model on a sample of text from each of them, and then try to use that model to forecast the text in a training set. Although this is a arbitrary example, we could imagine many real-world applications. For instance, we may be interested in whether some text was likely written by a bot or a human.
+<!-- One of the nice aspects of text is that we can adapt our existing methods to use it as an input. Here we are going to use a variant of logistic regression, along with text inputs, to forecast. Inspired by @silge2018 we are going to have two different text inputs, train a model on a sample of text from each of them, and then try to use that model to forecast the text in a training set. Although this is a arbitrary example, we could imagine many real-world applications. For instance, we may be interested in whether some text was likely written by a bot or a human. -->
 
-:::{.callout-note}
-## Shoulders of giants
+<!-- :::{.callout-note} -->
+<!-- ## Shoulders of giants -->
 
-Rob Tibshirani - link to lasso
-:::
+<!-- Rob Tibshirani - link to lasso -->
+<!-- ::: -->
 
-First we need to get some data. We use books from Project Gutenberg using `gutenberg_download()` from `gutenbergr` [@gutenbergr]. We will consider *Jane Eyre* [@janeeyre] and *Alice's Adventures in Wonderland* [@citealice].
+<!-- First we need to get some data. We use books from Project Gutenberg using `gutenberg_download()` from `gutenbergr` [@gutenbergr]. We will consider *Jane Eyre* [@janeeyre] and *Alice's Adventures in Wonderland* [@citealice]. -->
 
-```{r}
-#| include: true
-#| message: false
-#| warning: false
-#| eval: false
+<!-- ```{r} -->
+<!-- #| include: true -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+<!-- #| eval: false -->
 
-library(gutenbergr)
-library(tidyverse)
+<!-- library(gutenbergr) -->
+<!-- library(tidyverse) -->
 
-# The books that we are interested in have the keys of 1260 and 11, respectively.
-alice_and_jane <-
-  gutenberg_download(
-    gutenberg_id = c(1260, 11),
-    meta_fields = "title"
-  )
+<!-- # The books that we are interested in have the keys of 1260 and 11, respectively. -->
+<!-- alice_and_jane <- -->
+<!--   gutenberg_download( -->
+<!--     gutenberg_id = c(1260, 11), -->
+<!--     meta_fields = "title" -->
+<!--   ) -->
 
-write_csv(alice_and_jane, "alice_and_jane.csv")
+<!-- write_csv(alice_and_jane, "alice_and_jane.csv") -->
 
-head(alice_and_jane)
-```
+<!-- head(alice_and_jane) -->
+<!-- ``` -->
 
-```{r}
-#| include: false
-#| eval: true
-#| warning: false
-#| message: false
+<!-- ```{r} -->
+<!-- #| include: false -->
+<!-- #| eval: true -->
+<!-- #| warning: false -->
+<!-- #| message: false -->
 
-library(gutenbergr)
-library(tidyverse)
+<!-- library(gutenbergr) -->
+<!-- library(tidyverse) -->
 
-alice_and_jane <- read_csv("inputs/books/alice_and_jane.csv")
+<!-- alice_and_jane <- read_csv("inputs/books/alice_and_jane.csv") -->
 
-head(alice_and_jane)
-```
+<!-- head(alice_and_jane) -->
+<!-- ``` -->
 
-One of the great things about this is that the dataset is a tibble. So we can work with all our familiar skills. Each line of the book is read in as a different row in the dataset. Notice that we have downloaded two books here at once, and so we added the title. The two books are one after each other. 
+<!-- One of the great things about this is that the dataset is a tibble. So we can work with all our familiar skills. Each line of the book is read in as a different row in the dataset. Notice that we have downloaded two books here at once, and so we added the title. The two books are one after each other.  -->
 
-By looking at the number of lines in each, it looks like *Jane Eyre* is much longer than *Alice in Wonderland*. We will start by getting rid of blank lines using `remove_empty()` from `janitor` [@janitor].
+<!-- By looking at the number of lines in each, it looks like *Jane Eyre* is much longer than *Alice in Wonderland*. We will start by getting rid of blank lines using `remove_empty()` from `janitor` [@janitor]. -->
 
-```{r}
-library(janitor)
+<!-- ```{r} -->
+<!-- library(janitor) -->
 
-alice_and_jane <-
-  alice_and_jane |>
-  mutate(blank_line = if_else(text == "", 1, 0)) |>
-  filter(blank_line == 0) |>
-  select(-blank_line)
+<!-- alice_and_jane <- -->
+<!--   alice_and_jane |> -->
+<!--   mutate(blank_line = if_else(text == "", 1, 0)) |> -->
+<!--   filter(blank_line == 0) |> -->
+<!--   select(-blank_line) -->
 
-table(alice_and_jane$title)
-```
+<!-- table(alice_and_jane$title) -->
+<!-- ``` -->
 
-There is still an overwhelming amount of *Jane Eyre*, compared with *Alice in Wonderland*, so we will sample from *Jane Eyre* to make it more equal.
+<!-- There is still an overwhelming amount of *Jane Eyre*, compared with *Alice in Wonderland*, so we will sample from *Jane Eyre* to make it more equal. -->
 
-```{r}
-set.seed(853)
+<!-- ```{r} -->
+<!-- set.seed(853) -->
 
-alice_and_jane$rows <- c(1:nrow(alice_and_jane))
-sample_from_me <- alice_and_jane |> filter(title == "Jane Eyre: An Autobiography")
-keep_me <- sample(x = sample_from_me$rows, size = 2481, replace = FALSE)
+<!-- alice_and_jane$rows <- c(1:nrow(alice_and_jane)) -->
+<!-- sample_from_me <- alice_and_jane |> filter(title == "Jane Eyre: An Autobiography") -->
+<!-- keep_me <- sample(x = sample_from_me$rows, size = 2481, replace = FALSE) -->
 
-alice_and_jane <-
-  alice_and_jane |>
-  filter(title == "Alice's Adventures in Wonderland" | rows %in% keep_me) |>
-  select(-rows)
+<!-- alice_and_jane <- -->
+<!--   alice_and_jane |> -->
+<!--   filter(title == "Alice's Adventures in Wonderland" | rows %in% keep_me) |> -->
+<!--   select(-rows) -->
 
-table(alice_and_jane$title)
-```
+<!-- table(alice_and_jane$title) -->
+<!-- ``` -->
 
-There are a variety of issues here, for instance, we have the whole of Alice, but we only have random bits of Jane, but nonetheless we will continue and add a counter with the line number for each book.
+<!-- There are a variety of issues here, for instance, we have the whole of Alice, but we only have random bits of Jane, but nonetheless we will continue and add a counter with the line number for each book. -->
 
-```{r}
-alice_and_jane <-
-  alice_and_jane |>
-  group_by(title) |>
-  mutate(line_number = paste(gutenberg_id, row_number(), sep = "_")) |>
-  ungroup()
-```
+<!-- ```{r} -->
+<!-- alice_and_jane <- -->
+<!--   alice_and_jane |> -->
+<!--   group_by(title) |> -->
+<!--   mutate(line_number = paste(gutenberg_id, row_number(), sep = "_")) |> -->
+<!--   ungroup() -->
+<!-- ``` -->
 
-We now want to unnest the tokes. We will use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016].
+<!-- We now want to unnest the tokes. We will use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016]. -->
 
-```{r}
-#| message: false
-#| warning: false
+<!-- ```{r} -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
 
-library(tidytext)
+<!-- library(tidytext) -->
 
-alice_and_jane_by_word <-
-  alice_and_jane |>
-  unnest_tokens(word, text) |>
-  group_by(word) |>
-  filter(n() > 10) |>
-  ungroup()
-```
+<!-- alice_and_jane_by_word <- -->
+<!--   alice_and_jane |> -->
+<!--   unnest_tokens(word, text) |> -->
+<!--   group_by(word) |> -->
+<!--   filter(n() > 10) |> -->
+<!--   ungroup() -->
+<!-- ``` -->
 
-We remove any word that was not used more than 10 times. Nonetheless we still have more than 500 unique words. (If we did not require that the word be used by the author at least 10 times then we end up with more than 6,000 words.)
+<!-- We remove any word that was not used more than 10 times. Nonetheless we still have more than 500 unique words. (If we did not require that the word be used by the author at least 10 times then we end up with more than 6,000 words.) -->
 
-The reason this is relevant is because these are our independent variables. So where we may be used to having something less than 10 explanatory variables, in this case we are going to have 585 As such, we need a model that can handle this.
+<!-- The reason this is relevant is because these are our independent variables. So where we may be used to having something less than 10 explanatory variables, in this case we are going to have 585 As such, we need a model that can handle this. -->
 
-However, as mentioned before, we are going to have some rows that essentially just had one word. And so we filter for that also, which ensures that the model will have at least some words to work with.
+<!-- However, as mentioned before, we are going to have some rows that essentially just had one word. And so we filter for that also, which ensures that the model will have at least some words to work with. -->
 
-```{r}
-alice_and_jane_by_word <-
-  alice_and_jane_by_word |>
-  group_by(title, line_number) |>
-  mutate(number_of_words_in_line = n()) |>
-  ungroup() |>
-  filter(number_of_words_in_line > 2) |>
-  select(-number_of_words_in_line)
-```
+<!-- ```{r} -->
+<!-- alice_and_jane_by_word <- -->
+<!--   alice_and_jane_by_word |> -->
+<!--   group_by(title, line_number) |> -->
+<!--   mutate(number_of_words_in_line = n()) |> -->
+<!--   ungroup() |> -->
+<!--   filter(number_of_words_in_line > 2) |> -->
+<!--   select(-number_of_words_in_line) -->
+<!-- ``` -->
 
-We will create a test/training split, and load in `tidymodels`.
+<!-- We will create a test/training split, and load in `tidymodels`. -->
 
-```{r}
-#| message: false
-#| warning: false
+<!-- ```{r} -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
 
-library(tidymodels)
+<!-- library(tidymodels) -->
 
-set.seed(853)
+<!-- set.seed(853) -->
 
-alice_and_jane_by_word_split <-
-  alice_and_jane_by_word |>
-  select(title, line_number) |>
-  distinct() |>
-  initial_split(prop = 3 / 4, strata = title)
-```
+<!-- alice_and_jane_by_word_split <- -->
+<!--   alice_and_jane_by_word |> -->
+<!--   select(title, line_number) |> -->
+<!--   distinct() |> -->
+<!--   initial_split(prop = 3 / 4, strata = title) -->
+<!-- ``` -->
 
-Then we can use `cast_dtm()` to create a document-term matrix. This provides a count of how many times each word is used.
+<!-- Then we can use `cast_dtm()` to create a document-term matrix. This provides a count of how many times each word is used. -->
 
-```{r}
-alice_and_jane_dtm_training <-
-  alice_and_jane_by_word |>
-  count(line_number, word) |>
-  inner_join(training(alice_and_jane_by_word_split) |> select(line_number)) |>
-  cast_dtm(term = word, document = line_number, value = n)
+<!-- ```{r} -->
+<!-- alice_and_jane_dtm_training <- -->
+<!--   alice_and_jane_by_word |> -->
+<!--   count(line_number, word) |> -->
+<!--   inner_join(training(alice_and_jane_by_word_split) |> select(line_number)) |> -->
+<!--   cast_dtm(term = word, document = line_number, value = n) -->
 
-dim(alice_and_jane_dtm_training)
-```
+<!-- dim(alice_and_jane_dtm_training) -->
+<!-- ``` -->
 
-So we have our independent variables sorted, now we need our binary dependent variable, which is whether the book is Alice in Wonderland or Jane Eyre.
+<!-- So we have our independent variables sorted, now we need our binary dependent variable, which is whether the book is Alice in Wonderland or Jane Eyre. -->
 
-```{r}
-response <-
-  data.frame(id = dimnames(alice_and_jane_dtm_training)[[1]]) |>
-  separate(id, into = c("book", "line", sep = "_")) |>
-  mutate(is_alice = if_else(book == 11, 1, 0))
+<!-- ```{r} -->
+<!-- response <- -->
+<!--   data.frame(id = dimnames(alice_and_jane_dtm_training)[[1]]) |> -->
+<!--   separate(id, into = c("book", "line", sep = "_")) |> -->
+<!--   mutate(is_alice = if_else(book == 11, 1, 0)) -->
 
-predictor <- alice_and_jane_dtm_training[] |> as.matrix()
-```
-
-
-Now we can run our model.
-
-```{r}
-#| eval: false
-
-library(glmnet)
-
-model <- cv.glmnet(
-  x = predictor,
-  y = response$is_alice,
-  family = "binomial",
-  keep = TRUE
-)
-
-save(model, file = "alice_vs_jane.rda")
-```
-
-```{r} 
-#| echo: false
-
-load("outputs/model/alice_vs_jane.rda")
-```
+<!-- predictor <- alice_and_jane_dtm_training[] |> as.matrix() -->
+<!-- ``` -->
 
 
-```{r}
-library(glmnet)
-library(broom)
+<!-- Now we can run our model. -->
 
-coefs <- model$glmnet.fit |>
-  tidy() |>
-  filter(lambda == model$lambda.1se)
+<!-- ```{r} -->
+<!-- #| eval: false -->
 
-coefs |> head()
-```
+<!-- library(glmnet) -->
 
-```{r}
-coefs |>
-  group_by(estimate > 0) |>
-  top_n(10, abs(estimate)) |>
-  ungroup() |>
-  ggplot(aes(fct_reorder(term, estimate), estimate, fill = estimate > 0)) +
-  geom_col(alpha = 0.8, show.legend = FALSE) +
-  coord_flip() +
-  theme_minimal() +
-  labs(
-    x = "Coefficient",
-    y = "Word"
-  ) +
-  scale_fill_brewer(palette = "Set1")
-```
+<!-- model <- cv.glmnet( -->
+<!--   x = predictor, -->
+<!--   y = response$is_alice, -->
+<!--   family = "binomial", -->
+<!--   keep = TRUE -->
+<!-- ) -->
 
-Perhaps unsurprisingly, if a line mentions Alice then it is likely to be a Alice in Wonderland and if it mention Jane then it is likely to be Jane Eyre.
+<!-- save(model, file = "alice_vs_jane.rda") -->
+<!-- ``` -->
+
+<!-- ```{r}  -->
+<!-- #| echo: false -->
+
+<!-- load("outputs/model/alice_vs_jane.rda") -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- library(glmnet) -->
+<!-- library(broom) -->
+
+<!-- coefs <- model$glmnet.fit |> -->
+<!--   tidy() |> -->
+<!--   filter(lambda == model$lambda.1se) -->
+
+<!-- coefs |> head() -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- coefs |> -->
+<!--   group_by(estimate > 0) |> -->
+<!--   top_n(10, abs(estimate)) |> -->
+<!--   ungroup() |> -->
+<!--   ggplot(aes(fct_reorder(term, estimate), estimate, fill = estimate > 0)) + -->
+<!--   geom_col(alpha = 0.8, show.legend = FALSE) + -->
+<!--   coord_flip() + -->
+<!--   theme_minimal() + -->
+<!--   labs( -->
+<!--     x = "Coefficient", -->
+<!--     y = "Word" -->
+<!--   ) + -->
+<!--   scale_fill_brewer(palette = "Set1") -->
+<!-- ``` -->
+
+<!-- Perhaps unsurprisingly, if a line mentions Alice then it is likely to be a Alice in Wonderland and if it mention Jane then it is likely to be Jane Eyre. -->
 
 
 
@@ -622,9 +617,7 @@ Perhaps unsurprisingly, if a line mentions Alice then it is likely to be a Alice
 
 ## Topic models
 
-, and `stm` [@stm].
-
-Sometimes we have a statement and we want to know what it is about. Sometimes this will be easy, but we do not always have titles for statements, and even when we do, sometimes we do not have titles that define topics in a well-defined and consistent way. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA) method of @Blei2003latent, as implemented by `topicmodels` [@Grun2011]. 
+Sometimes we have a statement and we want to know what it is about. Sometimes this will be easy, but we do not always have titles for statements, and even when we do, sometimes we do not have titles that define topics in a well-defined and consistent way. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA) method of @Blei2003latent, as implemented by `stm` [@stm].
 
 The key assumption behind the LDA method is that each statement, "a document", is made by a person who decides the topics they would like to talk about in that document, and then chooses words, "terms", that are appropriate to those topics. A topic could be thought of as a collection of terms, and a document as a collection of topics. The topics are not specified *ex ante*; they are an outcome of the method. Terms are not necessarily unique to a particular topic, and a document could be about more than one topic. This provides more flexibility than other approaches such as a strict word count method. The goal is to have the words found in documents group themselves to define topics.
 
@@ -725,38 +718,231 @@ ggplot(topic_2, aes(Terms, Probability)) +
   coord_cartesian(ylim = c(0, 0.4))
 ```
 
-Following @BleiLafferty2009, @blei2012 and @GriffithsSteyvers2004, the process by which a document is generated is more formally considered to be:
+<!-- Following @BleiLafferty2009, @blei2012 and @GriffithsSteyvers2004, the process by which a document is generated is more formally considered to be: -->
 
-1. There are $1, 2, \dots, k, \dots, K$ topics and the vocabulary consists of $1, 2, \dots, V$ terms. For each topic, decide the terms that the topic uses by randomly drawing distributions over the terms. The distribution over the terms for the $k$th topic is $\beta_k$. Typically a topic would be a small number of terms and so the Dirichlet distribution with hyperparameter $0<\eta<1$ is used: $\beta_k \sim \mbox{Dirichlet}(\eta)$.[^Dirichletfootnote] Strictly, $\eta$ is actually a vector of hyperparameters, one for each $K$, but in practice they all tend to be the same value.
-2. Decide the topics that each document will cover by randomly drawing distributions over the $K$ topics for each of the $1, 2, \dots, d, \dots, D$ documents. The topic distributions for the $d$th document are $\theta_d$, and $\theta_{d,k}$ is the topic distribution for topic $k$ in document $d$. Again, the Dirichlet distribution with the hyperparameter $0<\alpha<1$ is used here because usually a document would only cover a handful of topics: $\theta_d \sim \mbox{Dirichlet}(\alpha)$. Again, strictly $\alpha$ is vector of length $K$ of hyperparameters, but in practice each is usually the same value.
-3. If there are $1, 2, \dots, n, \dots, N$ terms in the $d$th document, then to choose the $n$th term, $w_{d, n}$:
-    a. Randomly choose a topic for that term $n$, in that document $d$, $z_{d,n}$, from the multinomial distribution over topics in that document, $z_{d,n} \sim \mbox{Multinomial}(\theta_d)$. 
-    b. Randomly choose a term from the relevant multinomial distribution over the terms for that topic, $w_{d,n} \sim \mbox{Multinomial}(\beta_{z_{d,n}})$.
+<!-- 1. There are $1, 2, \dots, k, \dots, K$ topics and the vocabulary consists of $1, 2, \dots, V$ terms. For each topic, decide the terms that the topic uses by randomly drawing distributions over the terms. The distribution over the terms for the $k$th topic is $\beta_k$. Typically a topic would be a small number of terms and so the Dirichlet distribution with hyperparameter $0<\eta<1$ is used: $\beta_k \sim \mbox{Dirichlet}(\eta)$.[^Dirichletfootnote] Strictly, $\eta$ is actually a vector of hyperparameters, one for each $K$, but in practice they all tend to be the same value. -->
+<!-- 2. Decide the topics that each document will cover by randomly drawing distributions over the $K$ topics for each of the $1, 2, \dots, d, \dots, D$ documents. The topic distributions for the $d$th document are $\theta_d$, and $\theta_{d,k}$ is the topic distribution for topic $k$ in document $d$. Again, the Dirichlet distribution with the hyperparameter $0<\alpha<1$ is used here because usually a document would only cover a handful of topics: $\theta_d \sim \mbox{Dirichlet}(\alpha)$. Again, strictly $\alpha$ is vector of length $K$ of hyperparameters, but in practice each is usually the same value. -->
+<!-- 3. If there are $1, 2, \dots, n, \dots, N$ terms in the $d$th document, then to choose the $n$th term, $w_{d, n}$: -->
+<!--     a. Randomly choose a topic for that term $n$, in that document $d$, $z_{d,n}$, from the multinomial distribution over topics in that document, $z_{d,n} \sim \mbox{Multinomial}(\theta_d)$.  -->
+<!--     b. Randomly choose a term from the relevant multinomial distribution over the terms for that topic, $w_{d,n} \sim \mbox{Multinomial}(\beta_{z_{d,n}})$. -->
     
-The Dirichlet distribution is a variation of the beta distribution that is commonly used as a prior for categorical and multinomial variables. If there are just two categories, then the Dirichlet and the beta distributions are the same. In the special case of a symmetric Dirichlet distribution, $\eta=1$, it is equivalent to a uniform distribution. If $\eta<1$, then the distribution is sparse and concentrated on a smaller number of the values, and this number decreases as $\eta$ decreases. A hyperparameter is a parameter of a prior distribution.
+By way of backgroud, the Dirichlet distribution is a variation of the beta distribution that is commonly used as a prior for categorical and multinomial variables. If there are just two categories, then the Dirichlet and the beta distributions are the same. In the special case of a symmetric Dirichlet distribution, $\eta=1$, it is equivalent to a uniform distribution. If $\eta<1$, then the distribution is sparse and concentrated on a smaller number of the values, and this number decreases as $\eta$ decreases. A hyperparameter, in this usage, is a parameter of a prior distribution.
 
-Given this set-up, the joint distribution for the variables is [@blei2012, p.6]:
-$$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}) = \prod^{K}_{i=1}p(\beta_i) \prod^{D}_{d=1}p(\theta_d) \left(\prod^N_{n=1}p(z_{d,n}|\theta_d)p\left(w_{d,n}|\beta_{1:K},z_{d,n}\right) \right).$$
+<!-- Given this set-up, the joint distribution for the variables is [@blei2012, p.6]: -->
+<!-- $$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}) = \prod^{K}_{i=1}p(\beta_i) \prod^{D}_{d=1}p(\theta_d) \left(\prod^N_{n=1}p(z_{d,n}|\theta_d)p\left(w_{d,n}|\beta_{1:K},z_{d,n}\right) \right).$$ -->
 
-Based on this document generation process the analysis problem, discussed in the next section, is to compute a posterior over $\beta_{1:K}$ and $\theta_{1:D}$, given $w_{1:D, 1:N}$. This is intractable directly, but can be approximated [@GriffithsSteyvers2004; @blei2012].
+<!-- Based on this document generation process the analysis problem, discussed in the next section, is to compute a posterior over $\beta_{1:K}$ and $\theta_{1:D}$, given $w_{1:D, 1:N}$. This is intractable directly, but can be approximated [@GriffithsSteyvers2004; @blei2012]. -->
 
-After the documents are created, they are all that we have to analyze. The term usage in each document, $w_{1:D, 1:N}$, is observed, but the topics are hidden, or "latent". We do not know the topics of each document, nor how terms defined the topics. That is, we do not know the probability distributions of Figures @fig-topicsoverdocuments or @fig-topicsoverterms. In a sense we are trying to reverse the document generation process -- we have the terms and we would like to discover the topics.
+After the documents are created, they are all that we have to analyze. The term usage in each document is observed, but the topics are hidden, or "latent". We do not know the topics of each document, nor how terms defined the topics. That is, we do not know the probability distributions of Figures @fig-topicsoverdocuments or @fig-topicsoverterms. In a sense we are trying to reverse the document generation process---we have the terms and we would like to discover the topics.
 
-If the earlier process around how the documents were generated is assumed and we observe the terms in each document, then we can obtain estimates of the topics [@SteyversGriffiths2006]. The outcomes of the LDA process are probability distributions and these define the topics. Each term will be given a probability of being a member of a particular topic, and each document will be given a probability of being about a particular topic. That is, we are trying to calculate the posterior distribution of the topics given the terms observed in each document (@blei2012, p.7): 
-$$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N} | w_{1:D, 1:N}) = \frac{p\left(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}\right)}{p(w_{1:D, 1:N})}.$$
+If the earlier process around how the documents were generated is assumed and we observe the terms in each document, then we can obtain estimates of the topics [@SteyversGriffiths2006]. The outcomes of the LDA process are probability distributions and these define the topics. Each term will be given a probability of being a member of a particular topic, and each document will be given a probability of being about a particular topic. 
 
-The initial practical step when implementing LDA given a corpus of documents is to remove "stop words". These are words that are common, but that do not typically help to define topics. There is a general list of stop words such as: "a"; "a's"; "able"; "about"; "above"... We also remove punctuation and capitalization. The documents need to then be transformed into a document-term-matrix. This is essentially a table with a column of the number of times each term appears in each document.
+<!-- That is, we are trying to calculate the posterior distribution of the topics given the terms observed in each document (@blei2012, p.7):  -->
+<!-- $$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N} | w_{1:D, 1:N}) = \frac{p\left(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}\right)}{p(w_{1:D, 1:N})}.$$ -->
 
-After the dataset is ready, `topicmodels` [@Grun2011] can be used to implement LDA and approximate the posterior. It does this using Gibbs sampling or the variational expectation-maximization algorithm. Following @SteyversGriffiths2006 and @Darling2011, the Gibbs sampling process attempts to find a topic for a particular term in a particular document, given the topics of all other terms for all other documents. Broadly, it does this by first assigning every term in every document to a random topic, specified by Dirichlet priors with $\alpha = \frac{50}{K}$ and $\eta = 0.1$  (@SteyversGriffiths2006 recommends $\eta = 0.01$), where $\alpha$ refers to the distribution over topics and $\eta$ refers to the distribution over terms (@Grun2011, p.7). It then selects a particular term in a particular document and assigns it to a new topic based on the conditional distribution where the topics for all other terms in all documents are taken as given [@Grun2011, p.6]:
-$$p(z_{d, n}=k | w_{1:D, 1:N}, z'_{d, n}) \propto \frac{\lambda'_{n\rightarrow k}+\eta}{\lambda'_{.\rightarrow k}+V\eta} \frac{\lambda'^{(d)}_{n\rightarrow k}+\alpha}{\lambda'^{(d)}_{-i}+K\alpha} $$
-where $z'_{d, n}$ refers to all other topic assignments; $\lambda'_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$; $\lambda'_{.\rightarrow k}$ is a count of how many other times that any term has been assigned to topic $k$; $\lambda'^{(d)}_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$ in that particular document; and $\lambda'^{(d)}_{-i}$ is a count of how many other times that term has been assigned in that document. Once $z_{d,n}$ has been estimated, then estimates for the distribution of words into topics and topics into documents can be backed out.
+The initial practical step when implementing LDA given a corpus of documents is usually to remove stop words. Although, as mentioned earlier, this is not necessary, and may be better done after the groups are created. We often also remove punctuation and capitalization. We then construct our document-feature matrix using `dfm()` from `quanteda` [@quanteda].
+
+After the dataset is ready, `stm` [@stm] can be used to implement LDA and approximate the posterior. 
+<!-- It does this using Gibbs sampling or the variational expectation-maximization algorithm. Following @SteyversGriffiths2006 and @Darling2011, the Gibbs sampling  -->
+The process attempts to find a topic for a particular term in a particular document, given the topics of all other terms for all other documents. Broadly, it does this by first assigning every term in every document to a random topic, specified by Dirichlet priors.
+<!-- with $\alpha = \frac{50}{K}$ and $\eta = 0.1$  (@SteyversGriffiths2006 recommends $\eta = 0.01$), where $\alpha$ refers to the distribution over topics and $\eta$ refers to the distribution over terms (@Grun2011, p.7).  -->
+It then selects a particular term in a particular document and assigns it to a new topic based on the conditional distribution where the topics for all other terms in all documents are taken as given.
+[@Grun2011, p.6]:
+<!-- $$p(z_{d, n}=k | w_{1:D, 1:N}, z'_{d, n}) \propto \frac{\lambda'_{n\rightarrow k}+\eta}{\lambda'_{.\rightarrow k}+V\eta} \frac{\lambda'^{(d)}_{n\rightarrow k}+\alpha}{\lambda'^{(d)}_{-i}+K\alpha} $$ -->
+<!-- where $z'_{d, n}$ refers to all other topic assignments; $\lambda'_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$; $\lambda'_{.\rightarrow k}$ is a count of how many other times that any term has been assigned to topic $k$; $\lambda'^{(d)}_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$ in that particular document; and $\lambda'^{(d)}_{-i}$ is a count of how many other times that term has been assigned in that document.  -->
+Once this has been estimated, then estimates for the distribution of words into topics and topics into documents can be backed out.
 
 This conditional distribution assigns topics depending on how often a term has been assigned to that topic previously, and how common the topic is in that document [@SteyversGriffiths2006]. The initial random allocation of topics means that the results of early passes through the corpus of document are poor, but given enough time the algorithm converges to an appropriate estimate. 
 
-
 The choice of the number of topics, *k*, affects the results, and must be specified *a priori*. If there is a strong reason for a particular number, then this can be used. Otherwise, one way to choose an appropriate number is to use a test and training set process. Essentially, this means running the process on a variety of possible values for *k* and then picking an appropriate value that performs well.
 
-One weakness of the LDA method is that it considers a "bag of words" where the order of those words does not matter [@blei2012]. It is possible to extend the model to reduce the impact of the bag-of-words assumption and add conditionality to word order. Additionally, alternatives to the Dirichlet distribution can be used to extend the model to allow for correlation. For instance, in Hansard topics related the army may be expected to be more commonly found with topics related to the navy, but less commonly with topics related to banking.
+One weakness of the LDA method is that it considers a "bag of words" where the order of those words does not matter [@blei2012]. It is possible to extend the model to reduce the impact of the bag-of-words assumption and add conditionality to word order. Additionally, alternatives to the Dirichlet distribution can be used to extend the model to allow for correlation. 
+
+### What is talked about in Canadian parliament?
+
+Following the example of the British, the written record of what is said in the Canadian parliament is called "Hansard". It is not completely verbatim, but is very close. It is available in CSV format from [lipad](https://www.lipad.ca), which was constructed by @BeelenEtc2017.
+
+We are interested in what was talked about in the Canadian parliament in 2018. To get started we can download the entire corpus from [here](https://www.lipad.ca/data/), and then discard all of the years apart from 2018. If the datasets are in a folder called "2018", we can use `read_csv()` to read and combine all the CSVs.
+
+```{r}
+#| echo: true
+#| eval: false
+
+library(fs)
+library(tidyverse)
+
+files_of_interest <-
+  dir_ls(path = "2018/",
+         glob = "*.csv",
+         recurse = 2)
+
+hansard_canada_2018 <-
+  read_csv(
+    files_of_interest,
+    col_types = cols(
+      basepk = col_integer(),
+      hid = col_character(),
+      speechdate = col_date(),
+      pid = col_character(),
+      opid = col_integer(),
+      speakeroldname = col_character(),
+      speakerposition = col_character(),
+      maintopic = col_character(),
+      subtopic = col_character(),
+      subsubtopic = col_character(),
+      speechtext = col_character(),
+      speakerparty = col_character(),
+      speakerriding = col_character(),
+      speakername = col_character(),
+      speakerurl = col_character()
+    ),
+    col_select = c(
+      basepk,
+      speechdate,
+      speechtext,
+      speakername,
+      speakerparty,
+      speakerriding
+    )
+  ) |>
+  filter(!is.na(speakername))
+
+hansard_canada_2018
+```
+
+```{r}
+#| echo: false
+#| eval: true
+
+library(fs)
+library(tidyverse)
+
+files_of_interest <-
+  dir_ls(path = "inputs/data/2018/",
+         glob = "*.csv",
+         recurse = 2)
+
+hansard_canada_2018 <-
+  read_csv(
+    files_of_interest,
+    col_types = cols(
+      basepk = col_integer(),
+      hid = col_character(),
+      speechdate = col_date(),
+      pid = col_character(),
+      opid = col_integer(),
+      speakeroldname = col_character(),
+      speakerposition = col_character(),
+      maintopic = col_character(),
+      subtopic = col_character(),
+      subsubtopic = col_character(),
+      speechtext = col_character(),
+      speakerparty = col_character(),
+      speakerriding = col_character(),
+      speakername = col_character(),
+      speakerurl = col_character()
+    ),
+    col_select = c(
+      basepk,
+      speechdate,
+      speechtext,
+      speakername,
+      speakerparty,
+      speakerriding
+    )
+  ) |>
+  filter(!is.na(speakername))
+
+hansard_canada_2018
+```
+
+The use of `filter()` at the end is needed because sometime aspects such as "directions" and similar non-speech aspects, are included in the Hansard. For instance, if we do not include that `filter()` then the first line is "The House resumed from November 9, 2017, consideration of the motion.". We can then construct a corpus.
+
+```{r}
+#| warning: false
+#| message: false
+
+hansard_canada_2018_corpus <- 
+  corpus(hansard_canada_2018, docid_field = "basepk", text_field = "speechtext")
+
+hansard_canada_2018_corpus
+```
+
+We use the tokens in the corpus to construct a document-feature matrix. To make our life a little easier, computationally, we remove any word that does not occur at least twice, and any word that does not occur in at least two documents.
+
+```{r}
+hansard_dfm <- 
+  hansard_canada_2018_corpus |> 
+  tokens(remove_punct = TRUE,
+         remove_symbols = TRUE) |> 
+  dfm() |> 
+  dfm_trim(min_termfreq = 2, min_docfreq = 2)
+
+hansard_dfm
+```
+
+At this point we can use `stm()` from `stm` [@stm] to implement an LDA model. We need to specify a document-feature matrix and the number of topics. Topic models are essentially just summaries. Instead of a document becoming a collection of words, they become a collection of topics with some probability associated with each topic. But because it is just providing a collection of words that tend to be used at similar times, rather than actual underlying meaning, we need to specify the number of topics that we are interested in. This decision will have a big impact, and it is important to consider a few different numbers.
+
+```{r}
+#| echo: true
+#| eval: false
+
+library(stm)
+library(beepr)
+
+hansard_topics <- stm(documents = hansard_dfm, K = 10)
+
+beep()
+
+write_rds(hansard_topics,
+          file = "hansard_topics.rda")
+```
+
+```{r}
+#| echo: false
+#| eval: false
+
+# INTERNAL
+library(beepr)
+library(stm)
+
+hansard_topics <- stm(documents = hansard_dfm, K = 10)
+
+beep()
+
+write_rds(hansard_topics,
+          file = "outputs/hansard_topics.rda")
+```
+
+This will take some time, likely 10-30 min, so it is useful to save the model when it is done using `write_rds()`, and use `beep` to get a notification when it is done. We could then read the results back in with `read_rds()`.
+
+```{r}
+#| echo: true
+#| eval: false
+
+hansard_topics <- read_rds(
+  file = "hansard_topics.rda"
+)
+```
+
+```{r}
+#| echo: false
+#| eval: true
+
+hansard_topics <- read_rds(
+  file = "outputs/hansard_topics.rda"
+)
+```
+
+We can look at the words in each topic with `labelTopics()`.
+
+```{r}
+library(stm)
+labelTopics(hansard_topics)
+```
+
+
+
 
 
 
@@ -766,7 +952,7 @@ One weakness of the LDA method is that it considers a "bag of words" where the o
 
 ## Word embedding
 
-Add Python here?
+<!-- Add Python here? -->
 
 
 

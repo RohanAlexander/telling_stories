@@ -383,7 +383,10 @@ div.csl-indent {
   </ul></li>
   <li><a href="#tf-idf" id="toc-tf-idf" class="nav-link" data-scroll-target="#tf-idf"> <span class="header-section-number">17.3</span> TF-IDF</a></li>
   <li><a href="#lasso-regression" id="toc-lasso-regression" class="nav-link" data-scroll-target="#lasso-regression"> <span class="header-section-number">17.4</span> Lasso regression</a></li>
-  <li><a href="#topic-models" id="toc-topic-models" class="nav-link" data-scroll-target="#topic-models"> <span class="header-section-number">17.5</span> Topic models</a></li>
+  <li><a href="#topic-models" id="toc-topic-models" class="nav-link" data-scroll-target="#topic-models"> <span class="header-section-number">17.5</span> Topic models</a>
+  <ul class="collapse">
+  <li><a href="#what-is-talked-about-in-canadian-parliament" id="toc-what-is-talked-about-in-canadian-parliament" class="nav-link" data-scroll-target="#what-is-talked-about-in-canadian-parliament"> <span class="header-section-number">17.5.1</span> What is talked about in Canadian parliament?</a></li>
+  </ul></li>
   <li><a href="#word-embedding" id="toc-word-embedding" class="nav-link" data-scroll-target="#word-embedding"> <span class="header-section-number">17.6</span> Word embedding</a></li>
   <li><a href="#exercises-and-tutorial" id="toc-exercises-and-tutorial" class="nav-link" data-scroll-target="#exercises-and-tutorial"> <span class="header-section-number">17.7</span> Exercises and tutorial</a>
   <ul class="collapse">
@@ -414,6 +417,7 @@ div.csl-indent {
 
 <p><strong>Required material</strong></p>
 <ul>
+<li>Read <em>Text as data: an overview</em> <span class="citation" data-cites="benoit2020text">(<a href="99-references.html#ref-benoit2020text" role="doc-biblioref">Benoit 2020</a>)</span></li>
 <li>Read <em>The Naked Truth: How the names of 6,816 complexion products can reveal bias in beauty</em>, <span class="citation" data-cites="thenakedtruth">(<a href="99-references.html#ref-thenakedtruth" role="doc-biblioref">Amaka and Thomas 2021</a>)</span>.</li>
 <li>Read <em>Supervised Machine Learning for Text Analysis in R</em>, Chapters 2 “Tokenization”, 3 “Stop words”, 6 “Regression”, and 7 “Classification”, <span class="citation" data-cites="hvitfeldt2021supervised">(<a href="99-references.html#ref-hvitfeldt2021supervised" role="doc-biblioref">Hvitfeldt and Silge 2021</a>)</span></li>
 </ul>
@@ -791,28 +795,6 @@ docs          in a villag of la mancha the name which i
 <p>Again, while this is a common step in using text as data, <span class="citation" data-cites="schofield2017understanding">Schofield et al. (<a href="99-references.html#ref-schofield2017understanding" role="doc-biblioref">2017</a>)</span> find that in the context of LDA, which we cover later, stemming has little effect and there is little need to do it.</p>
 <!-- ### Duplication -->
 <!-- Duplication is an  -->
-<!-- Now that we have a plausibly clean dataset (of course you'd want to come back and clean it more if you were actually interested in analysing the RBA minutes), we can try a topic model. Topic models are essentially just summaries. Instead of a document becoming a collection of words, they become a collection of topics with some probability associated with each topic.  -->
-<!-- ```{r topicsmodelling, eval = FALSE} -->
-<!-- #### First topic modelling #### -->
-<!-- # Convert the corpus to a form that the topic model can work with -->
-<!-- rba_minutes <- quanteda::corpus(text) %>% # Minimum viable conversion -->
-<!--   quanteda::dfm(remove_punct = TRUE, remove = stopwords('en')) %>% # Get rid of -->
-<!--   # punctuation (in case you didn't already do that) and stop words - check  -->
-<!--   # those stop words assumptions -->
-<!--   quanteda::dfm_trim(min_termfreq = 2, # Remove any word that doesn't occur at  -->
-<!--                      # least twice -->
-<!--            min_docfreq = 2) # Get rid of any word that isn't in at least two documents -->
-<!-- # Run the topic model with 10 topics -->
-<!-- dtm <- quanteda::convert(rba_minutes, to = "topicmodels") # Getting the dfm  -->
-<!-- # into a form that topicmodels can deal with -->
-<!-- lda_topics <- topicmodels::LDA(dtm, k = 10) # The k is the number of topics -  -->
-<!-- # this decision has a big impact -->
-<!-- # Have a look at the terms -->
-<!-- terms(lda_topics, 10) # Top 10 words for each topic. Topics are just  -->
-<!-- # probability distributions over words so you should look at different numbers of words -->
-<!-- ``` -->
-<!-- @benoit2020text -->
-<!-- Take a look at the topics again. Notice that 'growth' is in essentially every topic. So is 'members' and a couple of others. It's not that growth isn't important (insert standard economist joke here), but the fact that 'members' shows up suggests that these may just be due to the way that language is used at the RBA, rather than communicating topics. If you read these minutes, you'll know that the RBA starts a LOT of sentences with 'Members noted...'. What does this mean for our purposes? Essentially, if you look at each topic by itself they seem 'coherent', but taken as a group it seems as though the topics are too similar. Another way to say that is that the words lack 'exclusivity'. This is a common tradeoff, and our results suggest that it may be worthwhile for us to reduce some of the coherence in order to increase the exclusivity. At this point, we'll use a different package for creating topic models - the STM package - because it has a bunch of nice features that you might like to take advantage of in future work. -->
 </section>
 </section>
 <section id="tf-idf" class="level2" data-number="17.3">
@@ -867,23 +849,13 @@ docs          in a villag of la mancha the name which i
 12 Pisces        106</code></pre>
 </div>
 </div>
-<p>We can see that there are 106 horoscopes for each zodiac sign. In this example we will tokenize by word. We will use…</p>
-<p>UP TO HERE.</p>
-<!-- In this example we are going to split everything into separate words. When we do this, it is just searching for a space. And so, it will be the case that more than just words will be considered "words", for instance, numbers. We use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016] to do this. -->
-<!-- ```{r} -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-<!-- #|  -->
-<!-- library(tidytext) -->
-<!-- makeup_by_words <- -->
-<!--   makeup |> -->
-<!--   unnest_tokens( -->
-<!--     output = word, -->
-<!--     input = product, -->
-<!--     token = "words" -->
-<!--   ) -->
-<!-- head(makeup_by_words) -->
-<!-- ``` -->
+<p>We can see that there are 106 horoscopes for each zodiac sign. In this example we will tokenize by word, and as we are interested in distinguishing between zodiac signs, we will concatenate each of those 106 to construct a corpus of 12 documents, one for each zodiac sign.</p>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
 <!-- We now want to count the number of times each word is used by each of the lightness classifications. -->
 <!-- ```{r} -->
 <!-- makeup_by_words <- -->
@@ -917,228 +889,168 @@ docs          in a villag of la mancha the name which i
 </section>
 <section id="lasso-regression" class="level2" data-number="17.4">
 <h2 data-number="17.4" class="anchored" data-anchor-id="lasso-regression"><span class="header-section-number">17.4</span> Lasso regression</h2>
-<p>One of the nice aspects of text is that we can adapt our existing methods to use it as an input. Here we are going to use logistic regression, along with text inputs, to forecast. Inspired by <span class="citation" data-cites="silge2018">Silge (<a href="99-references.html#ref-silge2018" role="doc-biblioref">2018</a>)</span> we are going to have two different text inputs, train a model on a sample of text from each of them, and then try to use that model to forecast the text in a training set. Although this is a arbitrary example, we could imagine many real-world applications. For instance, we may be interested in whether some text was likely written by a bot or a human.</p>
-<div class="callout-note callout callout-style-default callout-captioned">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-caption-container flex-fill">
-Shoulders of giants
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>Rob Tibshirani - link to lasso</p>
-</div>
-</div>
-<p>First we need to get some data. We use books from Project Gutenberg using <code>gutenberg_download()</code> from <code>gutenbergr</code> <span class="citation" data-cites="gutenbergr">(<a href="99-references.html#ref-gutenbergr" role="doc-biblioref">Robinson 2021</a>)</span>. We will consider <em>Jane Eyre</em> <span class="citation" data-cites="janeeyre">(<a href="99-references.html#ref-janeeyre" role="doc-biblioref">Brontë 1847</a>)</span> and <em>Alice’s Adventures in Wonderland</em> <span class="citation" data-cites="citealice">(<a href="99-references.html#ref-citealice" role="doc-biblioref">Carroll 1865</a>)</span>.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gutenbergr)</span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="co"># The books that we are interested in have the keys of 1260 and 11, respectively.</span></span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>alice_and_jane <span class="ot">&lt;-</span></span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gutenberg_download</span>(</span>
-<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">gutenberg_id =</span> <span class="fu">c</span>(<span class="dv">1260</span>, <span class="dv">11</span>),</span>
-<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">meta_fields =</span> <span class="st">"title"</span></span>
-<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(alice_and_jane, <span class="st">"alice_and_jane.csv"</span>)</span>
-<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(alice_and_jane)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>One of the great things about this is that the dataset is a tibble. So we can work with all our familiar skills. Each line of the book is read in as a different row in the dataset. Notice that we have downloaded two books here at once, and so we added the title. The two books are one after each other.</p>
-<p>By looking at the number of lines in each, it looks like <em>Jane Eyre</em> is much longer than <em>Alice in Wonderland</em>. We will start by getting rid of blank lines using <code>remove_empty()</code> from <code>janitor</code> <span class="citation" data-cites="janitor">(<a href="99-references.html#ref-janitor" role="doc-biblioref">Firke 2020</a>)</span>.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janitor)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>
-Attaching package: 'janitor'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>The following objects are masked from 'package:stats':
+<!-- One of the nice aspects of text is that we can adapt our existing methods to use it as an input. Here we are going to use a variant of logistic regression, along with text inputs, to forecast. Inspired by @silge2018 we are going to have two different text inputs, train a model on a sample of text from each of them, and then try to use that model to forecast the text in a training set. Although this is a arbitrary example, we could imagine many real-world applications. For instance, we may be interested in whether some text was likely written by a bot or a human. -->
+<!-- :::{.callout-note} -->
+<!-- ## Shoulders of giants -->
+<!-- Rob Tibshirani - link to lasso -->
+<!-- ::: -->
+<!-- First we need to get some data. We use books from Project Gutenberg using `gutenberg_download()` from `gutenbergr` [@gutenbergr]. We will consider *Jane Eyre* [@janeeyre] and *Alice's Adventures in Wonderland* [@citealice]. -->
+<!-- ```{r} -->
+<!-- #| include: true -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+<!-- #| eval: false -->
+<!-- library(gutenbergr) -->
+<!-- library(tidyverse) -->
+<!-- # The books that we are interested in have the keys of 1260 and 11, respectively. -->
+<!-- alice_and_jane <- -->
+<!--   gutenberg_download( -->
+<!--     gutenberg_id = c(1260, 11), -->
+<!--     meta_fields = "title" -->
+<!--   ) -->
+<!-- write_csv(alice_and_jane, "alice_and_jane.csv") -->
+<!-- head(alice_and_jane) -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- #| include: false -->
+<!-- #| eval: true -->
+<!-- #| warning: false -->
+<!-- #| message: false -->
+<!-- library(gutenbergr) -->
+<!-- library(tidyverse) -->
+<!-- alice_and_jane <- read_csv("inputs/books/alice_and_jane.csv") -->
+<!-- head(alice_and_jane) -->
+<!-- ``` -->
+<!-- One of the great things about this is that the dataset is a tibble. So we can work with all our familiar skills. Each line of the book is read in as a different row in the dataset. Notice that we have downloaded two books here at once, and so we added the title. The two books are one after each other.  -->
+<!-- By looking at the number of lines in each, it looks like *Jane Eyre* is much longer than *Alice in Wonderland*. We will start by getting rid of blank lines using `remove_empty()` from `janitor` [@janitor]. -->
+<!-- ```{r} -->
+<!-- library(janitor) -->
+<!-- alice_and_jane <- -->
+<!--   alice_and_jane |> -->
+<!--   mutate(blank_line = if_else(text == "", 1, 0)) |> -->
+<!--   filter(blank_line == 0) |> -->
+<!--   select(-blank_line) -->
 
-    chisq.test, fisher.test</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>alice_and_jane <span class="ot">&lt;-</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  alice_and_jane <span class="sc">|&gt;</span></span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">blank_line =</span> <span class="fu">if_else</span>(text <span class="sc">==</span> <span class="st">""</span>, <span class="dv">1</span>, <span class="dv">0</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(blank_line <span class="sc">==</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>blank_line)</span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(alice_and_jane<span class="sc">$</span>title)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Alice's Adventures in Wonderland      Jane Eyre: An Autobiography 
-                            2481                            16395 </code></pre>
-</div>
-</div>
-<p>There is still an overwhelming amount of <em>Jane Eyre</em>, compared with <em>Alice in Wonderland</em>, so we will sample from <em>Jane Eyre</em> to make it more equal.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>alice_and_jane<span class="sc">$</span>rows <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(alice_and_jane))</span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>sample_from_me <span class="ot">&lt;-</span> alice_and_jane <span class="sc">|&gt;</span> <span class="fu">filter</span>(title <span class="sc">==</span> <span class="st">"Jane Eyre: An Autobiography"</span>)</span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>keep_me <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="at">x =</span> sample_from_me<span class="sc">$</span>rows, <span class="at">size =</span> <span class="dv">2481</span>, <span class="at">replace =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>alice_and_jane <span class="ot">&lt;-</span></span>
-<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>  alice_and_jane <span class="sc">|&gt;</span></span>
-<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(title <span class="sc">==</span> <span class="st">"Alice's Adventures in Wonderland"</span> <span class="sc">|</span> rows <span class="sc">%in%</span> keep_me) <span class="sc">|&gt;</span></span>
-<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>rows)</span>
-<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(alice_and_jane<span class="sc">$</span>title)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Alice's Adventures in Wonderland      Jane Eyre: An Autobiography 
-                            2481                             2481 </code></pre>
-</div>
-</div>
-<p>There are a variety of issues here, for instance, we have the whole of Alice, but we only have random bits of Jane, but nonetheless we will continue and add a counter with the line number for each book.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>alice_and_jane <span class="ot">&lt;-</span></span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  alice_and_jane <span class="sc">|&gt;</span></span>
-<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(title) <span class="sc">|&gt;</span></span>
-<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">line_number =</span> <span class="fu">paste</span>(gutenberg_id, <span class="fu">row_number</span>(), <span class="at">sep =</span> <span class="st">"_"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>We now want to unnest the tokes. We will use <code>unnest_tokens()</code> from <code>tidytext</code> <span class="citation" data-cites="SilgeRobinson2016">(<a href="99-references.html#ref-SilgeRobinson2016" role="doc-biblioref">Silge and Robinson 2016</a>)</span>.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidytext)</span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>alice_and_jane_by_word <span class="ot">&lt;-</span></span>
-<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>  alice_and_jane <span class="sc">|&gt;</span></span>
-<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_tokens</span>(word, text) <span class="sc">|&gt;</span></span>
-<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(word) <span class="sc">|&gt;</span></span>
-<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">10</span>) <span class="sc">|&gt;</span></span>
-<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>We remove any word that was not used more than 10 times. Nonetheless we still have more than 500 unique words. (If we did not require that the word be used by the author at least 10 times then we end up with more than 6,000 words.)</p>
-<p>The reason this is relevant is because these are our independent variables. So where we may be used to having something less than 10 explanatory variables, in this case we are going to have 585 As such, we need a model that can handle this.</p>
-<p>However, as mentioned before, we are going to have some rows that essentially just had one word. And so we filter for that also, which ensures that the model will have at least some words to work with.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>alice_and_jane_by_word <span class="ot">&lt;-</span></span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  alice_and_jane_by_word <span class="sc">|&gt;</span></span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(title, line_number) <span class="sc">|&gt;</span></span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">number_of_words_in_line =</span> <span class="fu">n</span>()) <span class="sc">|&gt;</span></span>
-<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
-<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(number_of_words_in_line <span class="sc">&gt;</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
-<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>number_of_words_in_line)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>We will create a test/training split, and load in <code>tidymodels</code>.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>alice_and_jane_by_word_split <span class="ot">&lt;-</span></span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>  alice_and_jane_by_word <span class="sc">|&gt;</span></span>
-<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(title, line_number) <span class="sc">|&gt;</span></span>
-<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
-<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">initial_split</span>(<span class="at">prop =</span> <span class="dv">3</span> <span class="sc">/</span> <span class="dv">4</span>, <span class="at">strata =</span> title)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Then we can use <code>cast_dtm()</code> to create a document-term matrix. This provides a count of how many times each word is used.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>alice_and_jane_dtm_training <span class="ot">&lt;-</span></span>
-<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  alice_and_jane_by_word <span class="sc">|&gt;</span></span>
-<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(line_number, word) <span class="sc">|&gt;</span></span>
-<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(<span class="fu">training</span>(alice_and_jane_by_word_split) <span class="sc">|&gt;</span> <span class="fu">select</span>(line_number)) <span class="sc">|&gt;</span></span>
-<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cast_dtm</span>(<span class="at">term =</span> word, <span class="at">document =</span> line_number, <span class="at">value =</span> n)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Joining, by = "line_number"</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(alice_and_jane_dtm_training)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 3413  585</code></pre>
-</div>
-</div>
-<p>So we have our independent variables sorted, now we need our binary dependent variable, which is whether the book is Alice in Wonderland or Jane Eyre.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>response <span class="ot">&lt;-</span></span>
-<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">id =</span> <span class="fu">dimnames</span>(alice_and_jane_dtm_training)[[<span class="dv">1</span>]]) <span class="sc">|&gt;</span></span>
-<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(id, <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"book"</span>, <span class="st">"line"</span>, <span class="at">sep =</span> <span class="st">"_"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">is_alice =</span> <span class="fu">if_else</span>(book <span class="sc">==</span> <span class="dv">11</span>, <span class="dv">1</span>, <span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Expected 3 pieces. Missing pieces filled with `NA` in 3413 rows [1, 2,
-3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...].</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>predictor <span class="ot">&lt;-</span> alice_and_jane_dtm_training[] <span class="sc">|&gt;</span> <span class="fu">as.matrix</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Now we can run our model.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(glmnet)</span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(</span>
-<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> predictor,</span>
-<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> response<span class="sc">$</span>is_alice,</span>
-<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="st">"binomial"</span>,</span>
-<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">keep =</span> <span class="cn">TRUE</span></span>
-<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(model, <span class="at">file =</span> <span class="st">"alice_vs_jane.rda"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div class="cell">
+<!-- table(alice_and_jane$title) -->
+<!-- ``` -->
+<!-- There is still an overwhelming amount of *Jane Eyre*, compared with *Alice in Wonderland*, so we will sample from *Jane Eyre* to make it more equal. -->
+<!-- ```{r} -->
+<!-- set.seed(853) -->
+<!-- alice_and_jane$rows <- c(1:nrow(alice_and_jane)) -->
+<!-- sample_from_me <- alice_and_jane |> filter(title == "Jane Eyre: An Autobiography") -->
+<!-- keep_me <- sample(x = sample_from_me$rows, size = 2481, replace = FALSE) -->
+<!-- alice_and_jane <- -->
+<!--   alice_and_jane |> -->
+<!--   filter(title == "Alice's Adventures in Wonderland" | rows %in% keep_me) |> -->
+<!--   select(-rows) -->
 
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(glmnet)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Loading required package: Matrix</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>
-Attaching package: 'Matrix'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>The following objects are masked from 'package:tidyr':
-
-    expand, pack, unpack</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Loaded glmnet 4.1-4</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
-<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>coefs <span class="ot">&lt;-</span> model<span class="sc">$</span>glmnet.fit <span class="sc">|&gt;</span></span>
-<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tidy</span>() <span class="sc">|&gt;</span></span>
-<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(lambda <span class="sc">==</span> model<span class="sc">$</span>lambda<span class="fl">.1</span>se)</span>
-<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a>coefs <span class="sc">|&gt;</span> <span class="fu">head</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 6 × 5
-  term         step estimate  lambda dev.ratio
-  &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;     &lt;dbl&gt;
-1 (Intercept)    36 -0.335   0.00597     0.562
-2 in             36 -0.144   0.00597     0.562
-3 she            36  0.390   0.00597     0.562
-4 so             36  0.00249 0.00597     0.562
-5 a              36 -0.117   0.00597     0.562
-6 about          36  0.279   0.00597     0.562</code></pre>
-</div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>coefs <span class="sc">|&gt;</span></span>
-<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(estimate <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
-<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">top_n</span>(<span class="dv">10</span>, <span class="fu">abs</span>(estimate)) <span class="sc">|&gt;</span></span>
-<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
-<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="fu">fct_reorder</span>(term, estimate), estimate, <span class="at">fill =</span> estimate <span class="sc">&gt;</span> <span class="dv">0</span>)) <span class="sc">+</span></span>
-<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">alpha =</span> <span class="fl">0.8</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
-<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
-<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Coefficient"</span>,</span>
-<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Word"</span></span>
-<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb66-13"><a href="#cb66-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">"Set1"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<p><img src="17-text_files/figure-html/unnamed-chunk-32-1.png" class="img-fluid" width="672"></p>
-</div>
-</div>
-<p>Perhaps unsurprisingly, if a line mentions Alice then it is likely to be a Alice in Wonderland and if it mention Jane then it is likely to be Jane Eyre.</p>
+<!-- table(alice_and_jane$title) -->
+<!-- ``` -->
+<!-- There are a variety of issues here, for instance, we have the whole of Alice, but we only have random bits of Jane, but nonetheless we will continue and add a counter with the line number for each book. -->
+<!-- ```{r} -->
+<!-- alice_and_jane <- -->
+<!--   alice_and_jane |> -->
+<!--   group_by(title) |> -->
+<!--   mutate(line_number = paste(gutenberg_id, row_number(), sep = "_")) |> -->
+<!--   ungroup() -->
+<!-- ``` -->
+<!-- We now want to unnest the tokes. We will use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016]. -->
+<!-- ```{r} -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+<!-- library(tidytext) -->
+<!-- alice_and_jane_by_word <- -->
+<!--   alice_and_jane |> -->
+<!--   unnest_tokens(word, text) |> -->
+<!--   group_by(word) |> -->
+<!--   filter(n() > 10) |> -->
+<!--   ungroup() -->
+<!-- ``` -->
+<!-- We remove any word that was not used more than 10 times. Nonetheless we still have more than 500 unique words. (If we did not require that the word be used by the author at least 10 times then we end up with more than 6,000 words.) -->
+<!-- The reason this is relevant is because these are our independent variables. So where we may be used to having something less than 10 explanatory variables, in this case we are going to have 585 As such, we need a model that can handle this. -->
+<!-- However, as mentioned before, we are going to have some rows that essentially just had one word. And so we filter for that also, which ensures that the model will have at least some words to work with. -->
+<!-- ```{r} -->
+<!-- alice_and_jane_by_word <- -->
+<!--   alice_and_jane_by_word |> -->
+<!--   group_by(title, line_number) |> -->
+<!--   mutate(number_of_words_in_line = n()) |> -->
+<!--   ungroup() |> -->
+<!--   filter(number_of_words_in_line > 2) |> -->
+<!--   select(-number_of_words_in_line) -->
+<!-- ``` -->
+<!-- We will create a test/training split, and load in `tidymodels`. -->
+<!-- ```{r} -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+<!-- library(tidymodels) -->
+<!-- set.seed(853) -->
+<!-- alice_and_jane_by_word_split <- -->
+<!--   alice_and_jane_by_word |> -->
+<!--   select(title, line_number) |> -->
+<!--   distinct() |> -->
+<!--   initial_split(prop = 3 / 4, strata = title) -->
+<!-- ``` -->
+<!-- Then we can use `cast_dtm()` to create a document-term matrix. This provides a count of how many times each word is used. -->
+<!-- ```{r} -->
+<!-- alice_and_jane_dtm_training <- -->
+<!--   alice_and_jane_by_word |> -->
+<!--   count(line_number, word) |> -->
+<!--   inner_join(training(alice_and_jane_by_word_split) |> select(line_number)) |> -->
+<!--   cast_dtm(term = word, document = line_number, value = n) -->
+<!-- dim(alice_and_jane_dtm_training) -->
+<!-- ``` -->
+<!-- So we have our independent variables sorted, now we need our binary dependent variable, which is whether the book is Alice in Wonderland or Jane Eyre. -->
+<!-- ```{r} -->
+<!-- response <- -->
+<!--   data.frame(id = dimnames(alice_and_jane_dtm_training)[[1]]) |> -->
+<!--   separate(id, into = c("book", "line", sep = "_")) |> -->
+<!--   mutate(is_alice = if_else(book == 11, 1, 0)) -->
+<!-- predictor <- alice_and_jane_dtm_training[] |> as.matrix() -->
+<!-- ``` -->
+<!-- Now we can run our model. -->
+<!-- ```{r} -->
+<!-- #| eval: false -->
+<!-- library(glmnet) -->
+<!-- model <- cv.glmnet( -->
+<!--   x = predictor, -->
+<!--   y = response$is_alice, -->
+<!--   family = "binomial", -->
+<!--   keep = TRUE -->
+<!-- ) -->
+<!-- save(model, file = "alice_vs_jane.rda") -->
+<!-- ``` -->
+<!-- ```{r}  -->
+<!-- #| echo: false -->
+<!-- load("outputs/model/alice_vs_jane.rda") -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- library(glmnet) -->
+<!-- library(broom) -->
+<!-- coefs <- model$glmnet.fit |> -->
+<!--   tidy() |> -->
+<!--   filter(lambda == model$lambda.1se) -->
+<!-- coefs |> head() -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- coefs |> -->
+<!--   group_by(estimate > 0) |> -->
+<!--   top_n(10, abs(estimate)) |> -->
+<!--   ungroup() |> -->
+<!--   ggplot(aes(fct_reorder(term, estimate), estimate, fill = estimate > 0)) + -->
+<!--   geom_col(alpha = 0.8, show.legend = FALSE) + -->
+<!--   coord_flip() + -->
+<!--   theme_minimal() + -->
+<!--   labs( -->
+<!--     x = "Coefficient", -->
+<!--     y = "Word" -->
+<!--   ) + -->
+<!--   scale_fill_brewer(palette = "Set1") -->
+<!-- ``` -->
+<!-- Perhaps unsurprisingly, if a line mentions Alice then it is likely to be a Alice in Wonderland and if it mention Jane then it is likely to be Jane Eyre. -->
 </section>
 <section id="topic-models" class="level2" data-number="17.5">
 <h2 data-number="17.5" class="anchored" data-anchor-id="topic-models"><span class="header-section-number">17.5</span> Topic models</h2>
-<p>, and <code>stm</code> <span class="citation" data-cites="stm">(<a href="99-references.html#ref-stm" role="doc-biblioref">Roberts, Stewart, and Tingley 2018</a>)</span>.</p>
-<p>Sometimes we have a statement and we want to know what it is about. Sometimes this will be easy, but we do not always have titles for statements, and even when we do, sometimes we do not have titles that define topics in a well-defined and consistent way. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA) method of <span class="citation" data-cites="Blei2003latent">Blei, Ng, and Jordan (<a href="99-references.html#ref-Blei2003latent" role="doc-biblioref">2003</a>)</span>, as implemented by <code>topicmodels</code> <span class="citation" data-cites="Grun2011">(<a href="99-references.html#ref-Grun2011" role="doc-biblioref">Grün and Hornik 2011</a>)</span>.</p>
+<p>Sometimes we have a statement and we want to know what it is about. Sometimes this will be easy, but we do not always have titles for statements, and even when we do, sometimes we do not have titles that define topics in a well-defined and consistent way. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA) method of <span class="citation" data-cites="Blei2003latent">Blei, Ng, and Jordan (<a href="99-references.html#ref-Blei2003latent" role="doc-biblioref">2003</a>)</span>, as implemented by <code>stm</code> <span class="citation" data-cites="stm">(<a href="99-references.html#ref-stm" role="doc-biblioref">Roberts, Stewart, and Tingley 2018</a>)</span>.</p>
 <p>The key assumption behind the LDA method is that each statement, “a document”, is made by a person who decides the topics they would like to talk about in that document, and then chooses words, “terms”, that are appropriate to those topics. A topic could be thought of as a collection of terms, and a document as a collection of topics. The topics are not specified <em>ex ante</em>; they are an outcome of the method. Terms are not necessarily unique to a particular topic, and a document could be about more than one topic. This provides more flexibility than other approaches such as a strict word count method. The goal is to have the words found in documents group themselves to define topics.</p>
 <p>LDA considers each statement to be a result of a process where a person first chooses the topics they want to speak about. After choosing the topics, the person then chooses appropriate words to use for each of those topics. More generally, the LDA topic model works by considering each document as having been generated by some probability distribution over topics. For instance, if there were five topics and two documents, then the first document may be comprised mostly of the first few topics; the other document may be mostly about the final few topics (<a href="#fig-topicsoverdocuments">Figure&nbsp;<span>17.1</span></a>).</p>
 <div id="fig-topicsoverdocuments" class="cell quarto-layout-panel">
@@ -1188,34 +1100,234 @@ Attaching package: 'Matrix'</code></pre>
 <p></p><figcaption class="figure-caption">Figure 17.2: Probability distributions over terms</figcaption><p></p>
 </figure>
 </div>
-<p>Following <span class="citation" data-cites="BleiLafferty2009">Blei and Lafferty (<a href="99-references.html#ref-BleiLafferty2009" role="doc-biblioref">2009</a>)</span>, <span class="citation" data-cites="blei2012">Blei (<a href="99-references.html#ref-blei2012" role="doc-biblioref">2012</a>)</span> and <span class="citation" data-cites="GriffithsSteyvers2004">Griffiths and Steyvers (<a href="99-references.html#ref-GriffithsSteyvers2004" role="doc-biblioref">2004</a>)</span>, the process by which a document is generated is more formally considered to be:</p>
-<ol type="1">
-<li>There are <span class="math inline">\(1, 2, \dots, k, \dots, K\)</span> topics and the vocabulary consists of <span class="math inline">\(1, 2, \dots, V\)</span> terms. For each topic, decide the terms that the topic uses by randomly drawing distributions over the terms. The distribution over the terms for the <span class="math inline">\(k\)</span>th topic is <span class="math inline">\(\beta_k\)</span>. Typically a topic would be a small number of terms and so the Dirichlet distribution with hyperparameter <span class="math inline">\(0&lt;\eta&lt;1\)</span> is used: <span class="math inline">\(\beta_k \sim \mbox{Dirichlet}(\eta)\)</span>.[^Dirichletfootnote] Strictly, <span class="math inline">\(\eta\)</span> is actually a vector of hyperparameters, one for each <span class="math inline">\(K\)</span>, but in practice they all tend to be the same value.</li>
-<li>Decide the topics that each document will cover by randomly drawing distributions over the <span class="math inline">\(K\)</span> topics for each of the <span class="math inline">\(1, 2, \dots, d, \dots, D\)</span> documents. The topic distributions for the <span class="math inline">\(d\)</span>th document are <span class="math inline">\(\theta_d\)</span>, and <span class="math inline">\(\theta_{d,k}\)</span> is the topic distribution for topic <span class="math inline">\(k\)</span> in document <span class="math inline">\(d\)</span>. Again, the Dirichlet distribution with the hyperparameter <span class="math inline">\(0&lt;\alpha&lt;1\)</span> is used here because usually a document would only cover a handful of topics: <span class="math inline">\(\theta_d \sim \mbox{Dirichlet}(\alpha)\)</span>. Again, strictly <span class="math inline">\(\alpha\)</span> is vector of length <span class="math inline">\(K\)</span> of hyperparameters, but in practice each is usually the same value.</li>
-<li>If there are <span class="math inline">\(1, 2, \dots, n, \dots, N\)</span> terms in the <span class="math inline">\(d\)</span>th document, then to choose the <span class="math inline">\(n\)</span>th term, <span class="math inline">\(w_{d, n}\)</span>:
-<ol type="a">
-<li>Randomly choose a topic for that term <span class="math inline">\(n\)</span>, in that document <span class="math inline">\(d\)</span>, <span class="math inline">\(z_{d,n}\)</span>, from the multinomial distribution over topics in that document, <span class="math inline">\(z_{d,n} \sim \mbox{Multinomial}(\theta_d)\)</span>.</li>
-<li>Randomly choose a term from the relevant multinomial distribution over the terms for that topic, <span class="math inline">\(w_{d,n} \sim \mbox{Multinomial}(\beta_{z_{d,n}})\)</span>.</li>
-</ol></li>
-</ol>
-<p>The Dirichlet distribution is a variation of the beta distribution that is commonly used as a prior for categorical and multinomial variables. If there are just two categories, then the Dirichlet and the beta distributions are the same. In the special case of a symmetric Dirichlet distribution, <span class="math inline">\(\eta=1\)</span>, it is equivalent to a uniform distribution. If <span class="math inline">\(\eta&lt;1\)</span>, then the distribution is sparse and concentrated on a smaller number of the values, and this number decreases as <span class="math inline">\(\eta\)</span> decreases. A hyperparameter is a parameter of a prior distribution.</p>
-<p>Given this set-up, the joint distribution for the variables is <span class="citation" data-cites="blei2012">(<a href="99-references.html#ref-blei2012" role="doc-biblioref">Blei 2012, 6</a>)</span>:</p>
-<p><span class="math display">\[p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}) = \prod^{K}_{i=1}p(\beta_i) \prod^{D}_{d=1}p(\theta_d) \left(\prod^N_{n=1}p(z_{d,n}|\theta_d)p\left(w_{d,n}|\beta_{1:K},z_{d,n}\right) \right).\]</span></p>
-<p>Based on this document generation process the analysis problem, discussed in the next section, is to compute a posterior over <span class="math inline">\(\beta_{1:K}\)</span> and <span class="math inline">\(\theta_{1:D}\)</span>, given <span class="math inline">\(w_{1:D, 1:N}\)</span>. This is intractable directly, but can be approximated <span class="citation" data-cites="GriffithsSteyvers2004 blei2012">(<a href="99-references.html#ref-GriffithsSteyvers2004" role="doc-biblioref">Griffiths and Steyvers 2004</a>; <a href="99-references.html#ref-blei2012" role="doc-biblioref">Blei 2012</a>)</span>.</p>
-<p>After the documents are created, they are all that we have to analyze. The term usage in each document, <span class="math inline">\(w_{1:D, 1:N}\)</span>, is observed, but the topics are hidden, or “latent”. We do not know the topics of each document, nor how terms defined the topics. That is, we do not know the probability distributions of Figures <a href="#fig-topicsoverdocuments">Figure&nbsp;<span>17.1</span></a> or <a href="#fig-topicsoverterms">Figure&nbsp;<span>17.2</span></a>. In a sense we are trying to reverse the document generation process – we have the terms and we would like to discover the topics.</p>
-<p>If the earlier process around how the documents were generated is assumed and we observe the terms in each document, then we can obtain estimates of the topics <span class="citation" data-cites="SteyversGriffiths2006">(<a href="99-references.html#ref-SteyversGriffiths2006" role="doc-biblioref">Steyvers and Griffiths 2006</a>)</span>. The outcomes of the LDA process are probability distributions and these define the topics. Each term will be given a probability of being a member of a particular topic, and each document will be given a probability of being about a particular topic. That is, we are trying to calculate the posterior distribution of the topics given the terms observed in each document (<span class="citation" data-cites="blei2012">Blei (<a href="99-references.html#ref-blei2012" role="doc-biblioref">2012</a>)</span>, p.7):</p>
-<p><span class="math display">\[p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N} | w_{1:D, 1:N}) = \frac{p\left(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}\right)}{p(w_{1:D, 1:N})}.\]</span></p>
-<p>The initial practical step when implementing LDA given a corpus of documents is to remove “stop words”. These are words that are common, but that do not typically help to define topics. There is a general list of stop words such as: “a”; “a’s”; “able”; “about”; “above”… We also remove punctuation and capitalization. The documents need to then be transformed into a document-term-matrix. This is essentially a table with a column of the number of times each term appears in each document.</p>
-<p>After the dataset is ready, <code>topicmodels</code> <span class="citation" data-cites="Grun2011">(<a href="99-references.html#ref-Grun2011" role="doc-biblioref">Grün and Hornik 2011</a>)</span> can be used to implement LDA and approximate the posterior. It does this using Gibbs sampling or the variational expectation-maximization algorithm. Following <span class="citation" data-cites="SteyversGriffiths2006">Steyvers and Griffiths (<a href="99-references.html#ref-SteyversGriffiths2006" role="doc-biblioref">2006</a>)</span> and <span class="citation" data-cites="Darling2011">Darling (<a href="99-references.html#ref-Darling2011" role="doc-biblioref">2011</a>)</span>, the Gibbs sampling process attempts to find a topic for a particular term in a particular document, given the topics of all other terms for all other documents. Broadly, it does this by first assigning every term in every document to a random topic, specified by Dirichlet priors with <span class="math inline">\(\alpha = \frac{50}{K}\)</span> and <span class="math inline">\(\eta = 0.1\)</span> (<span class="citation" data-cites="SteyversGriffiths2006">Steyvers and Griffiths (<a href="99-references.html#ref-SteyversGriffiths2006" role="doc-biblioref">2006</a>)</span> recommends <span class="math inline">\(\eta = 0.01\)</span>), where <span class="math inline">\(\alpha\)</span> refers to the distribution over topics and <span class="math inline">\(\eta\)</span> refers to the distribution over terms (<span class="citation" data-cites="Grun2011">Grün and Hornik (<a href="99-references.html#ref-Grun2011" role="doc-biblioref">2011</a>)</span>, p.7). It then selects a particular term in a particular document and assigns it to a new topic based on the conditional distribution where the topics for all other terms in all documents are taken as given <span class="citation" data-cites="Grun2011">(<a href="99-references.html#ref-Grun2011" role="doc-biblioref">Grün and Hornik 2011, 6</a>)</span>:</p>
-<p><span class="math display">\[p(z_{d, n}=k | w_{1:D, 1:N}, z'_{d, n}) \propto \frac{\lambda'_{n\rightarrow k}+\eta}{\lambda'_{.\rightarrow k}+V\eta} \frac{\lambda'^{(d)}_{n\rightarrow k}+\alpha}{\lambda'^{(d)}_{-i}+K\alpha} \]</span></p>
-<p>where <span class="math inline">\(z'_{d, n}\)</span> refers to all other topic assignments; <span class="math inline">\(\lambda'_{n\rightarrow k}\)</span> is a count of how many other times that term has been assigned to topic <span class="math inline">\(k\)</span>; <span class="math inline">\(\lambda'_{.\rightarrow k}\)</span> is a count of how many other times that any term has been assigned to topic <span class="math inline">\(k\)</span>; <span class="math inline">\(\lambda'^{(d)}_{n\rightarrow k}\)</span> is a count of how many other times that term has been assigned to topic <span class="math inline">\(k\)</span> in that particular document; and <span class="math inline">\(\lambda'^{(d)}_{-i}\)</span> is a count of how many other times that term has been assigned in that document. Once <span class="math inline">\(z_{d,n}\)</span> has been estimated, then estimates for the distribution of words into topics and topics into documents can be backed out.</p>
+<!-- Following @BleiLafferty2009, @blei2012 and @GriffithsSteyvers2004, the process by which a document is generated is more formally considered to be: -->
+<!-- 1. There are $1, 2, \dots, k, \dots, K$ topics and the vocabulary consists of $1, 2, \dots, V$ terms. For each topic, decide the terms that the topic uses by randomly drawing distributions over the terms. The distribution over the terms for the $k$th topic is $\beta_k$. Typically a topic would be a small number of terms and so the Dirichlet distribution with hyperparameter $0<\eta<1$ is used: $\beta_k \sim \mbox{Dirichlet}(\eta)$.[^Dirichletfootnote] Strictly, $\eta$ is actually a vector of hyperparameters, one for each $K$, but in practice they all tend to be the same value. -->
+<!-- 2. Decide the topics that each document will cover by randomly drawing distributions over the $K$ topics for each of the $1, 2, \dots, d, \dots, D$ documents. The topic distributions for the $d$th document are $\theta_d$, and $\theta_{d,k}$ is the topic distribution for topic $k$ in document $d$. Again, the Dirichlet distribution with the hyperparameter $0<\alpha<1$ is used here because usually a document would only cover a handful of topics: $\theta_d \sim \mbox{Dirichlet}(\alpha)$. Again, strictly $\alpha$ is vector of length $K$ of hyperparameters, but in practice each is usually the same value. -->
+<!-- 3. If there are $1, 2, \dots, n, \dots, N$ terms in the $d$th document, then to choose the $n$th term, $w_{d, n}$: -->
+<!--     a. Randomly choose a topic for that term $n$, in that document $d$, $z_{d,n}$, from the multinomial distribution over topics in that document, $z_{d,n} \sim \mbox{Multinomial}(\theta_d)$.  -->
+<!--     b. Randomly choose a term from the relevant multinomial distribution over the terms for that topic, $w_{d,n} \sim \mbox{Multinomial}(\beta_{z_{d,n}})$. -->
+<p>By way of backgroud, the Dirichlet distribution is a variation of the beta distribution that is commonly used as a prior for categorical and multinomial variables. If there are just two categories, then the Dirichlet and the beta distributions are the same. In the special case of a symmetric Dirichlet distribution, <span class="math inline">\(\eta=1\)</span>, it is equivalent to a uniform distribution. If <span class="math inline">\(\eta&lt;1\)</span>, then the distribution is sparse and concentrated on a smaller number of the values, and this number decreases as <span class="math inline">\(\eta\)</span> decreases. A hyperparameter, in this usage, is a parameter of a prior distribution.</p>
+<!-- Given this set-up, the joint distribution for the variables is [@blei2012, p.6]: -->
+<!-- $$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}) = \prod^{K}_{i=1}p(\beta_i) \prod^{D}_{d=1}p(\theta_d) \left(\prod^N_{n=1}p(z_{d,n}|\theta_d)p\left(w_{d,n}|\beta_{1:K},z_{d,n}\right) \right).$$ -->
+
+<!-- Based on this document generation process the analysis problem, discussed in the next section, is to compute a posterior over $\beta_{1:K}$ and $\theta_{1:D}$, given $w_{1:D, 1:N}$. This is intractable directly, but can be approximated [@GriffithsSteyvers2004; @blei2012]. -->
+<p>After the documents are created, they are all that we have to analyze. The term usage in each document is observed, but the topics are hidden, or “latent”. We do not know the topics of each document, nor how terms defined the topics. That is, we do not know the probability distributions of Figures <a href="#fig-topicsoverdocuments">Figure&nbsp;<span>17.1</span></a> or <a href="#fig-topicsoverterms">Figure&nbsp;<span>17.2</span></a>. In a sense we are trying to reverse the document generation process—we have the terms and we would like to discover the topics.</p>
+<p>If the earlier process around how the documents were generated is assumed and we observe the terms in each document, then we can obtain estimates of the topics <span class="citation" data-cites="SteyversGriffiths2006">(<a href="99-references.html#ref-SteyversGriffiths2006" role="doc-biblioref">Steyvers and Griffiths 2006</a>)</span>. The outcomes of the LDA process are probability distributions and these define the topics. Each term will be given a probability of being a member of a particular topic, and each document will be given a probability of being about a particular topic.</p>
+<!-- That is, we are trying to calculate the posterior distribution of the topics given the terms observed in each document (@blei2012, p.7):  -->
+<!-- $$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N} | w_{1:D, 1:N}) = \frac{p\left(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}\right)}{p(w_{1:D, 1:N})}.$$ -->
+<p>The initial practical step when implementing LDA given a corpus of documents is usually to remove stop words. Although, as mentioned earlier, this is not necessary, and may be better done after the groups are created. We often also remove punctuation and capitalization. We then construct our document-feature matrix using <code>dfm()</code> from <code>quanteda</code> <span class="citation" data-cites="quanteda">(<a href="99-references.html#ref-quanteda" role="doc-biblioref">Benoit et al. 2018</a>)</span>.</p>
+<p>After the dataset is ready, <code>stm</code> <span class="citation" data-cites="stm">(<a href="99-references.html#ref-stm" role="doc-biblioref">Roberts, Stewart, and Tingley 2018</a>)</span> can be used to implement LDA and approximate the posterior. <!-- It does this using Gibbs sampling or the variational expectation-maximization algorithm. Following @SteyversGriffiths2006 and @Darling2011, the Gibbs sampling  --> The process attempts to find a topic for a particular term in a particular document, given the topics of all other terms for all other documents. Broadly, it does this by first assigning every term in every document to a random topic, specified by Dirichlet priors. <!-- with $\alpha = \frac{50}{K}$ and $\eta = 0.1$  (@SteyversGriffiths2006 recommends $\eta = 0.01$), where $\alpha$ refers to the distribution over topics and $\eta$ refers to the distribution over terms (@Grun2011, p.7).  --> It then selects a particular term in a particular document and assigns it to a new topic based on the conditional distribution where the topics for all other terms in all documents are taken as given. <span class="citation" data-cites="Grun2011">(<a href="99-references.html#ref-Grun2011" role="doc-biblioref">Grün and Hornik 2011, 6</a>)</span>: <!-- $$p(z_{d, n}=k | w_{1:D, 1:N}, z'_{d, n}) \propto \frac{\lambda'_{n\rightarrow k}+\eta}{\lambda'_{.\rightarrow k}+V\eta} \frac{\lambda'^{(d)}_{n\rightarrow k}+\alpha}{\lambda'^{(d)}_{-i}+K\alpha} $$ --> <!-- where $z'_{d, n}$ refers to all other topic assignments; $\lambda'_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$; $\lambda'_{.\rightarrow k}$ is a count of how many other times that any term has been assigned to topic $k$; $\lambda'^{(d)}_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$ in that particular document; and $\lambda'^{(d)}_{-i}$ is a count of how many other times that term has been assigned in that document.  --> Once this has been estimated, then estimates for the distribution of words into topics and topics into documents can be backed out.</p>
 <p>This conditional distribution assigns topics depending on how often a term has been assigned to that topic previously, and how common the topic is in that document <span class="citation" data-cites="SteyversGriffiths2006">(<a href="99-references.html#ref-SteyversGriffiths2006" role="doc-biblioref">Steyvers and Griffiths 2006</a>)</span>. The initial random allocation of topics means that the results of early passes through the corpus of document are poor, but given enough time the algorithm converges to an appropriate estimate.</p>
 <p>The choice of the number of topics, <em>k</em>, affects the results, and must be specified <em>a priori</em>. If there is a strong reason for a particular number, then this can be used. Otherwise, one way to choose an appropriate number is to use a test and training set process. Essentially, this means running the process on a variety of possible values for <em>k</em> and then picking an appropriate value that performs well.</p>
-<p>One weakness of the LDA method is that it considers a “bag of words” where the order of those words does not matter <span class="citation" data-cites="blei2012">(<a href="99-references.html#ref-blei2012" role="doc-biblioref">Blei 2012</a>)</span>. It is possible to extend the model to reduce the impact of the bag-of-words assumption and add conditionality to word order. Additionally, alternatives to the Dirichlet distribution can be used to extend the model to allow for correlation. For instance, in Hansard topics related the army may be expected to be more commonly found with topics related to the navy, but less commonly with topics related to banking.</p>
+<p>One weakness of the LDA method is that it considers a “bag of words” where the order of those words does not matter <span class="citation" data-cites="blei2012">(<a href="99-references.html#ref-blei2012" role="doc-biblioref">Blei 2012</a>)</span>. It is possible to extend the model to reduce the impact of the bag-of-words assumption and add conditionality to word order. Additionally, alternatives to the Dirichlet distribution can be used to extend the model to allow for correlation.</p>
+<section id="what-is-talked-about-in-canadian-parliament" class="level3" data-number="17.5.1">
+<h3 data-number="17.5.1" class="anchored" data-anchor-id="what-is-talked-about-in-canadian-parliament"><span class="header-section-number">17.5.1</span> What is talked about in Canadian parliament?</h3>
+<p>Following the example of the British, the written record of what is said in the Canadian parliament is called “Hansard”. It is not completely verbatim, but is very close. It is available in CSV format from <a href="https://www.lipad.ca">lipad</a>, which was constructed by <span class="citation" data-cites="BeelenEtc2017">Beelen et al. (<a href="99-references.html#ref-BeelenEtc2017" role="doc-biblioref">2017</a>)</span>.</p>
+<p>We are interested in what was talked about in the Canadian parliament in 2018. To get started we can download the entire corpus from <a href="https://www.lipad.ca/data/">here</a>, and then discard all of the years apart from 2018. If the datasets are in a folder called “2018”, we can use <code>read_csv()</code> to read and combine all the CSVs.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>files_of_interest <span class="ot">&lt;-</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir_ls</span>(<span class="at">path =</span> <span class="st">"2018/"</span>,</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">glob =</span> <span class="st">"*.csv"</span>,</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">recurse =</span> <span class="dv">2</span>)</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>hansard_canada_2018 <span class="ot">&lt;-</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>    files_of_interest,</span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">col_types =</span> <span class="fu">cols</span>(</span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">basepk =</span> <span class="fu">col_integer</span>(),</span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">hid =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">speechdate =</span> <span class="fu">col_date</span>(),</span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">pid =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">opid =</span> <span class="fu">col_integer</span>(),</span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">speakeroldname =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">speakerposition =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">maintopic =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">subtopic =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">subsubtopic =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">speechtext =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a>      <span class="at">speakerparty =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a>      <span class="at">speakerriding =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a>      <span class="at">speakername =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>      <span class="at">speakerurl =</span> <span class="fu">col_character</span>()</span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">col_select =</span> <span class="fu">c</span>(</span>
+<span id="cb39-30"><a href="#cb39-30" aria-hidden="true" tabindex="-1"></a>      basepk,</span>
+<span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a>      speechdate,</span>
+<span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a>      speechtext,</span>
+<span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a>      speakername,</span>
+<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a>      speakerparty,</span>
+<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a>      speakerriding</span>
+<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb39-38"><a href="#cb39-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(speakername))</span>
+<span id="cb39-39"><a href="#cb39-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-40"><a href="#cb39-40" aria-hidden="true" tabindex="-1"></a>hansard_canada_2018</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 33,105 × 6
+    basepk speechdate speechtext                         speak…¹ speak…² speak…³
+     &lt;int&gt; &lt;date&gt;     &lt;chr&gt;                              &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;  
+ 1 4732776 2018-01-29 "Mr. Speaker, I would like to wis… Julie … Liberal Toront…
+ 2 4732777 2018-01-29 "Mr. Speaker, I want to thank my … Matthe… New De… Beloei…
+ 3 4732778 2018-01-29 "Mr. Speaker, I am here today to … Stepha… Conser… Calgar…
+ 4 4732779 2018-01-29 "Resuming debate.\nThere being no… Anthon… Liberal Nipiss…
+ 5 4732780 2018-01-29 "Mr. Speaker, we are nearing the … Alain … Conser… Richmo…
+ 6 4732781 2018-01-29 "The question is on the motion. I… Anthon… Liberal Nipiss…
+ 7 4732782 2018-01-29 "Agreed.\n No."                    Some h… &lt;NA&gt;    &lt;NA&gt;   
+ 8 4732783 2018-01-29 "All those in favour of the motio… Anthon… Liberal Nipiss…
+ 9 4732784 2018-01-29 "Yea."                             Some h… &lt;NA&gt;    &lt;NA&gt;   
+10 4732785 2018-01-29 "All those opposed will please sa… Anthon… Liberal Nipiss…
+# … with 33,095 more rows, and abbreviated variable names ¹​speakername,
+#   ²​speakerparty, ³​speakerriding
+# ℹ Use `print(n = ...)` to see more rows</code></pre>
+</div>
+</div>
+<p>The use of <code>filter()</code> at the end is needed because sometime aspects such as “directions” and similar non-speech aspects, are included in the Hansard. For instance, if we do not include that <code>filter()</code> then the first line is “The House resumed from November 9, 2017, consideration of the motion.”. We can then construct a corpus.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>hansard_canada_2018_corpus <span class="ot">&lt;-</span> </span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corpus</span>(hansard_canada_2018, <span class="at">docid_field =</span> <span class="st">"basepk"</span>, <span class="at">text_field =</span> <span class="st">"speechtext"</span>)</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>hansard_canada_2018_corpus</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Corpus consisting of 33,105 documents and 4 docvars.
+4732776 :
+"Mr. Speaker, I would like to wish everyone in this place a h..."
+
+4732777 :
+"Mr. Speaker, I want to thank my colleague from Richmond—Arth..."
+
+4732778 :
+"Mr. Speaker, I am here today to discuss a motion that asks t..."
+
+4732779 :
+"Resuming debate. There being no further debate, the hon. mem..."
+
+4732780 :
+"Mr. Speaker, we are nearing the end of the discussion and de..."
+
+4732781 :
+"The question is on the motion. Is the pleasure of the House ..."
+
+[ reached max_ndoc ... 33,099 more documents ]</code></pre>
+</div>
+</div>
+<p>We use the tokens in the corpus to construct a document-feature matrix. To make our life a little easier, computationally, we remove any word that does not occur at least twice, and any word that does not occur in at least two documents.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>hansard_dfm <span class="ot">&lt;-</span> </span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  hansard_canada_2018_corpus <span class="sc">|&gt;</span> </span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tokens</span>(<span class="at">remove_punct =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">remove_symbols =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dfm</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dfm_trim</span>(<span class="at">min_termfreq =</span> <span class="dv">2</span>, <span class="at">min_docfreq =</span> <span class="dv">2</span>)</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>hansard_dfm</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Document-feature matrix of: 33,105 documents, 29,410 features (99.67% sparse) and 4 docvars.
+         features
+docs      mr speaker  i would like to wish everyone in this
+  4732776  1       1 15    12    2 61    1        1 54    5
+  4732777  1       1 31     7    5 42    0        1 36   23
+  4732778  1       1  6     6    2 47    0        0 34   10
+  4732779  0       0  0     0    0  1    0        0  0    0
+  4732780  1       1 23     6    4 26    0        1 23   10
+  4732781  0       0  0     0    0  1    0        0  0    0
+[ reached max_ndoc ... 33,099 more documents, reached max_nfeat ... 29,400 more features ]</code></pre>
+</div>
+</div>
+<p>At this point we can use <code>stm()</code> from <code>stm</code> <span class="citation" data-cites="stm">(<a href="99-references.html#ref-stm" role="doc-biblioref">Roberts, Stewart, and Tingley 2018</a>)</span> to implement an LDA model. We need to specify a document-feature matrix and the number of topics. Topic models are essentially just summaries. Instead of a document becoming a collection of words, they become a collection of topics with some probability associated with each topic. But because it is just providing a collection of words that tend to be used at similar times, rather than actual underlying meaning, we need to specify the number of topics that we are interested in. This decision will have a big impact, and it is important to consider a few different numbers.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stm)</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(beepr)</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>hansard_topics <span class="ot">&lt;-</span> <span class="fu">stm</span>(<span class="at">documents =</span> hansard_dfm, <span class="at">K =</span> <span class="dv">10</span>)</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a><span class="fu">beep</span>()</span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(hansard_topics,</span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>          <span class="at">file =</span> <span class="st">"hansard_topics.rda"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+
+</div>
+<p>This will take some time, likely 10-30 min, so it is useful to save the model when it is done using <code>write_rds()</code>, and use <code>beep</code> to get a notification when it is done. We could then read the results back in with <code>read_rds()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>hansard_topics <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"hansard_topics.rda"</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+
+</div>
+<p>We can look at the words in each topic with <code>labelTopics()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stm)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>stm v1.3.6 successfully loaded. See ?stm for help. 
+ Papers, resources, and other materials at structuraltopicmodel.com</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">labelTopics</span>(hansard_topics)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Topic 1 Top Words:
+     Highest Prob: the, minister, and, that, is, of, he 
+     FREX: minister's, ethics, oh, iran, yea, nay, iranian 
+     Lift: 332,000, 384.4, 79-year-old, 887, 9,000-kilometre-long, abyss, admiral 
+     Score: prime, he, veterans, minister, liberals, ethics, nay 
+Topic 2 Top Words:
+     Highest Prob: the, to, of, for, and, on, bill 
+     FREX: amendment, consent, offences, clause, amended, c-75, pursuant 
+     Lift: concur, concurred, extraterritoriality, kinetic, lesage, non-contentious, prosecutors 
+     Score: pursuant, bill, c-75, offences, criminal, amendment, deleting 
+Topic 3 Top Words:
+     Highest Prob: the, and, to, in, of, a, is 
+     FREX: energy, pipeline, climate, oil, environmental, gas, pollution 
+     Lift: 1.5-billion, 10-knot, 146,000, 232, 300-day, 867, aiib's 
+     Score: oil, energy, pipeline, pollution, climate, emissions, carbon 
+Topic 4 Top Words:
+     Highest Prob: the, is, in, and, that, a, for 
+     FREX: tax, taxes, debt, deficit, deficits, bargaining, havens 
+     Lift: havens, -30, 0.2, 0.23, 0.3, 0.6, 1.60 
+     Score: tax, carbon, taxes, budget, workers, housing, billion 
+Topic 5 Top Words:
+     Highest Prob: the, to, we, of, not, have, are 
+     FREX: not, they, actually, conservatives, doing, opposite, what 
+     Lift: non-sitting, blockage, booster, first-year, hoots, it'll, non-productive 
+     Score: we, they, not, the, what, have, conservatives 
+Topic 6 Top Words:
+     Highest Prob: to, the, and, of, in, a, for 
+     FREX: disabilities, mental, harassment, workplace, organ, disability, correctional 
+     Lift: c-65, divorce, smoking, 1-800, 1,000-a-month, 1.16, 10.9 
+     Score: violence, harassment, disabilities, mental, organ, correctional, health 
+Topic 7 Top Words:
+     Highest Prob: the, and, of, to, in, a, i 
+     FREX: latin, celebrate, filipino, sikh, church, anniversary, jewish 
+     Lift: andrews, celebrating, cup, descent, dodd, downie, fcawi 
+     Score: latin, filipino, sikh, celebrate, community, heritage, i 
+Topic 8 Top Words:
+     Highest Prob: that, is, in, a, this, and, would 
+     FREX: legislation, gun, piece, firearms, discussion, different, issue 
+     Lift: 1608, ammo, atts, consensus-building, hanson, housecleaning, impairing 
+     Score: that, bill, legislation, important, is, firearms, i 
+Topic 9 Top Words:
+     Highest Prob: i, it, was, about, be, a, my 
+     FREX: voter, talked, id, think, card, hear, bit 
+     Lift: 747, 854-page, 980,000, balloting, bookkeeping, canapux, clip 
+     Score: i, he, going, about, think, was, my 
+Topic 10 Top Words:
+     Highest Prob: the, and, to, of, canada, our, in 
+     FREX: freedoms, treaty, declaration, attestation, peoples, rights, petitioners 
+     Lift: 2018-2019, accede, accedes, bilaterally, cic, compacts, crewing 
+     Score: indigenous, rights, peoples, security, asylum, petitioners, petition </code></pre>
+</div>
+</div>
+</section>
 </section>
 <section id="word-embedding" class="level2" data-number="17.6">
 <h2 data-number="17.6" class="anchored" data-anchor-id="word-embedding"><span class="header-section-number">17.6</span> Word embedding</h2>
-<p>Add Python here?</p>
+<!-- Add Python here? -->
 <!-- ## Simulated example - categorising spending by merchant -->
 <!-- *Thank you to Josh Harris for discussions that led to this example. The code draws on Alexander and Leslie, 2019.* -->
 <!-- To begin with, let's pretend that we work for KOHO - a Toronto-based fintech. One important feature of the KOHO app is that it categorises your spending. For instance, buying a double-double from Tim Hortons could be categorised into "Eating out". This works because each merchant has a unique name, however that uniqueness means that the Tim Hortons at Sid Smith has a slightly different name to the Tim Hortons at Queen and John. Despite this slightly different name, we would like for them both to be classified as "Eating out". -->
@@ -1297,35 +1409,26 @@ Attaching package: 'Matrix'</code></pre>
 <div id="ref-thenakedtruth" class="csl-entry" role="doc-biblioentry">
 Amaka, Ofunne, and Amber Thomas. 2021. <span>“The Naked Truth: How the Names of 6,816 Complexion Products Can Reveal Bias in Beauty.”</span> <em>The Pudding</em>, March. <a href="https://pudding.cool/2021/03/foundation-names/">https://pudding.cool/2021/03/foundation-names/</a>.
 </div>
+<div id="ref-BeelenEtc2017" class="csl-entry" role="doc-biblioentry">
+Beelen, Kaspar, Timothy Alberdingk Thim, Christopher Cochrane, Kees Halvemaan, Graeme Hirst, Michael Kimmins, Sander Lijbrink, et al. 2017. <span>“Digitization of the Canadian Parliamentary Debates.”</span> <em>Canadian Journal of Political Science</em> 50 (3): 849–64.
+</div>
+<div id="ref-benoit2020text" class="csl-entry" role="doc-biblioentry">
+Benoit, Kenneth. 2020. <span>“Text as Data: An Overview.”</span> In <em>The SAGE Handbook of Research Methods in Political Science and International Relations</em>, edited by Luigi Curini and Robert Franzese, 461–97. London: SAGE Publishing. <a href="https://doi.org/10.4135/9781526486387.n29">https://doi.org/10.4135/9781526486387.n29</a>.
+</div>
 <div id="ref-quanteda" class="csl-entry" role="doc-biblioentry">
 Benoit, Kenneth, Kohei Watanabe, Haiyan Wang, Paul Nulty, Adam Obeng, Stefan Müller, and Akitaka Matsuo. 2018. <span>“Quanteda: An r Package for the Quantitative Analysis of Textual Data.”</span> <em>Journal of Open Source Software</em> 3 (30): 774. <a href="https://doi.org/10.21105/joss.00774">https://doi.org/10.21105/joss.00774</a>.
 </div>
 <div id="ref-blei2012" class="csl-entry" role="doc-biblioentry">
 Blei, David. 2012. <span>“Probabilistic Topic Models.”</span> <em>Communications of the ACM</em> 55 (4): 77–84. <a href="https://doi.org/10.1145/2133806.2133826">https://doi.org/10.1145/2133806.2133826</a>.
 </div>
-<div id="ref-BleiLafferty2009" class="csl-entry" role="doc-biblioentry">
-Blei, David, and John Lafferty. 2009. <span>“Topic Models.”</span> In <em>Text Mining</em>, edited by Ashok Srivastava and Mehran Sahami, 101–24. Chapman &amp; Hall/CRC. <a href="https://doi.org/10.1201/9781420059458">https://doi.org/10.1201/9781420059458</a>.
-</div>
 <div id="ref-Blei2003latent" class="csl-entry" role="doc-biblioentry">
 Blei, David, Andrew Ng, and Michael Jordan. 2003. <span>“Latent Dirichlet Allocation.”</span> <em>Journal of Machine Learning Research</em> 3 (Jan): 993–1022.
-</div>
-<div id="ref-janeeyre" class="csl-entry" role="doc-biblioentry">
-Brontë, Charlotte. 1847. <em>Jane Eyre</em>. <a href="https://www.gutenberg.org/files/1260/1260-h/1260-h.htm">https://www.gutenberg.org/files/1260/1260-h/1260-h.htm</a>.
-</div>
-<div id="ref-citealice" class="csl-entry" role="doc-biblioentry">
-Carroll, Lewis. 1865. <em>Alice’s Adventures in Wonderland</em>. Macmillan. <a href="https://www.gutenberg.org/files/11/11-h/11-h.htm">https://www.gutenberg.org/files/11/11-h/11-h.htm</a>.
-</div>
-<div id="ref-Darling2011" class="csl-entry" role="doc-biblioentry">
-Darling, William. 2011. <span>“A Theoretical and Practical Implementation Tutorial on Topic Modeling and Gibbs Sampling.”</span> In <em>Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics: Human Language Technologies</em>, 642–47.
 </div>
 <div id="ref-janitor" class="csl-entry" role="doc-biblioentry">
 Firke, Sam. 2020. <em><span class="nocase">janitor: Simple Tools for Examining and Cleaning Dirty Data</span></em>. <a href="https://CRAN.R-project.org/package=janitor">https://CRAN.R-project.org/package=janitor</a>.
 </div>
 <div id="ref-astrologer" class="csl-entry" role="doc-biblioentry">
 Gelfand, Sharla. 2022. <em>Astrologer: Chani Nicholas Weekly Horoscopes (2013-2017)</em>. <a href="http://github.com/sharlagelfand/astrologer">http://github.com/sharlagelfand/astrologer</a>.
-</div>
-<div id="ref-GriffithsSteyvers2004" class="csl-entry" role="doc-biblioentry">
-Griffiths, Thomas, and Mark Steyvers. 2004. <span>“Finding Scientific Topics.”</span> <em><span>PNAS</span></em> 101: 5228–35. <a href="https://doi.org/10.1073/pnas.0307752101">https://doi.org/10.1073/pnas.0307752101</a>.
 </div>
 <div id="ref-textasdata" class="csl-entry" role="doc-biblioentry">
 Grimmer, Justin, Margaret Roberts, and Brandon Stewart. 2022. <em><span class="nocase">Text As Data: A New Framework for Machine Learning and the Social Sciences</span></em>. New Jersey: Princeton University Press.
@@ -1362,9 +1465,6 @@ Schofield, Alexandra, Måns Magnusson, and David Mimno. 2017. <span>“Pulling O
 </div>
 <div id="ref-schofield2017understanding" class="csl-entry" role="doc-biblioentry">
 Schofield, Alexandra, Måns Magnusson, Laure Thompson, and David Mimno. 2017. <span>“Understanding Text Pre-Processing for Latent Dirichlet Allocation.”</span> In <em>ACL Workshop for Women in NLP (WiNLP)</em>.
-</div>
-<div id="ref-silge2018" class="csl-entry" role="doc-biblioentry">
-Silge, Julia. 2018. <span>“Text Classification with Tidy Data Principles,”</span> December. <a href="https://juliasilge.com/blog/tidy-text-classification/">https://juliasilge.com/blog/tidy-text-classification/</a>.
 </div>
 <div id="ref-SilgeRobinson2016" class="csl-entry" role="doc-biblioentry">
 Silge, Julia, and David Robinson. 2016. <span>“<span class="nocase">tidytext: Text Mining and Analysis Using Tidy Data Principles in R</span>.”</span> <em>The Journal of Open Source Software</em> 1 (3). <a href="https://doi.org/10.21105/joss.00037">https://doi.org/10.21105/joss.00037</a>.
