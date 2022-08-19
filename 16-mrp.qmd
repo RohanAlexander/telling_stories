@@ -94,13 +94,90 @@ The fundamental insight of multilevel modelling, is that a lot of the time, our 
 
 We distinguish between three settings: 1) Complete pooling where we treat every observation as being from the same group, which is what we have been doing to this point. 2) No pooling, where we treat every group separately, which might happen if we were to run a separate regression for each group. 3) Partial pooling, where we allow group membership to have some influence. As an example, consider we are interested in the relationship between GDP and inflation for each of the countries in the world. Complete pooling would have us put all the countries into the one group; no pooling would have us run separate regressions for each continent. We will illustrate the partial pooling approach.
 
-ADD EQUATIONS.
+In general there are two ways to go about: 1) enable varying intercepts, or 2) enable varying slopes. We consider only the first, but if this is of interest then *Statistical Rethinking* [@citemcelreath] and *Bayes Rules!* [@bayesrules] are the next natural steps. Let us consider a situation in which the probability of support for a particular political party depends on their age-group, and the state that they live in.
+
+$$
+\begin{aligned}
+\mbox{Pr}(y_i=1) & = \mbox{logit}^{-1}\left(\beta_0 + \beta_1 x_i + \beta_2 x_{i[j]} \right)\\
+\beta_0 & \sim \mbox{Normal}(0, 3)\\
+\beta_1 & \sim \mbox{Normal}(0, 3)\\
+\beta_2 & \sim \mbox{Normal}(0, \sigma_{j})\\
+\sigma_{j} & \sim \mbox{Exponential}(1)
+\end{aligned}
+$$
+
+We model this with the following notation "(1 | state)". 
 
 ```{r}
+#| warning: false
+#| message: false
 
+library(tidyverse)
+
+set.seed(853)
+
+political_support <-
+  tibble(
+    state = sample(1:50, size = 1000, replace = TRUE),
+    age_group = sample(c(1, 15, 30, 45), size = 1000, replace = TRUE),
+    noise = rnorm(n = 1000, mean = 0, sd = 10) |> round(),
+    supports = if_else(state + age_group + noise > 50, 1, 0)
+  )
+
+political_support
 ```
 
-We will often notice shrinkage in multilevel modelling. This is the situation in which estimates f
+```{r}
+#| eval: false
+#| echo: true
+#| message: false
+#| warning: false
+
+library(rstanarm)
+
+voter_preferences <-
+  stan_glmer(
+    supports ~ factor(age_group) + (1 | state),
+    data = political_support,
+    family = binomial(link = "logit"),
+    prior = normal(location = 0, scale = 3, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 3, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  voter_preferences,
+  file = "voter_preferences.rds"
+)
+```
+
+```{r}
+#| eval: false
+#| include: false
+#| message: false
+#| warning: false
+
+# INTERNAL
+saveRDS(
+  voter_preferences,
+  file = "outputs/model/voter_preferences.rds"
+)
+```
+
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+
+voter_preferences <-
+  readRDS(file = "outputs/model/voter_preferences.rds")
+```
+
+```{r}
+print(voter_preferences)
+```
+
 
 Multilevel modelling should be the default thought when you come to a new modelling situation [@citemcelreath, p. 400], especially one where inference is the primary concern. There is almost always some grouping that can be taken advantage of to provide more information to the model.
 
@@ -1004,9 +1081,9 @@ biden_support_by_state |>
 
 ### Exercises {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: **TBD**. Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
-2. *(Simulate)* Please further consider the scenario described and simulate the situation with every variable independent of each other.
-3. *(Acquire)* Please describe three possible sources of such a dataset.
+1. *(Plan)* Consider the following scenario: *Support for a political party is a binary (yes/no), and is related to age-group, gender, income-group, and highest education.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+2. *(Simulate)* Please further consider the scenario described and simulate the situation.
+3. *(Acquire)* Please describe one possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
 5. *(Communicate)* Please write two paragraphs about what you did.
 6. Please explain what MRP is to someone who has university-education, but who has not necessarily taken any statistics, so you will need to explain any technical terms that you use, and be clear about strengths and weaknesses (write at least three paragraphs).
