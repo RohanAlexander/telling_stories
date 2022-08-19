@@ -16,14 +16,39 @@ engine: knitr
 
 **Key packages and functions**
 
-- `glmnet` [@glmnet]
-  - `glmnet()`
-- `gutenbergr` [@gutenbergr]
-  - `gutenberg_download()`
-- `janitor` [@janitor]
+- Base R [@citeR]
+  - `unlist()`
+- `astrologer` [@astrologer]
+	- `horoscopes`
+- `beepr` [@beepr]
+	- `beep()`
+- `devtools` [@citeDevtools]
+	- `install_github()`
+- `fs` [@fs]
+	- `dir_ls()`
+- `quanteda` [@quanteda]
+	- `char_wordstem()`
+	- `corpus()`
+	- `dfm()`
+	- `dfm_remove()`
+	- `dfm_trim()`
+	- `dfm_wordstem()`
+	- `labelTopics()`
+	- `quanteda()`
+	- `stopwords()`
+	- `tokens()`
+	- `tokens_compound()`
+	- `tokens_ngrams()`
+- `stm` [@stm]
+	- `stm()`
 - `tidytext` [@SilgeRobinson2016]
-  - `bind_tf_idf()`
-  - `cast_dtm()`
+	- `bind_tf_idf()`
+	- `unnest_tokens()`
+- Core `tidyverse` [@tidyverse]
+  - `stringr` [@citestringr]
+	  - `str_replace_all()`
+	  - `str_to_lower()`
+
 
 ## Introduction
 
@@ -256,26 +281,22 @@ books_corpus |>
 Again, while this is a common step in using text as data, @schofield2017understanding find that in the context of LDA, which we cover later, stemming has little effect and there is little need to do it.
 
 
-
 <!-- ### Duplication -->
 
 <!-- Duplication is an  -->
 
 
 
-
-
-
-
 ## TF-IDF
 
-We will now use `astrologer` [@astrologer], which is a dataset of horoscopes to explore a real dataset. This package is not on CRAN, so we need to install it.
+We will now use `astrologer` [@astrologer], which is a dataset of horoscopes to explore a real dataset. This package is not on CRAN, so we need to install it using `devtools` [@citeDevtools].
 
 ```{r}
 #| echo: true
 #| eval: false
+library(devtools)
 
-devtools::install_github("sharlagelfand/astrologer")
+install_github("sharlagelfand/astrologer")
 ```
 
 We can then access the "horoscopes" dataset.
@@ -290,103 +311,69 @@ library(tidyverse)
 horoscopes
 ```
 
-There are four variables: "startdate", "zodiacsign", "horoscope", and "url". We are interested in the words used to distinguish the horoscope of each zodiac sign.
+There are four variables: "startdate", "zodiacsign", "horoscope", and "url" (note that URL is out-of-date because the website has been updated, for instance, the first one refers to [here](https://chaninicholas.com/horoscopes-week-january-5th/)). We are interested in the words that are used to distinguish the horoscope of each zodiac sign.
 
 ```{r}
 horoscopes |> 
   count(zodiacsign)
 ```
 
-We can see that there are 106 horoscopes for each zodiac sign. In this example we will tokenize by word, and as we are interested in distinguishing between zodiac signs, we will concatenate each of those 106 to construct a corpus of 12 documents, one for each zodiac sign.
+We can see that there are 106 horoscopes for each zodiac sign. In this example we first tokenize by word, and then create counts on the basis of zodiac sign only, not date. We use `tidytext` [@SilgeRobinson2016], as it is used extensively in @hvitfeldt2021supervised.
 
 ```{r}
-#| message: false
-#| warning: false
-#| eval: false
-#| echo: false
+library(tidytext)
 
-library(quanteda)
+horoscopes_by_word <- 
+  horoscopes |>
+  select(-startdate, -url) |> 
+  unnest_tokens(
+    output = word,
+    input = horoscope,
+    token = "words"
+  )
 
-horoscope_corpus <- 
-  horoscopes |> 
+horoscopes_counts_by_word <-
+  horoscopes_by_word |>
+  count(zodiacsign, word, sort = TRUE)
+```
+
+We can see that the most popular words appear to be similar for the different zodiacs. At this point, we could use the data in a variety of ways. We might be interested to know which words characterize each group---that is to say, which words are commonly used only in each group. We can do that by first looking at a word's term frequency (TF), which is how many times a word is used in the horoscopes for each zodiac sign. The issue is that there are a lot of words that are commonly used regardless of context. As such, we may also like to look at the inverse document frequency (IDF) in which we "penalize" words that occur in the horoscopes for many zodiac sign. A word that occurs in the horoscopes of many zodiac signs would have a lower IDF than a word that only occurs in the horoscopes of one. The term frequency–inverse document frequency (tf-idf) is then the product of these.
+
+We can create this value using `bind_tf_idf()` from `tidytext`. It will create new variables for each of these measures.
+
+```{r}
+horoscopes_counts_by_word_tf_idf <-
+  horoscopes_counts_by_word |>
+  bind_tf_idf(
+    term = word,
+    document = zodiacsign,
+    n = n
+  ) |> 
+  arrange(-tf_idf)
+
+horoscopes_counts_by_word_tf_idf
+```
+
+In @tbl-zodiac we look at the words that distinguish the horoscopes of each zodiac sign. The first thing to notice is that some of them have their own zodiac sign. On the one hand, there is an argument for removing this, but on the other hand, the fact that it does not happen for all of them is perhaps informative of the nature of the horoscopes for each sign.
+
+```{r}
+#| label: tbl-zodiac
+#| tbl-cap: "Most common words in horoscopes that are unique to a particular Zodiac sign"
+
+horoscopes_counts_by_word_tf_idf |>
+  group_by(zodiacsign) |>
+  slice(1:10) |> 
+  select(zodiacsign, word) |> 
   group_by(zodiacsign) |> 
-  summarise(all = paste0(horoscope, collapse = "; ")) |> 
-  corpus(docid_field = "zodiacsign", 
-         text_field = "all")
-
-horoscope_corpus
-
-horoscope_dfm <- 
-  horoscope_corpus |> 
-  tokens() |> 
-  dfm()
-
-horoscope_dfm
+  summarise(all = paste0(word, collapse = "; ")) |> 
+  knitr::kable(
+    col.names = c(
+      "Zodiac sign",
+      "Most common words unique to that sign"
+    ),
+    booktabs = TRUE
+  )
 ```
-
-```{r}
-#| eval: false
-#| echo: false
-
-library(quanteda.corpora)
-
-tstat_freq <- textstat_frequency(dfmat_tweets, n = 5, groups = lang)
-head(tstat_freq, 20)
-
-head(dfm_tfidf(horoscope_dfm))[,1:5]
-
-library(quanteda.textstats)
-sdf <- 
-  textstat_frequency(horoscope_dfm,
-                          groups = docs)
-
-tstat_freq <- textstat_frequency(dfmat_tweets, n = 5, groups = lang)
-```
-
-
-
-
-
-<!-- We now want to count the number of times each word is used by each of the lightness classifications. -->
-
-<!-- ```{r} -->
-<!-- makeup_by_words <- -->
-<!--   makeup_by_words |> -->
-<!--   count(lightness_above_half, word, sort = TRUE) -->
-
-<!-- makeup_by_words |> -->
-<!--   filter(lightness_above_half == "Yes") |> -->
-<!--   slice(1:5) -->
-
-<!-- makeup_by_words |> -->
-<!--   filter(lightness_above_half == "No") |> -->
-<!--   slice(1:5) -->
-<!-- ``` -->
-
-<!-- We can see that the most popular words appear to be similar between the two categories. At this point, we could use the data in a variety of ways. We might be interested to know which words characterize each group---that is to say, which words are commonly used only in each group. We can do that by first looking at a word's term frequency (tf), which is how many times a word is used in the product name. The issue is that there are a lot of words that are commonly used regardless of context. As such, we may also like to look at the inverse document frequency (idf) in which we "penalize" words that occur in both groups. For instance, we have seen that "foundation" occurs in both products with high and low lightness values. And so, its idf would be lower than another word which only occurred in products that did not have a lightness value above half. The term frequency–inverse document frequency (tf-idf) is then the product of these. -->
-
-<!-- We can create this value using `bind_tf_idf()` from `tidytext`. It will create a bunch of new columns, one for each word and star combination. -->
-
-<!-- ```{r} -->
-<!-- makeup_by_words_tf_idf <- -->
-<!--   makeup_by_words |> -->
-<!--   bind_tf_idf( -->
-<!--     term = word, -->
-<!--     document = lightness_above_half, -->
-<!--     n = n -->
-<!--   ) |> -->
-<!--   arrange(-tf_idf) -->
-
-<!-- makeup_by_words_tf_idf -->
-<!-- ``` -->
-
-
-<!-- ```{r} -->
-<!-- makeup_by_words_tf_idf |> -->
-<!--   group_by(lightness_above_half) |> -->
-<!--   slice(1:5) -->
-<!-- ``` -->
-
 
 
 ## Lasso regression
@@ -733,7 +720,7 @@ By way of backgroud, the Dirichlet distribution is a variation of the beta distr
 
 <!-- Based on this document generation process the analysis problem, discussed in the next section, is to compute a posterior over $\beta_{1:K}$ and $\theta_{1:D}$, given $w_{1:D, 1:N}$. This is intractable directly, but can be approximated [@GriffithsSteyvers2004; @blei2012]. -->
 
-After the documents are created, they are all that we have to analyze. The term usage in each document is observed, but the topics are hidden, or "latent". We do not know the topics of each document, nor how terms defined the topics. That is, we do not know the probability distributions of Figures @fig-topicsoverdocuments or @fig-topicsoverterms. In a sense we are trying to reverse the document generation process---we have the terms and we would like to discover the topics.
+After the documents are created, they are all that we have to analyze. The term usage in each document is observed, but the topics are hidden, or "latent". We do not know the topics of each document, nor how terms defined the topics. That is, we do not know the probability distributions of @fig-topicsoverdocuments or @fig-topicsoverterms. In a sense we are trying to reverse the document generation process---we have the terms and we would like to discover the topics.
 
 If the earlier process around how the documents were generated is assumed and we observe the terms in each document, then we can obtain estimates of the topics [@SteyversGriffiths2006]. The outcomes of the LDA process are probability distributions and these define the topics. Each term will be given a probability of being a member of a particular topic, and each document will be given a probability of being about a particular topic. 
 
@@ -876,7 +863,8 @@ hansard_dfm <-
   tokens(remove_punct = TRUE,
          remove_symbols = TRUE) |> 
   dfm() |> 
-  dfm_trim(min_termfreq = 2, min_docfreq = 2)
+  dfm_trim(min_termfreq = 2, min_docfreq = 2) |> 
+  dfm_remove(stopwords(source = "snowball"))
 
 hansard_dfm
 ```
@@ -914,7 +902,7 @@ write_rds(hansard_topics,
           file = "outputs/hansard_topics.rda")
 ```
 
-This will take some time, likely 10-30 min, so it is useful to save the model when it is done using `write_rds()`, and use `beep` to get a notification when it is done. We could then read the results back in with `read_rds()`.
+This will take some time, likely 15-30 min, so it is useful to save the model when it is done using `write_rds()`, and use `beep` to get a notification when it is done. We could then read the results back in with `read_rds()`.
 
 ```{r}
 #| echo: true
@@ -950,7 +938,7 @@ labelTopics(hansard_topics)
 
 
 
-## Word embedding
+<!-- ## Word embeddings -->
 
 <!-- Add Python here? -->
 
@@ -1052,14 +1040,13 @@ labelTopics(hansard_topics)
 
 ### Exercises {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: **TBD**. Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
-2. *(Simulate)* Please further consider the scenario described and simulate the situation with every variable independent of each other.
-3. *(Acquire)* Please describe three possible sources of such a dataset.
+1. *(Plan)* Consider the following scenario: *You run a news website and are trying to understand whether to allow anonymous comments. You decide to do an A/B test, where we will keep everything the same, but only allow anonymous comments on one version of the site. All you will have to decide is the text data that you obtain from the test.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+2. *(Simulate)* Please further consider the scenario described and simulate the situation.
+3. *(Acquire)* Please describe one possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
 5. *(Communicate)* Please write two paragraphs about what you did.
 
 
 ### Tutorial {.unnumbered}
 
-Consider a situation where we run a news website and are trying to understand whether to allow anonymous comments. We decide to do an A/B test, where we will keep everything the same, but only allow anonymous comments on one version of the site. Please simulate some text data that we may obtain from our test. And then build a model that could test whether there is a difference between the situations. 
-
+Please follow the code of @hvitfeldt2021supervised in *Supervised Machine Learning for Text Analysis in R*, Chapter 5.2 "Understand word embeddings by finding them yourself", freely available [here](https://smltar.com/embeddings.html), to implement your own word embeddings for one year's worth of data from [Lipad](https://www.lipad.ca).
