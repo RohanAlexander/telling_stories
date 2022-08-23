@@ -181,6 +181,159 @@ print(voter_preferences)
 
 Multilevel modelling should be the default thought when you come to a new modelling situation [@citemcelreath, p. 400], especially one where inference is the primary concern. There is almost always some grouping that can be taken advantage of to provide more information to the model.
 
+<!-- ### Austen, Brontë, Dickens, and Shakespeare -->
+
+<!-- As an example of Poisson regression, we could consider data from Project Gutenburg on the length of books by two different authors: Jane Austen, Charlotte Brontë, Charles Dickens, and William Shakespeare. We would expect that Austen, as she wrote books, will have longer books, than Shakespeare, as he wrote plays. -->
+
+<!-- ```{r} -->
+<!-- #| eval: false -->
+<!-- #| echo: true -->
+
+<!-- library(gutenbergr) -->
+
+<!-- dups_and_letters_shakespeare <- -->
+<!--   c( -->
+<!--     2270, 4774, 5137, 9077, 10606, 12578, 22791, 23041,  -->
+<!--     23042, 23043, 23044, 23045, 23046, 28334, 45128, -->
+<!--     47518, 47715, 47960, 49007, 49008, 49297, 50095, 50559 -->
+<!--   ) -->
+
+<!-- dups_and_letters_bronte <- c(31100, 42078) -->
+
+<!-- dups_and_letters_dickens <- -->
+<!--   c( -->
+<!--     25852, 25853, 25854, 30368, 32241, 35536, -->
+<!--     37121, 40723, 42232, 43111, 43207, 46675, -->
+<!--     47529, 47530, 47531, 47534, 47535, 49927, 50334 -->
+<!--   ) -->
+
+<!-- books <- -->
+<!--   gutenberg_works( -->
+<!--     author %in% c("Austen, Jane", -->
+<!--                   "Shakespeare, William", -->
+<!--                   "Brontë, Charlotte"), -->
+<!--     !gutenberg_id %in% c( -->
+<!--       dups_and_letters_shakespeare, -->
+<!--       dups_and_letters_bronte, -->
+<!--       dups_and_letters_dickens -->
+<!--     ) -->
+<!--   ) |> -->
+<!--   gutenberg_download(meta_fields = c("title", "author"), -->
+<!--                      mirror = "https://gutenberg.pglaf.org/") -->
+
+<!-- write_csv(books, "books.csv") -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| eval: false -->
+<!-- #| echo: false -->
+
+<!-- # INTERNAL -->
+
+<!-- write_csv(books, "dont_push/books.csv") -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| eval: true -->
+<!-- #| echo: false -->
+
+<!-- # INTERNAL -->
+
+<!-- books <- read_csv( -->
+<!--   "dont_push/books.csv", -->
+<!--   col_types = cols( -->
+<!--     gutenberg_id = col_integer(), -->
+<!--     text = col_character(), -->
+<!--     title = col_character(), -->
+<!--     author = col_character() -->
+<!--   ) -->
+<!-- ) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| eval: false -->
+<!-- #| echo: true -->
+
+<!-- books <- read_csv( -->
+<!--   "books.csv", -->
+<!--   col_types = cols( -->
+<!--     gutenberg_id = col_integer(), -->
+<!--     text = col_character(), -->
+<!--     title = col_character(), -->
+<!--     author = col_character() -->
+<!--   ) -->
+<!-- ) -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- lines_by_author_work <- -->
+<!--   books |> -->
+<!--   group_by(author, title) |> -->
+<!--   summarise(number_of_lines = n()) -->
+
+<!-- lines_by_author_work -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| echo: true -->
+<!-- #| eval: false -->
+
+<!-- author_lines_rstanarm <- -->
+<!--   stan_glm( -->
+<!--     number_of_lines ~ author, -->
+<!--     data = lines_by_author_work, -->
+<!--     family = poisson(link = "log"), -->
+<!--     prior = normal(location = 0, scale = 0.5, autoscale = TRUE), -->
+<!--     prior_intercept = normal(location = 0, scale = 0.5, autoscale = TRUE), -->
+<!--     seed = 853 -->
+<!--   ) -->
+
+<!-- saveRDS( -->
+<!--   author_lines_rstanarm, -->
+<!--   file = "author_lines_rstanarm.rds" -->
+<!-- ) -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- #| echo: false -->
+<!-- #| eval: false -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+
+<!-- # INTERNAL -->
+<!-- saveRDS( -->
+<!--   author_lines_rstanarm, -->
+<!--   file = "outputs/model/author_lines_rstanarm.rds" -->
+<!-- ) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| eval: true -->
+<!-- #| echo: false -->
+<!-- #| warning: false -->
+<!-- #| message: false -->
+
+<!-- library(rstanarm) -->
+
+<!-- author_lines_rstanarm <- -->
+<!--   readRDS(file = "outputs/model/author_lines_rstanarm.rds") -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- #| label: tbl-modelsummaryaustenshakes -->
+<!-- #| tbl-cap: "Explaining whether Austen or Shakespeare wrote a book based on the number of lines" -->
+<!-- #| warning: false -->
+
+<!-- modelsummary( -->
+<!--   author_lines_rstanarm, -->
+<!--   statistic = "conf.int" -->
+<!-- ) -->
+<!-- ``` -->
+
+
 
 ## Simulation
 
