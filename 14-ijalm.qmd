@@ -107,10 +107,10 @@ For ease of next steps after this book, our notation for probability distributio
 
 ## Simple linear regression
 
-When we are interested in the relationship between two continuous variables, say $y$ and $x$, we can use simple linear regression. This is based on the Normal, also "Gaussian", distribution. The shape of the Normal distribution is determined by two parameters, the mean, $\mu$, and the standard deviation, $\sigma$: 
+When we are interested in the relationship between two continuous variables, say $y$ and $x$, we can use simple linear regression. This is based on the Normal, also "Gaussian", distribution. The shape of the Normal distribution is determined by two parameters, the mean, $\mu$, and the standard deviation, $\sigma$ [@pitman, p. 94]: 
 
 $$y = \frac{1}{\sqrt{2\pi\sigma}}e^{-\frac{1}{2}z^2},$$
-where $z = (x - \mu)/\sigma$ is the difference between the mean, $\mu$, and $x$, in terms of the standard deviation [@pitman, p. 94].
+where $z = (x - \mu)/\sigma$ is the difference between the mean, $\mu$, and $x$, in terms of the standard deviation.
 
 As introduced in @sec-r-essentials, we use `rnorm()` to simulate data from the Normal distribution. 
 
@@ -216,9 +216,9 @@ normal_takes_shape |>
 When we use simple linear regression, we assume that our relationship is characterized by the variables and the parameters. If we have two variables, $Y$ and $X$, then we could characterize a linear relationship between these as [@islr, p. 61]:
 $$Y \approx \beta_0 + \beta_1 X.$$
 
-There are two coefficients, also referred to as "parameters": the "intercept", $\beta_0$, and the "slope", $\beta_1$. We are saying that $Y$ will have some value, $\beta_0$, even when $X$ is 0, and that $Y$ will change by $\beta_1$ units for every one unit change in $X$. The language that we use is that "X is being regressed on Y". We may then take this relationship to the data that we have, in order to estimate these coefficients, for the particular data that we have.
+There are two coefficients, also referred to as "parameters": the "intercept", $\beta_0$, and the "slope", $\beta_1$. We are saying that $Y$ will have some value, $\beta_0$, even when $X$ is 0, and that $Y$ will change by $\beta_1$ units for every one unit change in $X$. We may then take this relationship to the data that we have, in order to estimate these coefficients, for the particular data that we have.
 
-To make this example concrete, we will simulate some data and then discuss it in that context. For instance, we could consider the time it takes someone to run five kilometers, compared with the time it takes them to run a marathon (@fig-fivekmvsmarathon). We impute a relationship of 8.4, as that is roughly the ratio between the distance of a marathon and a five-kilometer race.
+To make this example concrete, we will simulate some data and then discuss it in that context. For instance, we could consider the time it takes someone to run five kilometers, compared with the time it takes them to run a marathon (@fig-fivekmvsmarathon-1). We impute a relationship of 8.4, as that is roughly the ratio between the distance of a marathon and a five-kilometer race. Note that it is the noise that is normally distributed, not the variables.
 
 ```{r}
 #| eval: true
@@ -256,13 +256,16 @@ simulated_running_data
 
 
 ```{r}
+#| echo: true
 #| eval: true
-#| fig-cap: "Simulated data of the relationship between the time to run five kilometers and a marathon"
-#| include: true
-#| label: fig-fivekmvsmarathon
 #| message: false
 #| warning: false
+#| label: fig-fivekmvsmarathon
+#| fig-cap: "Simulated data of the relationship between the time to run five kilometers and a marathon"
+#| fig-subcap: ["Distribution of data", "With one 'linear best-fit' line"]
+#| layout-ncol: 2
 
+base_simulated_running_data <- 
 simulated_running_data |>
   ggplot(aes(x = five_km_time, y = marathon_time)) +
   geom_point() +
@@ -271,6 +274,20 @@ simulated_running_data |>
     y = "Marathon time (minutes)"
   ) +
   theme_classic()
+
+base_simulated_running_data
+
+base_and_fit_simulated_running_data <- 
+  base_simulated_running_data +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "black",
+    linetype = "dashed",
+    formula = "y ~ x"
+  )
+
+base_and_fit_simulated_running_data
 ```
 
 In this simulated example, we know what $\beta_0$ and $\beta_1$ are. But our challenge is to see if we can use only the data, and simple linear regression, to recover them. That is, can we use $x$, which is the five-kilometer time, to produce estimates of $y$, which is the marathon time, and which we will put a hat on to denote our estimate [@islr, p. 61]:
@@ -285,32 +302,7 @@ $$e_i = y_i - \hat{y}_i.$$
 
 To compute the residual sum of squares (RSS), we sum across all the points, taking the square to account for negative differences [@islr, p. 62]:
 $$\mbox{RSS} = e^2_1+ e^2_2 +\dots + e^2_n.$$
-This results in one "linear best-fit" line (@fig-fivekmvsmarathonwithbestfit), but it is worth reflecting on all of the assumptions and decisions that it took to get us to this point.
-
-```{r}
-#| eval: true
-#| fig-cap: "Simulated data of the relationship between the time to run five kilometers and a marathon"
-#| include: true
-#| label: fig-fivekmvsmarathonwithbestfit
-#| message: false
-#| warning: false
-
-simulated_running_data |>
-  ggplot(aes(x = five_km_time, y = marathon_time)) +
-  geom_point() +
-  geom_smooth(
-    method = "lm",
-    se = FALSE,
-    color = "black",
-    linetype = "dashed",
-    formula = "y ~ x"
-  ) +
-  labs(
-    x = "Five-kilometer time (minutes)",
-    y = "Marathon time (minutes)"
-  ) +
-  theme_classic()
-```
+This results in one "linear best-fit" line (@fig-fivekmvsmarathon-2), but it is worth reflecting on all of the assumptions and decisions that it took to get us to this point.
 
 Underpinning our use of simple linear regression is a belief that there is some "true" relationship between $X$ and $Y$, that is [@islr, p. 62]: 
 
@@ -380,7 +372,7 @@ simulated_running_data
 #| message: false
 #| warning: false
 #| label: fig-fivekmvsmarathonresids
-#| layout-ncol: 3
+#| layout-ncol: 2
 #| fig-cap: "Residuals from the simple linear regression with simulated data on the time someone takes to run five kilometers and a marathon"
 #| fig-subcap: ["Distribution of residuals","Residuals by order", "Comparing the estimated time with the actual time"]
 
@@ -969,7 +961,7 @@ Linear regression is a useful way to come to better understand our data. But it 
 
 Logistic regression, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1. Although the presence of a binary outcome variable may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation, or can be adjusted into it.
 
-The reason that we use logistic regression is that we will be modelling a probability and so it will be bounded between 0 and 1. Whereas with linear regression we may end up with values outside this. The foundation of logistic regression is the logit function:
+One reason to use logistic regression is that we will be modelling a probability and so it will be bounded between 0 and 1. Whereas with linear regression we may end up with values outside this. The foundation of logistic regression is the logit function:
 
 $$
 \mbox{logit}(x) = \log\left(\frac{x}{1-x}\right).
@@ -1656,16 +1648,12 @@ alberta_cod <-
   read_csv("inputs/alberta_COD.csv") |> 
   janitor::clean_names() |> 
   add_count(cause) |> 
-  filter(n == 20)
-
-mean_deaths <- mean(alberta_cod$total_deaths)
-var_deaths <- var(alberta_cod$total_deaths)
+  filter(n == 21) |> 
+  mutate(cause = str_trunc(cause, 15))
 
 alberta_cod |> 
   ggplot(aes(x = total_deaths, y= cause)) +
   geom_point(alpha = 0.5) +
-  geom_vline(xintercept = mean_deaths, linetype = "dashed", color = "#C64191") +
-  geom_vline(xintercept = var_deaths, linetype = "dashed", color = "#0ABAB5") +
   theme_minimal() +
   labs(
     x = "Number of deaths",
@@ -1673,7 +1661,37 @@ alberta_cod |>
   )
 ```
 
-One thing that we notice is that the mean, in pink, is quite different to the variance.
+One thing that we notice is that the mean, 665, is somewhat different to the variance, 227,152 (@tbl-ohboyalberta).
+
+
+```{r}
+#| echo: false
+#| eval: true
+#| label: tbl-ohboyalberta
+#| tbl-cap: "Summary statistics of the number of deaths, by cause, in Alberta"
+
+alberta_cod |>
+  summarise(
+    min = min(total_deaths),
+    mean = mean(total_deaths),
+    std_dev = sd(total_deaths),
+    variance = var(total_deaths),
+    max = max(total_deaths)
+  ) |>
+  knitr::kable(
+    col.names = c("Minimum",
+                  "Mean",
+                  "Std dev",
+                  "Variance",
+                  "Maximum"),
+    digits = 0,
+    format.args = list(big.mark = ",")
+  )
+```
+
+
+
+
 
 ```{r}
 #| echo: true
@@ -1690,9 +1708,6 @@ cause_of_death_alberta_poisson <-
     family = poisson(link = "log"),
     seed = 853
   )
-alberta_cod <- 
-  alberta_cod |> 
-  mutate(cause = as.factor(cause))
 
 cause_of_death_alberta_neg_binomial <-
   stan_glm(
@@ -1732,37 +1747,50 @@ cause_of_death_alberta_neg_binomial <-
   readRDS(file = "outputs/model/cause_of_death_alberta_neg_binomial.rds")
 ```
 
-
-
-
+We can compare our different models (@tbl-modelsummarypoissonvsnegbinomial) (if there is an error with `modelsummary::modelsummary()` for the negative binomial model, then it can sometimes be resolved by installing `broom.mixed`).
 
 ```{r}
+#| label: tbl-modelsummarypoissonvsnegbinomial
+#| tbl-cap: "Modelling the most prevelent cause of deaths in Alberta, 2001-2020"
+
+library(broom.mixed)
+
+modelsummary::modelsummary(
+  list(
+    "Posson" = cause_of_death_alberta_poisson,
+    "Negative binomial" = cause_of_death_alberta_neg_binomial
+  ),
+  statistic = NULL
+)
+```
+
+We could use posterior predictive checks to more clearly show that the negative binomial approach is a better choice for this circumstance (@fig-ppcheckpoissonvsbinomial).
+
+```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-ppcheckpoissonvsbinomial
+#| layout-ncol: 2
+#| fig-cap: "Comparing posterior prediction checks for Poisson and negative binomial models"
+#| fig-subcap: ["Poisson model", "Negative binomial model"]
+
 pp_check(cause_of_death_alberta_poisson)
 
 pp_check(cause_of_death_alberta_neg_binomial)
-
-poisson <- loo(cause_of_death_alberta_poisson, cores = 2)
-neg_binomial <- loo(cause_of_death_alberta_neg_binomial, cores = 2)
-
-loo_compare(poisson, neg_binomial)
 ```
 
 
 
-<!-- We can compare our different models (@tbl-modelsummarypoissonvsnegbinomial). -->
-
 <!-- ```{r} -->
-<!-- #| label: tbl-modelsummarypoissonvsnegbinomial -->
-<!-- #| tbl-cap: "Modelling the most prevelent cause of deaths in Alberta, 2001-2020" -->
+<!-- poisson <- loo(cause_of_death_alberta_poisson, cores = 2) -->
+<!-- neg_binomial <- loo(cause_of_death_alberta_neg_binomial, cores = 2) -->
 
-<!-- modelsummary::modelsummary( -->
-<!--   list( -->
-<!--     "Posson" = cause_of_death_alberta_poisson, -->
-<!--     "Negative binomial" = cause_of_death_alberta_neg_binomial -->
-<!--   ), -->
-<!--   statistic = "conf.int" -->
-<!-- ) -->
+<!-- loo_compare(poisson, neg_binomial) -->
 <!-- ``` -->
+
+
 
 
 
