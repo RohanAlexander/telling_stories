@@ -366,7 +366,9 @@ modelsummary::modelsummary(
 ```
 
 The top half of the table provides our estimated coefficients and standard errors. And the second half provides some useful diagnostics. 
-The intercept is the marathon time that we would expect with a five-kilometer time of 0 minutes. Hopefully this example illustrates the need to carefully interpret the intercept coefficient! The coefficient on five-kilometer run time shows how different individuals compare. When comparing the marathon times of individuals in our dataset whose five-kilometer run time differed by one minute, we would expect their marathon times to differ by about eight minutes. This makes sense seeing as a marathon is roughly that many times longer than a five-kilometer run.
+The intercept is the marathon time that we would expect with a five-kilometer time of 0 minutes. Hopefully this example illustrates the need to carefully interpret the intercept coefficient! 
+
+Following @gelmanhillvehtari2020 [p. 84] we recommend considering the coefficients as comparisons, rather than effects, and to use language that makes it clear these are comparisons, on average, that are based on one dataset. For instance, we may say that the coefficient on the five-kilometer run time shows how different individuals compare. When comparing the marathon times of individuals in our dataset whose five-kilometer run time differed by one minute, on average, we would expect their marathon times to differ by about eight minutes. This makes sense seeing as a marathon is roughly that many times longer than a five-kilometer run.
 
 We use `augment()` from `broom` [@broom] to add the fitted values and residuals to our original dataset. This allows us to plot the residuals (@fig-fivekmvsmarathonresids).
 
@@ -660,7 +662,7 @@ sim_run_data_train <- training(sim_run_data_split)
 sim_run_data_test <- testing(sim_run_data_split)
 ```
 
-When we look at the training and test datasets, we can see that we have placed most of our dataset into the training dataset. We will use that to estimate the parameters of our model (@tbl-modelsummarybayes). We have kept a small amount of it back, and we will use that to evaluate our model.
+When we look at the training and test datasets, we can see that we have placed most of our dataset into the training dataset. We will use that to estimate the parameters of our model. These are summarized in the first column of @tbl-modelsummarybayesbetter. We have kept a small amount of it back, and we will use that to evaluate our model.
 
 ```{r}
 sim_run_data_first_model_tidymodels <-
@@ -764,7 +766,7 @@ sim_run_data_first_model_rstanarm <-
   readRDS(file = "outputs/model/sim_run_data_first_model_rstanarm.rds")
 ```
 
-The estimation results (@tbl-modelsummarybayesbetter) indicate that the estimation is not quite what we expect. For instance, the comparison between individuals is estimated to be around three, which seems low given the ratio of five kilometer to marathon distance.
+The estimation results, which are in the second column of @tbl-modelsummarybayesbetter, indicate that the estimation is not quite what we expect. For instance, the comparison between individuals is estimated to be around three, which seems low given the ratio of five kilometer to marathon distance.
 
 The issue of picking priors is a challenging one and the subject of extensive study. For the purposes of this book, using the `rstanarm` defaults is fine. But even if they are just the default, priors should be explicitly specified in the model and included in the function. This is to make it clear to others what has been done. We can use `default_prior_intercept()` and `default_prior_coef()` to find the default priors in `rstanarm` and then explicitly include them in the model. 
 
@@ -865,7 +867,7 @@ updated_priors |>
   theme_classic()
 ```
 
-Additionally, `rstanarm` can help to improve the specified priors, by scaling the priors based on the data. Specify the prior that you think is reasonable and include it in the function, but also include "autoscale = TRUE", and `rstanarm` will adjust the scale. When we re-run our model with these updated priors and allowing auto-scaling we get much better results (@tbl-modelsummarybayesbetter).
+Additionally, `rstanarm` can help to improve the specified priors, by scaling the priors based on the data. Specify the prior that you think is reasonable and include it in the function, but also include "autoscale = TRUE", and `rstanarm` will adjust the scale. When we re-run our model with these updated priors and allowing auto-scaling we get much better results, which are in the third column of @tbl-modelsummarybayesbetter.
 
 ```{r}
 #| include: true
