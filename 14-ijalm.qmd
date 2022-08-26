@@ -1187,72 +1187,241 @@ modelsummary::modelsummary(
 
 ### US political support
 
+One area where logistic regression is often used is political polling, because in a lot of cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to 'support' or 'not support'.
+
+We can use the 2020 Cooperative Election Study (CES) [@cooperativeelectionstudyus], which is a long-standing annual survey of US political opinion. In 2020, there were 61,000 respondents who completed the post-election survey. While the sampling methodology, detailed in @guidetothe2020ces [p. 13], is not a perfect random sample and relies on matching, it is widely used and accepted approach that balances sampling and cost.
+
+We can access the CES using `get_dataframe_by_name()` from `dataverse` [@dataverse], which was an approach that was introduced in @sec-gather-data and @sec-store-and-share. We save the data that are of interest to us, and then refer to that saved dataset.
+
 ```{r}
 #| echo: true
 #| eval: false
 
-ces <- 
-  dataverse::get_dataframe_by_name(
+library(dataverse)
+
+ces2020 <-
+  get_dataframe_by_name(
     filename = "CES20_Common_OUTPUT_vv.csv",
-    dataset = "10.7910/DVN/E9N6PH", 
+    dataset = "10.7910/DVN/E9N6PH",
     server = "dataverse.harvard.edu",
     .f = readr::read_csv
-  )
+  ) |>
+  select(votereg, CC20_410, gender, educ)
 
-ces <- 
-  ces |> 
-  filter(votereg == 1,
-         CC20_410 %in% c(1, 2)) |> 
-  select(CC20_410, gender, educ)
-
-write_csv(ces, "inputs/data/ces2020.csv")
+write_csv(ces2020, "ces2020.csv")
 ```
 
+```{r}
+#| echo: false
+#| eval: false
+
+# INTERNAL
+
+write_csv(ces2020, "inputs/data/ces2020.csv")
+```
 
 ```{r}
-ces <- read_csv("inputs/data/ces2020.csv")
+#| echo: true
+#| eval: false
 
-ces <- 
-  ces |>
+ces2020 <- 
+  read_csv(
+  "ces2020.csv",
+  col_types =
+      cols(
+        "votereg" = col_integer(),
+        "CC20_410" = col_integer(),
+        "gender" = col_integer(),
+        "educ" = col_integer()
+      )
+  )
+
+ces2020
+```
+
+```{r}
+#| echo: false
+#| eval: true
+
+# INTERNAL
+
+ces2020 <- 
+  read_csv(
+  "inputs/data/ces2020.csv",
+  col_types =
+      cols(
+        "votereg" = col_integer(),
+        "CC20_410" = col_integer(),
+        "gender" = col_integer(),
+        "educ" = col_integer()
+      )
+  )
+
+ces2020
+```
+
+We only want respondents who are registered to vote, and we are only interested in those that voted for either Biden or Trump. So we can filter to only those respondents and then add more informative labels.
+
+```{r}
+ces2020 <-
+  ces2020 |>
+  filter(votereg == 1,
+         CC20_410 %in% c(1, 2)) |>
   mutate(
     voted_for = if_else(CC20_410 == 1, "Biden", "Trump"),
     voted_for = as_factor(voted_for),
     gender = if_else(gender == 1, "Male", "Female"),
-    educ = case_when(
+    education = case_when(
       educ == 1 ~ "No HS",
       educ == 2 ~ "High school graduate",
       educ == 3 ~ "Some college",
       educ == 4 ~ "2-year",
       educ == 5 ~ "4-year",
       educ == 6 ~ "Post-grad"
+    ),
+    education = factor(
+      education,
+      levels = c(
+        "No HS",
+        "High school graduate",
+        "Some college",
+        "2-year",
+        "4-year",
+        "Post-grad"
+      )
     )
-  ) |> 
-  select(voted_for, gender, educ)
+  ) |>
+  select(voted_for, gender, education)
 ```
+
+In the end we are left with 43,554 respondents (@fig-cesissogooditslikecheating). Gender of "female" and "male" is what is available from the CES.
+
+```{r}
+#| eval: true
+#| echo: true
+#| message: false
+#| warning: false
+#| fig-cap: "The distribution of presidential preferences, by gender, and highest education"
+#| label: fig-cesissogooditslikecheating
+
+ces2020 |> 
+  ggplot(aes(x = education, fill = voted_for)) +
+  stat_count(position = "dodge") +
+  facet_wrap(facets = vars(gender)) +
+  theme_minimal() +
+  labs(
+    x = "Highest education",
+    y = "Number of respondents",
+    fill = "Voted for"
+  ) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+```
+
+We are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. One approach is to use `tidymodels` to build a prediction-focused logistic regression model. 
 
 ```{r}
 library(tidymodels)
 
 set.seed(853)
 
-ces_split <- initial_split(ces, prop = 0.80)
-ces_train <- training(ces_split)
-ces_test <- testing(ces_split)
+ces2020_split <- initial_split(ces2020, prop = 0.80)
+ces2020_train <- training(ces2020_split)
+ces2020_test <- testing(ces2020_split)
 
 ces_tidymodels <-
   logistic_reg(mode = "classification") |>
   set_engine("glm") |>
-  fit(voted_for ~ gender + educ,
-      data = ces_train)
+  fit(voted_for ~ gender + education,
+      data = ces2020_train)
+
+ces_tidymodels
 ```
 
+And then evaluating it on the test set.
 
 ```{r}
 ces_tidymodels |>
-  predict(new_data = ces_test) |>
-  cbind(ces_test) |>
+  predict(new_data = ces2020_test) |>
+  cbind(ces2020_test) |>
   conf_mat(truth = voted_for, estimate = .pred_class)
 ```
+
+When we introduced `tidymodels`, we discussed the importance of randomly constructing training and test sets. We use the training dataset to estimate parameters, and then evaluate the model on the test set. It is natural to ask why should we be subject to the whims of randomness and whether we are making the most of our data. For instance, what if a good model is poorly evaluated because of some random inclusion in the test set? And what if we do not have a large test set?
+
+One commonly used resampling method that goes some way to addressing this is $k$-fold cross-validation. In this approach we create $k$ different samples from the dataset without replacement. We then fit the model to the first $k-1$ folds, and then evaluate it on the last fold. We do this $k$ times, once for every fold, such that every observation will be used for training  $k-1$ times and for testing once. The $k$-fold cross-validation estimate is then the average mean squared error [@islr, p. 181].
+
+We can use `vfold_cv()` from `tidymodels` to create, say, 10 folds.
+
+```{r}
+library(tidymodels)
+
+set.seed(853)
+
+ces2020_10_folds <- vfold_cv(ces2020, v = 10)
+
+ces2020_10_folds
+```
+
+And we could look at which observations are in each fold with `analysis()`.
+
+```{r}
+ces2020_10_folds$splits[[1]] |> analysis()
+ces2020_10_folds$splits[[2]] |> analysis()
+```
+
+Finally, we use `fit_resamples()` to fit our model across the different combinations of folds.
+
+```{r}
+ces2020_cross_validation <-
+  fit_resamples(
+    object = logistic_reg(mode = "classification") |> set_engine("glm"),
+    preprocessor = recipe(voted_for ~ gender + education,
+                          data = ces2020),
+    resamples = ces2020_10_folds,
+    metrics = metric_set(accuracy, roc_auc, sens, spec),
+    control = control_grid(save_pred = TRUE)
+  )
+
+ces2020_cross_validation
+```
+
+The average accuracy of our across the folds is 0.61, while the average sensitivity is 0.19 and the average specificity is 0.90.
+
+```{r}
+collect_metrics(ces2020_cross_validation)
+```
+
+```{r}
+add_predictions <- collect_predictions(ces2020_cross_validation)
+add_predictions
+```
+
+
+<!-- ```{r} -->
+<!-- add_predictions |>  -->
+<!--   ggplot(aes( -->
+<!--     x = education, -->
+<!--     y = .pred_Biden, -->
+<!--     color = voted_for -->
+<!--   )) + -->
+<!--   geom_jitter(alpha = 0.1, height = 0.1) + -->
+<!--   facet_wrap(facets = vars(gender)) + -->
+<!--   theme_minimal() + -->
+<!--   labs( -->
+<!--     x = "Highest education", -->
+<!--     y = "Number of respondents", -->
+<!--     fill = "Voted for" -->
+<!--   ) + -->
+<!--   coord_flip() + -->
+<!--   scale_color_brewer(palette = "Set1") + -->
+<!--   theme(legend.position = "bottom") -->
+<!-- ``` -->
+
+
+
+
 
 
 ## Poisson regression
@@ -1492,7 +1661,7 @@ summary(mfx)
 ```
 
 
-### Es in *Jane Eyre*
+### *Jane Eyre* letters
 
 Inspired by @edgeworth1885methods, who made counts of the dactyls in Virgil's Aeneid (the data are available with `HistData::Dactyl` from @HistData), we could say, create counts, of the number of times the letter "E" or "e", appears in the first 10 lines of each chapter in *Jane Eyre* by Charlotte Brontë using `gutenbergr` [@gutenbergr].
 
@@ -1679,7 +1848,7 @@ pp_check(jane_e_counts)
 ```
 
 
-### Negative binomial regression
+## Negative binomial regression
 
 One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion and should then use a close variant, negative binomial regression. But why are we going through all this trouble? Common practice, is to change from counts into a binary and then use logistic regression. The issue with this is that we are losing information when we group responses together. For this reason it may be worth going to the extra effort to consider more bespoke options such as these.
 
