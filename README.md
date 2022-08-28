@@ -11,6 +11,17 @@ This is a book about foundational data skills, tentatively titled *Telling Stori
 
 Removed the `gt` examples in Ch 6 because it doesn't seem to work with Quarto. In May they said there will be updates to gt coming to make it play nicely wiht Quarto PDFs, so can probably add this back in at some point. 
 
+### 28 August 2022
+
+Issue with the dataverse. So have commented out:
+
+library(jsonlite)
+
+politics_datasets <-
+  fromJSON("https://demo.dataverse.org/api/search?q=politics")
+  
+  
+
 ### Check
 
 - Check about installing tidyverse packages unnecessarily. And similarly, loading core tidyverse unnecessarily.

@@ -91,11 +91,11 @@ Your model does not care whether you validated your data, but you should. Validi
 
 SpaceX\index{SpaceX}, the US rocket company, uses cycles of 10 or 50 Hertz (equivalent to 0.1 and 0.02 seconds, respectively) to control their rockets. Each cycle, the inputs from sensors, such as temperature and pressure, are read, processed, and used to make a decision, such as whether to adjust some setting [@martinpopper]. We use a similar iterative approach of small adjustments for data cleaning and preparation\index{data cleaning and preparation}. Rather than trying to make everything perfect from the start, we get started, and iterate using a process of small, continuous, improvements.
 
-To a large extent, the role of data cleaning and preparation\index{data cleaning and preparation} is so great that the only people that understand a dataset, are those that who have cleaned it. Yet, the paradox of data cleaning is that often those that do the cleaning and preparation are those that have the least trust in the resulting dataset. At some point in every data science workflow, those doing the modelling should get their hands dirty with data cleaning. Even though few want to do it [@Sambasivan2021], it is a far more influential stage than modelling. To clean and prepare data is to make many decisions, some of which may have important effects on our results. For instance, @labelsiswrongs find the test sets of some popular datasets in computer science contain, on average, labels that are wrong in around three per cent of cases. This has the potential to result in incorrect conclusions.
+To a large extent, the role of data cleaning and preparation\index{data cleaning and preparation} is so great that the only people that understand a dataset, are those that who have cleaned it. Yet, the paradox of data cleaning is that often those that do the cleaning and preparation are those that have the least trust in the resulting dataset. At some point in every data science workflow, those doing the modelling should get their hands dirty with data cleaning. Even though few want to do it [@Sambasivan2021], it can be as influential as modelling. To clean and prepare data is to make many decisions, some of which may have important effects on our results. For instance, @labelsiswrongs find the test sets of some popular datasets in computer science contain, on average, labels that are wrong in around three per cent of cases. This has the potential to result in incorrect conclusions. Like Sam Rayburn wishing that Kennedy's cabinet despite their intelligence, had experience in the nitty-gritty, a data scientist needs to immerse themselves in the messy reality of their dataset.
 
-For a long time, data cleaning and preparation\index{data cleaning and preparation} was largely overlooked. We now realize that was a mistake. It has been difficult to trust results in disciplines that apply statistics for some time. The reproducibility crisis, which started in psychology but has now extended to many other fields in the physical and social sciences, brought to light issues such as p-value "hacking", researcher degrees of freedom, file-drawer issues, and even data and results fabrication [@gelman2013garden]. Steps are now being put in place to address these. But there has been relatively little focus on the data gathering, cleaning, and preparation aspects of applied statistics, despite evidence that decisions made during these steps greatly affect statistical results [@huntington2021influence]. In this chapter we focus on these issues.
+The reproducibility crisis, which started in psychology but has now extended to many other fields in the physical and social sciences, brought to light issues such as p-value "hacking", researcher degrees of freedom, file-drawer issues, and even data and results fabrication [@gelman2013garden]. Steps are now being put in place to address these. But there has been relatively little focus on the data gathering, cleaning, and preparation aspects of applied statistics, despite evidence that decisions made during these steps greatly affect statistical results [@huntington2021influence]. In this chapter we focus on these issues.
 
-While the statistical practices that underpin data science are themselves correct and robust when applied to simulated datasets, data science is not typically conducted with these types of datasets. For instance, data scientists are interested in "messy, unfiltered, and possibly unclean data---tainted by heteroskedasticity, complex dependence and missingness patterns---that until recently were avoided in polite conversations between more traditional statisticians" [@craiu2019hiring]. Big data does not resolve this issue and may even exacerbate it. For instance, population inference based on larger amounts of poor-quality data will just lead to more confidently wrong conclusions [@meng2018statistical]. The problems that are found in much of applied statistics research are not necessarily associated with researcher quality, or their biases [@silberzahn2018many]. Instead, they are a result of the environment within which data science is conducted. This chapter provides an approach and tools to explicitly think about this work.
+While the statistical practices that underpin data science are themselves correct and robust when applied to simulated datasets, data science is not typically conducted with data that follow the assumptions underlying the models commonly that are fit. For instance, data scientists are interested in "messy, unfiltered, and possibly unclean data---tainted by heteroskedasticity, complex dependence and missingness patterns---that until recently were avoided in polite conversations between more traditional statisticians" [@craiu2019hiring]. Big data does not resolve this issue and may even exacerbate it. For instance, population inference based on larger amounts of poor-quality data, without adjusting for data issues, will just lead to more confidently wrong conclusions [@meng2018statistical]. The problems that are found in much of applied statistics research are not necessarily associated with researcher quality, or their biases [@silberzahn2018many]. Instead, they are a result of the context within which data science is conducted. This chapter provides an approach and tools to explicitly think about this work.
 
 @gelman2020most writing about the most important statistical ideas of the past 50 years say that each of them enabled new ways of thinking about data analysis and they brought into the tent of statistics, approaches that "had been considered more a matter of taste or philosophy". The focus on data cleaning and preparation in this chapter is analogous, insofar, as it represents a codification, or bringing inside the tent, of aspects that are typically, incorrectly, considered those of taste rather than core statistical concerns.
 
@@ -124,6 +124,8 @@ All data regardless of whether they were obtained from farming, gathering, or hu
 The first step is to save the raw data into a separate, local, folder. It is important to save this raw data, to the extent that is possible, because it establishes the foundation for reproducibility [@wilsongoodenough]. If we are obtaining our data from a third-party, such as a government website, then we have no control over whether they will continue to host that data, update it, or change the address at which it is available. Saving a local copy also reduces the burden that we impose on their servers.
 
 Having locally saved the raw data we must maintain a copy of it in that state, and not modify it. As we begin to clean and prepare it, we instead create a copy of the dataset. Maintaining the initial, raw, state of the dataset, and using scripts to create the dataset that we are interested in analyzing, ensures that our entire workflow is reproducible. 
+
+We may not always be allowed to share that local copy, but we can almost always create it. If we are not even able to create a local copy of the raw data, then it may be that the best we can do is save a copy of as close to the raw data as is possible, create a simulated version of the raw data that conveys the main features, and include detailed access instructions in the README, 
 
 
 ### Begin with an end in mind
@@ -349,9 +351,9 @@ expect_equal(unique(cleaned_data$names), "Patricia")
 
 If the tests pass then nothing happens, but if the tests fail then the script will stop.
 
-What do we test? It is a difficult problem, and we detail a range of more-specific tests in the next section. But broadly we test what we have, against what we expect. The engineers working on the software for the Apollo\index{Apollo} program in the 1960s initially considered writing tests to be "busy work" [@digitalapollo, p. 170]. But they eventually came to realize that NASA would not have faith that software could be used to send men to the moon unless it was accompanied by a comprehensive suite of tests.  And it is the same for data science. 
+What do we test? It is a difficult problem, and we detail a range of more-specific tests in the next section. But broadly we test what we have, against what we expect. The engineers working on the software for the Apollo\index{Apollo} program in the 1960s initially considered writing tests to be "busy work" [@digitalapollo, p. 170]. But they eventually came to realize that NASA would not have faith that software could be used to send men to the moon unless it was accompanied by a comprehensive suite of tests.  And it is the same for data science, even if we are not necessarily sending people to the moon. 
 
-Start with tests for validity\index{validity}. These will typically be aspects such as the class of the variables, and then their unique values. For instance, if we were using a recent dataset then columns that are years could be tested to ensure that all elements have four digits and start with a "2". @peterbaumgartnertesting describes this as tests on the schema. After that turn to checks of internal consistency\index{internal consistency}. For instance, if there is a column for different responses, then check that the sum of those is equal to the total column. Finally, turn to tests for external consistency\index{external consistency}. Here we want to use outside information to inform our tests. For instance, if we had a column of, say, NMR for Germany (this concept was introduced in @sec-fire-hose), then we could look at the estimates from, say, the WHO, and ensure our NMR column is consist with these. Experienced analysts do this all in their head. This is great, but the issue is that it does not scale, can be faulty and inconsistent, and overloads reputation. We return to this issue in @sec-its-just-a-linear-model in the context of modelling. 
+Start with tests for validity\index{validity}. These will typically be aspects such as the class of the variables, and then their unique values. For instance, if we were using a recent dataset then columns that are years could be tested to ensure that all elements have four digits and start with a "2". @peterbaumgartnertesting describes this as tests on the schema. After that turn to checks of internal consistency\index{internal consistency}. For instance, if there is a column for different responses, then check that the sum of those is equal to the total column, or if it does not then this difference is explainable. Finally, turn to tests for external consistency\index{external consistency}. Here we want to use outside information to inform our tests. For instance, if we had a column of, say, neonatal mortality rate (NMR) for Germany (this concept was introduced in @sec-fire-hose), then we could look at the estimates from, say, the World Health Organization (WHO), and ensure our NMR column is consist with these. Experienced analysts do this all in their head. This is great, but the issue is that it does not scale, can be faulty and inconsistent, and overloads reputation. We return to this issue in @sec-its-just-a-linear-model in the context of modelling. 
 
 We write tests throughout our code, rather than only right at the end. In particular using `stopifnot()` statements on as many intermediate steps as possible ensures that the dataset is being cleaned in a way that we expect. For instance, when merging two datasets we could check that the column names in the datasets are unique, apart from the column/s to be used as the key. Or that the number of observations of each type is being carried through appropriately. And even that the dimensions of the dataset are not being unexpectedly changed.
 
@@ -395,12 +397,12 @@ youth_survey_data <-
   ))
 
 youth_survey_data |>
-  ggplot(aes(y = ages, x = 0)) +
-  geom_point() +
+  ggplot(aes(x = ages)) +
+  geom_histogram(binwidth = 1) +
   theme_minimal() +
   labs(
-    x = "Position",
-    y = "Simulated ages"
+    x = "Age of respondent",
+    y = "Number of respondents"
   )
 ```
 
@@ -437,11 +439,11 @@ The use of this count clearly identifies where we should spend our time: changin
 
 ### Tests
 
-As we said in @sec-reproducible-workflows, if you write code, then you are a programmer, but there is a difference between a student messing around for fun, and an astronomer writing the code that runs the James Webb Telescope. Following @weinbergpsychology [p. 122], we distinguish between amateurs and professionals based on the end-user. When we first start out coding, we typically write code that only we write, read, and rely on. For instance, we may write some code for a paper that we submit for a class. After we get a grade, then in most cases, everything can be forgotten about. In contrast, a professional writes code for, and often with, other people. For instance, much of the academic research in the social sciences relies on code. If that research is to contribute to lasting knowledge, then partly that means the code that underpins it is being written for others and must work for others well after the researcher has moved onto other projects. A professional places appropriate care on tasks that ensure code can be considered by others. A large part of that is tests. Code without tests can only ever be an amateurish affair.
+As we said in @sec-reproducible-workflows, if you write code, then you are a programmer, but there is a difference between someone coding for fun, and an astronomer writing the code that runs the James Webb Telescope. Following @weinbergpsychology [p. 122], we distinguish between amateurs and professionals based on the end-user. When we first start out coding, we typically write code that only we use. For instance, we may write some code for a paper that we submit for a class. After we get a grade, then in most cases, everything can be forgotten about. In contrast, a professional writes code for, and often with, other people. For instance, much of the academic research in the social sciences relies on code. If that research is to contribute to lasting knowledge, then partly that means the code that underpins it is being written for others and must work for others well after the researcher has moved onto other projects. A professional places appropriate care on tasks that ensure code can be considered by others. A large part of that is tests. As such, we should strive to include tests in our code when possible and where appropriate.
 
 Some things are so important that we require that the cleaned dataset have them. These are conditions that we should check. They would typically come out of experience, expert knowledge, or the planning and simulation stages. For instance, there should be no negative numbers in an age variable, and no ages above 140. For these we could specifically require that the condition is met. Another example is when doing cross-country analysis, then a list of country names that we know should be in our dataset would be useful. Our test would then be that there were: 1) values not in that list that were in our dataset, or, vice versa; 2) countries that we expected to be in there that were not.
 
-To have a concrete example, let us consider if we were doing some analysis about the five largest counties in Kenya\index{Kenya}. From talking with experts, we find these are: "Nairobi", "Kiambu", "Nakuru", "Kakamega", and "Bungoma". Let us create that variable first.
+To have a concrete example, let us consider if we were doing some analysis about the five largest counties in Kenya\index{Kenya}. From looking it up, we find these are: "Nairobi", "Kiambu", "Nakuru", "Kakamega", and "Bungoma". Let us create that variable first.
 
 ```{r}
 correct_kenya_counties <-
@@ -596,7 +598,7 @@ simulated_class_data <-
   )
 ```
 
-Let us start with "group" as an integer and use logistic regression, which we cover in more detail in @sec-its-just-a-linear-model. We can then try it as a factor. @tbl-effect-of-class clearly shows how different the results are and highlights the absolute necessity of getting the class of variables used in regression right. The interpretation of the variable is completely different.
+Let us start with "group" as an integer and use logistic regression, which we cover in more detail in @sec-its-just-a-linear-model. We can then try it as a factor. @tbl-effect-of-class clearly shows how different the results are and highlights the absolute necessity of getting the class of variables used in regression right. The interpretation of the variable is completely different. In the former, where it is an integer, we impose a consistent relationship between the different levels of the observations, whereas in the latter, where it is a factor, we enable more freedom.
 
 ```{r}
 #| label: tbl-effect-of-class
@@ -605,20 +607,21 @@ Let us start with "group" as an integer and use logistic regression, which we co
 library(modelsummary)
 
 models <- list(
-  "Group as integer" = lm(
+  "Group as integer" = glm(
     response ~ group_as_integer,
-    data = simulated_class_data
+    data = simulated_class_data,
+    family = "binomial"
   ),
-  "Group as factor" = lm(
+  "Group as factor" = glm(
     response ~ group_as_factor,
-    data = simulated_class_data
+    data = simulated_class_data,
+    family = "binomial"
   )
 )
-
 modelsummary(models)
 ```
 
-Class is so important, subtle, and can have such a pernicious effect on analysis, that it is *prima facie* difficult to believe any analysis that does not have a suite of tests that check class. This is especially the case just before modelling, but it is worthwhile setting this up as part of data cleaning and preparation. One reason that Jane Street, the US proprietary trading firm, use a particular programming language, OCaml, is that its type system make it more reliable [@somers2015]. When code matters, class is of vital concern.
+Class is so important, subtle, and can have such a pernicious effect on analysis, that analysis with a suite of tests that check class is easier to believe. Establishing this suite is especially valuable just before modelling, but it is worthwhile setting this up as part of data cleaning and preparation. One reason that Jane Street, the US proprietary trading firm, use a particular programming language, OCaml, is that its type system make it more reliable [@somers2015]. When code matters, class is of vital concern.
 
 
 
@@ -721,7 +724,16 @@ earlier_toronto_shelters_clean_years <-
   )
 ```
 
-The main issue with this dataset will be the dates. For 2017-2019 (inclusive) we will find appear to be year-month-day, but for 2020 they seem to be month-day-year. The separator is also inconsistent, changing from "-" to "/". We first fix that, check our guesses, and then get to a more pernicious and subtle issue. When working with dates, we draw heavily on `lubridate` [@GrolemundWickham2011].
+The main issue with this dataset will be the dates. For 2017-2019 (inclusive) we will find appear to be year-month-day, but for 2020 they seem to be month-day-year. The separator is also inconsistent, changing from "-" to "/".
+
+```{r}
+earlier_toronto_shelters_clean_years |> 
+  slice(1, nrow(earlier_toronto_shelters_clean_years)) |> 
+  select(occupancy_date)
+```
+
+
+We first fix that, check our guesses, and then get to a more pernicious and subtle issue. When working with dates, we draw heavily on `lubridate` [@GrolemundWickham2011].
 
 ```{r}
 #| warning: false
@@ -765,7 +777,9 @@ earlier_toronto_shelters_test_date <-
 earlier_toronto_shelters_test_date
 ```
 
-We can check whether the guess of the date orderings was at least plausible by looking at the distribution of year (@tbl-homelessyearcountworks), month (@fig-homeless-monthcount), and day components (@fig-homeless-daycount). We are interested in differences between the three years 2017-2019 and 2020.
+We can check whether the guess of the date orderings was at least plausible by looking at, say, the distribution of 
+<!-- year (@tbl-homelessyearcountworks), month (@fig-homeless-monthcount), and  -->
+what purports to be the day component (@fig-homeless-daycount). We are interested in differences between the three years 2017-2019 and 2020.
 
 ```{r}
 earlier_toronto_shelters_test_date <-
@@ -782,6 +796,8 @@ earlier_toronto_shelters_test_date <-
 ```{r}
 #| label: tbl-homelessyearcountworks
 #| tbl-cap: "Counts, by the first component of occupancy date, for 2017-2020"
+#| eval: false
+#| echo: false
 
 earlier_toronto_shelters_test_date |>
   count(one) |>
@@ -799,6 +815,8 @@ earlier_toronto_shelters_test_date |>
 ```{r}
 #| label: fig-homeless-monthcount
 #| fig-cap: "Counts, by the second component of occupancy date, for 2017-2020"
+#| eval: false
+#| echo: false
 
 earlier_toronto_shelters_test_date |>
   count(year_from_file, two) |>
@@ -839,7 +857,7 @@ earlier_toronto_shelters_test_date |>
   )
 ```
 
-It is increasingly clear that our guess that the order was swapped around for 2020 seems right. We would be especially concerned if the distribution of the days was not roughly uniform, or if we had values other than [1-12] in the month.
+It is clear that our guess that the order was swapped around for 2020 seems right. We would be especially concerned if the distribution of the days was not roughly uniform, or if we had values other than [1-12] in the month.
 
 ```{r}
 #| eval: true
@@ -867,7 +885,7 @@ earlier_toronto_shelters |>
   )
 ```
 
-While this is just a quick graph it illustrates the point---the data are not in order of date in the dataset. If they were in order, then we would expect them to be along the diagonal. It is odd that the data are not in order, especially as there appears to be something systematic initially. We can summarize the data to get a count of occupancy by day.
+While this is just a quick graph it illustrates the point---there are a lot in order, but not all. If they were in order, then we would expect them to be along the diagonal. It is odd that the data are not in order, especially as there appears to be something systematic initially. We can summarize the data to get a count of occupancy by day.
 
 ```{r}
 library(tidyr)
@@ -974,11 +992,15 @@ toronto_shelters_by_day |>
 <!--   theme_minimal() -->
 <!-- ``` -->
 
-It is clear there is an issue with the first twelve days of the month. We noted that when we look at the data it is a bit odd that it is not in order. We can take another look at that by going back to the data as it was given to us (as opposed to the counts by day that we have been using). Although there is no rule that says the dataset must be in order of the date, if it were, then all the points would lie on the diagonal line. We have a lot of deviation from that. To get a sense of what we are expecting let us look at all four years (@fig-sheltersdatebyrow).
+It is clear there is an issue with the first twelve days of the month. We noted that when we look at the data it is a bit odd that it is not in order. 
+
+<!-- We can take another look at that by going back to the data as it was given to us (as opposed to the counts by day that we have been using). Although there is no rule that says the dataset must be in order of the date, if it were, then all the points would lie on the diagonal line. We have a lot of deviation from that. To get a sense of what we are expecting let us look at all four years (@fig-sheltersdatebyrow). -->
 
 ```{r}
 #| label: fig-sheltersdatebyrow
 #| fig-cap: "Date of each row in order (2017-2020)"
+#| eval: false
+#| echo: false
 
 earlier_toronto_shelters |>
   mutate(counter = seq_len(nrow(earlier_toronto_shelters))) |>
@@ -995,7 +1017,7 @@ earlier_toronto_shelters |>
   theme_minimal()
 ```
 
-It looks like 2020 is roughly as we would expect, although with some potential weirdness at the start. 2019 has a few odd situations, but not too many. 2018 has a small cluster early in the dataset and then possibly something systematic toward the middle. But 2017 has a large number of systematic issues. These affect a lot of observations, so we prioritize and focus our attention here.
+From @fig-plotorder it looks like 2020 is roughly as we would expect, although with some potential weirdness at the start. 2019 has a few odd situations, but not too many. 2018 has a small cluster early in the dataset and then possibly something systematic toward the middle. But 2017 has a large number of systematic issues. These affect a lot of observations, so we prioritize and focus our attention here.
 
 In general, it seems that it might be the case that in 2017 the first 12 days are the wrong way around, i.e. we think it is year-month-day, but it is actually year-day-month, but there are exceptions. As a first pass, we can flip those first 12 days of each month and see if that helps. It will be fairly blunt, but hopefully gets us somewhere.
 
@@ -1023,7 +1045,7 @@ earlier_toronto_shelters_2017_flipped <-
   select(-year, -month, -day)
 ```
 
-Now let us take a look (@fig-sheltersdatebyrowadj). It is probably a little blunt. For instance, notice there are now no entries below the diagonal (@fig-sheltersdatebyrowadj-1). But we can see that has almost entirely taken care of the systematic differences (@fig-sheltersdatebyrowadj-2). 
+Now let us take a look (@fig-sheltersdatebyrowadj). It has not fixed all the issues. For instance, notice there are now no entries below the diagonal (@fig-sheltersdatebyrowadj-1). But we can see that has almost entirely taken care of the systematic differences (@fig-sheltersdatebyrowadj-2). 
 
 ```{r}
 #| label: fig-sheltersdatebyrowadj
@@ -1076,7 +1098,7 @@ earlier_toronto_shelters_2017_flipped |>
 
 Names matter. The land on which much of this book was written is today named Canada, but for a long time was known as Turtle Island. Similarly, there is a big rock in the center of Australia. For a long time, it was called Uluru, then it was known as Ayers Rock. Today it has a dual name that combines both. And in parts of the US South, including signage surrounding the South Carolina State House, the US Civil War is referred to as the War of Northern Aggression. In these examples, the name that is used conveys information, not only about the user, but about the circumstances. Even the British Royal Family recognize the power of names. In 1917 they changed from the House of Saxe-Coburg and Gotha to the House of Windsor. It was felt that the former was too Germanic given World War I was ongoing. Names matter in everyday life. And they matter in our code too.
 
-Names impart meaning [@kimmerer2013 p. 34]. By ignoring existing names, we ignore what has come before us. The importance of names, and of how existing relationships were ignored by re-naming, was clear in those cases mentioned above, but we see it in data science as well. We need to be careful when we name our datasets, variables, and functions, even our statistical methods! @tukey1962future essentially defined what we today call data science, but it was popularized by folks in computer science in the late 2000s who ignored, either deliberately or through ignorance, what came before them. With that came the renaming of concepts that were well-established in the fields that computer science had expanded into. For instance, the use of binary variables in regression, sometimes called "dummy variables", is often called one-hot encoding in computer science. The social sciences went through a similar experience, starting in the 1980s, with economics expanding in a similarly (and self-described) imperialistic way [@lazear2000economic]. The social sciences now recognize the cost of this, and data science should try to avoid it. No area of study is ever actually without existing claims. And recognizing, adopting, and using existing names and practices is important.
+<!-- Names impart meaning [@kimmerer2013 p. 34]. By ignoring existing names, we ignore what has come before us. The importance of names, and of how existing relationships were ignored by re-naming, was clear in those cases mentioned above, but we see it in data science as well. We need to be careful when we name our datasets, variables, and functions, even our statistical methods! @tukey1962future essentially defined what we today call data science, but it was popularized by folks in computer science in the late 2000s who ignored, either deliberately or through ignorance, what came before them. With that came the renaming of concepts that were well-established in the fields that computer science had expanded into. For instance, the use of binary variables in regression, sometimes called "dummy variables", is often called one-hot encoding in computer science. The social sciences went through a similar experience, starting in the 1980s, with economics expanding in a similarly (and self-described) imperialistic way [@lazear2000economic]. The social sciences now recognize the cost of this, and data science should try to avoid it. No area of study is ever actually without existing claims. And recognizing, adopting, and using existing names and practices is important. -->
 
 Names are critical and worthy of special attention because [@hermans2021programmer]:
 
@@ -1143,7 +1165,7 @@ R, Python, and many of the other languages that are commonly used for data scien
 
 @columnnamesascontracts advises using column names as contracts, through establishing a controlled vocabulary for column names. In this way, we would define a set of words that we can use in column names. In the controlled vocabulary of @columnnamesascontracts a column could start with an abbreviation for its class, then something specific to what it pertains to, and then various details. 
 
-For instance, we could consider column names of "age" and "sex". Following @columnnamesascontracts we may change these to be more informative of the class and other information.
+For instance, we could consider column names of "age" and "sex". Following @columnnamesascontracts we may change these to be more informative of the class and other information. This issue is not settled, and there is not yet best practice. For instance, there are arguments against this in terms of readability.
 
 ```{r}
 some_names <-
@@ -1166,9 +1188,9 @@ riederer_names
 
 
 
-## 1996 Tanzanian DHS
+## Example: 1996 Tanzanian DHS
 
-As introduced in @sec-gather-data, the Demographic and Health Surveys play an important role in gathering data in areas where we may not have other datasets. Here we will clean and prepare a DHS table about household populations in Tanzania in 1996.
+We will now go through the first of two examples. As introduced in @sec-gather-data, the Demographic and Health Surveys (DHS) play an important role in gathering data in areas where we may not have other datasets. Here we will clean and prepare a DHS table about household populations in Tanzania in 1996.
 
 We are interested in the distribution of age-groups, gender, and urban/rural. A quick sketch might look like @fig-tanzaniasketch.
 
@@ -1340,17 +1362,23 @@ tanzania_dhs_cleaned <-
 tanzania_dhs_cleaned
 ```
 
+Finally, we may wish to check that the sum of the constituent parts equals the total.
+
+```{r}
+tanzania_dhs_cleaned |> 
+  filter(!age_group %in% c("Total", "Number")) |> 
+  summarise(sum = sum(total_total))
+```
+In this case we can see that it is a few percentage points off.
 
 
 
 
 
 
-## 2019 Kenyan Census
+## Example: 2019 Kenyan Census
 
-### Gather and clean data
-
-Finally, let us consider a more extensive example and gather, clean, and prepare some data from the 2019 Kenyan\index{Kenya} census. The distribution of population by age, sex, and administrative unit from the 2019 Kenyan census can be downloaded [here](https://www.knbs.or.ke/?wpdmpro=2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units). While this format as a PDF makes it easy to look up a particular result, it is not overly useful if we want to model the data. In order to be able to do that, we need to convert a PDF of Kenyan census results of counts, by age and sex, by county and sub-county, into a tidy dataset that can be analyzed. We use `janitor` [@janitor], `pdftools` [@pdftools], `purrr` [@citepurrr], `tidyverse` [@tidyverse], and `stringi` [@stringi].
+Finally, as a second example, let us consider a more extensive example and gather, clean, and prepare some data from the 2019 Kenyan\index{Kenya} census. The distribution of population by age, sex, and administrative unit from the 2019 Kenyan census can be downloaded [here](https://www.knbs.or.ke/?wpdmpro=2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units). While this format as a PDF makes it easy to look up a particular result, it is not overly useful if we want to model the data. In order to be able to do that, we need to convert a PDF of Kenyan census results of counts, by age and sex, by county and sub-county, into a tidy dataset that can be analyzed. We use `janitor` [@janitor], `pdftools` [@pdftools], `purrr` [@citepurrr], `tidyverse` [@tidyverse], and `stringi` [@stringi].
 
 ```{r}
 #| message: false
@@ -1362,6 +1390,8 @@ library(purrr)
 library(tidyverse)
 library(stringi)
 ```
+
+### Gather and clean data
 
 We first need to download and read in the PDF of the 2019 Kenyan census.^[If the Kenyan government link breaks then replace their URL with: https://www.tellingstorieswithdata.com/inputs/pdfs/2019_Kenya_census.pdf.] 
 
