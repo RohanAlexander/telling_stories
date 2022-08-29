@@ -522,10 +522,10 @@ sim_run_data <-
     ),
     weather_conditions = 
       case_when(
-        was_raining == "No" & humidity == "Low" ~ "No rain, low humidy",
-        was_raining == "Yes" & humidity == "Low" ~ "Raining, low humidy",
-        was_raining == "No" & humidity == "High" ~ "No rain, high humidy",
-        was_raining == "Yes" & humidity == "High" ~ "Raining, high humidy"
+        was_raining == "No" & humidity == "Low" ~ "No rain, not humid",
+        was_raining == "Yes" & humidity == "Low" ~ "Rain, not humid",
+        was_raining == "No" & humidity == "High" ~ "No rain, humid",
+        was_raining == "Yes" & humidity == "High" ~ "Rain, humid"
       )
   )
 
@@ -1260,7 +1260,7 @@ ces2020 <-
 ces2020
 ```
 
-We only want respondents who are registered to vote, and we are only interested in those that voted for either Biden or Trump. So we can filter to only those respondents and then add more informative labels.
+We only want respondents who are registered to vote, and we are only interested in those that voted for either Biden or Trump. So we can filter to only those respondents and then add more informative labels. Gender of "female" and "male" is what is available from the CES.
 
 ```{r}
 ces2020 <-
@@ -1294,7 +1294,7 @@ ces2020 <-
   select(voted_for, gender, education)
 ```
 
-In the end we are left with 43,554 respondents (@fig-cesissogooditslikecheating). Gender of "female" and "male" is what is available from the CES.
+In the end we are left with 43,554 respondents (@fig-cesissogooditslikecheating). 
 
 ```{r}
 #| eval: true
@@ -1319,7 +1319,7 @@ ces2020 |>
   theme(legend.position = "bottom")
 ```
 
-We are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. One approach is to use `tidymodels` to build a prediction-focused logistic regression model. 
+We are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. One approach is to use `tidymodels` to build a prediction-focused logistic regression model in the same way as before i.e. a validation set approach [@islr, p. 176]. 
 
 ```{r}
 library(tidymodels)
@@ -1364,14 +1364,14 @@ ces2020_10_folds <- vfold_cv(ces2020, v = 10)
 ces2020_10_folds
 ```
 
-And we could look at which observations are in each fold with `analysis()`.
+<!-- And we could look at which observations are in each fold with `analysis()`. -->
 
-```{r}
-ces2020_10_folds$splits[[1]] |> analysis()
-ces2020_10_folds$splits[[2]] |> analysis()
-```
+<!-- ```{r} -->
+<!-- # ces2020_10_folds$splits[[1]] |> analysis() -->
+<!-- # ces2020_10_folds$splits[[2]] |> analysis() -->
+<!-- ``` -->
 
-Finally, we use `fit_resamples()` to fit our model across the different combinations of folds.
+We then fit our model across the different combinations of folds with `fit_resamples()`. So in this case, the model will be fit 10 times.
 
 ```{r}
 ces2020_cross_validation <-
@@ -1380,48 +1380,72 @@ ces2020_cross_validation <-
     preprocessor = recipe(voted_for ~ gender + education,
                           data = ces2020),
     resamples = ces2020_10_folds,
-    metrics = metric_set(accuracy, roc_auc, sens, spec),
-    control = control_grid(save_pred = TRUE)
+    metrics = metric_set(accuracy, sens, spec),
+    control = control_resamples(save_pred = TRUE)
   )
 
 ces2020_cross_validation
 ```
 
-The average accuracy of our across the folds is 0.61, while the average sensitivity is 0.19 and the average specificity is 0.90.
+We might be interested to understand the performance of our model and we can use `collect_metrics()` to aggregate them across the folds [@tbl-metricsvoters-1]. The average accuracy of our model across the folds is 0.61, while the average sensitivity is 0.19 and the average specificity is 0.90.
 
 ```{r}
-collect_metrics(ces2020_cross_validation)
+#| label: tbl-metricsvoters
+#| tbl-cap: "Average metrics across the 10 folds of a logistic regression to forecast voter preference"
+#| layout-ncol: 2
+#| tbl-subcap: ["Key performance metrics", "Confusion matrix"]
+
+collect_metrics(ces2020_cross_validation) |> 
+  select(.metric, mean) |> 
+  knitr::kable(
+    col.names = c("Metric",
+                  "Mean"),
+    digits = 2
+  )
+
+conf_mat_resampled(ces2020_cross_validation) |> 
+  knitr::kable(
+    digits = 0
+  )
 ```
+
+What does this mean? Accuracy is the generalized proportion of individuals that were correctly classified. So the result of 0.61 suggests the model is doing better than a coin toss, but not much more. Sensitivity is the percentage of true that are identified as true [@islr, p. 145]. So in this case would mean that the model predicted a respondent voted for Biden and they actually did. And specificity is the percentage of false that are identified as false [@islr, p. 145]. So in this case it is the percentage of voters that voted for Trump, that were predicted to vote for Trump.  It is clear that the model is having trouble identifying Biden supporters. 
+
+We can see this in more detail by looking at the confusion matrix [@tbl-metricsvoters-2]. When used with resampling approaches, such as cross-validation, the confusion matrix if computed for each fold and then averaged.
+
+Finally, it may be the case that we are interested in individual-level results, and we can add these to our dataset with `collect_predictions()`.
 
 ```{r}
-add_predictions <- collect_predictions(ces2020_cross_validation)
-add_predictions
+ces2020_with_predictions <-
+  cbind(
+    ces2020,
+    collect_predictions(ces2020_cross_validation) |>
+      arrange(.row) |>
+      select(.pred_class)
+  ) |> 
+  as_tibble()
+
+ces2020_with_predictions
 ```
 
+For instance, we can see that model is essentially predicting support for Biden, for all individuals apart from males with no high school or high school graduates or 2 years of college [@tbl-omgthismodelishorriblelol].
 
-<!-- ```{r} -->
-<!-- add_predictions |>  -->
-<!--   ggplot(aes( -->
-<!--     x = education, -->
-<!--     y = .pred_Biden, -->
-<!--     color = voted_for -->
-<!--   )) + -->
-<!--   geom_jitter(alpha = 0.1, height = 0.1) + -->
-<!--   facet_wrap(facets = vars(gender)) + -->
-<!--   theme_minimal() + -->
-<!--   labs( -->
-<!--     x = "Highest education", -->
-<!--     y = "Number of respondents", -->
-<!--     fill = "Voted for" -->
-<!--   ) + -->
-<!--   coord_flip() + -->
-<!--   scale_color_brewer(palette = "Set1") + -->
-<!--   theme(legend.position = "bottom") -->
-<!-- ``` -->
+```{r}
+#| label: tbl-omgthismodelishorriblelol
+#| tbl-cap: "The performance of the model is poor"
 
-
-
-
+ces2020_with_predictions |> 
+  group_by(gender, education, voted_for) |> 
+  count(.pred_class) |> 
+  knitr::kable(
+    col.names = c("Gender",
+                  "Education",
+                  "Voted for",
+                  "Predicted vote",
+                  "Number"),
+    digits = 0
+    )
+```
 
 
 ## Poisson regression
@@ -1851,6 +1875,8 @@ pp_check(jane_e_counts)
 ## Negative binomial regression
 
 One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion and should then use a close variant, negative binomial regression. But why are we going through all this trouble? Common practice, is to change from counts into a binary and then use logistic regression. The issue with this is that we are losing information when we group responses together. For this reason it may be worth going to the extra effort to consider more bespoke options such as these.
+
+Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance, @maher1982modelling considers both in the context of results from the English Football League, and discusses the context in which one may be considered more appropriate than the other. Similarly, @thanksleo considers the 2000 US presidential election and especially the issue of overdispersion in a Poisson analysis.
 
 For instance, if we were to consider the number of "k"s in the those same lines of Jane then we would have many zeros (@fig-janeecountsk). 
 
