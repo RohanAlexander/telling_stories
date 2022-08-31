@@ -40,6 +40,7 @@ Change:
 - a large number of -> many
 - take advantage of -> use
 - 'tidyverse' -> 'the tidyverse'
+- "we will" -> "we" (sometimes)
 
 So there are a lot of unnecessary "So " at the start of sentences that can just be removed.
 
