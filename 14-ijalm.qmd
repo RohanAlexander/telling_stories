@@ -47,6 +47,8 @@ engine: knitr
 - `gutenbergr` [@gutenbergr]
 	- `gutenberg_download()`
 	- `gutenberg_works()`
+- `marginaleffects` [@marginaleffects]
+  - `marginaleffects()`
 - `modelsummary` [@citemodelsummary]
   - `modelsummary()`
 - `plumber` [@plumber]
@@ -61,6 +63,8 @@ engine: knitr
 	- `default_prior_intercept()`
 	- `exponential()`
 	- `gaussian()`
+	- `loo()`
+  - `loo_compare()`
 	- `posterior_vs_prior()`
 	- `pp_check()`
 	- `prior_summary()`
@@ -74,11 +78,22 @@ engine: knitr
     - `logistic_reg()`
     - `poisson_reg()`
     - `set_engine()`
+  - `recipes` [@recipes]
+    - `recipe()`
   - `rsample` [@rsample]
     - `initial_split()`
     - `testing()`
     - `training()`
-- `tidyverse` [@tidyverse]
+    - `vfold_cv()`
+  - `tune` [@tune]    
+    - `collect_metrics()`
+    - `collect_predictions()`
+    - `conf_mat_resampled()`
+    - `fit_resamples()`
+  - `yarkdstick` [@yardstick]    
+    - `conf_mat()`
+
+
 
 ## Introduction
 
@@ -232,7 +247,7 @@ $$ {#eq-xandy}
 
 Here, there are two coefficients, also referred to as parameters: the intercept, $\beta_0$, and the slope, $\beta_1$. In @eq-xandy we are saying that $Y$ will have some value, $\beta_0$, even when $X$ is 0, and that $Y$ will change by $\beta_1$ units for every one unit change in $X$. We may then take this relationship to the data that we have to estimate these coefficients.
 
-To make this example concrete, we will simulate some data and then discuss it in that context. In particular, we could consider the time it takes someone to run five kilometers, compared with the time it takes them to run a marathon (@fig-fivekmvsmarathon-1). In the simulation we specify a relationship of 8.4, as that is roughly the ratio between the distance of a marathon and a five-kilometer run. Notice that it is the noise that is normally distributed, not the variables.
+To make this example concrete, we will simulate some data and then discuss it in that context. We could consider the time it takes someone to run five kilometers, compared with the time it takes them to run a marathon (@fig-fivekmvsmarathon-1). In the simulation we specify a relationship of 8.4, as that is roughly the ratio between the distance of a marathon and a five-kilometer run. Notice that it is the noise that is normally distributed, not the variables.
 
 ```{r}
 #| eval: true
@@ -327,7 +342,7 @@ $$e_i = y_i - \hat{y}_i.$$
 
 To compute the residual sum of squares (RSS), we sum the errors across all the points, taking the square to account for negative differences [@islr, p. 62]:
 $$\mbox{RSS} = e^2_1+ e^2_2 +\dots + e^2_n.$$
-This results in one linear best-fit line (@fig-fivekmvsmarathon-2), but it is worth reflecting on all of the assumptions and decisions that it took to get us to this point.
+This results in one linear best-fit line (@fig-fivekmvsmarathon-2), but it is worth reflecting on all the assumptions and decisions that it took to get us to this point.
 
 Underpinning our use of simple linear regression is a belief that there is some "true" relationship between $X$ and $Y$, that is [@islr, p. 62]: 
 
@@ -378,7 +393,7 @@ modelsummary::modelsummary(
 ```
 
 The top half of the table provides our estimated coefficients and standard errors in brackets. And the second half provides some useful diagnostics, which we will not dwell too much on here.
-The intercept is the marathon time associated with a hypothetical five-kilometer time of 0 minutes. Hopefully this example illustrates the need to always carefully interpret the intercept coefficient. And to disregard it at times.
+The intercept is the marathon time associated with a hypothetical five-kilometer time of 0 minutes. Hopefully this example illustrates the need to always interpret the intercept coefficient carefully. And to disregard it at times.
 
 Following @gelmanhillvehtari2020 [p. 84] we recommend considering the coefficients as comparisons, rather than effects. And to use language that makes it clear these are comparisons, on average, based on one dataset. For instance, we may consider that the coefficient on the five-kilometer run time shows how different individuals compare. When comparing the marathon times of individuals in our dataset whose five-kilometer run time differed by one minute, on average we find their marathon times differs by about eight minutes. This makes sense seeing as a marathon is roughly that many times longer than a five-kilometer run.
 
@@ -848,7 +863,7 @@ priors |>
   theme_classic()
 ```
 
-@fig-worstmodelever suggests our model has been poorly constructed. In particular, not only are there world record marathon times, there are negative marathon times! One issue is that our prior for $\beta_1$ does not take in all the information that we know. We know that a marathon is about eight times longer than a five-kilometer run and so we could center the prior for $\beta_1$ around that. Our re-specified model is:
+@fig-worstmodelever suggests our model has been poorly constructed. Not only are there world record marathon times, but there are also negative marathon times! One issue is that our prior for $\beta_1$ does not take in all the information that we know. We know that a marathon is about eight times longer than a five-kilometer run and so we could center the prior for $\beta_1$ around that. Our re-specified model is:
 
 $$
 \begin{aligned}
@@ -1049,9 +1064,9 @@ day_or_night_model <-
 
 The results of the estimation are in the first column of @tbl-modelsummarylogistic. The estimated coefficient on the number of cars is 0.19. We have switched to confidence intervals because they have a Bayesian equivalent.
 
-One reason that logistic regression can be a bit tricky initially is because the coefficients take a bit of work to interpret. In particular, the estimate of 0.19 is the average change in the log odds of our observations with one extra car. The coefficient is positive which means an increase, but as it is non-linear, if we want a particular change, then this will be different for different observations.
+One reason that logistic regression can be a bit tricky initially is because the coefficients take a bit of work to interpret. The estimate of 0.19 is the average change in the log odds of our observations with one extra car. The coefficient is positive which means an increase, but as it is non-linear, if we want a particular change, then this will be different for different observations.
 
-We can translate our estimate into the probability of it being night, for a given number of cars. In particular, `predictions()` from `marginaleffects` [@marginaleffects] can be used to add the implied probability that it is night for each observation.
+We can translate our estimate into the probability of it being night, for a given number of cars. `predictions()` from `marginaleffects` [@marginaleffects] can be used to add the implied probability that it is night for each observation.
 
 ```{r}
 library(marginaleffects)
@@ -1091,7 +1106,7 @@ day_or_night_predictions |>
   theme(legend.position = "bottom")
 ```
 
-The marginal effect at each observation is of interest because it provides a sense of how this probability is changing. In particular, it enables us to say that at the mean (which in this case is if we were to see 50 cars) the probability of it being night, increases by a little over four per cent if we were to see another one (@tbl-marginaleffectcar).
+The marginal effect at each observation is of interest because it provides a sense of how this probability is changing. It enables us to say that at the mean (which in this case is if we were to see 50 cars) the probability of it being night, increases by a little over four per cent if we were to see another one (@tbl-marginaleffectcar).
 
 ```{r}
 #| label: tbl-marginaleffectcar
@@ -1132,7 +1147,7 @@ day_or_night_tidymodels <-
   )
 ```
 
-As before, we can make a graph of the actual results compared with our estimates. But one nice aspect of this is that we could use our test dataset to more thoroughly evaluate our model's forecasting ability, for instance through a confusion matrix, which specifies the count of each prediction by what the truth was. We find that the model does well on the held-out dataset. There were 90 observations where the model predicted it was day, and it was actually day, and 95 where the model predicted it was night, and it was night. It was wrong for 15 observations, and these were split across 7 where it forecast night but it was day, and 8 where it was the opposite case.
+As before, we can make a graph of the actual results compared with our estimates. But one nice aspect of this is that we could use our test dataset to evaluate our model’s forecasting ability more thoroughly, for instance through a confusion matrix, which specifies the count of each prediction by what the truth was. We find that the model does well on the held-out dataset. There were 90 observations where the model predicted it was day, and it was actually day, and 95 where the model predicted it was night, and it was night. It was wrong for 15 observations, and these were split across seven where it forecast night, but it was day, and eight where it was the opposite case.
 
 ```{r}
 day_or_night_tidymodels |>
@@ -1444,9 +1459,9 @@ conf_mat_resampled(ces2020_cross_validation) |>
   )
 ```
 
-What does this mean? Accuracy is the proportion of observations that were correctly classified. The result of 0.61 suggests the model is doing better than a coin toss, but not much more. Sensitivity is the proportion of true observations that are identified as true [@islr, p. 145]. In this case would mean that the model predicted a respondent voted for Biden and they actually did. And specificity is the proportion of false observations that are identified as false [@islr, p. 145]. In this case it is the proportion of voters that voted for Trump, that were predicted to vote for Trump. The model is having trouble identifying Biden supporters. 
+What does this mean? Accuracy is the proportion of observations that were correctly classified. The result of 0.61 suggests the model is doing better than a coin toss, but not much more. Sensitivity is the proportion of true observations that are identified as true [@islr, p. 145]. In this case would mean that the model predicted a respondent voted for Biden and they did. And specificity is the proportion of false observations that are identified as false [@islr, p. 145]. In this case it is the proportion of voters that voted for Trump, that were predicted to vote for Trump. The model is having trouble identifying Biden supporters. 
 
-We can see this in more detail by looking at the confusion matrix (@tbl-metricsvoters-2). When used with resampling approaches, such as cross-validation, the confusion matrix is computed for each fold and then averaged. The model is predicting Biden much more than we might expect from our knowledge of how close the 2020 election was. It suggests that our model may need additional variables in order to do a better job.
+We can see this in more detail by looking at the confusion matrix (@tbl-metricsvoters-2). When used with resampling approaches, such as cross-validation, the confusion matrix is computed for each fold and then averaged. The model is predicting Biden much more than we might expect from our knowledge of how close the 2020 election was. It suggests that our model may need additional variables to do a better job.
 
 Finally, it may be the case that we are interested in individual-level results, and we can add these to our dataset with `collect_predictions()`.
 
@@ -1556,7 +1571,7 @@ poisson_takes_shape |>
   )
 ```
 
-To illustrate the situation, we could simulate data about the number of A's that are awarded in each university course. In this simulated example, we consider three departments, each of which has a number of courses. Each course will award a different number of A's.
+To illustrate the situation, we could simulate data about the number of A grades that are awarded in each university course. In this simulated example, we consider three departments, each of which has many courses. Each course will award a different number of A grades.
 
 ```{r}
 set.seed(853)
@@ -1587,14 +1602,14 @@ count_of_A
 #| eval: true
 #| message: false
 #| warning: false
-#| fig-cap: "Simulated number of A's in various classes across three departments"
+#| fig-cap: "Simulated number of A grades in various classes across three departments"
 #| label: fig-simgradesdepartments
 
 count_of_A |>
   ggplot(aes(x = number_of_A)) +
   geom_histogram(aes(fill = department), position = "dodge") +
   labs(
-    x = "Number of A's awarded",
+    x = "Number of A grades awarded",
     y = "Numnber of classes",
     fill = "Department"
   ) +
@@ -1602,7 +1617,7 @@ count_of_A |>
   scale_fill_brewer(palette = "Set1")
 ```
 
-Our simulated dataset has the number of A's awarded by courses, which are structured within departments (@fig-simgradesdepartments). (In @sec-multilevel-regression-with-post-stratification, we will take advantage of this departmental structure, but for now we just ignore it.) 
+Our simulated dataset has the number of A grades awarded by courses, which are structured within departments (@fig-simgradesdepartments). (In @sec-multilevel-regression-with-post-stratification, we will take advantage of this departmental structure, but for now we just ignore it.) 
 
 The model that we are interested in estimating is:
 
@@ -1612,9 +1627,9 @@ y_i &\sim \mbox{Poisson}(\lambda_i)\\
 \log(\lambda_i) & = \beta_0 + \beta_1 x_1
 \end{aligned}
 $$
-where $y_i$ is the number of A's awarded, and $x_1$ is the course.
+where $y_i$ is the number of A grades awarded, and $x_1$ is the course.
 
-We can use `glm()` from base R to get a quick sense of the data. The estimates are contained in the first column of @tbl-modelsummarypoisson.
+We can use `glm()` from base R to get a quick sense of the data. This function is quite general, and we specify Poisson regression by setting the "family" parameter. The estimates are contained in the first column of @tbl-modelsummarypoisson.
 
 ```{r}
 stopifnot(
@@ -1632,7 +1647,7 @@ grades_base <-
   )
 ```
 
-As with logistic regression, the interpretation of the coefficients from Poisson regression can bes difficult. In particular, the interpretation of the coefficient on "department2" is that it is the log of the expected difference between departments. We expect $e^{0.7893} \approx 2.2$ and $e^{1.4804} \approx 4.4$ additional A's in departments 2 and 3, compared with department 1.
+As with logistic regression, the interpretation of the coefficients from Poisson regression can be difficult. The interpretation of the coefficient on "department2" is that it is the log of the expected difference between departments. We expect $e^{0.7893} \approx 2.2$ and $e^{1.4804} \approx 4.4$ additional A grades in departments 2 and 3, compared with department 1.
 
 If we were interested in prediction, then we could use `tidymodels` to estimate Poisson models with `poissonreg` [@poissonreg] (@tbl-modelsummarypoisson).
 
@@ -1743,27 +1758,27 @@ modelsummary::modelsummary(
 )
 ```
 
-As with logistic regression, we can use `marginaleffects()` from [@marginaleffects] to help with interpreting these results. In particular, it may be useful to consider how we expect the number of A's to change as we go from one department to another. @tbl-marginaleffectspoisson suggests that in our dataset classes in Department 2 tend to have around five additional A's, compared with Department 1. And that classes in Department 3, tend to have around 17 more A's, compared with Department 1. 
+As with logistic regression, we can use `marginaleffects()` from [@marginaleffects] to help with interpreting these results. It may be useful to consider how we expect the number of A grades to change as we go from one department to another. @tbl-marginaleffectspoisson suggests that in our dataset classes in Department 2 tend to have around five additional A grades, compared with Department 1. And that classes in Department 3, tend to have around 17 more A grades, compared with Department 1. 
 
 ```{r}
 #| label: tbl-marginaleffectspoisson
-#| tbl-cap: "The estimated difference in the number of A's awarded at each department"
+#| tbl-cap: "The estimated difference in the number of A grades awarded at each department"
 
-marginaleffects::marginaleffects(grades_rstanarm) |> 
+marginaleffects(grades_rstanarm) |> 
   summary() |> 
   select(-type, -term) |> 
   knitr::kable(
-    digits = 2,
-    col.names = c("Departmental comparison", "Estimate", "2.5%", "97.5%"),
-    booktabs = TRUE,
-    linesep = ""
+    # digits = 2,
+    # col.names = c("Departmental comparison", "Estimate", "2.5%", "97.5%"),
+    # booktabs = TRUE,
+    # linesep = ""
   )
 ```
 
 
 ### Letters used in *Jane Eyre* 
 
-In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's Aeneid (@HistData makes this dataset easily available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë. We could then consider the first 10 lines of each chapter, and count the number of times either "E" or "e" appears.
+In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's Aeneid (@HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë. We could then consider the first 10 lines of each chapter and count the number of times either "E" or "e" appears.
 
 ```{r}
 #| eval: false
@@ -1827,7 +1842,7 @@ jane_eyre <- read_csv(
 jane_eyre
 ```
 
-We are interested in only those lines that have content. And so we remove those empty lines that are just there for spacing. Then we can create counts of the number of times "e" or "E" occurs in that line, for the first 10 lines of each chapter. @tbl-countejane finds that there are 5 e/E's in the first line and 8 in the second.
+We are interested in only those lines that have content, so we remove those empty lines that are just there for spacing. Then we can create counts of the number of times "e" or "E" occurs in that line, for the first 10 lines of each chapter. For instance, we can look at the first few lines and see that there are 5 e/E's in the first line and 8 in the second.
 
 ```{r}
 jane_eyre_reduced <-
@@ -1859,20 +1874,12 @@ jane_eyre_reduced <-
 
 
 ```{r}
-#| label: tbl-countejane
-#| tbl-cap: "Counts of e/E's by line in Jane Eyre"
-
 jane_eyre_reduced |> 
   select(chapter, count_e, text) |> 
-  head() |> 
-  knitr::kable(
-    col.names = c("Chapter", "Number of e/E", "Text"),
-    booktabs = TRUE,
-    linesep = ""
-    )
+  head()
 ```
 
-We can verify that the mean and variance of the number of E/e's is roughly similar by plotting all of the data (@fig-janeecounts). In particular, the mean, in pink, is 6.9, and the variance, in blue, is 6.2. While they are not entirely the same, they are similar.
+We can verify that the mean and variance of the number of E/e's is roughly similar by plotting all of the data (@fig-janeecounts). The mean, in pink, is 6.9, and the variance, in blue, is 6.2. While they are not entirely the same, they are similar.
 
 ```{r}
 #| echo: true
@@ -1902,14 +1909,12 @@ We could consider the following model:
 $$
 \begin{aligned}
 y_i &\sim \mbox{Poisson}(\lambda_i)\\
-\log(\lambda_i) & = \beta_0 + \beta_1 x\\
+\log(\lambda_i) & = \beta_0 + \beta_1 x_1\\
 \beta_0 & \sim \mbox{Normal}(0, 2.5)\\
 \beta_1 & \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
 $$
-where $x_1$ is the chapter.
-
-The estimates, using `rstanarm()`, are in @tbl-modelsummarypoisson.
+where $x_1$ is the chapter. We could estimate the parameters using `stan_glm()`. 
 
 ```{r}
 #| eval: false
@@ -1973,55 +1978,62 @@ jane_e_counts <-
 <!-- ) -->
 <!-- ``` -->
 
-@fig-predictionsjaneecounts shows the the number of e/E's predicted by the model, for each chapter.
+While we would normally be interested in the table of estimates, as we have seen that a few times now, rather than again creating a table of the estimates, we introduce `plot_cap()` from `marginaleffects` [@marginaleffects]. We can use this to show the number of e/E's predicted by the model, for each chapter. @fig-predictionsjaneecounts makes it clear that there are a number of chapters where we expect more e/E's than others.
 
 ```{r}
 #| label: fig-predictionsjaneecounts
 #| fig-cap: "The predicted number of e/E's in each chapter"
 
-marginaleffects::plot_cap(jane_e_counts, condition = "chapter") +
+plot_cap(jane_e_counts, condition = "chapter") +
   labs(x = "Chapter",
        y = "Average number of e/E in the first 10 lines")
 ```
 
 ## Negative binomial regression
 
-One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion and should then use a close variant, negative binomial regression. But why are we going through all this trouble? Common practice is to change from counts into a binary and then use logistic regression. The issue with this is that we are losing information when we group responses together. For this reason, it may be worth going to the extra effort to consider more bespoke options such as these.
+One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion and should then use a close variant, negative binomial regression. Before getting to this, it might be worth taking a moment to think about why we are we going through all this trouble. Common practice is to change from counts into a binary and then use logistic regression. The issue with this is that we may lose information when we group responses together. For this reason, it may be worth going to the extra effort to consider more bespoke options such as these.
 
 Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance, @maher1982modelling considers both in the context of results from the English Football League and discusses the context in which one may be considered more appropriate than the other. Similarly, @thanksleo considers the 2000 US presidential election and especially the issue of overdispersion in a Poisson analysis.
 
-For instance, if we were to consider the number of k's in those same lines of *Jane Eyre*, then we would have many zeros (@fig-janeecountsk). 
+<!-- The shape of the negative binomial distribution is determined by two parameters, the probability of success, $p$, and the number of successes, $r$ [@pitman, p. 482]:  -->
 
-```{r}
-jane_eyre_reduced <-
-  jane_eyre_reduced |>
-  mutate(count_k = str_count(text, "k|K"))
-```
+<!-- $$P(F_r = n) = {n+r-1\choose r-1}p^r(1-p)^n\mbox{, for }n=0,1,2,...$$ -->
+<!-- where $F_r$ is the number of failures, before the $r$th success in Bernoulli trials. -->
 
-```{r}
-#| echo: true
-#| eval: true
-#| fig-cap: "Number of 'K' or 'k' in the first ten lines of each chapter in Jane Eyre"
-#| label: fig-janeecountsk
-#| message: false
-#| warning: false
+<!-- For instance, if we were to consider the number of k's in those same lines of *Jane Eyre*, then we would have many zeros (@fig-janeecountsk).  -->
 
-mean_k <- mean(jane_eyre_reduced$count_k)
-variance_k <- var(jane_eyre_reduced$count_k)
+<!-- ```{r} -->
+<!-- jane_eyre_reduced <- -->
+<!--   jane_eyre_reduced |> -->
+<!--   mutate(count_k = str_count(text, "k|K")) -->
+<!-- ``` -->
 
-jane_eyre_reduced |>
-  ggplot(aes(y = chapter, x = count_k)) +
-  geom_point(alpha = 0.5) +
-  geom_vline(xintercept = mean_k, linetype = "dashed", color = "#C64191") +
-  geom_vline(xintercept = variance_k, linetype = "dashed", color = "#0ABAB5") +
-  theme_minimal() +
-  labs(
-    x = "Number of k's per line for first ten lines",
-    y = "Chapter"
-  )
-```
+<!-- ```{r} -->
+<!-- #| echo: true -->
+<!-- #| eval: true -->
+<!-- #| fig-cap: "Number of 'K' or 'k' in the first ten lines of each chapter in Jane Eyre" -->
+<!-- #| label: fig-janeecountsk -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
 
-Similarly, consider, somewhat morbidly, that every year each individual either dies or does not. From the perspective of a state, we could gather data on the number of people who died each year, by their cause of death. The Canadian province of Alberta, makes the number of deaths, by cause, since 2001, for the top 30 causes each year, available [here](https://open.alberta.ca/opendata/leading-causes-of-death). We can look at the distribution of these deaths, and we have removed the labels as some are quite extensive (@fig-albertacod). (Note that because some causes are not always in the top 30 each year, not all causes have the same number of appearances.)
+<!-- mean_k <- mean(jane_eyre_reduced$count_k) -->
+<!-- variance_k <- var(jane_eyre_reduced$count_k) -->
+
+<!-- jane_eyre_reduced |> -->
+<!--   ggplot(aes(y = chapter, x = count_k)) + -->
+<!--   geom_point(alpha = 0.5) + -->
+<!--   geom_vline(xintercept = mean_k, linetype = "dashed", color = "#C64191") + -->
+<!--   geom_vline(xintercept = variance_k, linetype = "dashed", color = "#0ABAB5") + -->
+<!--   theme_minimal() + -->
+<!--   labs( -->
+<!--     x = "Number of k's per line for first ten lines", -->
+<!--     y = "Chapter" -->
+<!--   ) -->
+<!-- ``` -->
+
+### Mortality in Alberta
+
+Consider, somewhat morbidly, that every year each individual either dies or does not. From the perspective of a state, we could gather data on the number of people who died each year, by their cause of death. The Canadian province of Alberta makes the number of deaths, by cause, since 2001, for the top 30 causes each year, available [here](https://open.alberta.ca/opendata/leading-causes-of-death). We download that data, and save it as "alberta_COD.csv". We can look at the distribution of these deaths, by year and cause, where we have truncated the cause of death because some are quite extensive (@fig-albertacod). (Note that because some causes are not always in the top 30 each year, not all causes have the same number of occurrences.)
 
 <!-- :::{.callout-note} -->
 <!-- ## Oh, you think we have good data on that! -->
@@ -2030,14 +2042,21 @@ Similarly, consider, somewhat morbidly, that every year each individual either d
 <!-- ::: -->
 
 ```{r}
-#| eval: true
+#| eval: false
 #| echo: true
-#| fig-cap: "Annual number of deaths for the top 30 causes, since 2001, for Alberta, Canada"
-#| label: fig-albertacod
-#| message: false
-#| warning: false
 
-library(tidyverse)
+alberta_cod <-
+  read_csv("alberta_COD.csv") |>
+  janitor::clean_names() |>
+  add_count(cause) |>
+  filter(n == 21) |>
+  mutate(cause = str_trunc(cause, 15))
+```
+
+
+```{r}
+#| eval: true
+#| echo: false
 
 alberta_cod <-
   read_csv("inputs/alberta_COD.csv") |>
@@ -2045,6 +2064,14 @@ alberta_cod <-
   add_count(cause) |>
   filter(n == 21) |>
   mutate(cause = str_trunc(cause, 15))
+```
+
+
+```{r}
+#| fig-cap: "Annual number of deaths for the top 30 causes, since 2001, for Alberta, Canada"
+#| label: fig-albertacod
+#| message: false
+#| warning: false
 
 alberta_cod |>
   ggplot(aes(x = total_deaths, y = cause)) +
@@ -2056,8 +2083,7 @@ alberta_cod |>
   )
 ```
 
-One thing that we notice is that the mean, 665, is somewhat different to the variance, 227,152 (@tbl-ohboyalberta).
-
+One thing that we notice is that the mean, 665, is different to the variance, 227,152 (@tbl-ohboyalberta).
 
 ```{r}
 #| echo: false
@@ -2087,8 +2113,7 @@ alberta_cod |>
 ```
 
 
-
-
+We can implement negative binomial regression when using `stan_glm()` by specifying that distribution in "family". In this case, we run both Poisson and negative binomial.
 
 ```{r}
 #| echo: true
@@ -2144,7 +2169,7 @@ cause_of_death_alberta_neg_binomial <-
   readRDS(file = "outputs/model/cause_of_death_alberta_neg_binomial.rds")
 ```
 
-We can compare our different models (@tbl-modelsummarypoissonvsnegbinomial) (if there is an error with `modelsummary::modelsummary()` for the negative binomial model, then it can sometimes be resolved by installing `broom.mixed`).
+We can compare our different models (@tbl-modelsummarypoissonvsnegbinomial) (if there is an error with `modelsummary::modelsummary()` for the negative binomial model, then it can sometimes be resolved by loading `broom.mixed`).
 
 ```{r}
 #| label: tbl-modelsummarypoissonvsnegbinomial
@@ -2154,7 +2179,7 @@ library(broom.mixed)
 
 modelsummary::modelsummary(
   list(
-    "Posson" = cause_of_death_alberta_poisson,
+    "Poisson" = cause_of_death_alberta_poisson,
     "Negative binomial" = cause_of_death_alberta_neg_binomial
   ),
   statistic = NULL
@@ -2180,16 +2205,19 @@ pp_check(cause_of_death_alberta_neg_binomial) +
   theme(legend.position = "bottom")
 ```
 
+Finally, we can compare between the models using the resampling method leave-one-out (LOO) cross-validation. This is a variant of cross-validation, introduced earlier, where the size of each fold is one. That is to say, if there was a dataset with 100 observations this LOO is equivalent to 100-fold cross validation. We can implement this in `rstanarm` with `loo()` for each model, and then compare between them with `loo_compare()`.
 
+```{r}
+#| message: false
+#| warning: false
 
-<!-- ```{r} -->
-<!-- poisson <- loo(cause_of_death_alberta_poisson, cores = 2) -->
-<!-- neg_binomial <- loo(cause_of_death_alberta_neg_binomial, cores = 2) -->
+poisson <- loo(cause_of_death_alberta_poisson, cores = 2)
+neg_binomial <- loo(cause_of_death_alberta_neg_binomial, cores = 2)
 
-<!-- loo_compare(poisson, neg_binomial) -->
-<!-- ``` -->
+loo_compare(poisson, neg_binomial)
+```
 
-
+In this case we find that the negative binomial model is a better fit than the Poisson.
 
 
 
@@ -2252,15 +2280,15 @@ After we have created an account, we need to select a region where the computer 
 
 The first step is to choose an Amazon Machine Image (AMI). This provides the details of the computer that you will be using. For instance, a local computer may be a MacBook running Monterey. Louis Aslett provides AMIs that are already set-up with RStudio and much else [here](http://www.louisaslett.com/RStudio_AMI/). We can either search for the AMI of the region that we registered for, or click on the relevant link on Aslett's website. For instance, to use the AMI set-up for the Canadian central region we search for "ami-0bdd24fd36f07b638". The benefit of using these AMIs is that they are set-up specifically for RStudio, but the trade-off is that they are a little outdated, as they were compiled in August 2020.
 
-In the next step we can choose how powerful the computer will be. The free tier is basic computer, but we can choose better ones when we need them. At this point we can pretty much just launch the instance (@fig-awsthree). If we start using AWS more seriously we could go back and select different options, especially around the security of the account. AWS relies on key pairs. And so we will need to create a PEM and save it locally (@fig-awsfive). We can then launch the instance.
+In the next step we can choose how powerful the computer will be. The free tier is basic computer, but we can choose better ones when we need them. At this point we can pretty much just launch the instance (@fig-awsthree). If we start using AWS more seriously, then we could go back and select different options, especially around the security of the account. AWS relies on key pairs. And so, we will need to create a PEM and save it locally (@fig-awsfive). We can then launch the instance.
 
 After a few minutes, the instance will be running. We can use it by pasting the "public DNS" into a browser. The username is "rstudio" and the password is the instance ID.
 
 We should have RStudio running, which is exciting. The first thing to do is probably to change the default password using the instructions in the instance.
 
-We do not need to install, say, `tidyverse`, instead we can just call the library and keep going. This is because this AMI comes with many packages already installed. We can see the list of packages that are installed with `installed.packages()`. For instance, `rstan` is already installed, and we could set-up an instance with GPUs if we needed.
+We do not need to install, say, the `tidyverse`, instead we can just call the library and keep going. This is because this AMI comes with many packages already installed. We can see the list of packages that are installed with `installed.packages()`. For instance, `rstan` is already installed, and we could set-up an instance with GPUs if we needed.
 
-Perhaps as important as being able to start an AWS instance is being able to stop it (so that we do not get billed). The free tier is pretty great, but we do need to turn it off. To stop an instance, in the AWS instances page, select it, then "Actions -> Instance State -> Terminate".
+Perhaps as important as being able to start an AWS instance is being able to stop it (so that we do not get billed). The free tier is useful, but we do need to turn it off. To stop an instance, in the AWS instances page, select it, then "Actions -> Instance State -> Terminate".
 
 
 

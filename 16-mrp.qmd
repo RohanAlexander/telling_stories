@@ -67,11 +67,10 @@ He was appointed a Fellow of the American Statistical Association in 1998 and aw
 
 In total, 750,148 interviews were conducted, with 345,858 unique respondents, over 30,000 of whom completed five or more polls. As may be expected, young men dominate the Xbox population: 18-to-29-year-olds comprise 65 per cent of the Xbox dataset, compared to 19 per cent in the exit poll; and men make up 93 per cent of the Xbox sample but only 47 per cent of the electorate.
 
-Given the structure of the US electorate, they use a two-stage modelling approach. The details do not really matter too much, but essentially they model how likely a respondent is to vote for Obama, given various information such as state, education, sex, etc:
+Given the structure of the US electorate, they use a two-stage modelling approach. The details do not matter, but essentially they model how likely a respondent is to vote for Obama, given various information such as state, education, sex, etc:
 
 $$
-Pr\left(Y_i = \mbox{Obama} | Y_i\in\{\mbox{Obama, Romney}\}\right) = \\
-\mbox{logit}^{-1}(\alpha_0 + \alpha_1(\mbox{state last vote share}) + \alpha_{j[i]}^{\mbox{state}} + \alpha_{j[i]}^{\mbox{edu}} + \alpha_{j[i]}^{\mbox{sex}} + ...)
+Pr\left(Y_i = \mbox{Obama}\right) = \mbox{logit}^{-1}(\alpha_0 + \alpha_{j[i]}^{\mbox{state}} + \alpha_{j[i]}^{\mbox{edu}} + \alpha_{j[i]}^{\mbox{sex}} + ...)
 $$
 
 Having a trained model that considers the effect of these various independent variables on support for the candidates, they now post-stratify, where each of these "cell-level estimates are weighted by the proportion of the electorate in each cell and aggregated to the appropriate level (i.e., state or national)."
@@ -179,159 +178,247 @@ print(voter_preferences)
 ```
 
 
-Multilevel modelling should be the default thought when you come to a new modelling situation [@citemcelreath, p. 400], especially one where inference is the primary concern. There is almost always some grouping that can be taken advantage of to provide more information to the model.
+Multilevel modelling should be the default thought when you come to a new modelling situation [@citemcelreath, p. 400], especially one where inference is the primary concern. There is almost always some grouping that can be taken advantage of to provide more information to the model. 
 
-<!-- ### Austen, Brontë, Dickens, and Shakespeare -->
+When we move to multilevel modelling, it is possible that some `rstanarm` models will result in a warning about "divergent transitions". For the purposes of getting a model working for this book, if there are just a handful and the Rhats of the coefficients are all close to one (check this with `any(summary(change_this_to_the_model_name)[, "Rhat"] > 1.1)`), then just ignore it. If there are more than a handful, and/or any of the Rhats are not close to one, then add "adapt_delta = 0.99" as an argument to `stan_glmer()` and re-run the model (keeping in mind that it will take longer to run). If that does not fix the issue, then simplify the model by removing a variable. We will see an example later when we apply MRP to the 2020 US election, where the "adapt_delta" strategy fixes the issue.
 
-<!-- As an example of Poisson regression, we could consider data from Project Gutenburg on the length of books by two different authors: Jane Austen, Charlotte Brontë, Charles Dickens, and William Shakespeare. We would expect that Austen, as she wrote books, will have longer books, than Shakespeare, as he wrote plays. -->
+### Austen, Brontë, Dickens, and Shakespeare
 
-<!-- ```{r} -->
-<!-- #| eval: false -->
-<!-- #| echo: true -->
+As an example of multilevel modelling regression, we consider data from Project Gutenburg on the length of books by two different authors: Jane Austen, Charlotte Brontë, Charles Dickens, and William Shakespeare. We would expect that Austen, as she wrote books, will have longer books, than Shakespeare, as he wrote plays.
 
-<!-- library(gutenbergr) -->
+```{r}
+#| eval: false
+#| echo: true
 
-<!-- dups_and_letters_shakespeare <- -->
-<!--   c( -->
-<!--     2270, 4774, 5137, 9077, 10606, 12578, 22791, 23041,  -->
-<!--     23042, 23043, 23044, 23045, 23046, 28334, 45128, -->
-<!--     47518, 47715, 47960, 49007, 49008, 49297, 50095, 50559 -->
-<!--   ) -->
+library(gutenbergr)
 
-<!-- dups_and_letters_bronte <- c(31100, 42078) -->
+dups_and_letters_shakespeare <-
+  c(
+    2270, 4774, 5137, 9077, 10606, 12578, 22791, 23041,
+    23042, 23043, 23044, 23045, 23046, 28334, 45128,
+    47518, 47715, 47960, 49007, 49008, 49297, 50095, 50559
+  )
 
-<!-- dups_and_letters_dickens <- -->
-<!--   c( -->
-<!--     25852, 25853, 25854, 30368, 32241, 35536, -->
-<!--     37121, 40723, 42232, 43111, 43207, 46675, -->
-<!--     47529, 47530, 47531, 47534, 47535, 49927, 50334 -->
-<!--   ) -->
+dups_and_letters_bronte <- c(31100, 42078)
 
-<!-- books <- -->
-<!--   gutenberg_works( -->
-<!--     author %in% c("Austen, Jane", -->
-<!--                   "Shakespeare, William", -->
-<!--                   "Brontë, Charlotte"), -->
-<!--     !gutenberg_id %in% c( -->
-<!--       dups_and_letters_shakespeare, -->
-<!--       dups_and_letters_bronte, -->
-<!--       dups_and_letters_dickens -->
-<!--     ) -->
-<!--   ) |> -->
-<!--   gutenberg_download(meta_fields = c("title", "author"), -->
-<!--                      mirror = "https://gutenberg.pglaf.org/") -->
+dups_and_letters_dickens <-
+  c(
+    25852, 25853, 25854, 30368, 32241, 35536,
+    37121, 40723, 42232, 43111, 43207, 46675,
+    47529, 47530, 47531, 47534, 47535, 49927, 50334
+  )
 
-<!-- write_csv(books, "books.csv") -->
-<!-- ``` -->
+books <-
+  gutenberg_works(
+    author %in% c("Austen, Jane",
+                  "Dickens, Charles",
+                  "Shakespeare, William",
+                  "Brontë, Charlotte"),
+    !gutenberg_id %in% c(
+      dups_and_letters_shakespeare,
+      dups_and_letters_bronte,
+      dups_and_letters_dickens
+    )
+  ) |>
+  gutenberg_download(meta_fields = c("title", "author"),
+                     mirror = "https://gutenberg.pglaf.org/")
 
-<!-- ```{r} -->
-<!-- #| eval: false -->
-<!-- #| echo: false -->
+write_csv(books, "books-austen_bronte_dickens_shakespeare.csv")
+```
 
-<!-- # INTERNAL -->
+```{r}
+#| eval: false
+#| echo: false
 
-<!-- write_csv(books, "dont_push/books.csv") -->
-<!-- ``` -->
+# INTERNAL
 
-<!-- ```{r} -->
-<!-- #| eval: true -->
-<!-- #| echo: false -->
+write_csv(books, "dont_push/books-austen_bronte_dickens_shakespeare.csv")
+```
 
-<!-- # INTERNAL -->
+```{r}
+#| eval: false
+#| echo: false
 
-<!-- books <- read_csv( -->
-<!--   "dont_push/books.csv", -->
-<!--   col_types = cols( -->
-<!--     gutenberg_id = col_integer(), -->
-<!--     text = col_character(), -->
-<!--     title = col_character(), -->
-<!--     author = col_character() -->
-<!--   ) -->
-<!-- ) -->
-<!-- ``` -->
+# INTERNAL
 
-<!-- ```{r} -->
-<!-- #| eval: false -->
-<!-- #| echo: true -->
+books <- read_csv(
+  "dont_push/books-austen_bronte_dickens_shakespeare.csv",
+  col_types = cols(
+    gutenberg_id = col_integer(),
+    text = col_character(),
+    title = col_character(),
+    author = col_character()
+  )
+)
+```
 
-<!-- books <- read_csv( -->
-<!--   "books.csv", -->
-<!--   col_types = cols( -->
-<!--     gutenberg_id = col_integer(), -->
-<!--     text = col_character(), -->
-<!--     title = col_character(), -->
-<!--     author = col_character() -->
-<!--   ) -->
-<!-- ) -->
-<!-- ``` -->
+```{r}
+#| eval: false
+#| echo: true
 
-
-<!-- ```{r} -->
-<!-- lines_by_author_work <- -->
-<!--   books |> -->
-<!--   group_by(author, title) |> -->
-<!--   summarise(number_of_lines = n()) -->
-
-<!-- lines_by_author_work -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- #| echo: true -->
-<!-- #| eval: false -->
-
-<!-- author_lines_rstanarm <- -->
-<!--   stan_glm( -->
-<!--     number_of_lines ~ author, -->
-<!--     data = lines_by_author_work, -->
-<!--     family = poisson(link = "log"), -->
-<!--     prior = normal(location = 0, scale = 0.5, autoscale = TRUE), -->
-<!--     prior_intercept = normal(location = 0, scale = 0.5, autoscale = TRUE), -->
-<!--     seed = 853 -->
-<!--   ) -->
-
-<!-- saveRDS( -->
-<!--   author_lines_rstanarm, -->
-<!--   file = "author_lines_rstanarm.rds" -->
-<!-- ) -->
-<!-- ``` -->
+books <- read_csv(
+  "books-austen_bronte_dickens_shakespeare.csv",
+  col_types = cols(
+    gutenberg_id = col_integer(),
+    text = col_character(),
+    title = col_character(),
+    author = col_character()
+  )
+)
+```
 
 
-<!-- ```{r} -->
-<!-- #| echo: false -->
-<!-- #| eval: false -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
+```{r}
+#| eval: false
+#| echo: true
 
-<!-- # INTERNAL -->
-<!-- saveRDS( -->
-<!--   author_lines_rstanarm, -->
-<!--   file = "outputs/model/author_lines_rstanarm.rds" -->
-<!-- ) -->
-<!-- ``` -->
+lines_by_author_work <-
+  books |>
+  group_by(author, title) |>
+  summarise(number_of_lines = n())
 
-<!-- ```{r} -->
-<!-- #| eval: true -->
-<!-- #| echo: false -->
-<!-- #| warning: false -->
-<!-- #| message: false -->
+lines_by_author_work
+```
 
-<!-- library(rstanarm) -->
+```{r}
+#| eval: false
+#| echo: false
 
-<!-- author_lines_rstanarm <- -->
-<!--   readRDS(file = "outputs/model/author_lines_rstanarm.rds") -->
-<!-- ``` -->
+# INTERNAL
+
+write_csv(lines_by_author_work, "outputs/lines_by_author_work.csv")
+```
+
+```{r}
+#| eval: true
+#| echo: false
+
+lines_by_author_work <- read_csv(
+  "outputs/lines_by_author_work.csv",
+  col_types = cols(
+    author = col_character(),
+    title = col_character(),
+    number_of_lines = col_integer()
+  )
+)
+
+lines_by_author_work
+```
 
 
-<!-- ```{r} -->
-<!-- #| label: tbl-modelsummaryaustenshakes -->
-<!-- #| tbl-cap: "Explaining whether Austen or Shakespeare wrote a book based on the number of lines" -->
-<!-- #| warning: false -->
+```{r}
+#| echo: true
+#| eval: false
 
-<!-- modelsummary( -->
-<!--   author_lines_rstanarm, -->
-<!--   statistic = "conf.int" -->
-<!-- ) -->
-<!-- ``` -->
+author_lines_rstanarm <-
+  stan_glm(
+    number_of_lines ~ author,
+    data = lines_by_author_work,
+    family = neg_binomial_2(link = "log"),
+    prior = normal(location = 0, scale = 0.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 0.5, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  author_lines_rstanarm,
+  file = "author_lines_rstanarm.rds"
+)
+
+author_lines_rstanarm_multilevel <-
+  stan_glmer(
+    number_of_lines ~ (1 | author),
+    data = lines_by_author_work,
+    family = neg_binomial_2(link = "log"),
+    prior = normal(location = 0, scale = 0.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 0.5, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  author_lines_rstanarm_multilevel,
+  file = "author_lines_rstanarm_multilevel.rds"
+)
+```
+
+
+```{r}
+#| echo: false
+#| eval: false
+#| message: false
+#| warning: false
+
+# INTERNAL
+saveRDS(
+  author_lines_rstanarm,
+  file = "outputs/model/author_lines_rstanarm.rds"
+)
+
+saveRDS(
+  author_lines_rstanarm_multilevel,
+  file = "outputs/model/author_lines_rstanarm_multilevel.rds"
+)
+```
+
+```{r}
+#| eval: true
+#| echo: false
+#| warning: false
+#| message: false
+
+library(rstanarm)
+
+author_lines_rstanarm <-
+  readRDS(file = "outputs/model/author_lines_rstanarm.rds")
+
+author_lines_rstanarm_multilevel <-
+  readRDS(file = "outputs/model/author_lines_rstanarm_multilevel.rds")
+
+```
+
+
+```{r}
+#| label: tbl-modelsummaryaustenshakes
+#| tbl-cap: "Explaining whether Austen or Shakespeare wrote a book based on the number of lines"
+#| warning: false
+
+library(broom.mixed)
+
+modelsummary::modelsummary(
+  list(
+    "Negative binomial" = author_lines_rstanarm,
+    "Negative binomial with multilevel modelling" = author_lines_rstanarm_multilevel
+  ),
+  statistic = "conf.int"
+)
+```
+
+```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-ppcheckmultilevelexample
+#| layout-ncol: 2
+#| fig-cap: "Comparing posterior prediction checks for negative binomial models with and without multilevel modelling"
+#| fig-subcap: ["Negative binomial model", "Negative binomial model with multilevel modelling"]
+
+pp_check(author_lines_rstanarm)
+
+pp_check(author_lines_rstanarm_multilevel)
+```
+
+```{r}
+#| message: false
+#| warning: false
+
+neg_binomial <- loo(author_lines_rstanarm, cores = 2)
+neg_binomial_multilevel <- loo(author_lines_rstanarm_multilevel, cores = 2)
+
+loo_compare(neg_binomial, neg_binomial_multilevel)
+```
+
+
 
 
 
@@ -404,6 +491,9 @@ population_for_mrp_example |>
 And we can also work out what the "truth" is for the information that we are interested in (remembering that we would never actually know this when we move away from simulated examples).
 
 ```{r}
+#| message: false
+#| warning: false
+
 population_for_mrp_example_summarised <-
   population_for_mrp_example |>
   group_by(age_group, toilet_trained) |>
@@ -474,9 +564,12 @@ sample_for_mrp_example |>
   scale_color_brewer(palette = "Set1")
 ```
 
-It is pretty clear that our sample has a different bedtime than the overall population, but let us just do the same exercise as before to look at the median, by age and toilet-trained status.
+It is clear that our sample has a different bedtime than the overall population, but let us just do the same exercise as before to look at the median, by age and toilet-trained status.
 
 ```{r}
+#| message: false
+#| warning: false
+
 sample_for_mrp_example_summarized <-
   sample_for_mrp_example |>
   group_by(age_group, toilet_trained) |>
@@ -504,7 +597,9 @@ mrp_example_model |>
   modelsummary::modelsummary(fmt = 2)
 ```
 
-This is the "multilevel regression" part of the MRP (although this is not really a multilevel model just to keep things simple for now).
+
+
+
 
 ### Get a post-stratification dataset
 
@@ -700,7 +795,7 @@ sample_for_australian_polling <-
 
 ### Model the survey
 
-This polling data was generated to make both males and older people less likely to vote for the ALP; and females and younger people more likely to vote for the Labor Party. Females are over-sampled. As such, we should have an ALP skew on the dataset. We are going to use the `gtsummary` package to quickly make a summary table [@citemodelsummary].
+This polling data was generated to make both males and older people less likely to vote for the ALP; and females and younger people more likely to vote for the Labor Party. Females are over-sampled. As such, we should have an ALP skew on the dataset. We are going to use `gtsummary` to quickly make a summary table [@citemodelsummary].
 
 ```{r}
 library(modelsummary)
@@ -711,9 +806,10 @@ sample_for_australian_polling |>
 
 Now we would like to see if we can get our results back (we should find females less likely than males to vote for Australian Labor Party and that people are less likely to vote Australian Labor Party as they get older). Our model is:
 
-ADD THE MODEL.
-
-This model says that the probability that some person, $j$, will vote for the Australian Labor Party depends on their gender and their age-group. Based on our simulated data, we would like older age-groups to be less likely to vote for the Australian Labor Party and for males to be less likely to vote for the Australian Labor Party.
+$$
+\mbox{Pr}(\hat{FP}_{i,p=1}) = \mbox{logit}^{-1} \left(\beta_0 + \beta_1 \times \mbox{gender}_is + \beta_2\times \mbox{age}_i + \beta_3 \times \mbox{state}_i \right)
+$$
+This model says that the probability that some person, $i$, will vote for the Australian Labor Party depends on their gender and their age-group. Based on our simulated data, we would like older age-groups to be less likely to vote for the Australian Labor Party and for males to be less likely to vote for the Australian Labor Party.
 
 ```{r}
 #| label: initial_model_analyse_example_polling
@@ -799,7 +895,7 @@ We now have post-stratified estimates for each state Our model has a fair few we
 
 ### Improving the model
 
-We would like to address some of the major issues with our approach, specifically being able to deal with small cell counts, and also taking better account of uncertainty. As we are dealing with survey data, prediction intervals or something similar are critical, and it is not appropriate to only report central estimates. To do this we will use the same broad approach as before, but just improve the model. We are going to change to a Bayesian model and use the `rstanarm` package [@citerstanarm].
+We would like to address some of the major issues with our approach, specifically being able to deal with small cell counts, and also taking better account of uncertainty. As we are dealing with survey data, prediction intervals or something similar are critical, and it is not appropriate to only report central estimates. To do this we will use the same broad approach as before, but just improve the model. We are going to change to a Bayesian model and use `rstanarm` [@citerstanarm].
 
 Now, using the same basic model as before, but in a Bayesian setting.
 
@@ -818,7 +914,7 @@ improved_alp_support <-
   )
 ```
 
-As before, we would like an estimate for each state based on their demographic features. We are just going to do some rough forecasts. For each gender and age-group we want the relevant coefficient in the example data and we can construct the estimates (this code is from [Monica Alexander](https://www.monicaalexander.com/posts/2019-08-07-mrp/)). We are going to use `tidybayes` for this [@citetidybayes].
+As before, we would like an estimate for each state based on their demographic features. We are just going to do some rough forecasts. For each gender and age-group we want the relevant coefficient in the example data and we can construct the estimates (this code is from @monicanamechanges). We are going to use `tidybayes` for this [@citetidybayes].
 
 ```{r}
 library(tidybayes)
@@ -865,56 +961,58 @@ post_stratified_estimates |>
 Similarly, we may like to plot the distribution of the coefficients. We can work out which coefficients to be pass to `gather_draws` with `tidybayes::get_variables(model`; in this example we passed "b_.", but that will not always be the case.
 
 ```{r}
-# tidybayes::get_variables(improved_alp_support)
-# improved_alp_support |>
-#   gather_draws(genderMale) |>
-#   ungroup() |>
-#   # mutate(coefficient = stringr::str_replace_all(.variable, c("b_" = ""))) |>
-#   mutate(coefficient = forcats::fct_recode(coefficient,
-#                                            Intercept = "Intercept",
-#                                            `Is male` = "genderMale",
-#                                            `Age 30-44` = "age_groupages30to44",
-#                                            `Age 45-59` = "age_groupages45to59",
-#                                            `Age 60+` = "age_groupages60plus"
-#                                            )) |>
-#
-# # both |>
-#   ggplot(aes(y=fct_rev(coefficient), x = .value)) +
-#   ggridges::geom_density_ridges2(aes(height = ..density..),
-#                                  rel_min_height = 0.01,
-#                                  stat = "density",
-#                                  scale=1.5) +
-#   xlab("Distribution of estimate") +
-#   ylab("Coefficient") +
-#   scale_fill_brewer(name = "Dataset: ", palette = "Set1") +
-#   theme_minimal() +
-#   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank()) +
-#   theme(legend.position = "bottom")
+library(rstanarm)
+pp_check(improved_alp_support) +
+  theme_classic() +
+  theme(legend.position = "bottom")
+
+posterior_vs_prior(improved_alp_support) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom") +
+  coord_flip()
+
+marginaleffects::plot_cap(improved_alp_support, condition = "state") +
+  labs(x = "State",
+       y = "Average support")
 ```
 
 
 
 ## Forecasting the 2020 US election
 
-The US election has a lot of features that are unique to the US, but the model that we are going to build here is going to be fairly generic and, largely a generalization of the earlier model for the Australian election. One good thing about forecasting the US election is that there is a lot of data around. In this case we can use survey data from the [Democracy Fund Voter Study Group](https://www.voterstudygroup.org). They conducted polling in the lead-up to the US election and make this publicly available after registration. We will use the Integrated Public Use Microdata Series (IPUMS), to access the 2018 American Community Survey (ACS) as a post-stratification dataset. We will use state, age-group, gender, and education as explanatory variables.
+US presidential elections have many features that are unique to the US, but the model that we are going to build here will be generalizable, and a variant of the earlier model for the Australian election. We will use survey data from the Democracy Fund Voter Study Group. They conducted polling in the lead-up to the US election and make this publicly available after registration. We will use IPUMS, introduced in @sec-farm-data, to access the 2018 American Community Survey (ACS) as a post-stratification dataset. We will use state, age-group, gender, and education as explanatory variables.
 
 ### Survey data
 
-The first step is that we need to actually get the survey data. Go to their website: https://www.voterstudygroup.org and then you are looking for "Nationscape" and then a button along the lines of "Get the latest Nationscape data". To get the dataset, you need to fill out a form, which they will process and then email you. There is a real person on the other side of this form, and so your request could take a few days.
+First we need to get the survey data. Go to the Democracy Fund Voter Study Group [website](https://www.voterstudygroup.org), then look for "Nationscape" and request access to the data. This is usually quick, but could take a day or two. After getting access, focus on the ".dta" files. Nationscape conducted many surveys in the lead-up to the election, so there are many files. The filename is the reference date. So "ns20200625" refers to 25 June 2020. That is the file that we use here, but many of them are similar. We download and save it as "ns20200625.dta".
 
-Once you get access you will want to download the .dta files. Nationscape conducted many surveys and so there are many files. The filename is the reference date, and so "ns20200625" refers to 25 June 2020, which is the one that we will use here.
-
-We can read in ".dta" files using the `haven` package [@citehaven]. This code is based on that of Alen Mitrovski, Xiaoyan Yang, Matthew Wankiewicz: https://github.com/matthewwankiewicz/US_election_forecast.
-
+As introduced in @sec-r-essentials, we can import ".dta" files using `haven` [@citehaven]. The code that we use to import and prepare the survey dataset is based on that of @greatstudentwork.
 
 ```{r}
+#| eval: false
+#| echo: true
+
 library(haven)
 library(tidyverse)
 
 raw_nationscape_data <-
-  read_dta(here::here("dont_push/ns20200625.dta"))
+  read_dta("ns20200625.dta")
+```
 
+```{r}
+#| eval: true
+#| echo: false
+
+library(haven)
+library(tidyverse)
+
+raw_nationscape_data <-
+  read_dta("dont_push/ns20200625.dta")
+```
+
+
+```{r}
 # The Stata format separates labels so reunite those
 raw_nationscape_data <-
   labelled::to_factor(raw_nationscape_data)
@@ -930,7 +1028,7 @@ nationscape_data <-
     age
   )
 
-# For simplicity, remove anyone undecided or planning to vote for someone other than Biden/Trump and make vote a binary variable: 1 for Biden, 0 for Trump.
+# For simplicity, remove anyone not voting for Trump or Biden
 nationscape_data <-
   nationscape_data |>
   filter(vote_2020 == "Joe Biden" | vote_2020 == "Donald Trump") |>
@@ -970,29 +1068,19 @@ nationscape_data <-
     )
   ) |>
   select(-education, -age)
+```
 
-tests <-
-  nationscape_data |>
-  mutate(
-    test = stringr::str_detect(age_group, "Trouble"),
-    test = if_else(
-      test == TRUE,
-      TRUE,
-      stringr::str_detect(education_level, "Trouble")
-    ),
-    test = if_else(
-      test == TRUE,
-      TRUE,
-      stringr::str_detect(gender, "Trouble")
-    )
-  ) |>
-  filter(test == TRUE)
 
-if (nrow(tests) != 0) {
-  print("Check nationscape_data")
-} else {
-  rm(tests)
-}
+```{r}
+stopifnot(all(
+  str_detect(nationscape_data$age_group, "Trouble", negate = TRUE)
+))
+stopifnot(all(
+  str_detect(nationscape_data$education_level, "Trouble", negate = TRUE)
+))
+stopifnot(all(str_detect(
+  nationscape_data$gender, "Trouble", negate = TRUE
+)))
 
 nationscape_data |>
   head()
@@ -1001,14 +1089,13 @@ nationscape_data |>
 As we have seen, one of the most difficult aspects with MRP is ensuring consistency between the datasets. In this case, we need to do some work to make the variables consistent.
 
 ```{r}
-# Code based on Alen Mitrovski, Xiaoyan Yang, and Matthew Wankiewicz.
-# Format state names so the whole state name is written out, to match IPUMS data
+# Format state names to match IPUMS
 states_names_and_abbrevs <-
   tibble(stateicp = state.name, state = state.abb)
 
 nationscape_data <-
   nationscape_data |>
-  left_join(states_names_and_abbrevs)
+  left_join(states_names_and_abbrevs, by = "state")
 
 rm(states_names_and_abbrevs)
 
@@ -1025,6 +1112,13 @@ nationscape_data$stateicp <-
 nationscape_data <-
   nationscape_data |>
   mutate(across(c(gender, stateicp, education_level, age_group), as_factor))
+```
+
+Finally, we save the prepared dataset.
+
+```{r}
+#| eval: true
+#| echo: true
 
 # Save data
 write_csv(nationscape_data, "outputs/data/polling_data.csv")
@@ -1036,31 +1130,36 @@ nationscape_data |>
 
 ### Post-stratification data
 
-We have a lot of options for a dataset to post-stratify by and there are various considerations. We are after a dataset that is better quality (however that is to be defined), and likely larger. From a strictly data perspective, the best choice would probably be something like the Cooperative Congressional Election Study (CCES), however for whatever reason that is only released after the election and so it is not a reasonable choice. @wang2015forecasting use exit poll data, but again that is only available after the election. 
+We have many options for a dataset to post-stratify by and there are various considerations. We are after a dataset that is better quality (however that is to be defined), and likely larger. From a strictly data perspective, the best choice would probably be something like the Cooperative Election Study (CES), as used in @sec-its-just-a-linear-model, however it is only released after the election and so it is not a reasonable choice. @wang2015forecasting use exit poll data, but again that is only available after the election. 
 
-In most countries we would be stuck using the census, which is quite large, but likely out-of-date. Luckily in the US we have the opportunity to use the American Community Survey (ACS) which asks analogous questions to a census, is conducted every month, and over the course of a year, we end up with a few million responses. In this case we are going to access the ACS through IPUMS. 
+We will use the 2019 American Community Survey (ACS), and want the following variables: "STATEICP" (in "household"), and "SEX", "AGE", "EDUC" (in "person"). Instructions for how to get these data are in @sec-farm-data. It is worth briefly checking the dimensions of the request. It should be around one million rows, and ten to twenty columns. If it is much more than 300MB then check whether there are variables accidentally selected that are not needed or reduce the number of observations. Submit the request and within a day IPUMS should send an email with a link to the dataset. We assume the dataset has been saved locally as "usa_00004.dta" (your dataset may have a slightly different filename).
 
-To do this go to the IPUMS website - https://ipums.org - and we are looking for something like IPUMS USA and then "get data". Create an account, if you need to. That will take a while to process. But once you have an account, go to "Select Samples" and de-select everything apart from the 2019 ACS. Then we need to get the variables that we are interested in. From the household we want "STATEICP", then in person we want "SEX", "AGE", "EDUC". Once everything is selected, "view cart", and we want to be careful to change the "data format" to ".dta" (there is nothing wrong with the other formats, but we have just already got code earlier to deal with that type). Briefly just check how many rows and columns you are requesting. It should be around a million rows, and around ten to twenty columns. If it is much more than 300MB then maybe just see if you have accidentally selected something that you do not need. Submit the request and within a day, you should get an email saying that your data can be downloaded. It should only take 30 minutes or so, but if you do not get an email within a day then check again the size of the dataset, and customize the sample size to reduce the size initially.
-
-In any case let us tidy up the data.
+We will now tidy and prepare the post-stratification dataset, again based on @greatstudentwork.
 
 ```{r}
-# Again, closely following code from Alen Mitrovski, Xiaoyan Yang, and Matthew Wankiewicz.
-library(haven)
-library(tidyverse)
+#| eval: false
+#| echo: true
 
 raw_poststrat_data <-
-  read_dta(here::here("dont_push/usa_00004.dta"))
+  read_dta("usa_00004.dta")
+```
 
-# The Stata format separates labels so reunite those
+```{r}
+#| eval: true
+#| echo: false
+
+raw_poststrat_data <-
+  read_dta("dont_push/usa_00004.dta")
+```
+
+
+```{r}
 raw_poststrat_data <-
   labelled::to_factor(raw_poststrat_data)
-head(raw_poststrat_data)
-
-raw_poststrat_data$age <- as.numeric(raw_poststrat_data$age)
 
 poststrat_data <-
   raw_poststrat_data |>
+  mutate(age = as.numeric(age)) |> 
   filter(inctot < 9999999) |>
   filter(age >= 18) |>
   mutate(gender = sex) |>
@@ -1120,8 +1219,7 @@ poststrat_data <-
 # Save data
 write_csv(poststrat_data, "outputs/data/us_poststrat.csv")
 
-poststrat_data |>
-  head()
+poststrat_data
 ```
 
 This dataset is on an individual level. So we will create counts of each sub-cell, and then proportions by state.
@@ -1133,7 +1231,7 @@ poststrat_data_cells <-
   count()
 ```
 
-Now we would like to add proportions by state.
+And finally we add proportions for each of these cells. 
 
 ```{r}
 poststrat_data_cells <-
@@ -1142,45 +1240,76 @@ poststrat_data_cells <-
   mutate(prop = n / sum(n)) |>
   ungroup()
 
-poststrat_data_cells |> head()
+poststrat_data_cells
 ```
-
-
-
 
 
 ### Model
 
-We are going to use logistic regression to estimate a model where the binary of support for Biden is explained by gender, age-group, education-level, and state. We are going to do this in a Bayesian framework using `rstanarm` [@citerstanarm]. There are a variety of reasons for using `rstanarm` here, but the main one is that Stan is pre-compiled which eases some of the computer set-up issues that we may otherwise have. A great further resource about implementing MRP with `rstanarm` is @kennedygabry2020.
+We are going to use logistic regression to estimate a model where the binary of support for Biden is explained by gender, age-group, education-level, and state. Following @kennedygabry2020 we will use `rstanarm` [@citerstanarm].
 
 ```{r}
+#| echo: true
+#| eval: false
+
 library(rstanarm)
 
 us_election_model <-
-  rstanarm::stan_glmer(
-    vote_biden ~ gender + age_group + (1 | stateicp) + education_level,
+  stan_glmer(
+    vote_biden ~ factor(gender) + (1 | age_group) + (1 | stateicp) + (1 | education_level),
     data = nationscape_data,
     family = binomial(link = "logit"),
-    prior = normal(0, 1),
-    prior_intercept = normal(0, 1),
-    cores = 2,
+    prior = normal(
+      location = 0,
+      scale = 2.5,
+      autoscale = TRUE
+    ),
+    prior_intercept = normal(
+      location = 0,
+      scale = 2.5,
+      autoscale = TRUE
+    ),
+    cores = 4,
+    adapt_delta = 0.99,
     seed = 853
   )
 ```
 
-There are a variety of options here that we have largely unthinkingly set, and exploring the effect of these would be a good idea, but for now we can just have a quick look at the model.
+```{r}
+#| echo: false
+#| eval: false
+
+# INTERNAL
+ 
+saveRDS(
+  us_election_model,
+  file = "outputs/model/us_election_model_mrp.rds"
+)
+```
 
 ```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+
+us_election_model <-
+  readRDS(file = "outputs/model/us_election_model_mrp.rds")
+```
+
+We might be interested to look at the estimates (@tbl-modelsummaryusamrp).
+
+```{r}
+#| label: tbl-modelsummaryusamrp
+#| tbl-cap: "Estimating a model of choice between Biden and Trump in the 2020 US election"
+
 modelsummary::get_estimates(us_election_model)
-# The default usage of modelsummary requires statistics that we do not have.
-# Uncomment the following line if you want to look at what is available and specify your own:
-# modelsummary::get_estimates(us_election_model)
+
 modelsummary::modelsummary(
   us_election_model,
   statistic = c("conf.low", "conf.high")
 )
 ```
-
 
 ### Post-stratify
 

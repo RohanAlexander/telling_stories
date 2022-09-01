@@ -31,7 +31,9 @@ Need to add an example of differential privacy.
 
 Remove:
 
-- it is clear that
+- "it is clear that"
+- "easily"
+- "In particular, "
 
 Change:
 

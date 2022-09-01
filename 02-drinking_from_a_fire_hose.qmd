@@ -153,7 +153,6 @@ An example of installing the packages follows (excessive comments have been adde
 #### Workspace set-up ####
 install.packages("tidyverse") # Only need to do this once per computer
 install.packages("janitor") # Only need to do this once per computer
-install.packages("httr") # Only need to do this once per computer
 ```
 
 ![Screenshot of australian_elections.qmd highlighting the green arrow to run the chunk](figures/02-rstudio_cloud-4.png){#fig-quarto-australian-elections-4 width=75% fig-align="center"}
@@ -172,7 +171,6 @@ Now that the packages are installed, they need to be loaded. As that installatio
 
 library(tidyverse) # A collection of data-related packages
 library(janitor) # Helps clean datasets
-library(httr) # Tools for working with URLs
 ```
 
 We can render the entire document by clicking "Render". When you do this, you may be asked to install some packages. If that happens, then you should agree to this. This will result in a HTML document.
@@ -265,7 +263,7 @@ write_csv(
 raw_elections_data <-
   read_csv(
     file =
-      "https://tallyroom.aec.gov.au/Downloads/HouseMembersElectedDownload-27966.csv",
+      "https://results.aec.gov.au/27966/website/Downloads/HouseMembersElectedDownload-27966.csv",
     show_col_types = FALSE,
     skip = 1
   )
@@ -296,7 +294,7 @@ head(raw_elections_data)
 tail(raw_elections_data)
 ```
 
-We need to clean the data so that we can use it. We are trying to make it similar to the dataset that we thought we wanted in the planning stage. While it is fine to move away from the plan, this needs to be a deliberate, reasoned, decision. After reading in the dataset that we saved, the first thing that we will do is adjust the names to make them easier to type. Removing the spaces helps to type column names. We will do this using `clean_names()` from `janitor` [@janitor] which changes the names into "snake_case".
+We need to clean the data so that we can use it. We are trying to make it similar to the dataset that we thought we wanted in the planning stage. While it is fine to move away from the plan, this needs to be a deliberate, reasoned, decision. After reading in the dataset that we saved, the first thing that we will do is adjust the names of the variables. We will do this using `clean_names()` from `janitor` [@janitor].
 
 ```{r}
 #| echo: false
@@ -513,7 +511,7 @@ cleaned_elections_data |>
 ```
 
 
-### Communicate
+### Share
 
 To this point we have downloaded some data, cleaned it, and made a graph. We would typically need to communicate what we have done at some length. In this case, we can write a few paragraphs about what we did, why we did it, and what we found to conclude our workflow. An example follows.
 
@@ -551,7 +549,7 @@ We are interested in creating a table that has the monthly average number of bed
 
 The next step is to simulate some data that could resemble our dataset. Simulation provides us with an opportunity to think deeply about our data generating process.
 
-In RStudio Cloud make a new Quarto Document, save it, and make a new R code chunk and add preamble documentation. Then install and/or load the packages that are needed. We will again use `tidyverse` [@Wickham2017], `janitor` [@janitor], and `tidyr` [@citetidyr]. As those were installed earlier, they do not need to be installed again. In this example we will also use `lubridate` [@GrolemundWickham2011], which is part of the `tidyverse` and so it does not need to be installed independently. We will also use `opendatatoronto` [@citeSharla], and `knitr` [@citeknitr] and these will need to be installed. 
+In RStudio Cloud make a new Quarto Document, save it, and make a new R code chunk and add preamble documentation. Then install and/or load the packages that are needed. We will again use `tidyverse` [@Wickham2017], and `janitor` [@janitor]. As those were installed earlier, they do not need to be installed again. In this example we will also use `lubridate` [@GrolemundWickham2011], which is part of the `tidyverse` and so it does not need to be installed independently. We will also use `opendatatoronto` [@citeSharla], and `knitr` [@citeknitr] and these will need to be installed. 
 
 ```{r}
 #| eval: false
@@ -574,7 +572,6 @@ library(janitor)
 library(lubridate)
 library(opendatatoronto)
 library(tidyverse)
-library(tidyr)
 ```
 
 ```{r}
@@ -588,7 +585,6 @@ library(janitor)
 library(lubridate)
 library(opendatatoronto)
 library(tidyverse)
-library(tidyr)
 ```
 
 To add a bit more detail to the earlier example, packages contain code that other people have written. There are a few common ones that you will see regularly, especially the `tidyverse`. To use a package, we must first install it and then we need to load it. A package only needs to be installed once per computer but must be loaded every time. So, the packages that we installed earlier do not need to be reinstalled here.
@@ -634,7 +630,7 @@ simulated_occupancy_data <-
       rpois(
         n = 365 * 3,
         lambda = 30
-      ) # Draw 552 times from the Poisson distribution
+      ) # Draw 1,095 times from the Poisson distribution
   )
 
 head(simulated_occupancy_data)
@@ -755,7 +751,7 @@ toronto_shelters_clean <-
   )
 ```
 
-The dataset contains records on a daily basis for each shelter. We are interested in understanding average usage for each month. To do this, we need to add a month column, which we do using `month()` from `lubridate` [@GrolemundWickham2011]. By default, `month()` provides the number of the month, and so we include two arguments "label" and "abbr" to get the full name of the month. We remove rows that do not have any data for the number of beds using `drop_na()` from `tidyr`. We will do this here unthinkingly just because our focus is on getting started, but this is an important decision that we talk more about in @sec-farm-data and would normally require extensive justification. And we then create a summary statistic on the basis of monthly groups, using `summarize()` from `dplyr` [@citedplyr]. We use `kable()` from `knitr` [@citeknitr] to create a table.
+The dataset contains records on a daily basis for each shelter. We are interested in understanding average usage for each month. To do this, we need to add a month column, which we do using `month()` from `lubridate` [@GrolemundWickham2011]. By default, `month()` provides the number of the month, and so we include two arguments "label" and "abbr" to get the full name of the month. We remove rows that do not have any data for the number of beds using `drop_na()` from `tidyr`, which is part of the `tidyverse`. We will do this here unthinkingly just because our focus is on getting started, but this is an important decision that we talk more about in @sec-farm-data and would normally require extensive justification. And we then create a summary statistic on the basis of monthly groups, using `summarize()` from `dplyr` [@citedplyr]. We use `kable()` from `knitr` [@citeknitr] to create a table.
 
 ```{r}
 toronto_shelters_clean |>
@@ -797,13 +793,13 @@ toronto_shelters_clean |>
 ```
 
 
-### Communicate
+### Share
 
 We need to write a few brief paragraphs about what we did, why we did it, and what we found to sum up our work. An example follows.
 
 > Toronto has a large homeless population. Freezing winters mean it is critical there are enough places in shelters. We are interested to understand how usage of shelters changes in colder months, compared with warmer months. 
 > 
-> We use data provided by the City of Toronto about Toronto homeless shelter bed occupancy. Specifically, at 4am each night a count is made of the occupied beds. We are interested in averaging this over the month. We cleaned, tidied, and analyzed the dataset using the statistical programming language R [@citeR] as well as the `tidyverse` [@Wickham2017], `janitor` [@janitor], `tidyr` [@citetidyr], `opendatatoronto` [@citeSharla], `lubridate` [@GrolemundWickham2011], and `knitr` [@citeknitr]. We then made a table of the average number of occupied beds each night for each month (@tbl-homelessoccupancy).
+> We use data provided by the City of Toronto about Toronto homeless shelter bed occupancy. Specifically, at 4am each night a count is made of the occupied beds. We are interested in averaging this over the month. We cleaned, tidied, and analyzed the dataset using the statistical programming language R [@citeR] as well as the `tidyverse` [@Wickham2017], `janitor` [@janitor], `opendatatoronto` [@citeSharla], `lubridate` [@GrolemundWickham2011], and `knitr` [@citeknitr]. We then made a table of the average number of occupied beds each night for each month (@tbl-homelessoccupancy).
 > 
 > We found that the daily average number of occupied beds was higher in December 2021 than July 2021, with 34 occupied beds in December, compared with 30 in July (@tbl-homelessoccupancy). More generally, there was a steady increase in the daily average number of occupied beds between July and December, with a slight overall increase each month. 
 >
@@ -886,7 +882,7 @@ To update the version of all of the packages that we have installed, we use `upd
 update.packages()
 ```
 
-This does not need to be run, say, every day, but from time-to-time it is worth updating packages. While many packages take care to ensure backward compatibility, at a certain point this does not become reasonable, and so it is important to be aware that updating packages can result in old code needing to be re-written.
+This does not need to be run, say, every day, but from time-to-time it is worth updating packages. While many packages take care to ensure backward compatibility, at a certain point this does not become reasonable, and so it is important to be aware that updating packages can result in old code needing to be re-written. There are tools aimed at loading particular versions to help reproducibility which we cover in @sec-reproducible-workflows.
 
 Returning to the simulation, we repeat the name of each country 50 times with `rep()`, and enable the passing of 50 years. Finally, we draw from the uniform distribution with `runif()` to simulate an estimated NMR value for that year for that country.
 
@@ -1028,7 +1024,7 @@ raw_igme_data <-
   )
 ```
 
-We can take a quick look at the dataset to get a better sense of it. We might be interested in what the dataset seems to look like (using `head()` and `tail()`), and what the names of the columns are (using `names()`).
+With established data, such as this, it can be useful to examine the codebook of reference materials about the data. In this case, a codebook is available [here](https://childmortality.org/wp-content/uploads/2021/03/CME-Info_codebook_for_downloads.xlsx). After this we can take a quick look at the dataset to get a better sense of it. We might be interested in what the dataset seems to look like (using `head()` and `tail()`), and what the names of the columns are (using `names()`).
 
 ```{r}
 head(raw_igme_data)
@@ -1178,7 +1174,7 @@ cleaned_igme_data |>
 ```
 
 
-### Communicate
+### Share
 
 To this point we downloaded some data, cleaned it, wrote some tests, and made a graph. We would typically need to communicate what we have done at some length. In this case, we will write a few paragraphs about what we did, why we did it, and what we found. 
 
@@ -1285,6 +1281,7 @@ It is also the case that it is not necessary to fully understand everything in t
     b. There are no negative numbers.
     c. There are letters in the column.
     d. Each entry has four digits.
+21. Please consider @hao2019 and demonstrate a correspondence between the workflow steps and the stages that bias can enter as discussed by @hao2019. Then extend @hao2019 somehow to ensure it is clear that this is not a problem isolated to AI (for instance you may like to link it to @kennedy2020using).
 21. Please consider the following code, add a small mistake to it, and then create a GitHub Gist that contains all of the code, and submit the URL.
 
 ```{r}
@@ -1312,13 +1309,13 @@ Begin by planning what the dataset that we need will look like, and what the fin
 
 Please do a quick sketch of the dataset that we would need. And then do a quick sketch of a graph that we might be interested in.
 
-Then put together a Quarto Document that simulates some data. Add preamble documentation, then load the packages that are needed: `tidyverse`, `janitor`, and `tidyr`. Add numbers for the riding, then use `sample()` to randomly choose one of six options, with replacement, 338 times.
+Then put together a Quarto Document that simulates some data. Add preamble documentation, then load the packages that are needed: `tidyverse`, and `janitor`. Add numbers for the riding, then use `sample()` to randomly choose one of six options, with replacement, 338 times.
 
 Next we need to get the actual data, from Elections Canada, and the file that we need to download is [here](https://www.elections.ca/res/rep/off/ovr2021app/53/data_donnees/table_tableau11.csv).
 
 Clean the names, and then select the two columns that are of interest: "electoral_district_name_nom_de_circonscription", and "elected_candidate_candidat_elu". Finally, rename the columns to remove the French and simplify the names.
 
-The column that we need is about the elected canadidates. That has the surname of the elected candidate, followed by a comma, followed by their first name, followed by a space, followed by the name of the party in both English and French, separated by a slash. Break-up this column into its pieces using `separate()` from `tidyr` [@citetidyr] and then use `select()` to just keep party information.
+The column that we need is about the elected canadidates. That has the surname of the elected candidate, followed by a comma, followed by their first name, followed by a space, followed by the name of the party in both English and French, separated by a slash. Break-up this column into its pieces using `separate()` from `tidyr` and then use `select()` to just keep party information.
 
 ```{r}
 #| eval: false
