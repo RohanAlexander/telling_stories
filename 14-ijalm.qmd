@@ -985,7 +985,7 @@ As we used the "auto = TRUE" option, it can be helpful to look at how the priors
 prior_summary(sim_run_data_second_model_rstanarm)
 ```
 
-Having built a Bayesian model, we may want to look at what the posterior predicts (@fig-ppcheckandposteriorvsprior). The idea is that if the model is doing a good job of fitting the data, then the posterior should be able to be used to simulate data that are like the actual data [@bayesianworkflow]. We can implement a posterior predictive check with `pp_check()` (@fig-ppcheckandposteriorvsprior-1). And we can compare the posterior with the prior with `posterior_vs_prior()` (@fig-ppcheckandposteriorvsprior-2). Helpfully, `pp_check()` and `posterior_vs_prior()` return `ggplot` objects so we can modify the look of them in the normal way we manipulate graphs.
+Having built a Bayesian model, we may want to look at what the posterior predicts (@fig-ppcheckandposteriorvsprior). The idea is that if the model is doing a good job of fitting the data, then the posterior should be able to be used to simulate data that are like the actual data [@bayesianworkflow]. We can implement a posterior predictive check with `pp_check()` (@fig-ppcheckandposteriorvsprior-1). And we can compare the posterior with the prior with `posterior_vs_prior()` (@fig-ppcheckandposteriorvsprior-2). Helpfully, `pp_check()` and `posterior_vs_prior()` return `ggplot` objects so we can modify the look of them in the normal way we manipulate graphs. These checks and discussion would typically just be briefly mentioned in the main content of a paper, with all the detail and graphs added to a dedicated appendix.
 
 ```{r}
 #| eval: true
@@ -1240,6 +1240,41 @@ modelsummary::modelsummary(
 
 One area where logistic regression is often used is political polling. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to 'support' or 'not support'.
 
+As a reminder, the workflow we advocate in this book: Plan -> Simulate -> Acquire -> Explore -> Share. While the focus here is the exploration of data using linear models, we still need to do the other aspects. We begin by planning. In this case, we are interested in US political support. That means we are interested in a dataset with variables for who an individual voted for, and some of their characteristics, for instance, gender and education. A quick sketch of such a dataset is @fig-uspoliticalsupportsketch. And we would like our model to average over these points. A quick sketch is @fig-uspoliticalsupportmodel.
+
+::: {#fig-uspoliticalsuppor layout-ncol=2 layout-valign="bottom"}
+
+![Quick sketch of a dataset that could be used to examine US political support](figures/IMG_2054.png){#fig-uspoliticalsupportsketch}
+
+![Quick sketch of what we expect from the analysis before finalising either the data of the analysis](figures/IMG_2055.png){#fig-uspoliticalsupportmodel}
+
+Sketches of the expected dataset and analysis focus and clarify our thinking even if they will be updated later
+:::
+
+We will simulate a dataset where the chance that a person supports Biden depends on their gender and education.
+
+```{r}
+number_of_observations <- 1000
+
+us_political_preferences <-
+  tibble(
+    education = sample(1:5, size = number_of_observations, replace = TRUE),
+    gender = sample(1:2, size = number_of_observations, replace = TRUE),
+    support_prob = 1 - 1 / (education + gender)
+  ) |>
+  rowwise() |>
+  mutate(supports_biden = sample(
+    c("yes", "no"),
+    size = 1,
+    replace = TRUE,
+    prob = c(support_prob, 1 - support_prob)
+  )) |>
+  ungroup() |>
+  select(-support_prob, supports_biden, gender, education)
+
+us_political_preferences
+```
+
 We can use the 2020 Cooperative Election Study (CES) [@cooperativeelectionstudyus], which is a long-standing annual survey of US political opinion. In 2020, there were 61,000 respondents who completed the post-election survey. While the sampling methodology, detailed in @guidetothe2020ces [p. 13], is not a perfect random sample and relies on matching, it is widely used and accepted approach that balances sampling concerns and cost.
 
 We can access the CES using `get_dataframe_by_name()` from `dataverse` [@dataverse], which was an approach that was introduced in @sec-gather-data and @sec-store-and-share. We save the data that are of interest to us, and then refer to that saved dataset.
@@ -1311,7 +1346,7 @@ ces2020 <-
 ces2020
 ```
 
-We only want respondents who are registered to vote, and we are only interested in those that voted for either Biden or Trump. We can filter to only those respondents and then add more informative labels. Gender of "female" and "male" is what is available from the CES.
+When we look at the actual data, there are concerns that we did not anticipate in our sketches. We only want respondents who are registered to vote, and we are only interested in those that voted for either Biden or Trump. We can filter to only those respondents and then add more informative labels. Gender of "female" and "male" is what is available from the CES.
 
 ```{r}
 ces2020 <-
@@ -1429,7 +1464,7 @@ ces2020_cross_validation <-
   )
 ```
 
-We might be interested to understand the performance of our model and we can use `collect_metrics()` to aggregate them across the folds (@tbl-metricsvoters-1). The average accuracy of our model across the folds is 0.61, while the average sensitivity is 0.19 and the average specificity is 0.90.
+We might be interested to understand the performance of our model and we can use `collect_metrics()` to aggregate them across the folds (@tbl-metricsvoters-1). These types of details would typically be mentioned in passing in the main content of the paper, but included in great detail in an appendix. The average accuracy of our model across the folds is 0.61, while the average sensitivity is 0.19 and the average specificity is 0.90.
 
 ```{r}
 #| label: tbl-metricsvoters
@@ -1768,10 +1803,10 @@ marginaleffects(grades_rstanarm) |>
   summary() |> 
   select(-type, -term) |> 
   knitr::kable(
-    # digits = 2,
-    # col.names = c("Departmental comparison", "Estimate", "2.5%", "97.5%"),
-    # booktabs = TRUE,
-    # linesep = ""
+    digits = 2,
+    col.names = c("Departmental comparison", "Estimate", "2.5%", "97.5%"),
+    booktabs = TRUE,
+    linesep = ""
   )
 ```
 
@@ -1779,6 +1814,31 @@ marginaleffects(grades_rstanarm) |>
 ### Letters used in *Jane Eyre* 
 
 In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's Aeneid (@HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë. We could then consider the first 10 lines of each chapter and count the number of times either "E" or "e" appears.
+
+Following the workflow advocated in this book, we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-letterssketch. And a quick sketch our our model is @fig-lettersmodel.
+
+::: {#fig-letterss layout-ncol=2 layout-valign="bottom"}
+
+![Quick sketch of a dataset that could be used to examine US political support](figures/IMG_2056.png){#fig-letterssketch}
+
+![Quick sketch of what we expect from the analysis before finalising either the data of the analysis](figures/IMG_2059.png){#fig-lettersmodel}
+
+Sketches of the expected dataset and analysis force us to consider what we are interested in
+:::
+
+We will simulate a dataset the number of e/E letters is distributed following the Poisson distribution.
+
+```{r}
+count_of_e_simulation <-
+  tibble(
+    chapter = 1:30,
+    number_e = rpois(n = 30, lambda = 10)
+    )
+
+count_of_e_simulation
+```
+
+We can now gather and prepare our data.
 
 ```{r}
 #| eval: false
@@ -2033,7 +2093,33 @@ Poisson and negative binomial models go hand in hand. It is often the case that 
 
 ### Mortality in Alberta
 
-Consider, somewhat morbidly, that every year each individual either dies or does not. From the perspective of a state, we could gather data on the number of people who died each year, by their cause of death. The Canadian province of Alberta makes the number of deaths, by cause, since 2001, for the top 30 causes each year, available [here](https://open.alberta.ca/opendata/leading-causes-of-death). We download that data, and save it as "alberta_COD.csv". We can look at the distribution of these deaths, by year and cause, where we have truncated the cause of death because some are quite extensive (@fig-albertacod). (Note that because some causes are not always in the top 30 each year, not all causes have the same number of occurrences.)
+Consider, somewhat morbidly, that every year each individual either dies or does not. From the perspective of a state, we could gather data on the number of people who died each year, by their cause of death. The Canadian province of Alberta makes the number of deaths, by cause, since 2001, for the top 30 causes each year, available [here](https://open.alberta.ca/opendata/leading-causes-of-death). 
+
+As always we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-albertadatasketch And a quick sketch our our model is @fig-albertamodelsketch
+
+::: {#fig-letterss layout-ncol=2 layout-valign="bottom"}
+
+![Quick sketch of a dataset that could be used to examine cause of death in Alberta](figures/IMG_2058.png){#fig-albertadatasketch}
+
+![Quick sketch of what we expect from the analysis of cause of death in Alberta before finalising either the data or the analysis](figures/IMG_2061.png){#fig-albertamodelsketch}
+
+Sketches of the expected dataset and analysis for cause of death in Alberta
+:::
+
+We will simulate a dataset of cause of death distributed following the negative binomial distribution.
+
+```{r}
+alberta_death_simulation <-
+  tibble(
+    cause = rep(x = c("Heart", "Stroke", "Diabetes"), times = 10),
+    year = rep(x = 2016:2018, times = 10),
+    deaths = rnbinom(n = 30, size = 20, prob = 0.1)
+    )
+
+alberta_death_simulation
+```
+
+We download that data, and save it as "alberta_COD.csv". We can look at the distribution of these deaths, by year and cause, where we have truncated the cause of death because some are quite extensive (@fig-albertacod). (Note that because some causes are not always in the top 30 each year, not all causes have the same number of occurrences.)
 
 <!-- :::{.callout-note} -->
 <!-- ## Oh, you think we have good data on that! -->
