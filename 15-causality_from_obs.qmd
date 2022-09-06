@@ -43,13 +43,13 @@ engine: knitr
 
 <!-- - Gelman, Andrew, 2020 "100 Stories of Causal Inference", 4 August, https://www.youtube.com/watch?v=jnI5KI843Lk. -->
 
-<!-- - Coppock, Alenxader, and Donald P. Green, 2016, 'Is Voting Habit Forming? New Evidence from Experiments and Regression Discontinuities', *American Journal of Political Science*, Volume 60, Issue 4, pp. 1044-1062, available at: https://onlinelibrary.wiley.com/doi/abs/10.1111/ajps.12210. (Has code and data.) -->
+<!-- - Coppock, Alexander, and Donald P. Green, 2016, 'Is Voting Habit Forming? New Evidence from Experiments and Regression Discontinuities', *American Journal of Political Science*, Volume 60, Issue 4, pp. 1044-1062, available at: https://onlinelibrary.wiley.com/doi/abs/10.1111/ajps.12210. (Has code and data.) -->
 <!-- - Dell, Melissa, Pablo Querubin, 2018, 'Nation Building Through Foreign Intervention: Evidence from Discontinuities in Military Strategies', *The Quarterly Journal of Economics*, Volume 133, Issue 2, pp. 701–764, https://doi.org/10.1093/qje/qjx037. -->
 <!-- - Imbens, Guido W., and Thomas Lemieux, 2008, 'Regression discontinuity designs: A guide to practice', *Journal of Econometrics*, vol. 142, no. 2, pp. 615-635. -->
 
 ## Introduction
 
-Life is grand when we can conduct experiments to be able to speak to causality. But there are circumstances in which we cannot run an experiment, but nonetheless want to be able to make causal claims. And data from outside experiments have value that experiments do not have. In this chapter we discuss the circumstances and methods that allow us to speak to causality using observational data. We use relatively simple methods, in sophisticated ways, drawing from statistics, but also a variety of social sciences, including economics, and political science, as well as epidemiology.
+Life is grand when we can conduct experiments to be able to speak to causality. But there are circumstances in which we cannot run an experiment, yet nonetheless want to be able to make causal claims. And data from outside experiments have value that experiments do not have. In this chapter we discuss the circumstances and methods that allow us to speak to causality using observational data. We use relatively simple methods, in sophisticated ways, drawing from statistics, but also a variety of social sciences, including economics, and political science, as well as epidemiology.
 
 For instance, @dagan2021bnt162b2 use observational data to confirm the effectiveness of the Pfizer-BioNTech vaccine. They discuss how one concern with using observational data in this way is confounding, which is where we are concerned that there is some variable that affects both the explanatory and dependent variables and can lead to spurious relationships. @dagan2021bnt162b2 adjust for this by first making a list of potential confounders, such as age, sex, geographic location, healthcare usage and then adjusting for each of them, by matching, one-to-one between people that were vaccinated and those that were not. The experimental data guided the use of observational data, and the larger size of the later enabled a focus on specific age-groups and extent of disease.
 
@@ -58,7 +58,9 @@ This chapter is about using observational data in sophisticated ways. How we can
 
 ## Directed acyclic graphs
 
-When we are discussing causality, it can help to be specific about what we mean. It is easy to get caught up in observational data and trick ourselves. It is important to think hard, and to use all the tools available to us. For instance, in that earlier example, @dagan2021bnt162b2 were able to use experimental data as a guide. Most of the time, we will not be so lucky as to have both experimental data and observational data available to us. But one framework that can help with thinking hard about our data is the use of directed acyclic graph (DAG). DAGs are a fancy name for a flow diagram and involves drawing arrows and lines between the variables to indicate the relationship between them. We use Graphviz, which is an open source package for package graph visualization and is built into Quarto. Alternatives include the use of `DiagrammeR` [@citeDiagrammeR] and `ggdag` [@citeggdag].
+When we are discussing causality, it can help to be specific about what we mean. It is easy to get caught up in observational data and trick ourselves. It is important to think hard, and to use all the tools available to us. For instance, in that earlier example, @dagan2021bnt162b2 were able to use experimental data as a guide. Most of the time, we will not be so lucky as to have both experimental data and observational data available to us. One framework that can help with thinking hard about our data is the use of directed acyclic graph (DAG). DAGs are a fancy name for a flow diagram and involves drawing arrows and lines between the variables to indicate the relationship between them. 
+
+To construct them we use Graphviz, which is an open-source package for package graph visualization and is built into Quarto. The code needs to be wrapped in a "dot" chunk rather than "R", and the chunk options are set with "//|" instead of "#|". Alternatives that do not require this include the use of `DiagrammeR` [@citeDiagrammeR] and `ggdag` [@citeggdag]. We provide the whole chunk for the first DAG, but then, only provide the code for the others.
 
 <!-- ```{r} -->
 <!-- #| fig-cap: "Using a DAG to illustrate perceived relationships" -->
@@ -81,9 +83,8 @@ When we are discussing causality, it can help to be specific about what we mean.
 
 ```{dot}
 //| label: fig-dot-firstdag
-//| fig-cap: "Using a DAG to illustrate perceived relationships"
-//| echo: true
-
+//| fig-cap: "We expect a causal relationship between x and y, where x influences y"
+//| echo: fenced
 digraph D {
   node [shape=plaintext, fontname = "helvetica"];
   
@@ -93,7 +94,7 @@ digraph D {
 }
 ```
 
-In @fig-dot-firstdag, we think that *x* causes *y*. We could build another DAG where the situation is less clear. To make the examples a little easier to follow, we will switch to thinking about a hypothetical relationship between income, education, and fertility intention (@fig-dot-educationasconfounder).
+In @fig-dot-firstdag, we think that *x* causes *y*. We could build another DAG where the situation is less clear. To make the examples a little easier to follow, we will switch to thinking about a hypothetical relationship between income and happiness, with consideration of variables that could affect that relationship. In this first one we consider the relationship between income and happiness, along with education (@fig-dot-educationasconfounder).
 
 <!-- ```{r} -->
 <!-- #| fig-cap: "A DAG showing education as a confounder" -->
@@ -104,7 +105,7 @@ In @fig-dot-firstdag, we think that *x* causes *y*. We could build another DAG w
 <!--   graph [ranksep = 0.2] -->
 <!--   node [shape = plaintext, fontsize = 10, fontname = Helvetica] -->
 <!--     a [label = 'Income'] -->
-<!--     b [label = 'Fertility intentions'] -->
+<!--     b [label = 'Happiness'] -->
 <!--     c [label = 'Education'] -->
 <!--   edge [minlen = 2, arrowhead = vee] -->
 <!--     a->b -->
@@ -117,15 +118,14 @@ In @fig-dot-firstdag, we think that *x* causes *y*. We could build another DAG w
 
 ```{dot}
 //| label: fig-dot-educationasconfounder
-//| fig-cap: "Education is a confounder and affects the relationship between income and fertility intentions"
+//| fig-cap: "Education is a confounder that affects the relationship between income and happiness"
 //| echo: true
-
 digraph D {
   
   node [shape=plaintext, fontname = "helvetica"];
   
   a [label = "Income"];
-  b [label = "Fertility intentions"];
+  b [label = "Happiness"];
   c [label = "Education"];
   
   { rank=same a b};
@@ -135,13 +135,13 @@ digraph D {
 }
 ```
 
-In @fig-dot-educationasconfounder, we think income causes fertility intentions. But we also think that education causes fertility intentions, and that education also causes income. That relationship is a "backdoor path", and failing to adjust for education in a regression could create a spurious, or potentially overstate the extent of a, relationship between income and fertility intentions in our analysis. We may think that changes in income are causing changes in fertility intentions, but it could be that education is changing them both. That variable, in this case, education, is called a "confounder".
+In @fig-dot-educationasconfounder, we think income causes happiness. But we also think that education causes happiness, and that education also causes income. That relationship is a "backdoor path", and failing to adjust for education in a regression could overstate the extent of the relationship, or even create a spurious relationship, between income and happiness in our analysis. That is, we may think that changes in income are causing changes in happiness, but it could be that education is changing them both. That variable, in this case, education, is called a "confounder".
 
-@hernanrobins2020 [p. 83] discuss an interesting case where a researcher was interested in whether one person looking up at the sky makes others look up at the sky also. There was a clear relationship between the responses of both people. But it was also the case that there was noise in the sky. So, it was unclear whether the second person looked up because the first person looked up, or they both looked up because of the noise. When using experimental data, randomization allows us to avoid this concern, but with observational data we cannot rely on that. It is also not the case that bigger data necessarily get around this problem for us. Instead, it is important to think carefully about the situation. 
+@hernanrobins2020 [p. 83] discuss an interesting case where a researcher was interested in whether one person looking up at the sky makes others look up at the sky also. There was a clear relationship between the responses of both people. But it was also the case that there was noise in the sky. So, it was unclear whether the second person looked up because the first person looked up, or they both looked up because of the noise. When using experimental data, randomization allows us to avoid this concern, but with observational data we cannot rely on that. It is also not the case that bigger data necessarily get around this problem for us. Instead, it is important to think carefully about the situation, and DAGs can help with that. 
 
 If there are confounders, but we are still interested in causal effects, then we need to adjust for them. One way is to include them in the regression. But the validity of this requires several assumptions. In particular, @gelmanandhill [p. 169] warn that our estimate will only correspond to the average causal effect in the sample if we include all of the confounders and have the right model. Putting the second requirement to one side, and focusing only on the first, if we do not think about and observe a confounder, then it can be difficult to adjust for it. And this is an area where both domain expertise and theory can bring a lot to an analysis. 
 
-In @fig-dot-luxuryasmediator we have a similar situation where again, we may think that income causes fertility intentions. But in @fig-dot-luxuryasmediator income also causes luxury tastes, which itself causes fertility intentions.
+In @fig-dot-luxuryasmediator we again consider that income causes happiness. But, if income also causes children, and children also cause happiness, then we have a situation where it would be tricky to understand the effect of income on happiness.
 
 <!-- ```{r} -->
 <!-- #| fig-cap: "A DAG showing luxury tastes as a mediator" -->
@@ -152,7 +152,7 @@ In @fig-dot-luxuryasmediator we have a similar situation where again, we may thi
 <!--   graph [ranksep = 0.2] -->
 <!--   node [shape = plaintext, fontsize = 10, fontname = Helvetica] -->
 <!--     a [label = 'Income'] -->
-<!--     b [label = 'Fertility intentions'] -->
+<!--     b [label = 'Happiness'] -->
 <!--     c [label = 'Luxury tastes'] -->
 <!--   edge [minlen = 2, arrowhead = vee] -->
 <!--     a->b -->
@@ -165,16 +165,15 @@ In @fig-dot-luxuryasmediator we have a similar situation where again, we may thi
 
 ```{dot}
 //| label: fig-dot-luxuryasmediator
-//| fig-cap: "Luxury taste as a mediator between income and fertility intentions"
+//| fig-cap: "Children as a mediator between income and happiness"
 //| echo: true
-
 digraph D {
 
   node [shape=plaintext, fontname = "helvetica"];
   
   a [label = "Income"];
-  b [label = "Fertility intentions"];
-  c [label = "Luxury tastes"];
+  b [label = "Happiness"];
+  c [label = "Children"];
   
   { rank=same a b};
   
@@ -183,9 +182,9 @@ digraph D {
 }
 ```
 
-In @fig-dot-luxuryasmediator, luxury tastes is called a "mediator" and we would not adjust for it if we were interested in the effect of income on fertility intentions. If we were to adjust for it, then some of what we are attributing to income, would be due to luxury tastes.
+In @fig-dot-luxuryasmediator, children is called a "mediator" and we would not adjust for it if we were interested in the effect of income on happiness. If we were to adjust for it, then some of what we are attributing to income, would be due to children.
 
-Finally, in @fig-dot-residenceascollider we have yet another similar situation, where we think that income causes fertility intentions. But this time both income and fertility intentions also cause place of residence.
+Finally, in @fig-dot-residenceascollider we have yet another similar situation, where we think that income causes happiness. But this time both income and happiness also cause exercise. For instance, if you have more money then it may be easier to exercise, but also it may be easier to exercise if you are happier.
 
 <!-- ```{r} -->
 <!-- #| fig-cap: "A DAG showing residence as a collider" -->
@@ -198,7 +197,7 @@ Finally, in @fig-dot-residenceascollider we have yet another similar situation, 
 <!--   graph [ranksep = 0.2] -->
 <!--   node [shape = plaintext, fontsize = 10, fontname = Helvetica] -->
 <!--     a [label = 'Income'] -->
-<!--     b [label = 'Fertility intentions'] -->
+<!--     b [label = 'Happiness'] -->
 <!--     c [label = 'Place of residence'] -->
 <!--   edge [minlen = 2, arrowhead = vee] -->
 <!--     a->b -->
@@ -211,16 +210,15 @@ Finally, in @fig-dot-residenceascollider we have yet another similar situation, 
 
 ```{dot}
 //| label: fig-dot-residenceascollider
-//| fig-cap: "Residence as a collider affecting the relationship between income and fertility intentions"
+//| fig-cap: "Exercise as a collider affecting the relationship between income and happiness"
 //| echo: true
-
 digraph D {
 
   node [shape=plaintext, fontname = "helvetica"];
   
   a [label = "Income"];
-  b [label = "Fertility intentions"];
-  c [label = "Place of residence"];
+  b [label = "Happiness"];
+  c [label = "Exercise"];
   
   { rank=same a b};
   
@@ -229,11 +227,11 @@ digraph D {
 }
 ```
 
-In this case, place of residence is called a "collider" and if we were to condition on it, then we would create a misleading relationship. Income influences where people live, but their fertility intentions also affect this. place of residence is then a collider because both the independent and dependent variable of interest influence it.
+In this case, exercise is called a "collider" and if we were to condition on it, then we would create a misleading relationship. Income influences exercise, but a person's happiness also affects this. Exercise is a collider because both the independent and dependent variable of interest influence it.
 
 It is important to be clear about this: we must create the DAG ourselves, in the same way that we must put together the model ourselves. There is nothing that will create it for us. This means that we need to think carefully about the situation. Because it is one thing to see something in the DAG and then do something about it. But it is another to not even know that it is there. @citemcelreath [p. 180] describes these as haunted DAGs. DAGs are helpful, but they are just a tool to help us think deeply about our situation. 
 
-When we are building models, it can be tempting to include as many independent variables as possible. DAGs show clearly why we need to be more thoughtful. For instance, if a variable is a confounder then we would want to adjust for it, whereas if a variable was a collider then we would not. We can never know the truth, and we are informed by aspects such as theory, what we are interested in, research design, limitations of the data, or our own limitations as researchers, to name a few. Knowing the limits is as important as reporting the model. Data and models with flaws are still useful, as long as you acknowledge those flaws. The work of thinking about a situation is never done, and relies on others, which is why we need to make all of our work as reproducible as possible.
+When we are building models, it can be tempting to include as many independent variables as possible. DAGs show clearly why we need to be more thoughtful. For instance, if a variable is a confounder, then we would want to adjust for it, whereas if a variable was a collider then we would not. We can never know the truth, and we are informed by aspects such as theory, what we are interested in, research design, limitations of the data, or our own limitations as researchers, to name a few. Knowing the limits is as important as reporting the model. Data and models with flaws are still useful, if you acknowledge those flaws. The work of thinking about a situation is never done, and relies on others, which is why we need to make all our work as reproducible as possible.
 
 ## Two common paradoxes
 
@@ -303,7 +301,7 @@ both_departments |>
   theme(legend.position = "bottom")
 ```
 
-Simpson's paradox is often illustrated using real-world data from University of California, Berkeley, on graduate admissions [@bickel1975sex]. @bickel1975sex include what might be one of the greatest sub-titles ever published: "Measuring bias is harder than is usually assumed, and the evidence is sometimes contrary to expectation". More recently, as shown in its documentation, the "penguins" dataset from `palmerpenguins` [@palmerpenguins] provides an example of Simpson's paradox, using real-world data (@fig-simpsonsparadoxinpenguins).
+Simpson's paradox is often illustrated using real-world data from University of California, Berkeley, on graduate admissions [@bickel1975sex]. @bickel1975sex include what might be one of the greatest sub-titles ever published: "Measuring bias is harder than is usually assumed, and the evidence is sometimes contrary to expectation". More recently, as mentioned in its documentation, the "penguins" dataset from `palmerpenguins` [@palmerpenguins] provides an example of Simpson's paradox, using real-world data (@fig-simpsonsparadoxinpenguins).
 
 ```{r}
 #| eval: true
@@ -336,7 +334,7 @@ penguins |>
 
 ### Berkson's paradox
 
-Berkson's paradox occurs when we estimate some relationship based on the dataset that we have. But because the dataset is so selected, the relationship is different in a more general dataset [@citeberkson]. For instance, if we have a dataset of professional cyclists then we might find there is no relationship between their VO2 max and their chance of winning a bike race [@vomaxpaper; @anothernicevomaxpaper]. But if we had a dataset of the general population then we might find a relationship between these two variables. The professional dataset has just been so selected that the relationship disappears; one cannot become a professional cyclist unless one has a good-enough VO2 max. Again, we can simulate some data to show this more clearly (@fig-berksonsparadox).
+Berkson's paradox occurs when we estimate some relationship based on the dataset that we have. But because the dataset is so selected, the relationship is different in a more general dataset [@citeberkson]. For instance, if we have a dataset of professional cyclists then we might find there is no relationship between their VO2 max and their chance of winning a bike race [@vomaxpaper; @anothernicevomaxpaper]. But if we had a dataset of the general population then we might find a relationship between these two variables. The professional dataset has just been so selected that the relationship disappears; one cannot become a professional cyclist unless one has a good-enough VO2 max, but among professional cyclists everyone has a good-enough VO2 max. Again, we can simulate some data to show this more clearly (@fig-berksonsparadox).
 
 ```{r}
 #| eval: true
@@ -423,8 +421,6 @@ To be more specific about the situation, we simulate data. We will simulate a si
 #| eval: true
 #| include: true
 
-library(tidyverse)
-
 set.seed(853)
 
 simulated_diff_in_diff <-
@@ -444,7 +440,6 @@ simulated_diff_in_diff <-
     treatment_group = as.factor(treatment_group),
     time = as.factor(time)
   )
-
 
 simulated_diff_in_diff <-
   simulated_diff_in_diff |>
@@ -515,6 +510,8 @@ While we should include the separate aspects as well, it is the estimate of the 
 ```{r}
 #| echo: true
 #| eval: false
+#| warning: false
+#| message: false
 
 library(modelsummary)
 library(rstanarm)
@@ -576,9 +573,14 @@ diff_in_diff_example_regression <-
 ```{r}
 #| tbl-cap: "Illustration of simulated data that shows a difference before and after getting a new tennis racket"
 #| label: tbl-diffindifftennisracket
+#| warning: false
+#| message: false
 library(modelsummary)
-modelsummary(diff_in_diff_example_regression,
-             statistic = "conf.int")
+
+modelsummary(
+  diff_in_diff_example_regression,
+  statistic = "conf.int"
+)
 ```
 
 
@@ -629,7 +631,7 @@ newspapers
 
 library(haven)
 
-newspapers <- read_dta(here::here("inputs/data/116438-V1/data/dta/Angelucci_Cage_AEJMicro_dataset.dta"))
+newspapers <- read_dta("inputs/data/116438-V1/data/dta/Angelucci_Cage_AEJMicro_dataset.dta")
 
 newspapers
 ```
@@ -637,7 +639,6 @@ newspapers
 There are 1,196 observations in the dataset and 52 variables. @angelucci2019newspapers are interested in the 1960-1974 time-period which has around 100 newspapers. There are 14 national newspapers at the beginning of the period and 12 at the end. The key period is 1967, when the French government announced it would allow advertising on television. @angelucci2019newspapers argue that national newspapers were affected by this chance, but local newspapers were not. So, the national newspapers are the treatment group and the local newspapers are the control group.
 
 We focus just on the headline difference in differences result and construct summary statistics (@tbl-frenchnewspaperssummarystatistics).
-
 
 ```{r}
 #| eval: true
@@ -689,6 +690,7 @@ We are interested in what happened from 1967 onward, especially in terms of adve
 #| warning: false
 
 library(scales)
+
 newspapers |>
   mutate(type = if_else(local == 1, "Local", "National")) |>
   ggplot(aes(x = year, y = ra_cst)) +
@@ -715,37 +717,160 @@ newspapers |>
 
 The model that we are interested in estimating is:
 $$\mbox{ln}(y_{n,t}) = \beta_0 + \beta_1(\mbox{National binary}\times\mbox{1967 onward binary}) + \lambda_n + \gamma_y + \epsilon.$$
-It is the $\beta_1$ coefficient that we are especially interested in. We use $\lambda_n$ as fixed effect for each newspaper, and the $\gamma_y$ as a fixed effect for each year. We estimate the models using `lm()`.
+It is the $\beta_1$ coefficient that we are especially interested in. We use $\lambda_n$ as fixed effect for each newspaper, and the $\gamma_y$ as a fixed effect for each year. We estimate the models using `stan_glm()`.
 
 ```{r}
-# Advertising side
+#| echo: true
+#| eval: false
+#| warning: false
+#| message: false
+
+library(modelsummary)
+library(rstanarm)
+
 ad_revenue <-
-  lm(log(ra_cst) ~ after_national + id_news + year, data = newspapers)
+  stan_glm(
+    formula = log(ra_cst) ~ after_national + id_news + year,
+    data = newspapers,
+    family = gaussian(),
+    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(0, 2.5, autoscale = TRUE),
+    prior_aux = exponential(rate = 1, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  ad_revenue,
+  file = "ad_revenue.rds"
+)
+
 ad_revenue_div_circulation <-
-  lm(log(ra_cst_div_qtotal) ~ after_national + id_news + year, data = newspapers)
-ad_price <-
-  lm(log(ads_p4_cst) ~ after_national + id_news + year, data = newspapers)
-ad_space <-
-  lm(log(ads_s) ~ after_national + id_news + year, data = newspapers)
+  stan_glm(
+    formula = log(ra_cst_div_qtotal) ~ after_national + id_news + year,
+    data = newspapers,
+    family = gaussian(),
+    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(0, 2.5, autoscale = TRUE),
+    prior_aux = exponential(rate = 1, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  ad_revenue_div_circulation,
+  file = "ad_revenue_div_circulation.rds"
+)
 
 # Consumer side
 subscription_price <-
-  lm(log(ps_cst) ~ after_national + id_news + year, data = newspapers)
+  stan_glm(
+    formula = log(ps_cst) ~ after_national + id_news + year,
+    data = newspapers,
+    family = gaussian(),
+    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(0, 2.5, autoscale = TRUE),
+    prior_aux = exponential(rate = 1, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  subscription_price,
+  file = "subscription_price.rds"
+)
+
 unit_price <-
-  lm(log(po_cst) ~ after_national + id_news + year, data = newspapers)
-circulation <-
-  lm(log(qtotal) ~ after_national + id_news + year, data = newspapers)
-share_of_sub <-
-  lm(log(qs_s) ~ after_national + id_news + year, data = newspapers)
-revenue_from_sales <-
-  lm(log(rs_cst) ~ after_national + id_news + year, data = newspapers)
+  stan_glm(
+    formula = log(po_cst) ~ after_national + id_news + year,
+    data = newspapers,
+    family = gaussian(),
+    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(0, 2.5, autoscale = TRUE),
+    prior_aux = exponential(rate = 1, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  unit_price,
+  file = "unit_price.rds"
+)
 ```
 
-Looking at the advertising-side variables (@tbl-frenchnewspapersadvertising) we find consistently negative coefficients for everything apart from advertising space.
+
+```{r}
+#| echo: false
+#| eval: false
+#| message: false
+#| warning: false
+
+# INTERNAL
+saveRDS(
+  ad_revenue,
+  file = "outputs/model/ad_revenue.rds"
+)
+
+saveRDS(
+  ad_revenue_div_circulation,
+  file = "outputs/model/ad_revenue_div_circulation.rds"
+)
+
+saveRDS(
+  subscription_price,
+  file = "outputs/model/subscription_price.rds"
+)
+
+saveRDS(
+  unit_price,
+  file = "outputs/model/unit_price.rds"
+)
+```
+
+```{r}
+#| echo: true
+#| eval: false
+#| warning: false
+#| message: false
+
+ad_revenue <-
+  readRDS(file = "ad_revenue.rds")
+
+ad_revenue_div_circulation <-
+  readRDS(file = "ad_revenue_div_circulation")
+
+subscription_price <-
+  readRDS(file = "subscription_price.rds")
+
+unit_price <-
+  readRDS(file = "unit_price.rds")
+```
+
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+library(rstanarm)
+
+ad_revenue <-
+  readRDS(file = "outputs/model/ad_revenue.rds")
+
+ad_revenue_div_circulation <-
+  readRDS(file = "outputs/model/ad_revenue_div_circulation.rds")
+
+subscription_price <-
+  readRDS(file = "outputs/model/subscription_price.rds")
+
+unit_price <-
+  readRDS(file = "outputs/model/unit_price.rds")
+```
+
+Looking at the advertising-side variables (first two columns of @tbl-frenchnewspapersadvertising) we find consistently negative coefficients. And looking at the advertising-side variables (@tbl-frenchnewspapersadvertising) we again, find a negative coefficient for unit price, and a positive coefficient for subscription price.
 
 ```{r}
 #| label: tbl-frenchnewspapersadvertising
 #| tbl-cap: "Effect of changed television advertising laws on revenue of French newspapers (1960-1974)"
+#| warning: false
+#| message: false
 
 selected_variables <-
   c(
@@ -753,47 +878,20 @@ selected_variables <-
     "after_national1" = "After change"
   )
 
-advertising_models <- list(
-  "Ad revenue" = ad_revenue,
-  "Ad revenue over circulation" = ad_revenue_div_circulation,
-  "Ad prices" = ad_price,
-  "Ad space" = ad_space
-)
-
 modelsummary(
-  advertising_models,
+  models = list(
+    "Ad revenue" = ad_revenue,
+    "Ad revenue over circulation" = ad_revenue_div_circulation,
+    "Subscription price" = subscription_price,
+    "Unit price" = unit_price
+  ),
   fmt = 2,
-  coef_map = selected_variables
+  coef_map = selected_variables,
+  statistic = "conf.int"
 )
 ```
 
-
-
-And looking at the advertising-side variables (@tbl-frenchnewspapersconsumers) we again, find consistently negative coefficients for everything apart from the share of subscriptions and unit price.
-
-```{r}
-#| label: tbl-frenchnewspapersconsumers
-#| tbl-cap: "Effect of changed television advertising laws on consumers of French newspapers (1960-1974)"
-
-consumer_models <- list(
-  "Subscription price" = subscription_price,
-  "Circulation" = circulation,
-  "Subscriptions share" = share_of_sub,
-  "Sales revenue" = revenue_from_sales,
-  "Unit price" = unit_price
-)
-
-modelsummary(
-  consumer_models,
-  fmt = 2,
-  coef_map = selected_variables
-)
-```
-
-In general, we are able to replicate the main results of @angelucci2019newspapers and find that in many cases there appears to be a difference from 1967 onward. Our results are similar to @angelucci2019newspapers.
-
-<!-- - Parallel trends: Notice the wonderful way in which they test the "parallel trends" assumption on pp. 350-351. -->
-<!-- - Discussion: Look at their wonderful discussion (pp. 353-358) of interpretation, external validity, and robustness. -->
+In general, we are able to replicate the main results of @angelucci2019newspapers and find that in many cases there appears to be a difference from 1967 onward. Our results are similar to @angelucci2019newspapers. @angelucci2019newspapers [pp. 353-358] also includes an excellent example of the discussion of interpretation, external validity, and robustness that is required for difference in differences models.
 
 
 
@@ -851,15 +949,13 @@ In general, we are able to replicate the main results of @angelucci2019newspaper
 
 Difference in differences is a powerful analysis framework. But it can be tough to identify appropriate treatment and control groups. @alexander2018age compare migrant brothers, where one brother had most of their education in a different country, and the other brother had most of their education in the US. Given the data that are available, this match provides a reasonable treatment and control group. But other matches could have given different results, for instance friends or cousins.
 
-We can match based on observable variables. For instance, age-group or education. At two different times we compare smoking rates in 18-year-olds in one city with smoking rates in 18-year-olds in another city. This would be a coarse match because we know that there are many differences between 18-year-olds, even in terms of the variables that we commonly observe, say gender and education. One way to deal with this would be to create sub-groups: 18-year-old males with a high school education, etc. But then the sample sizes quickly become small. We also have the issue of how to deal with continuous variables. And, is a 18-year-old really that different to a 19-year-old? Why not also compare with them?
+We can only match based on observable variables. For instance, age-group or education. At two different times we compare smoking rates in 18-year-olds in one city with smoking rates in 18-year-olds in another city. This would be a coarse match because we know that there are many differences between 18-year-olds, even in terms of the variables that we commonly observe, say gender and education. One way to deal with this would be to create sub-groups: 18-year-old males with a high school education, etc. But then the sample sizes quickly become small. We also have the issue of how to deal with continuous variables. And, is a 18-year-old really that different to a 19-year-old? Why not also compare with them?
 
 One way to proceed is to consider a nearest neighbor approach. But there can be limited concern for uncertainty with this approach. There can also be an issue with having many variables because we end up with a high-dimension graph. This leads to propensity score matching. Here we will explain the process of propensity score matching, but it is not something that should be widely used [@king2019propensity], and we will then go through why that is the case.
 
 Propensity score matching involves assigning some probability to each observation. We construct that probability based on the observation's values for the independent variables, before treatment. That probability is our best guess at the probability of the observation being treated, regardless of whether it was treated or not. For instance, if 18-year-old males were treated but 19-year-old males were not, then as there is not much difference between 18-year-old males and 19-year-old males our assigned probability would be similar. We can then compare the outcomes of observations with similar propensity scores.
 
-One advantage of propensity score matching is that is allows us to easily consider many independent variables at once, and it can be constructed using logistic regression.
-
-To be more specific we can simulate some data. We will pretend that we work for a large online retailer. We are going to treat some individuals with free shipping to see what happens to their average purchase.
+One advantage of propensity score matching is that is allows us to easily consider many independent variables at once, and it can be constructed using logistic regression. To be more specific we can simulate some data. We will pretend that we work for a large online retailer. We are going to treat some individuals with free shipping to see what happens to their average purchase.
 
 ```{r}
 #| eval: true
@@ -1084,23 +1180,93 @@ rdd_example_data |>
   )
 ```
 
-We can use a binary variable with linear regression to estimate the effect. We expect the coefficient to be around two, which is what we simulated.
+We can use a binary variable with linear regression to estimate the effect. We expect the coefficient to be around two, which is what we simulated, and what we find (@tbl-rddexample).
 
 ```{r}
+#| echo: true
+#| eval: false
+#| warning: false
+#| message: false
+
+library(modelsummary)
+library(rstanarm)
+
 rdd_example_data <-
   rdd_example_data |>
   mutate(mark_80_and_over = if_else(mark < 80, 0, 1))
 
-lm(income ~ mark + mark_80_and_over, data = rdd_example_data) |>
-  modelsummary()
+rdd_example <-
+  stan_glm(
+    formula = income ~ mark + mark_80_and_over,
+    data = rdd_example_data,
+    family = gaussian(),
+    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(0, 2.5, autoscale = TRUE),
+    prior_aux = exponential(rate = 1, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  rdd_example,
+  file = "rdd_example.rds"
+)
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| message: false
+#| warning: false
+
+# INTERNAL
+saveRDS(
+  rdd_example,
+  file = "outputs/model/rdd_example.rds"
+)
+```
+
+```{r}
+#| echo: true
+#| eval: false
+#| warning: false
+#| message: false
+
+rdd_example <-
+  readRDS(file = "rdd_example.rds")
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+library(rstanarm)
+
+rdd_example <-
+  readRDS(file = "outputs/model/rdd_example.rds")
+```
+
+```{r}
+#| label: tbl-rddexample
+#| tbl-cap: "Example of regression discontinuity with simulated data"
+#| warning: false
+#| message: false
+
+modelsummary(
+  models = rdd_example,
+  fmt = 2,
+  statistic = "conf.int"
+)
 ```
 
 There are various caveats to this estimate that we will discuss, but the essentials of RDD are here. Given an appropriate set-up, and model, an RDD can compare favorably to randomized trials [@bloombellreiman2020].
 
-We could also implement RDD using `rdrobust` [@rdrobust]. The advantage of this approach is that many extensions are easily available. 
+We could also implement RDD using `rdrobust` [@rdrobust]. The advantage of this approach is that many common extensions are easily available. 
 
 ```{r}
 library(rdrobust)
+
 rdrobust(
   y = rdd_example_data$income,
   x = rdd_example_data$mark,
@@ -1119,11 +1285,11 @@ The key assumptions of RDD are [@Cunningham2021, p. 163]:
 1. The cut-off is specific, fixed, and known to all.
 2. The forcing function is continuous.
 
-The first assumption is largely about being unable to manipulate the cut-off, and ensures that the cut-off has meaning. The second assumption enables us to be confident that folks on either side of the threshold are similar, apart from just happening to just fall on either side of the threshold.
+The first assumption is largely about being unable to manipulate the cut-off, and ensures that the cut-off has meaning. The second assumption enables us to be confident that people on either side of the threshold are similar, apart from just happening to just fall on either side of the threshold.
 
 When we discussed randomized control trials and A/B testing in @sec-hunt-data the randomized assignment of the treatment meant that the control and treatment groups were the same, but for the treatment. Then we moved to difference in differences, and we assumed that there was a common trend between the treated and control groups. We allowed that the groups could be different, but that we could "difference out" their differences. Finally, we considered matching, and we said that even if we the control and treatment groups seemed quite different, we were able to match, to some extent, those who were treated with a group that were similar to them in all ways, apart from the fact that they were not treated.
 
-In regression discontinuity we consider a slightly different setting. The two groups are completely different in terms of the forcing variable. They are on either side of the threshold. So there is no overlap at all. But we know the threshold and believe that those on either side are essentially matched. Let us consider the 2019 NBA Eastern Conference Semifinals - Toronto and the Philadelphia. Game 1: Raptors win 108-95; Game 2: 76ers win 94-89; Game 3: 76ers win 116-95; Game 4: Raptors win 101-96; Game 5: Raptors win 125-89; Game 6: 76ers win 112-101; and finally, Game 7: Raptors win 92-90, because of a ball that win in after bouncing on the rim four times. Was there really that much difference between the teams?
+In regression discontinuity we consider a slightly different setting. The two groups are completely different in terms of the forcing variable. They are on either side of the threshold. There is no overlap at all. But we know the threshold and believe that those on either side are essentially matched. Let us consider the 2019 NBA Eastern Conference Semifinals - Toronto and the Philadelphia. Game 1: Raptors win 108-95; Game 2: 76ers win 94-89; Game 3: 76ers win 116-95; Game 4: Raptors win 101-96; Game 5: Raptors win 125-89; Game 6: 76ers win 112-101; and finally, Game 7: Raptors win 92-90, because of a ball that win in after bouncing on the rim four times. Was there really that much difference between the teams?
 
 The continuity assumption is important, but we cannot test this as it is based on a counterfactual. Instead, we need to convince people of it. Ways to do this include: 
 
@@ -1235,18 +1401,35 @@ revisit @carpenterdobkin in the context of crime in California.
 We can obtain their replication data [@carpenterdobkinreplicationdata] from [here](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/27070). @carpenterdobkin consider a large number of variables and construct a rate, and average this rate over a fortnight, but for simplicity, we will just consider numbers for a few variables: assault, aggravated_assault, DUI, and traffic violations (@fig-californiaarrests).
 
 ```{r}
-#| label: fig-californiaarrests
-#| fig-cap: "Comparing the number of arrests either side of turning 21 for selected reasons"
+#| eval: false
+#| echo: true
 
 library(haven)
 library(tidyverse)
 
 carpenter_dobkin <-
   read_dta(
-    here::here(
-      "inputs/data/P01 Age Profile of Arrest Rates 1979-2006.dta"
-    )
+    "P01 Age Profile of Arrest Rates 1979-2006.dta"
   )
+```
+
+```{r}
+#| eval: true
+#| echo: false
+
+library(haven)
+library(tidyverse)
+
+carpenter_dobkin <-
+  read_dta(
+    "inputs/data/P01 Age Profile of Arrest Rates 1979-2006.dta"
+  )
+```
+
+
+```{r}
+#| label: fig-californiaarrests
+#| fig-cap: "Comparing the number of arrests either side of turning 21 for selected reasons"
 
 carpenter_dobkin_prepared <-
   carpenter_dobkin |>
@@ -1284,11 +1467,91 @@ carpenter_dobkin_prepared |>
 ```
 
 ```{r}
-library(rdrobust)
-
 carpenter_dobkin_aggravated_assault_only <-
   carpenter_dobkin_prepared |>
-  filter(arrested_for == "aggravated_assault")
+  filter(
+    arrested_for == "aggravated_assault",
+    abs(age - 21) < 2
+  ) |>
+  mutate(is_21_or_more = if_else(age < 21, 0, 1))
+```
+
+```{r}
+#| echo: true
+#| eval: false
+#| warning: false
+#| message: false
+
+rdd_carpenter_dobkin <-
+  stan_glm(
+    formula = number ~ age + is_21_or_more,
+    data = carpenter_dobkin_aggravated_assault_only,
+    family = gaussian(),
+    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(0, 2.5, autoscale = TRUE),
+    prior_aux = exponential(rate = 1, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  rdd_example,
+  file = "rdd_example.rds"
+)
+```
+
+
+```{r}
+#| echo: false
+#| eval: false
+#| message: false
+#| warning: false
+
+# INTERNAL
+saveRDS(
+  rdd_carpenter_dobkin,
+  file = "outputs/model/rdd_carpenter_dobkin.rds"
+)
+```
+
+```{r}
+#| echo: true
+#| eval: false
+#| warning: false
+#| message: false
+
+rdd_carpenter_dobkin <-
+  readRDS(file = "rdd_carpenter_dobkin.rds")
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+library(rstanarm)
+
+rdd_carpenter_dobkin <-
+  readRDS(file = "outputs/model/rdd_carpenter_dobkin.rds")
+```
+
+```{r}
+#| label: tbl-rddcarpenterdobkin
+#| tbl-cap: "Examining the effect of alcohol on crime in California"
+#| warning: false
+#| message: false
+
+modelsummary(
+  models = rdd_carpenter_dobkin,
+  fmt = 2,
+  statistic = "conf.int"
+)
+```
+
+And the results are similar if we use `rdrobust`.
+
+```{r}
+library(rdrobust)
 
 rdrobust(
   y = carpenter_dobkin_aggravated_assault_only$number,
@@ -1320,7 +1583,7 @@ rdrobust(
 ## Instrumental variables
 
 
-Instrumental variables (IV) is an approach that can be handy when we have some type of treatment and control going on, but we have a lot of correlation with other variables and we possibly do not have a variable that actually measures what we are interested in. So adjusting for observables will not be enough to create a good estimate. Instead we find some variable---the eponymous instrumental variable---that is:
+Instrumental variables (IV) is an approach that can be handy when we have some type of treatment and control going on, but we have a lot of correlation with other variables and we possibly do not have a variable that actually measures what we are interested in. Adjusting for observables will not be enough to create a good estimate. Instead we find some variable---the eponymous instrumental variable---that is:
 
 1. correlated with the treatment variable, but
 2. not correlated with the outcome.
@@ -1340,12 +1603,12 @@ Following the language of [@gelmanandhill, p. 216] when we use instrumental vari
 - Monotonicity.
 - Exclusion restriction.
 
-As an aside, the history of instrumental variables is intriguing, and @stock2003retrospectives, via @Cunningham2021, provide a brief overview. The method was first published in @wright1928tariff. This is a book about the effect of tariffs on animal and vegetable oil. So why might instrumental variables be important in a book about tariffs on animal and vegetable oil? The fundamental problem is that the effect of tariffs depends on both supply and demand. But we only know prices and quantities, so we do not know what is driving the effect. We can use instrumental variables to pin down causality. The intriguing aspect is that the instrumental variables discussion is only in Appendix B. It would seem odd to relegate a major statistical break-through to an appendix. Further, Philip G. Wright, the book's author, had a son Sewall Wright, who had considerable expertise in statistics and the specific method used in Appendix B. Hence the mystery of Appendix B: did Philip or Sewall write it? @Cunningham2021, @stock2003retrospectives, and @angristkrueger, all go into more detail, but on balance feel that it is likely that Philip did actually author the work.
+As an aside, the history of instrumental variables is intriguing, and @stock2003retrospectives, via @Cunningham2021, provide a brief overview. The method was first published in @wright1928tariff. This is a book about the effect of tariffs on animal and vegetable oil. Why might instrumental variables be important in a book about tariffs on animal and vegetable oil? The fundamental problem is that the effect of tariffs depends on both supply and demand. But we only know prices and quantities, so we do not know what is driving the effect. We can use instrumental variables to pin down causality. The intriguing aspect is that the instrumental variables discussion is only in Appendix B. It would seem odd to relegate a major statistical break-through to an appendix. Further, Philip G. Wright, the book's author, had a son Sewall Wright, who had considerable expertise in statistics and the specific method used in Appendix B. Hence the mystery of Appendix B: did Philip or Sewall write it? @Cunningham2021, @stock2003retrospectives, and @angristkrueger, all go into more detail, but on balance feel that it is likely that Philip did actually author the work.
 
 
 ### Simulated example
 
-Let us generate some data. We will explore a simulation related to the canonical example of health status, smoking, and tax rates. So we are looking to explain how healthy someone is based on the amount they smoke, via the tax rate on smoking. We are going to generate different tax rates by provinces. My understanding is that the tax rate on cigarettes is now pretty much the same in each of the provinces, but that this is fairly recent. So we will pretend that Alberta had a low tax, and Nova Scotia had a high tax.
+Let us generate some data. We will explore a simulation related to the canonical example of health status, smoking, and tax rates. We are looking to explain how healthy someone is based on the amount they smoke, via the tax rate on smoking. We are going to generate different tax rates by provinces. My understanding is that the tax rate on cigarettes is now pretty much the same in each of the provinces, but that this is fairly recent. We will pretend that Alberta had a low tax, and Nova Scotia had a high tax.
 
 <!-- We first want a count for the number of cigarettes that a person smokes. The Poisson distribution can provide a distribution over the integers, so we will sample from that.  -->
 
@@ -1385,7 +1648,7 @@ iv_example_data <-
     rnorm(n = n(), mean = 1, sd = 1),
     rnorm(n = n(), mean = 0, sd = 1)
   ))
-## So health will be one standard deviation higher for people who do not or barely smoke.
+## Health will be one standard deviation higher for people who do not or barely smoke.
 ```
 
 Now we need a relationship between cigarettes and the province (because in this illustration, the provinces have different tax rates).
@@ -1455,7 +1718,7 @@ smoker_on_tax <- lm(smoker ~ tax, data = iv_example_data)
 coef(health_on_tax)["tax"] / coef(smoker_on_tax)["tax"]
 ```
 
-So we find that if you smoke then your health is likely to be worse than if you do not smoke.
+We find that if you smoke then your health is likely to be worse than if you do not smoke.
 
 Equivalently, we can think of instrumental variables in a two-stage regression context. 
 
@@ -1477,10 +1740,10 @@ iv_robust(health ~ smoker | tax, data = iv_example_data) |>
 
 ### Assumptions
 
-The set-up of instrumental variables is described in (@fig-dot-taxrebateasiv), which shows education as a confounder between income and fertility intentions. A tax rebate likely only affects income, not education, and could be used as an instrumental variable.
+The set-up of instrumental variables is described in (@fig-dot-taxrebateasiv), which shows education as a confounder between income and happiness. A tax rebate likely only affects income, not education, and could be used as an instrumental variable.
 
 <!-- ```{r} -->
-<!-- #| fig-cap: "Education as a confounder for the relationship between income and fertility intentions with tax rebate as an instrumental variable" -->
+<!-- #| fig-cap: "Education as a confounder for the relationship between income and happiness with tax rebate as an instrumental variable" -->
 <!-- #| label: fig-taxrebateasiv -->
 
 <!-- grViz(" -->
@@ -1488,7 +1751,7 @@ The set-up of instrumental variables is described in (@fig-dot-taxrebateasiv), w
 <!--   graph [ranksep = 0.2] -->
 <!--   node [shape = plaintext, fontsize = 10, fontname = Helvetica] -->
 <!--     a [label = 'Income'] -->
-<!--     b [label = 'Fertility intentions'] -->
+<!--     b [label = 'Happiness'] -->
 <!--     c [label = 'Education'] -->
 <!--     d [label = 'Tax rebate'] -->
 <!--   edge [minlen = 2, arrowhead = vee] -->
@@ -1503,14 +1766,14 @@ The set-up of instrumental variables is described in (@fig-dot-taxrebateasiv), w
 
 ```{dot}
 //| label: fig-dot-taxrebateasiv
-//| fig-cap: "Education as a confounder for the relationship between income and fertility intentions with tax rebate as an instrumental variable"
+//| fig-cap: "Education as a confounder for the relationship between income and happiness with tax rebate as an instrumental variable"
 //| echo: true
 
 digraph D {
   
   node [shape=plaintext, fontname = "helvetica"];
   a [label = "Income"]
-  b [label = "Fertility intentions"]
+  b [label = "Happiness"]
   c [label = "Education"]
   d [label = "Tax rebate"]
   { rank=same a b};
@@ -1674,6 +1937,7 @@ When considering an instrumental variable approach, it is important to spend con
 35. Please talk through a brief example of when you may want to be very careful about checking for Simpson's paradox.
 36. Please talk through a brief example of when you may want to be very careful about checking for Berkson's paradox.
 38. @NoiseKahneman say '... while correlation does not imply causation, causation does imply correlation. Where there is a causal link, we should find a correlation'. With reference to @Cunningham2021 [Chapter 1], are they right or wrong, and why?
+39. Please redo the French newspaper example, but for two variables on the advertising side: "ads_p4_cst", and "ads_s", and for two variables on the consumer side: "qtotal" and "qs_s".
 
 
 ### Tutorial {.unnumbered}

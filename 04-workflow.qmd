@@ -41,7 +41,7 @@ Some of the examples that @Gelman2016 talks about are not that important in the 
 
 At a minimum, and with few exceptions, we must release our code, datasets, and environment. Without these, it is difficult to know what a finding speaks to [@miyakawa2020no]. More banally, we also do not know if there are mistakes or aspects that were inadvertently overlooked [@merali2010computational; @hillelwayne; @natefixesmistake]. Increasingly, we consider a paper to be an advertisement, and for the associated code, data, and environment to be the actual work [@buckheit1995wavelab]. Steve Jobs, a co-founder of Apple, talked about how the best craftsmen ensure that even the aspects of their work that no one else will ever see are as well-finished and high-quality as the aspects that are public facing [@stevejobs]. The same is true in data science, where often one of the distinguishing aspects of high-quality work is that the README and code comments are as polished as, say, the abstract of the associated paper.
 
-Workflows exist within a cultural and social context, which imposes an additional reason for the need for them to be reproducible. For instance, @wang2018deep use deep neural networks to train a model to distinguish between gay and heterosexual men. (@murphy2017 provides a summary of the paper, the associated issues, and comments from its authors). To do this, @wang2018deep [p. 248] needed a dataset of photos of folks that were "adult, Caucasian, fully visible, and of a gender that matched the one reported on the user’s profile". They verified this using Amazon Mechanical Turk, an online platform that pays workers a small amount of money to complete specific tasks. The instructions provided to the Mechanical Turk workers for this task specify that Barack Obama, the 44th US President, who had a white mother and a black father, should be classified as "Black"; and that Latino is an ethnicity, rather than a race [@Mattson2017]. The classification task may seem objective, but, perhaps unthinkingly, echoes the views of Americans with a certain class and background.
+Workflows exist within a cultural and social context, which imposes an additional reason for the need for them to be reproducible. For instance, @wang2018deep use deep neural networks to train a model to distinguish between gay and heterosexual men. (@murphy2017 provides a summary of the paper, the associated issues, and comments from its authors). To do this, @wang2018deep [p. 248] needed a dataset of photos of people that were "adult, Caucasian, fully visible, and of a gender that matched the one reported on the user’s profile". They verified this using Amazon Mechanical Turk, an online platform that pays workers a small amount of money to complete specific tasks. The instructions provided to the Mechanical Turk workers for this task specify that Barack Obama, the 44th US President, who had a white mother and a black father, should be classified as "Black"; and that Latino is an ethnicity, rather than a race [@Mattson2017]. The classification task may seem objective, but, perhaps unthinkingly, echoes the views of Americans with a certain class and background.
 
 This is just one specific concern about one part of the @wang2018deep workflow. Broader concerns are raised by others including @Gelman_2018. The main issue is that statistical models are specific to the data on which they were trained. And the only reason that we can identify likely issues in the model of @wang2018deep is because, despite not releasing the specific dataset that they used, they were nonetheless open about their procedure. For our work to be credible, it needs to be reproducible by others.
 
@@ -272,16 +272,10 @@ The reference list at the end of the paper is automatically built based on calli
 
 It can be useful to cross-reference figures, tables, and equations. This makes it easier to refer to them in the text. To do this for a figure we refer to the name of the R chunk that creates or contains the figure. For instance, consider the following code.
 
-```{verbatim, file="inputs/quarto_example-figures_crossreferences.qmd"}
-```
-
-Then `(@fig-uniquename)` would produce: (@fig-uniquename) as the name of the R chunk is `fig-uniquename`. We need to add "fig" to the start of the chunk name so that Quarto knows that this is a figure. We then include a "fig-cap:" in the R chunk that specifies a caption.
-
-
 ```{r}
+#| echo: fenced
 #| label: fig-uniquename
 #| fig-cap: Number of illnesses in the past two weeks, based on the 1977--1978 Australian Health Survey
-#| echo: false
 #| warning: false
 
 library(tidyverse)
@@ -294,13 +288,15 @@ DoctorVisits |>
   geom_histogram(stat = "count")
 ```
 
+Then `(@fig-uniquename)` would produce: (@fig-uniquename) as the name of the R chunk is `fig-uniquename`. We need to add "fig" to the start of the chunk name so that Quarto knows that this is a figure. We then include a "fig-cap:" in the R chunk that specifies a caption.
+
 We can add `#| layout-ncol: 2` in an R chunk within a Quarto document to have two graphs appear side-by-side (@fig-doctorgraphsidebyside). Here @fig-doctorgraphsidebyside-1 uses the minimal theme, and @fig-doctorgraphsidebyside-2 uses the classic theme. These both cross-reference the same label `#| label: fig-doctorgraphsidebyside` in the R chunk, with an additional option added in the R chunk of `#| fig-subcap: ["Number of illnesses","Number of visits to the doctor"]` which provides the sub-cations. The addition of letters in-text is accomplished, by adding "-1" and "-2" to the end of the label when it is used in-text: `(@fig-doctorgraphsidebyside)`, `@fig-doctorgraphsidebyside-1`, and `@fig-doctorgraphsidebyside-2`.
 
 ```{r}
 #| eval: true
 #| warning: false
 #| label: fig-doctorgraphsidebyside
-#| echo: true
+#| echo: fenced
 #| fig-cap: "Two variants of Doctor Visits"
 #| fig-subcap: ["Number of illnesses","Number of visits to the doctor"]
 #| layout-ncol: 2
@@ -314,17 +310,11 @@ DoctorVisits |>
   geom_histogram(stat = "count")
 ```
 
-
-
-
 We can take a similar approach to cross-reference tables. For instance, `(@tbl-docvisittable)` will produce: (@tbl-docvisittable). In this case we specify "tbl" at the start of the label so that Quarto knows that it is a table. And we specify a caption for the table with "tbl-cap:".
-
-```{verbatim, file="inputs/quarto_example-tables_crossreferences.qmd"}
-```
 
 ```{r}
 #| label: tbl-docvisittable
-#| echo: false
+#| echo: fenced
 #| tbl-cap: "Number of visits to the doctor in the past two weeks, based on the 1977--1978 Australian Health Survey"
 
 DoctorVisits |>
@@ -334,15 +324,17 @@ DoctorVisits |>
 
 Finally, we can also cross-reference equations. To that we need to add a tag `{#eq-macroidentity}` which we then reference. 
 
-
-```{verbatim, file="inputs/quarto_example-equations_crossreferences.qmd"}
+``` markdown
+$$
+Y = C + I + G + (X - M)
+$$ {#eq-gdpidentity}
 ```
 
-For instance, we then use `@eq-macroidentity` to produce @eq-macroidentity.
+For instance, we then use `@eq-gdpidentity` to produce @eq-gdpidentity
 
 $$
 Y = C + I + G + (X - M)
-$$ {#eq-macroidentity}
+$$ {#eq-gdpidentity}
 
 When using cross-references, it is important that the labels are relatively simple. In general, try to keep the names simple but unique, avoid punctuation and stick to letters and hyphens. Do not use underscores, because they can cause an error.
 
@@ -560,7 +552,7 @@ If you need data to reproduce the error, then you should use data that is built 
 
 If you write code, then you are a programmer, regardless of how you do it, what you are using it for, or who you are. But there are a few traits that one tends to notice great programmers have in common.
 
-- Focused: Often having an aim to "learn R" or something similar tends to be problematic, because there is no real end point to that. It tends to be more efficient to have smaller, more specific goals, such as "make a histogram about the 2022 Australian Election with `ggplot`". This is something that can be focused on and achieved in a few hours. The issue with goals that are more nebulous, such as "I want to learn R", is that it becomes easy to get lost on tangents, much more difficult to get help. This can be demoralizing and lead to folks quitting too early.
+- Focused: Often having an aim to "learn R" or something similar tends to be problematic, because there is no real end point to that. It tends to be more efficient to have smaller, more specific goals, such as "make a histogram about the 2022 Australian Election with `ggplot`". This is something that can be focused on and achieved in a few hours. The issue with goals that are more nebulous, such as "I want to learn R", is that it becomes easy to get lost on tangents, much more difficult to get help. This can be demoralizing and lead to people quitting too early.
 - Curious: It is almost always useful to have a go. In general, the worst that happens is that you waste your time. You can rarely break something irreparably with code. If you want to know what happens if you pass a "vector" instead of a "dataframe" to `ggplot()` then try it.
 - Pragmatic: At the same time, it can be useful to stick within reasonable bounds, and make one small change each time. For instance, say you want to run some regressions, and are curious about the possibility of using the `tidymodels` package [@citeTidymodels] instead of `lm()`. A pragmatic way to proceed is to use one aspect from the `tidymodels` package initially and then make another change next time. 
 - Tenacious: Again, this is a balancing act. There are always unexpected problems and issues with every project. On the one hand, persevering despite these is a good tendency. But on the other hand, sometimes one does need to be prepared to give up on something if it does not seem like a break-through is possible. Here mentors can be useful as they tend to be a better judge of what is reasonable. It is also where appropriate planning is useful.

@@ -33,10 +33,12 @@ Remove:
 
 - "it is clear that"
 - "easily"
-- "In particular, "
+- "In particular, " 
+- "just"
 
 Change:
 
+- "folks" -> "people"
 - one particular -> one
 - and also -> and
 - a large number of -> many
