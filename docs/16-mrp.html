@@ -517,7 +517,7 @@ Pr\left(Y_i = \mbox{Obama}\right) = \mbox{logit}^{-1}(\alpha_0 + \alpha_{j[i]}^{
 \sigma_{j} &amp; \sim \mbox{Exponential}(1)
 \end{aligned}
 \]</span></p>
-<p>We model this with the following notation “(1 | state)”.</p>
+<p>We include this in the function with “(1 | state)” within <code>stan_glmer()</code> from <code>rstanarm</code> <span class="citation" data-cites="citerstanarm">(<a href="99-references.html#ref-citerstanarm" role="doc-biblioref">Goodrich et al. 2020</a>)</span>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -594,7 +594,7 @@ Num. levels: state 50
 * For info on the priors used see ?prior_summary.stanreg</code></pre>
 </div>
 </div>
-<p>Multilevel modelling should be the default thought when you come to a new modelling situation <span class="citation" data-cites="citemcelreath">(<a href="99-references.html#ref-citemcelreath" role="doc-biblioref">McElreath 2020, 400</a>)</span>, especially one where inference is the primary concern. There is almost always some grouping that can be taken advantage of to provide more information to the model.</p>
+<p>It is worth trying to look for opportunities to use a multilevel model when you come to a new modelling situation, especially one where inference is the primary concern. There is often some grouping that can be taken advantage of to provide the model with more information.</p>
 <p>When we move to multilevel modelling, it is possible that some <code>rstanarm</code> models will result in a warning about “divergent transitions”. For the purposes of getting a model working for this book, if there are just a handful and the Rhats of the coefficients are all close to one (check this with <code>any(summary(change_this_to_the_model_name)[, "Rhat"] &gt; 1.1)</code>), then just ignore it. If there are more than a handful, and/or any of the Rhats are not close to one, then add “adapt_delta = 0.99” as an argument to <code>stan_glmer()</code> and re-run the model (keeping in mind that it will take longer to run). If that does not fix the issue, then simplify the model by removing a variable. We will see an example later when we apply MRP to the 2020 US election, where the “adapt_delta” strategy fixes the issue.</p>
 <section id="austen-brontë-dickens-and-shakespeare" class="level3" data-number="16.2.1">
 <h3 data-number="16.2.1" class="anchored" data-anchor-id="austen-brontë-dickens-and-shakespeare"><span class="header-section-number">16.2.1</span> Austen, Brontë, Dickens, and Shakespeare</h3>
@@ -865,13 +865,14 @@ author_lines_rstanarm_multilevel  0.0       0.0
 author_lines_rstanarm            -3.6       3.0   </code></pre>
 </div>
 </div>
+<p>In this case it is not overwhelmingly the case that the multilevel model is the better choice, but it is slightly preferred on the basis of LOO.</p>
 </section>
 </section>
 <section id="simulation" class="level2" data-number="16.3">
 <h2 data-number="16.3" class="anchored" data-anchor-id="simulation"><span class="header-section-number">16.3</span> Simulation</h2>
 <section id="construct-a-population" class="level3" data-number="16.3.1">
 <h3 data-number="16.3.1" class="anchored" data-anchor-id="construct-a-population"><span class="header-section-number">16.3.1</span> Construct a population</h3>
-<p>To get started we will simulate some data from a population that has various properties, take a biased sample, and then conduct MRP to demonstrate how we can get those properties back. We are going to have two “explanatory variables”—age-group and toilet-trained—and one dependent variable - bedtime. Bed-time will increase as age-group increases, and will be later for children that are toilet-trained, compared with those that are not. To be clear, in this example we will “know” the “true” features of the population, but this is not something that occurs when we use real data—it is just to help to explain what is happening in MRP. We are going to rely heavily on <code>tidyverse</code> <span class="citation" data-cites="tidyverse">(<a href="99-references.html#ref-tidyverse" role="doc-biblioref">Wickham et al. 2019</a>)</span>.</p>
+<p>To get started we will simulate some data from a population that has various properties, take a biased sample, and then conduct MRP to demonstrate how we can get those properties back. We are going to have two “explanatory variables”—age-group and toilet-trained—and one dependent variable - bedtime. Bed-time will increase as age-group increases, and will be later for children that are toilet-trained, compared with those that are not. To be clear, in this example we will “know” the “true” features of the population, but this is not something that occurs when we use real data—it is just to help to explain what is happening in MRP.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -937,7 +938,7 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 <p><img src="16-mrp_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>And we can also work out what the “truth” is for the information that we are interested in (remembering that we would never actually know this when we move away from simulated examples).</p>
+<p>And we can also work out what the “truth” is for the information that we are interested in (remembering that we would never actually know this when we move away from simulated examples) (<a href="#tbl-toilettrained">Table&nbsp;<span>16.2</span></a>).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>population_for_mrp_example_summarised <span class="ot">&lt;-</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  population_for_mrp_example <span class="sc">|&gt;</span></span>
@@ -950,8 +951,9 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 <span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Age-group"</span>, <span class="st">"Is toilet trained"</span>, <span class="st">"Average bed time"</span>)</span>
 <span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
+<div id="tbl-toilettrained" class="anchored">
 
-<table>
+<table><caption>Table 16.2:  Average metrics bed time, based on whether a toddler is toilet trained </caption>
  <thead>
   <tr>
    <th style="text-align:left;"> Age-group </th>
@@ -993,6 +995,7 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 </tbody>
 </table>
 
+</div>
 </div>
 </div>
 </section>
@@ -2180,7 +2183,7 @@ Returning the palette you asked for with that many colors</code></pre>
 <div class="cell">
 
 </div>
-<p>We might be interested to look at the estimates (<a href="#tbl-modelsummaryusamrp">Table&nbsp;<span>16.2</span></a>).</p>
+<p>We might be interested to look at the estimates (<a href="#tbl-modelsummaryusamrp">Table&nbsp;<span>16.3</span></a>).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>modelsummary<span class="sc">::</span><span class="fu">get_estimates</span>(us_election_model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -2204,7 +2207,7 @@ Returning the palette you asked for with that many colors</code></pre>
 <div class="cell-output-display">
 <div id="tbl-modelsummaryusamrp" class="anchored">
 
-<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;"><caption>Table 16.2:  Estimating a model of choice between Biden and Trump in the 2020 US election </caption>
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;"><caption>Table 16.3:  Estimating a model of choice between Biden and Trump in the 2020 US election </caption>
  <thead>
   <tr>
    <th style="text-align:left;">   </th>
@@ -2525,9 +2528,6 @@ Wang, Wei, David Rothschild, Sharad Goel, and Andrew Gelman. 2015. <span>“Fore
 </div>
 <div id="ref-Wickham2017" class="csl-entry" role="doc-biblioentry">
 Wickham, Hadley. 2017. <em><span class="nocase">tidyverse: Easily Install and Load the <span>“Tidyverse”</span></span></em>. <a href="https://CRAN.R-project.org/package=tidyverse">https://CRAN.R-project.org/package=tidyverse</a>.
-</div>
-<div id="ref-tidyverse" class="csl-entry" role="doc-biblioentry">
-Wickham, Hadley, Mara Averick, Jenny Bryan, Winston Chang, Lucy D’Agostino McGowan, Romain François, Garrett Grolemund, et al. 2019. <span>“<span class="nocase">Welcome to the Tidyverse</span>.”</span> <em>Journal of Open Source Software</em> 4 (43): 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a>.
 </div>
 <div id="ref-citehaven" class="csl-entry" role="doc-biblioentry">
 Wickham, Hadley, and Evan Miller. 2020. <em><span class="nocase">haven: Import and Export <span>“SPSS”</span> <span>“Stata”</span> and <span>“SAS”</span> Files</span></em>. <a href="https://CRAN.R-project.org/package=haven">https://CRAN.R-project.org/package=haven</a>.
