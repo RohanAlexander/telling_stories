@@ -195,8 +195,6 @@ We should not be too worried that our estimates are slightly off (@tbl-meanstdex
 #| message: false
 #| warning: false
 
-library(tidyverse)
-
 set.seed(853)
 
 normal_takes_shape <-
@@ -256,7 +254,7 @@ To make this example concrete, we will simulate some data and then discuss it in
 
 set.seed(853)
 
-number_of_observations <- 100
+number_of_observations <- 200
 expected_relationship <- 8.4
 very_fast_5km_time <- 15
 good_enough_5km_time <- 30
@@ -295,7 +293,7 @@ sim_run_data
 base_sim_run_data <-
   sim_run_data |>
   ggplot(aes(x = five_km_time, y = marathon_time)) +
-  geom_point() +
+  geom_point(alpha = 0.5) +
   labs(
     x = "Five-kilometer time (minutes)",
     y = "Marathon time (minutes)"
@@ -346,14 +344,14 @@ Underpinning our use of simple linear regression is a belief that there is some 
 
 That $\epsilon$ is a measure of our error---what does the model not know in the small, contained, world implied by this dataset? There is going to be plenty that the model does not know, but we hope the error does not depend on $X$, and that the error is normally distributed.
 
-We can conduct simple linear regression with `lm()` from base R. We specify the dependent variable first, then `~`, followed by the independent variable. Finally, we specify the dataset. Before we run a regression, we may want to include a quick check of the class of the variables, and the number of observations, just to ensure that it corresponds with what we were expecting. And after we run it, we may check that our estimate seems reasonable. For instance, (pretending that we had not ourselves imposed this in the simulation) based on our knowledge of the respective distances of a five-kilometer run and a marathon, we would expect $\beta_1$ to be somewhere between 6 and 10.
+We can conduct simple linear regression with `lm()` from base R. We specify the dependent variable first, then `~`, followed by the independent variable. The dependent variable is the variable of interest, while the dependent variable is the basis on which we consider that variable. Finally, we specify the dataset. Before we run a regression, we may want to include a quick check of the class of the variables, and the number of observations, just to ensure that it corresponds with what we were expecting. And after we run it, we may check that our estimate seems reasonable. For instance, (pretending that we had not ourselves imposed this in the simulation) based on our knowledge of the respective distances of a five-kilometer run and a marathon, we would expect $\beta_1$ to be somewhere between 6 and 10.
 
 ```{r}
 # Test that the class and number of observations is as expected before running
 stopifnot(
   class(sim_run_data$marathon_time) == "numeric",
   class(sim_run_data$five_km_time) == "numeric",
-  nrow(sim_run_data) == 100
+  nrow(sim_run_data) == 200
 )
 
 sim_run_data_first_model <-
@@ -406,7 +404,7 @@ sim_run_data <-
 #| label: fig-fivekmvsmarathonresids
 #| layout-ncol: 2
 #| fig-cap: "Residuals from the simple linear regression with simulated data on the time someone takes to run five kilometers and a marathon"
-#| fig-subcap: ["Distribution of residuals", "Residuals by order", "Comparing the estimated time with the actual time"]
+#| fig-subcap: ["Distribution of residuals", "Residuals by five-kilometer time", "Residuals by marathon time", "Comparing the estimated time with the actual time"]
 
 ggplot(
   sim_run_data,
@@ -437,9 +435,26 @@ ggplot(
 
 ggplot(
   sim_run_data,
-  aes(x = marathon_time, .fitted)
+  aes(x = marathon_time, y = .resid)
 ) +
   geom_point() +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dotted",
+    color = "grey"
+  ) +
+  theme_classic() +
+  labs(
+    y = "Residuals",
+    x = "Marathon time (minutes)"
+  )
+
+ggplot(
+  sim_run_data,
+  aes(x = marathon_time, y = .fitted)) +
+  geom_point() + 
+  geom_abline(intercept = 0, slope = 1,
+              linetype = "dashed",) +
   theme_classic() +
   labs(
     y = "Estimated marathon time",
@@ -449,16 +464,14 @@ ggplot(
 
 We want our estimate to be unbiased. When we say our estimate is unbiased, we are trying to say that even though for some sample our estimate might be too high, and for another sample our estimate might be too low, eventually if we have a lot of data then our estimate would be the same as the population. That is, an estimator is unbiased if it does not systematically over- or under-estimate [@islr, p. 65].
 
-We want to try to speak to the "true" relationship, so we need to try to capture how much we think our understanding depends on the sample that we have to analyze. And this is where the standard error comes in. It tells us how wrong our estimates are compared with the actual data (@fig-fivekmvsmarathon-3).
+We want to try to speak to the "true" relationship, so we need to try to capture how much we think our understanding depends on the sample that we have to analyze. And this is where the standard error comes in. It tells us how sure we can be about the estimates of parameters based on the data that we have (@fig-fivekmvsmarathon-3). Part of this is captured by the fact that standard errors are a function, and as as the sample size increases, the standard errors decrease.
 
 From standard errors, we can compute a confidence interval. A 95 per cent confidence interval is a range, such that there is "approximately a 95 per cent chance that the interval" contains the population parameter, which is typically unknown [@islr, p. 66]. The lower end of this range is: $\hat{\beta_1} - 2 \times \mbox{SE}\left(\hat{\beta_1}\right)$ and the upper end of this range is: $\hat{\beta_1} + 2 \times \mbox{SE}\left(\hat{\beta_1}\right)$.
 
-After we have such a range, we could use it to test claims. For instance, we could claim that there is no relationship between $X$ and $Y$, i.e. $\beta_1 = 0$, as an alternative to a claim that there is some relationship between $X$ and $Y$, i.e. $\beta_1 \neq 0$.
+We can use this machinery to test claims. For instance, we could claim that there is no relationship between $X$ and $Y$, i.e. $\beta_1 = 0$, as an alternative to a claim that there is some relationship between $X$ and $Y$, i.e. $\beta_1 \neq 0$. In @sec-hunt-data we needed to decide how much evidence it would take to convince us that our tea taster could distinguish whether milk or tea had been added first. In the same way, here we need to decide if the estimate of $\beta_1$, which we denote $\hat{\beta}_1$, is far enough away from zero for us to be comfortable claiming that $\beta_1 \neq 0$. If we were very confident in our estimate of $\beta_1$ then it would not have to be far, but if we were not, then it would have to be substantial. The standard error of $\hat{\beta}_1$ does an awful lot of work here in accounting for a variety of factors, only some of which it can actually account for. 
 
-In @sec-hunt-data we needed to decide how much evidence it would take to convince us that our tea taster could distinguish whether milk or tea had been added first. In the same way, here we need to decide if the estimate of $\beta_1$, which we denote $\hat{\beta}_1$, is far enough away from zero for us to be comfortable claiming that $\beta_1 \neq 0$. If we were very confident in our estimate of $\beta_1$ then it would not have to be far, but if we were not, then it would have to be substantial. The standard error of $\hat{\beta}_1$ does an awful lot of work here in accounting for a variety of factors, only some of which it can actually account for. 
-
-We compare this standard error with $\hat{\beta}_1$ to get the "test statistic" or t-statistic [@islr, p. 67]:
-$$t = \frac{\hat{\beta}_1 - 0}{\mbox{SE}(\hat{\beta}_1)}.$$ 
+We compare this standard error with $\hat{\beta}_1$ to get the "test statistic" or t-statistic:
+$$t = \frac{\hat{\beta}_1}{\mbox{SE}(\hat{\beta}_1)}.$$ 
 And we then compare our t-statistic to the t-distribution to compute the probability of getting this absolute t-statistic or a larger one, if it was the case that $\beta_1 = 0$. This probability is the p-value. A smaller p-value means there is a smaller "probability of observing something at least as extreme as the observed test statistic" [@gelmanhillvehtari2020, p. 57].
 
 > Words! Mere words! How terrible they were! How clear, and vivid, and cruel! One could not escape from them. And yet what a subtle magic there was in them! They seemed to be able to give a plastic form to formless things, and to have a music of their own as sweet as that of viol or of lute. Mere words! Was there anything so real as words?
@@ -479,11 +492,11 @@ Dr Nancy Reid is University Professor in the Department of Statistical Sciences 
 
 ## Multiple linear regression
 
-To this point we have just considered one explanatory variable. But we will usually have more than one. One approach would be to run separate regressions for each explanatory variable. But compared with separate linear regressions for each, adding more explanatory variables allows us to have a better understanding of the intercept and accounts for interaction. Often the results will be quite different.
+To this point we have just considered one explanatory variable. But we will usually have more than one. One approach would be to run separate regressions for each explanatory variable. But compared with separate linear regressions for each, adding more explanatory variables allows for associations between the dependent variable and the independent variable of interest to be assessed while adjusting for other explanatory variables. Often the results will be quite different.
 
-We may also like to consider explanatory variables that do not have an inherent ordering. For instance: pregnant or not; day or night. When there are only two options then we can use a binary variable, which is considered either 0 or 1. If we have a column of character values that only has two values, such as: `c("Myles", "Ruth", "Ruth", "Myles", "Myles", "Ruth")`, then using this as an explanatory variable in the usual regression set up would mean that it is treated as a binary variable. If there are more than two levels, then we can use a combination of binary variables, where some baseline outcome gets integrated into the intercept.
+We may also like to consider explanatory variables that are not continuous. For instance: pregnant or not; day or night. When there are only two options then we can use a binary variable, which is considered either 0 or 1. If we have a column of character values that only has two values, such as: `c("Myles", "Ruth", "Ruth", "Myles", "Myles", "Ruth")`, then using this as an explanatory variable in the usual regression set up would mean that it is treated as a binary variable. If there are more than two levels, then we can use a combination of binary variables, where some baseline outcome gets integrated into the intercept.
 
-As an example, we add whether it was raining to our simulated relationship between marathon and five-kilometer run times. We then specify that if it was raining, then the individual is five minutes slower than they otherwise would have been.
+As an example, we add whether it was raining to our simulated relationship between marathon and five-kilometer run times. We then specify that if it was raining, the individual is five minutes slower than they otherwise would have been.
 
 ```{r}
 minutes_slower_in_rain <- 5
@@ -516,7 +529,7 @@ stopifnot(
   class(sim_run_data$five_km_time) == "numeric",
   class(sim_run_data$was_raining) == "character",
   all(complete.cases(sim_run_data)),
-  nrow(sim_run_data) == 100
+  nrow(sim_run_data) == 200
 )
 
 sim_run_data_rain_model <-
@@ -599,7 +612,7 @@ base +
 
 base +
   geom_point(aes(color = weather_conditions)) +
-  labs(color = "Weather conditions")
+  labs(color = "Conditions")
 ```
 
 ```{r}
@@ -613,7 +626,7 @@ stopifnot(
   class(sim_run_data$was_raining) == "character",
   class(sim_run_data$humidity) == "character",
   all(complete.cases(sim_run_data)),
-  nrow(sim_run_data) == 100,
+  nrow(sim_run_data) == 200,
   unique(sim_run_data$humidity) %in% c("Low", "High")
 )
 
@@ -637,19 +650,19 @@ modelsummary::modelsummary(
 
 There are a variety of threats to the validity of linear regression estimates, and aspects to think about. We need to address these when we use it, and usually graphs and associated text are sufficient to assuage most of them. Aspects of concern include:
 
-1. Linearity of explanatory variables. We are concerned with whether the independent variables enter in a linear way. Sometimes if we are worried that there might be a multiplicative relationship between the explanatory variables, rather than an additive one, then we may consider a logarithmic transform. We can usually be convinced there is enough linearity in our explanatory variables for our purposes by using graphs of the variables.
-2. Independence of errors. We are concerned that the errors are not correlated. For instance, if we are interested in weather-related measurement such as average daily temperature, then we may find a pattern because the temperature on one day is likely similar to the temperature on another. We can be convinced that we have satisfied this condition by making graphs of estimated compared with actual outcomes, such as @fig-fivekmvsmarathonresids-3.
-3. Homoscedasticity of errors. We are concerned that the errors are not becoming systematically larger or smaller throughout the sample. If that is happening, then we term it heteroscedasticity. Again, graphs of errors, particular by order, such as @fig-fivekmvsmarathonresids-2, are used to convince us of this.
-4. Normality of errors. We are concerned that our errors are normally distributed when we are interested in making individual-level predictions.
-5. Outliers and other high-impact observations. Finally, we might be worried that our results are being driven by a handful of observations. For instance, thinking back to @sec-static-communication and Anscombe's Quartet, we notice that linear regression estimates would be heavily influenced by the inclusion of one or two particular points. We can become comfortable with this by considering our analysis on various sub-sets
+1. Linearity of explanatory variables. We are concerned with whether the independent variables enter in a linear way. We can usually be convinced there is enough linearity in our explanatory variables for our purposes by using graphs of the variables.
+2. Independence of errors. We are concerned that the errors are not correlated with each other. For instance, if we are interested in weather-related measurement such as average daily temperature, then we may find a pattern because the temperature on one day is likely similar to the temperature on another. We can be convinced that we have satisfied this condition by making graphs of estimated compared with actual outcomes, such as @fig-fivekmvsmarathonresids-4, or graphs of the residuals compared with observed values, such as @fig-fivekmvsmarathonresids-3.
+3. Homoscedasticity of errors. We are concerned that the errors are not becoming systematically larger or smaller throughout the sample. If that is happening, then we term it heteroscedasticity. Again, graphs of errors, such as @fig-fivekmvsmarathonresids-2, are used to convince us of this.
+<!-- 4. Normality of errors. We are concerned that our errors are normally distributed when we are interested in making individual-level predictions. -->
+4. Outliers and other high-impact observations. Finally, we might be worried that our results are being driven by a handful of observations. For instance, thinking back to @sec-static-communication and Anscombe's Quartet, we notice that linear regression estimates would be heavily influenced by the inclusion of one or two particular points. We can become comfortable with this by considering our analysis on various sub-sets.
 
-Those aspects are statistical concerns and relate to whether the model is working. The most important threat to validity and hence the aspect that must be addressed at some length, is speaking to the fact that this model is appropriate to the circumstances and addresses the research question at hand.
+Those aspects are statistical concerns and relate to whether the model is working. The most important threat to validity and hence the aspect that must be addressed at some length, is speaking to the fact that this model is directly relevant to the research question of interest.
 
 ## Two cultures
 
 @breiman2001statistical describes two cultures of statistical modelling: one focused on prediction and the other on inference. At the time, and speaking in generalizations, various disciplines tended to focus on either inference or prediction. The rise of data science has meant there is now a need to be comfortable with both [@Neufeld2021]. The two cultures are being brought closer together. And there is an overlap and interaction between prediction and inference. But their separate evolution means there are still considerable cultural differences.
 
-In this book we use `tidymodels` when we are interested in prediction. And when we are focused on inference, instead, we use the probabilistic programming language Stan, and interface with it using `rstanarm` [@citerstanarm]. This is slightly simplistic---we could do prediction with Bayesian models, and we could use Stan within `tidymodels`. But, for the sake of simplicity and clarity, we keep these separated in this way for this book. It is important to be conversant in both ecosystems and cultures.
+In this book we use frequentist GLM within `tidymodels` when we are interested in prediction. And when we are focused on inference, instead, we use the probabilistic programming language Stan, and interface with it using `rstanarm` [@citerstanarm]. This is slightly simplistic---we could do prediction with Bayesian models, and we could use Stan within `tidymodels`. But, for the sake of simplicity and clarity, we keep these separated in this way for this book. It is important to be conversant in both ecosystems and cultures.
 
 ### Prediction
 
@@ -669,7 +682,7 @@ y_i &\sim \mbox{Normal}(\mu_i, \sigma) \\
 \mu_i &= \beta_0 +\beta_1x_i
 \end{aligned}
 $$
-where $y_i$ refers to the marathon time of some individual $i$ and $x_i$ refers to their five-kilometer time.
+where $y_i$ refers to the marathon time of some individual $i$ and $x_i$ refers to their five-kilometer time. Here we say that the marathon time of some individual $i$ is normally distributed with a mean of $\mu$ and a standard deviation of $\sigma$, where the mean depends on two parameters $\beta_0$ and $\beta_1$ and their five-kilometer time.
 
 As we are focused on prediction, we are worried about over-fitting our data, which would limit our ability to make claims about other datasets. One way to partially address this is to split our dataset in two using `initial_split()`. 
 
@@ -722,15 +735,17 @@ sim_run_data_first_model_tidymodels <-
   )
 ```
 
-The estimated coefficients are summarized in the first column of @tbl-modelsummarybayesbetter. For instance, we find that on average in our dataset, five-kilometer run times that are one minute longer are associated with marathon times that are 7.5 minutes longer. We have changed to reporting confidence intervals because this will allow us to have both frequentist and Bayesian approaches in the one table.
+The estimated coefficients are summarized in the first column of @tbl-modelsummarybayesbetter. For instance, we find that on average in our dataset, five-kilometer run times that are one minute longer are associated with marathon times that are 7.5 minutes longer. We have changed to reporting confidence intervals because this will allow us to have both frequentist and Bayesian approaches in the one table, in the interest of space.
 
 ### Inference
 
-To use Bayesian approaches we must specify a starting point. This is a guess for what we think the distribution of the coefficients should look like and is called a prior. This is another reason for the workflow advocated in this book; the simulation stage leads directly to priors. We will again specify the model that we are interested in, but this time we include priors.
+Running a regression in a Bayesian setting is similar to frequentist (i.e. `lm()`, `glm()`, etc). The main difference from a regression point of view, is that the parameters involved in the models (i.e. $\beta_0$, $\beta_1$, etc) are considered random variables, and so themselves have associated probability distributions. Before we run a regression in a Bayesian framework, we need to decide on a starting probability distribution for each of these parameters, which we call a 'prior'.
+
+To use Bayesian approaches we must specify a starting point. This is a guess for what we think the distribution of the parameters should look like and is called a prior. This is another reason for the workflow advocated in this book; the simulation stage leads directly to priors. We will again specify the model that we are interested in, but this time we include priors.
 
 $$
 \begin{aligned}
-y_i &\sim \mbox{Normal}(\mu_i, \sigma) \\
+y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
 \mu_i &= \beta_0 +\beta_1x_i\\
 \beta_0 &\sim \mbox{Normal}(0, 2.5) \\
 \beta_1 &\sim \mbox{Normal}(0, 2.5) \\
@@ -845,7 +860,7 @@ priors <-
 
 priors |>
   ggplot(aes(x = marathon_time)) +
-  geom_freqpoly(binwidth = 3) +
+  geom_freqpoly(binwidth = 10) +
   theme_classic()
 
 priors |>
@@ -858,7 +873,7 @@ priors |>
 
 $$
 \begin{aligned}
-y_i &\sim \mbox{Normal}(\mu_i, \sigma) \\
+y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
 \mu_i &= \beta_0 +\beta_1x_i\\
 \beta_0 &\sim \mbox{Normal}(0, 2.5) \\
 \beta_1 &\sim \mbox{Normal}(8, 2.5) \\
@@ -896,7 +911,7 @@ updated_priors <-
 
 updated_priors |>
   ggplot(aes(x = marathon_time)) +
-  geom_freqpoly(binwidth = 3) +
+  geom_freqpoly(binwidth = 10) +
   theme_classic()
 
 updated_priors |>
@@ -999,12 +1014,27 @@ posterior_vs_prior(sim_run_data_second_model_rstanarm) +
   coord_flip()
 ```
 
+With a simple model like this, the differences between the predict and inference approaches are minimal. But as model or data complexity increases these differences can become important.
 
 ## Logistic regression
 
 Linear regression is a useful way to come to better understand our data. But it assumes a continuous outcome variable that can take any number on the real line. We would like some way to use this same machinery when we cannot satisfy this condition. We turn to logistic and Poisson regression for binary and count outcome variables, respectively, noting they are still linear models, because the independent variables enter in a linear fashion.
 
-Logistic regression, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1. Although the presence of a binary outcome variable may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it.
+Logistic regression, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it.
+
+The foundation of this is the Bernoulli distribution where there is a certain probability, $p$, of outcome "1" and the remainder, $1-p$, for outcome "0". We can use `rbernoulli()` to simulate data from the Bernoulli distribution. 
+
+```{r}
+#| message: false
+#| warning: false
+
+set.seed(853)
+
+Bernoulli_example <-
+  tibble(draws = rbernoulli(n = 20, p = 0.1))
+
+Bernoulli_example |> pull(draws)
+```
 
 One reason to use logistic regression is that we will be modelling a probability and so it will be bounded between 0 and 1. Whereas with linear regression we may end up with values outside this. The foundation of logistic regression is the logit function:
 
@@ -1013,7 +1043,7 @@ $$
 $$
 This will transpose values between 0 and 1, onto the real line. For instance, `logit(0.1) = -2.2`, `logit(0.5) = 0`, and `logit(0.9) = 2.2`.
 
-To illustrate logistic regression, we will simulate data on whether it is day or night, based on the number of cars on the road.
+To illustrate logistic regression, we will simulate data on whether it is a weekday or weekend, based on the number of cars on the road. We will assume that on weekdays the road is busier.
 
 ```{r}
 #| message: false
@@ -1021,39 +1051,39 @@ To illustrate logistic regression, we will simulate data on whether it is day or
 
 set.seed(853)
 
-day_or_night <-
+week_or_weekday <-
   tibble(
     number_of_cars = runif(n = 1000, min = 0, 100),
     noise = rnorm(n = 1000, mean = 0, sd = 10),
-    is_night = if_else(number_of_cars + noise > 50, 1, 0)
+    is_weekday = if_else(number_of_cars + noise > 50, 1, 0)
   ) |>
   mutate(number_of_cars = round(number_of_cars)) |>
   select(-noise)
 
-day_or_night
+week_or_weekday
 ```
 
-We can use `glm()` from base R to do a quick estimation. In this case we will try to work out whether it is day or night, based on the number of cars we can see. We are interested in estimating @eq-logisticexample:
+We can use `glm()` from base R to do a quick estimation. In this case we will try to work out whether it is a weekday or weekend, based on the number of cars we can see. We are interested in estimating @eq-logisticexample:
 $$
 \mbox{Pr}(y_i=1) = \mbox{logit}^{-1}\left(\beta_0+\beta_1 x_i\right).
 $$ {#eq-logisticexample}
 
 ```{r}
 stopifnot(
-  class(day_or_night$is_night) == "numeric",
-  class(day_or_night$number_of_cars) == "numeric",
-  nrow(day_or_night) == 1000
+  class(week_or_weekday$is_weekday) == "numeric",
+  class(week_or_weekday$number_of_cars) == "numeric",
+  nrow(week_or_weekday) == 1000
 )
 
-day_or_night_model <-
+week_or_weekday_model <-
   glm(
-    is_night ~ number_of_cars,
-    data = day_or_night,
+    is_weekday ~ number_of_cars,
+    data = week_or_weekday,
     family = "binomial"
   )
 ```
 
-The results of the estimation are in the first column of @tbl-modelsummarylogistic. The estimated coefficient on the number of cars is 0.19. We have switched to confidence intervals because they have a Bayesian equivalent.
+The results of the estimation are in the first column of @tbl-modelsummarylogistic. The estimated coefficient on the number of cars is 0.19. We have switched to confidence intervals because they have a Bayesian equivalent. This Bayesian equivalent is called a "credibility interval", and reflect two points such there is a certain probability mass between them, in this case 95 per cent.
 
 One reason that logistic regression can be a bit tricky initially is because the coefficients take a bit of work to interpret. The estimate of 0.19 is the average change in the log odds of our observations with one extra car. The coefficient is positive which means an increase, but as it is non-linear, if we want a particular change, then this will be different for different observations.
 
@@ -1062,96 +1092,97 @@ We can translate our estimate into the probability of it being night, for a give
 ```{r}
 library(marginaleffects)
 
-day_or_night_predictions <-
-  predictions(day_or_night_model) |>
+week_or_weekday_predictions <-
+  predictions(week_or_weekday_model) |>
   as_tibble()
 
-day_or_night_predictions
+week_or_weekday_predictions
 ```
 
-And we can then graph the probability that our model implies, for each observation, of it being night (@fig-dayornightprobs).
+And we can then graph the probability that our model implies, for each observation, of it being a weekday (@fig-dayornightprobs).
 
 ```{r}
 #| eval: true
-#| fig-cap: "Logistic regression probability results with simulated data of whether it is day or night based on the number of cars that are around"
+#| fig-cap: "Logistic regression probability results with simulated data of whether it is a weekday or weekend based on the number of cars that are around"
 #| include: true
 #| label: fig-dayornightprobs
 #| message: false
 #| warning: false
 
-day_or_night_predictions |>
-  mutate(is_night = factor(is_night)) |>
+week_or_weekday_predictions |>
+  mutate(is_weekday = factor(is_weekday)) |>
   ggplot(aes(
     x = number_of_cars,
     y = predicted,
-    color = is_night
+    color = is_weekday
   )) +
   geom_jitter(width = 0.01, height = 0.01, alpha = 0.3) +
   labs(
     x = "Number of cars that were seen",
-    y = "Estimated probability it is night",
-    color = "Was actually night"
+    y = "Estimated probability it is a weekday",
+    color = "Was actually weekday"
   ) +
   theme_classic() +
   scale_color_brewer(palette = "Set1") +
   theme(legend.position = "bottom")
 ```
 
-The marginal effect at each observation is of interest because it provides a sense of how this probability is changing. It enables us to say that at the mean (which in this case is if we were to see 50 cars) the probability of it being night, increases by a little over four per cent if we were to see another one (@tbl-marginaleffectcar).
+The marginal effect at each observation is of interest because it provides a sense of how this probability is changing. It enables us to say that at the mean (which in this case is if we were to see 50 cars) the probability of it being a weekday, increases by a little over four per cent if we were to see another one (@tbl-marginaleffectcar).
 
 ```{r}
 #| label: tbl-marginaleffectcar
-#| tbl-cap: "Marginal effect of another car on the probability that it is day, at the mean"
+#| tbl-cap: "Marginal effect of another car on the probability that it is a weekday, at the mean"
 
-marginaleffects(day_or_night_model, newdata = "mean") |> 
+marginaleffects(week_or_weekday_model, newdata = "mean") |> 
   select(term, dydx, std.error) |> 
   knitr::kable(
     col.names = c("Term", "Slope", "Standard error")
   )
 ```
 
-We could use `tidymodels` to run this if we wanted. To do that, we first need to change the class of our dependent variable into a factor.
+We could use `tidymodels` to run this if we wanted. To do that, we first need to change the class of our dependent variable into a factor because this is required for classification models.
 
 ```{r}
 set.seed(853)
 
-day_or_night <-
-  day_or_night |>
-  mutate(is_night = as_factor(is_night))
+week_or_weekday <-
+  week_or_weekday |>
+  mutate(is_weekday = as_factor(is_weekday))
 
-day_or_night_split <- initial_split(day_or_night, prop = 0.80)
-day_or_night_train <- training(day_or_night_split)
-day_or_night_test <- testing(day_or_night_split)
+week_or_weekday_split <- initial_split(week_or_weekday, prop = 0.80)
+week_or_weekday_train <- training(week_or_weekday_split)
+week_or_weekday_test <- testing(week_or_weekday_split)
 
 stopifnot(
-  class(day_or_night_train$is_night) == "factor",
-  class(day_or_night_train$number_of_cars) == "numeric",
-  nrow(day_or_night_train) == 800
+  class(week_or_weekday_train$is_weekday) == "factor",
+  class(week_or_weekday_train$number_of_cars) == "numeric",
+  nrow(week_or_weekday_train) == 800
 )
 
-day_or_night_tidymodels <-
+week_or_weekday_tidymodels <-
   logistic_reg(mode = "classification") |>
   set_engine("glm") |>
   fit(
-    is_night ~ number_of_cars,
-    data = day_or_night_train
+    is_weekday ~ number_of_cars,
+    data = week_or_weekday_train
   )
 ```
 
-As before, we can make a graph of the actual results compared with our estimates. But one nice aspect of this is that we could use our test dataset to evaluate our model’s forecasting ability more thoroughly, for instance through a confusion matrix, which specifies the count of each prediction by what the truth was. We find that the model does well on the held-out dataset. There were 90 observations where the model predicted it was day, and it was actually day, and 95 where the model predicted it was night, and it was night. It was wrong for 15 observations, and these were split across seven where it forecast night, but it was day, and eight where it was the opposite case.
+As before, we can make a graph of the actual results compared with our estimates. But one nice aspect of this is that we could use our test dataset to evaluate our model's forecasting ability more thoroughly, for instance through a confusion matrix, which specifies the count of each prediction by what the truth was. We find that the model does well on the held-out dataset. There were 90 observations where the model predicted it was a weekday, and it was actually a weekday, and 95 where the model predicted it was a weekend, and it was a weekend. It was wrong for 15 observations, and these were split across seven where it forecast a weekend, but it was a weekday, and eight where it was the opposite case.
 
 ```{r}
-day_or_night_tidymodels |>
-  predict(new_data = day_or_night_test) |>
-  cbind(day_or_night_test) |>
-  conf_mat(truth = is_night, estimate = .pred_class)
+week_or_weekday_tidymodels |>
+  predict(new_data = week_or_weekday_test) |>
+  cbind(week_or_weekday_test) |>
+  conf_mat(truth = is_weekday, estimate = .pred_class)
 ```
 
 We might be interested in inference, and so want to build a Bayesian model using `rstanarm`. Again, we will specify priors for our model, but use the default priors that `rstanarm` uses:
 
 $$
 \begin{aligned}
-\mbox{Pr}(y_i=1) & = \mbox{logit}^{-1}\left(\beta_0+\beta_1 x_i\right)\\
+y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
+\mbox{logit}(\pi_i) & = left(\beta_0+\beta_1 x_i\right)\\
 \beta_0 & \sim \mbox{Normal}(0, 2.5)\\
 \beta_1 & \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
@@ -1164,15 +1195,15 @@ $$
 #| warning: false
 
 stopifnot(
-  class(day_or_night$is_night) == "factor",
-  class(day_or_night$number_of_cars) == "numeric",
-  nrow(day_or_night) == 1000
+  class(week_or_weekday$is_weekday) == "factor",
+  class(week_or_weekday$number_of_cars) == "numeric",
+  nrow(week_or_weekday) == 1000
 )
 
-day_or_night_rstanarm <-
+week_or_weekday_rstanarm <-
   stan_glm(
-    is_night ~ number_of_cars,
-    data = day_or_night,
+    is_weekday ~ number_of_cars,
+    data = week_or_weekday,
     family = binomial(link = "logit"),
     prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
     prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
@@ -1180,8 +1211,8 @@ day_or_night_rstanarm <-
   )
 
 saveRDS(
-  day_or_night_rstanarm,
-  file = "day_or_night_rstanarm.rds"
+  week_or_weekday_rstanarm,
+  file = "week_or_weekday_rstanarm.rds"
 )
 ```
 
@@ -1193,8 +1224,8 @@ saveRDS(
 
 # INTERNAL
 saveRDS(
-  day_or_night_rstanarm,
-  file = "outputs/model/day_or_night_rstanarm.rds"
+  week_or_weekday_rstanarm,
+  file = "outputs/model/week_or_weekday_rstanarm.rds"
 )
 ```
 
@@ -1204,8 +1235,8 @@ saveRDS(
 #| message: false
 #| warning: false
 
-day_or_night_rstanarm <-
-  readRDS(file = "outputs/model/day_or_night_rstanarm.rds")
+week_or_weekday_rstanarm <-
+  readRDS(file = "outputs/model/week_or_weekday_rstanarm.rds")
 ```
 
 We can compare our different models (@tbl-modelsummarylogistic).
@@ -1216,15 +1247,15 @@ We can compare our different models (@tbl-modelsummarylogistic).
 
 modelsummary::modelsummary(
   list(
-    "base R" = day_or_night_model,
-    "tidymodels" = day_or_night_tidymodels,
-    "rstanarm" = day_or_night_rstanarm
+    "base R" = week_or_weekday_model,
+    "tidymodels" = week_or_weekday_tidymodels,
+    "rstanarm" = week_or_weekday_rstanarm
   ),
   statistic = "conf.int"
 )
 ```
 
-@tbl-modelsummarylogistic makes it clear that each of the approaches is similar in this case. They agree on the direction of the effect of seeing an extra car on the probability of it being day. And even the magnitude of the effect is estimated to be similar.
+@tbl-modelsummarylogistic makes it clear that each of the approaches is similar in this case. They agree on the direction of the effect of seeing an extra car on the probability of it being a weekday. And even the magnitude of the effect is estimated to be similar.
 
 
 ### US political support
@@ -1529,9 +1560,9 @@ ces2020_with_predictions |>
 
 ## Poisson regression
 
-When we have count data of binary outcomes, we should initially think to take advantage of the Poisson distribution. The Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. As such, the Poisson distribution is governed by the parameter, $\lambda$. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. The Poisson distribution is [@pitman, p. 121]: 
-$$P_{\lambda}(k) = e^{-\lambda}\mu^k/k!\mbox{, for }k=0,1,2,...$$
-We can simulate $n=20$ draws from the Poisson distribution with `rpois()`, where $\lambda$ is the mean (@fig-poissondistributiontakingshape).
+When we have count data of binary outcomes, we should initially think to take advantage of the Poisson distribution. The Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. As such, the Poisson distribution is governed by the parameter, $\lambda$. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. The Poisson probability mass function is [@pitman, p. 121]: 
+$$P_{\lambda}(k) = e^{-\lambda}\lambda^k/k!\mbox{, for }k=0,1,2,...$$
+We can simulate $n=20$ draws from the Poisson distribution with `rpois()`, where $\lambda$ is the mean and here is equal to three (@fig-poissondistributiontakingshape).
 
 ```{r}
 rpois(n = 20, lambda = 3)
