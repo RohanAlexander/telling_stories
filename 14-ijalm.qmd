@@ -1562,11 +1562,13 @@ ces2020_with_predictions |>
 
 When we have count data of binary outcomes, we should initially think to take advantage of the Poisson distribution. The Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. As such, the Poisson distribution is governed by the parameter, $\lambda$. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. The Poisson probability mass function is [@pitman, p. 121]: 
 $$P_{\lambda}(k) = e^{-\lambda}\lambda^k/k!\mbox{, for }k=0,1,2,...$$
-We can simulate $n=20$ draws from the Poisson distribution with `rpois()`, where $\lambda$ is the mean and here is equal to three (@fig-poissondistributiontakingshape).
+We can simulate $n=20$ draws from the Poisson distribution with `rpois()`, where $\lambda$ is the mean and here is equal to three. 
 
 ```{r}
 rpois(n = 20, lambda = 3)
 ```
+
+We can also look at what happens to the distribution as we change the value of $\lambda$ (@fig-poissondistributiontakingshape).
 
 ```{r}
 #| eval: true
@@ -1680,7 +1682,7 @@ The model that we are interested in estimating is:
 
 $$
 \begin{aligned}
-y_i &\sim \mbox{Poisson}(\lambda_i)\\
+y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
 \log(\lambda_i) & = \beta_0 + \beta_1 x_1
 \end{aligned}
 $$
@@ -1704,7 +1706,7 @@ grades_base <-
   )
 ```
 
-As with logistic regression, the interpretation of the coefficients from Poisson regression can be difficult. The interpretation of the coefficient on "department2" is that it is the log of the expected difference between departments. We expect $e^{0.7893} \approx 2.2$ and $e^{1.4804} \approx 4.4$ additional A grades in departments 2 and 3, compared with department 1.
+As with logistic regression, the interpretation of the coefficients from Poisson regression can be difficult. The interpretation of the coefficient on "department2" is that it is the log of the expected difference between departments. We expect $e^{0.883} \approx 2.4$ and $e^{1.703} \approx 5.5$ as many A grades in departments 2 and 3, respectively, compared with department 1 (@tbl-modelsummarypoisson).
 
 If we were interested in prediction, then we could use `tidymodels` to estimate Poisson models with `poissonreg` [@poissonreg] (@tbl-modelsummarypoisson).
 
@@ -1740,7 +1742,7 @@ Finally, we could build a Bayesian model and estimate it with `rstanarm` (@tbl-m
 
 $$
 \begin{aligned}
-y_i &\sim \mbox{Poisson}(\lambda_i)\\
+y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
 \log(\lambda_i) & = \beta_0 + \beta_1 x_1\\
 \beta_0 & \sim \mbox{Normal}(0, 2.5)\\
 \beta_1 & \sim \mbox{Normal}(0, 2.5)
@@ -2154,7 +2156,13 @@ We download that data, and save it as "alberta_COD.csv". We can look at the dist
 #| echo: true
 
 alberta_cod <-
-  read_csv("alberta_COD.csv") |>
+  read_csv("alberta_COD.csv",
+           col_types = cols(
+             `Calendar Year` = col_integer(),
+             Cause = col_character(),
+             Ranking = col_integer(),
+             `Total Deaths` = col_integer()
+             )) |>
   janitor::clean_names() |>
   add_count(cause) |>
   filter(n == 21) |>
@@ -2167,7 +2175,14 @@ alberta_cod <-
 #| echo: false
 
 alberta_cod <-
-  read_csv("inputs/alberta_COD.csv") |>
+  read_csv("inputs/alberta_COD.csv",
+           col_types = cols(
+             `Calendar Year` = col_integer(),
+             Cause = col_character(),
+             Ranking = col_integer(),
+             `Total Deaths` = col_integer()
+             )
+           ) |>
   janitor::clean_names() |>
   add_count(cause) |>
   filter(n == 21) |>
