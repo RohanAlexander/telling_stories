@@ -23,10 +23,21 @@ engine: knitr
 **Key packages and functions**
 
 - `haven` [@citehaven]
-- `labelled` [@citelabelled]
+  - `read_dta()`
 - `modelsummary` [@citemodelsummary]
+  - `get_estimates()`
 - `rstanarm` [@citerstanarm]
+  - `binomial()`
+  - `loo()`
+  - `loo_compare()`
+  - `neg_binomial_2()`
+  - `posterior_vs_prior()`
+  - `pp_check()`
+  - `stan_glm()`
+  - `stan_glmer()`
 - `tidybayes` [@citetidybayes]
+  - `add_epred_draws()`
+  - `get_variables()`
 - `tidyverse` [@Wickham2017]
 
 ## Introduction
@@ -391,6 +402,9 @@ modelsummary::modelsummary(
   statistic = "conf.int"
 )
 ```
+
+
+
 
 ```{r}
 #| echo: true
@@ -922,8 +936,8 @@ library(tidybayes)
 
 post_stratified_estimates <-
   improved_alp_support |>
-  add_fitted_draws(newdata = post_strat_census_data) |>
-  rename(alp_predict = .value) |>
+  add_epred_draws(newdata = post_strat_census_data) |>
+  rename(alp_predict = .epred) |>
   mutate(alp_predict_prop = alp_predict * cell_prop_of_division_total) |>
   group_by(state, .draw) |>
   summarise(alp_predict = sum(alp_predict_prop)) |>
@@ -1317,8 +1331,8 @@ modelsummary::modelsummary(
 ```{r}
 biden_support_by_state <-
   us_election_model |>
-  tidybayes::add_fitted_draws(newdata = poststrat_data_cells) |>
-  rename(support_biden_predict = .value) |>
+  tidybayes::add_epred_draws(newdata = poststrat_data_cells) |>
+  rename(support_biden_predict = .epred) |>
   mutate(support_biden_predict_prop = support_biden_predict * prop) |>
   group_by(stateicp, .draw) |>
   summarise(support_biden_predict = sum(support_biden_predict_prop)) |>
