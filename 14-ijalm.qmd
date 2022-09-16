@@ -1669,7 +1669,7 @@ count_of_A |>
   geom_histogram(aes(fill = department), position = "dodge") +
   labs(
     x = "Number of A grades awarded",
-    y = "Numnber of classes",
+    y = "Number of classes",
     fill = "Department"
   ) +
   theme_classic() +
@@ -1841,7 +1841,7 @@ In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's 
 
 Following the workflow advocated in this book, we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-letterssketch. And a quick sketch our our model is @fig-lettersmodel.
 
-::: {#fig-letterss layout-ncol=2 layout-valign="bottom"}
+::: {#fig-letterss layout-ncol=2 layout-valign="bottom" layout="[[50,10,50]]"}
 
 ![Quick sketch of a dataset that could be used to examine US political support](figures/IMG_2056.png){#fig-letterssketch}
 
@@ -1850,16 +1850,31 @@ Following the workflow advocated in this book, we first sketch our dataset and m
 Sketches of the expected dataset and analysis force us to consider what we are interested in
 :::
 
-We will simulate a dataset the number of e/E letters is distributed following the Poisson distribution.
+We will simulate a dataset the number of e/E letters is distributed following the Poisson distribution (@fig-simenum).
 
 ```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-cap: "Simulated counts of e/E letters"
+#| label: fig-simenum
+
 count_of_e_simulation <-
   tibble(
     chapter = 1:30,
     number_e = rpois(n = 30, lambda = 10)
     )
 
-count_of_e_simulation
+count_of_e_simulation |> 
+  ggplot(aes(y = number_e, x = chapter)) +
+  geom_point() +
+  labs(
+    x = "Number of e/E letters in the chapter",
+    y = "Chapter"
+  ) +
+  theme_classic() +
+  scale_fill_brewer(palette = "Set1")
 ```
 
 We can now gather and prepare our data.
@@ -1953,17 +1968,19 @@ jane_eyre_reduced <-
 
 jane_eyre_reduced <-
   jane_eyre_reduced |>
-  mutate(count_e = str_count(text, "e|E"))
+  mutate(count_e = str_count(text, "e|E")) |> 
+  # Based on: https://stackoverflow.com/a/38058033
+  mutate(word_count = str_count(text, "\\w+"))
 ```
 
 
 ```{r}
 jane_eyre_reduced |> 
-  select(chapter, count_e, text) |> 
+  select(chapter, word_count, count_e, text) |> 
   head()
 ```
 
-We can verify that the mean and variance of the number of E/e's is roughly similar by plotting all of the data (@fig-janeecounts). The mean, in pink, is 6.9, and the variance, in blue, is 6.2. While they are not entirely the same, they are similar.
+We can verify that the mean and variance of the number of E/e's is roughly similar by plotting all of the data (@fig-janeecounts). The mean, in pink, is 6.7, and the variance, in blue, is 6.2. While they are not entirely the same, they are similar.
 
 ```{r}
 #| echo: true
@@ -1972,19 +1989,31 @@ We can verify that the mean and variance of the number of E/e's is roughly simil
 #| label: fig-janeecounts
 #| message: false
 #| warning: false
+#| layout-ncol: 2
+#| fig-subcap: ["Distribution of the number of e/E's", "Comparison of the number of e/E's in the line and the number of words in the line"]
 
 mean_e <- mean(jane_eyre_reduced$count_e)
 variance_e <- var(jane_eyre_reduced$count_e)
 
 jane_eyre_reduced |>
-  ggplot(aes(y = chapter, x = count_e)) +
-  geom_point(alpha = 0.5) +
+  ggplot(aes(x = count_e)) +
+  geom_histogram() +
   geom_vline(xintercept = mean_e, linetype = "dashed", color = "#C64191") +
   geom_vline(xintercept = variance_e, linetype = "dashed", color = "#0ABAB5") +
   theme_minimal() +
   labs(
-    x = "Number of e's per line for first ten lines",
-    y = "Chapter"
+    y = "Count",
+    x = "Number of e's per line for first ten lines"
+  )
+
+jane_eyre_reduced |>
+  ggplot(aes(x = word_count, y = count_e)) +
+  geom_jitter(alpha = 0.5) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  theme_minimal() +
+  labs(
+    x = "Number of words in the line",
+    y = "Number of e/E's in the line"
   )
 ```
 
@@ -1992,13 +2021,13 @@ We could consider the following model:
 
 $$
 \begin{aligned}
-y_i &\sim \mbox{Poisson}(\lambda_i)\\
+y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
 \log(\lambda_i) & = \beta_0 + \beta_1 x_1\\
 \beta_0 & \sim \mbox{Normal}(0, 2.5)\\
 \beta_1 & \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
 $$
-where $x_1$ is the chapter. We could estimate the parameters using `stan_glm()`. 
+where $y_i$ is the number of e/E's in the line and $x_1$ is the number of words in the line. We could estimate the parameters using `stan_glm()`. 
 
 ```{r}
 #| eval: false
@@ -2006,13 +2035,9 @@ where $x_1$ is the chapter. We could estimate the parameters using `stan_glm()`.
 #| message: false
 #| warning: false
 
-jane_eyre_reduced <- 
-  jane_eyre_reduced |> 
-  mutate(chapter = factor(chapter))
-
 jane_e_counts <-
   stan_glm(
-    count_e ~ chapter,
+    count_e ~ word_count,
     data = jane_eyre_reduced,
     family = poisson(link = "log"),
     seed = 853
@@ -2062,20 +2087,22 @@ jane_e_counts <-
 <!-- ) -->
 <!-- ``` -->
 
-While we would normally be interested in the table of estimates, as we have seen that a few times now, rather than again creating a table of the estimates, we introduce `plot_cap()` from `marginaleffects` [@marginaleffects]. We can use this to show the number of e/E's predicted by the model, for each chapter. @fig-predictionsjaneecounts makes it clear that there are a number of chapters where we expect more e/E's than others.
+While we would normally be interested in the table of estimates, as we have seen that a few times now, rather than again creating a table of the estimates, we introduce `plot_cap()` from `marginaleffects` [@marginaleffects]. We can use this to show the number of e/E's predicted by the model, for each line, based on the number of words in that line. @fig-predictionsjaneecounts makes it clear that we expect a positive relationship.
 
 ```{r}
 #| label: fig-predictionsjaneecounts
-#| fig-cap: "The predicted number of e/E's in each chapter"
+#| fig-cap: "The predicted number of e/E's in each line based on the number of words"
 
-plot_cap(jane_e_counts, condition = "chapter") +
-  labs(x = "Chapter",
+plot_cap(jane_e_counts, condition = "word_count") +
+  labs(x = "Number of words",
        y = "Average number of e/E in the first 10 lines")
 ```
 
 ## Negative binomial regression
 
-One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion and should then use a close variant, negative binomial regression. Before getting to this, it might be worth taking a moment to think about why we are we going through all this trouble. Common practice is to change from counts into a binary and then use logistic regression. The issue with this is that we may lose information when we group responses together. For this reason, it may be worth going to the extra effort to consider more bespoke options such as these.
+One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion and can use a close variant, negative binomial regression. 
+
+<!-- Before getting to this, it might be worth taking a moment to think about why we are we going through all this trouble. Common practice is to change from counts into a binary and then use logistic regression. The issue with this is that we may lose information when we group responses together. -->
 
 Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance, @maher1982modelling considers both in the context of results from the English Football League and discusses the context in which one may be considered more appropriate than the other. Similarly, @thanksleo considers the 2000 US presidential election and especially the issue of overdispersion in a Poisson analysis.
 
@@ -2117,7 +2144,7 @@ Poisson and negative binomial models go hand in hand. It is often the case that 
 
 ### Mortality in Alberta
 
-Consider, somewhat morbidly, that every year each individual either dies or does not. From the perspective of a state, we could gather data on the number of people who died each year, by their cause of death. The Canadian province of Alberta makes the number of deaths, by cause, since 2001, for the top 30 causes each year, available [here](https://open.alberta.ca/opendata/leading-causes-of-death). 
+Consider, somewhat morbidly, that every year each individual either dies or does not. From the perspective of a state, we could gather data on the number of people who died each year, by their cause of death. The Canadian province of Alberta makes [available](https://open.alberta.ca/opendata/leading-causes-of-death) the number of deaths, by cause, since 2001, for the top 30 causes each year. 
 
 As always we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-albertadatasketch And a quick sketch our our model is @fig-albertamodelsketch
 
@@ -2143,7 +2170,7 @@ alberta_death_simulation <-
 alberta_death_simulation
 ```
 
-We download that data, and save it as "alberta_COD.csv". We can look at the distribution of these deaths, by year and cause, where we have truncated the cause of death because some are quite extensive (@fig-albertacod). (Note that because some causes are not always in the top 30 each year, not all causes have the same number of occurrences.)
+We download that data, and save it as "alberta_COD.csv". We can look at the distribution of these deaths, by year and cause (@fig-albertacod). We have truncated the full cause of death because some are quite long. As some causes are not always in the top 30 each year, not all causes have the same number of occurrences.
 
 <!-- :::{.callout-note} -->
 <!-- ## Oh, you think we have good data on that! -->
@@ -2166,7 +2193,7 @@ alberta_cod <-
   janitor::clean_names() |>
   add_count(cause) |>
   filter(n == 21) |>
-  mutate(cause = str_trunc(cause, 15))
+  mutate(cause = str_trunc(cause, 20))
 ```
 
 
@@ -2184,25 +2211,62 @@ alberta_cod <-
              )
            ) |>
   janitor::clean_names() |>
-  add_count(cause) |>
-  filter(n == 21) |>
-  mutate(cause = str_trunc(cause, 15))
+  add_count(cause)
+```
+
+If we were to look at the top ten causes in 2021, we would notice a variety of interesting aspects (@tbl-albertahuh). For instance, we would expect that the most common causes would be in all 21 years of our data. But we notice that that most common cause, "Other ill-defined and unknown causes of mortality", is only in three years. Naturally, "COVID-19, virus identified", is only in two other years, as there were no COVID deaths in Canada before 2020.
+
+```{r}
+#| label: tbl-albertahuh
+#| tbl-cap: "Top ten causes of death in 2021"
+#| warning: false
+
+alberta_cod |>
+  filter(calendar_year == 2021,
+         ranking <= 10) |>
+  mutate(total_deaths = format(total_deaths, big.mark = ",")) |>
+  knitr::kable(
+    col.names = c("Year",
+                  "Cause",
+                  "Ranking",
+                  "Total deaths",
+                  "Number of years"),
+    digits = 0,
+    align = c("l", "r", "r", "r", "r")
+  )
+```
+
+In this case, for simplicity, we will restrict ourselves to the five most common causes of death in 2021, that have been present every year.
+
+```{r}
+alberta_cod_top_five <- 
+  alberta_cod |> 
+  filter(calendar_year == 2021,
+         n == 21) |> 
+  slice_max(order_by = desc(ranking), n = 5) |> 
+  pull(cause)
+
+alberta_cod <- 
+  alberta_cod |> 
+  filter(cause %in% alberta_cod_top_five)
 ```
 
 
 ```{r}
-#| fig-cap: "Annual number of deaths for the top 30 causes, since 2001, for Alberta, Canada"
+#| fig-cap: "Annual number of deaths for the top 5 causes in 2021, since 2001, for Alberta, Canada"
 #| label: fig-albertacod
 #| message: false
 #| warning: false
 
 alberta_cod |>
-  ggplot(aes(x = total_deaths, y = cause)) +
-  geom_point(alpha = 0.5) +
+  ggplot(aes(x = calendar_year, y = total_deaths, color = cause)) +
+  geom_line(alpha = 0.5) +
   theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
   labs(
-    x = "Number of deaths",
-    y = "Cause"
+    x = "Year",
+    y = "Annual number of deaths in Alberta",
+    color = "Cause"
   )
 ```
 
@@ -2213,28 +2277,12 @@ One thing that we notice is that the mean, 665, is different to the variance, 22
 #| eval: true
 #| label: tbl-ohboyalberta
 #| tbl-cap: "Summary statistics of the number of deaths, by cause, in Alberta"
+library(modelsummary)
 
-alberta_cod |>
-  summarise(
-    min = min(total_deaths),
-    mean = mean(total_deaths),
-    std_dev = sd(total_deaths),
-    variance = var(total_deaths),
-    max = max(total_deaths)
-  ) |>
-  knitr::kable(
-    col.names = c(
-      "Minimum",
-      "Mean",
-      "Std dev",
-      "Variance",
-      "Maximum"
-    ),
-    digits = 0,
-    format.args = list(big.mark = ",")
-  )
+datasummary(total_deaths ~ Min + Mean + Max + SD + Var + N,
+            fmt = 0,
+            data = alberta_cod)
 ```
-
 
 We can implement negative binomial regression when using `stan_glm()` by specifying that distribution in "family". In this case, we run both Poisson and negative binomial.
 
@@ -2342,7 +2390,13 @@ loo_compare(poisson, neg_binomial)
 
 In this case we find that the negative binomial model is a better fit than the Poisson.
 
+We have covered a variety of diagnostic aspects for Bayesian models. While it is difficult to be definitive about what is "enough" because it is context specific, the following checklist would be enough for most purposes. These would go into an appendix that was mentioned and cross-referenced in the model section of a paper:
 
+- Prior predictive checks: Construct them yourself based on simulation then use `ggplot2`.
+- Convergence graphs: Use `plot(the_model, "trace", facet_args = list(nrow = 2)) + scale_color_brewer(palette = "Set1")`.
+- Histogram of rhats: Use `plot(the_model, "rhat_hist")`.
+- Graphs of distributions: Use `bayesplot::mcmc_areas(the_model, prob = 0.8)`.
+- Graphs of posterior predictive checks: `pp_check()`.
 
 
 
