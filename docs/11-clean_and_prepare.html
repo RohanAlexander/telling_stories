@@ -565,11 +565,11 @@ div.csl-indent {
 <h3 data-number="11.2.1" class="anchored" data-anchor-id="save-a-copy-of-the-raw-data"><span class="header-section-number">11.2.1</span> Save a copy of the raw data</h3>
 <p>The first step is to save the raw data into a separate, local, folder. It is important to save this raw data, to the extent that is possible, because it establishes the foundation for reproducibility <span class="citation" data-cites="wilsongoodenough">(<a href="99-references.html#ref-wilsongoodenough" role="doc-biblioref">Wilson et al. 2017</a>)</span>. If we are obtaining our data from a third-party, such as a government website, then we have no control over whether they will continue to host that data, update it, or change the address at which it is available. Saving a local copy also reduces the burden that we impose on their servers.</p>
 <p>Having locally saved the raw data we must maintain a copy of it in that state, and not modify it. As we begin to clean and prepare it, we instead create a copy of the dataset. Maintaining the initial, raw, state of the dataset, and using scripts to create the dataset that we are interested in analyzing, ensures that our entire workflow is reproducible.</p>
-<p>We may not always be allowed to share that local copy, but we can almost always create it. If we are not even able to create a local copy of the raw data, then it may be that the best we can do is save a copy of as close to the raw data as is possible, create a simulated version of the raw data that conveys the main features, and include detailed access instructions in the README,</p>
+<p>We may not always be allowed to share that local copy, but we can almost always create it. If we are not even able to create a local copy of the raw data, then it may be that the best we can do is save a copy of as close to the raw data as is possible, create a simulated version of the raw data that conveys the main features, and include detailed access instructions in the README.</p>
 </section>
 <section id="begin-with-an-end-in-mind" class="level3" data-number="11.2.2">
 <h3 data-number="11.2.2" class="anchored" data-anchor-id="begin-with-an-end-in-mind"><span class="header-section-number">11.2.2</span> Begin with an end in mind</h3>
-<p>Planning the endpoint forces us to begin with an end in mind and is important for a variety of reasons. As with scraping data, introduced in <a href="09-gather.html"><span>Chapter&nbsp;9</span></a>, it helps us to be proactive about scope-creep. But with data cleaning it additionally forces us to really think about what we want the final dataset to look like.</p>
+<p>Planning the endpoint forces us to begin with an end in mind and is important for a variety of reasons. As with scraping data, introduced in <span class="quarto-unresolved-ref">?sec-gather-data</span>, it helps us to be proactive about scope-creep. But with data cleaning it additionally forces us to really think about what we want the final dataset to look like.</p>
 <p>The first step is to sketch the dataset that we are interested in. The key features of the sketch will be aspects such as the names of the columns, their class, and the possible range of values. For instance, we might be interested in the populations of US states. So, our sketch might look like <a href="#fig-sketchdataplan">Figure&nbsp;<span>11.1</span></a>.</p>
 <div id="fig-sketchdataplan" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
@@ -615,7 +615,7 @@ div.csl-indent {
 <li>each observation is in its own row; and</li>
 <li>each value is in its own cell.</li>
 </ol>
-<p>At this stage it is important to begin to think about validity and internal consistency. What are some of the features that we know these data should have? Note these down as you got through the process of simulating the dataset because we will draw on them to write tests.</p>
+<p>At this stage it is important to begin thinking about validity and internal consistency. What are some of the features that we know these data should have? Note these down as you got through the process of simulating the dataset because we will draw on them to write tests.</p>
 </section>
 <section id="start-small" class="level3" data-number="11.2.3">
 <h3 data-number="11.2.3" class="anchored" data-anchor-id="start-small"><span class="header-section-number">11.2.3</span> Start small</h3>
@@ -626,13 +626,13 @@ Alaska, 0.7
 Arizona, 7
 Arkansas, 3
 California, 40</code></pre>
-<p>In more challenging cases there may be some regular feature of the dataset that we can take advantage of. For instance, sometimes various text is repeated, as in the following case with “State is” and “and population is”.</p>
+<p>In more challenging cases there may be some regular feature of the dataset that we can take advantage of. For instance, sometimes various text is repeated, as in the following case.</p>
 <pre><code>State is Alabama and population is 5 million.
 State is Alaska and population is 0.7 million.
 State is Arizona and population is 7 million.
 State is Arkansas and population is 3 million.
 State is California and population is 40 million.</code></pre>
-<p>In this case, although we do not have a traditional delimiter, we can use the regularity of “State is” and “and population is” to get what we need. A more difficult case is when we do not have line breaks. This final case is illustrative of that.</p>
+<p>In this case, although we do not have a traditional delimiter, we can use the regularity of “State is”, “and population is”, and “million” to get what we need. A more difficult case is when we do not have line breaks. This final case is illustrative of that.</p>
 <pre><code>Alabama 5 Alaska 0.7 Arizona 7 Arkansas 3 California 40</code></pre>
 <p>One way to approach this is to take advantage of the different classes and values that we are looking for. For instance, in this case, we know that we are after US states, so there are only 50 possible options (setting D.C. to one side for the time being), and we could use the presence of these as a delimiter. We could also use the fact that population is a number, and so split based on a space followed by a number.</p>
 <p>We will now convert this final case into tidy data using <code>tidyr</code> <span class="citation" data-cites="citetidyr">(<a href="99-references.html#ref-citetidyr" role="doc-biblioref">Wickham 2021</a>)</span>.</p>
@@ -648,7 +648,7 @@ State is California and population is 40 million.</code></pre>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(</span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> raw,</span>
 <span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">into =</span> letters[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>],</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">"(?&lt;=[[:digit:]]) "</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">"(?&lt;=[[:digit:]]) "</span>  <span class="co"># Separate based on...</span></span>
 <span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
 <span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
 <span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> letters[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>],</span>
@@ -658,7 +658,7 @@ State is California and population is 40 million.</code></pre>
 <span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(</span>
 <span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> separate_me,</span>
 <span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"state"</span>, <span class="st">"population"</span>),</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">" (?=[[:digit:]])"</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">" (?=[[:digit:]])"</span>  <span class="co"># Separate according to...</span></span>
 <span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
 <span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>drop_me)</span>
 <span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
@@ -677,10 +677,10 @@ State is California and population is 40 million.</code></pre>
 </section>
 <section id="write-tests-and-documentation" class="level3" data-number="11.2.4">
 <h3 data-number="11.2.4" class="anchored" data-anchor-id="write-tests-and-documentation"><span class="header-section-number">11.2.4</span> Write tests and documentation</h3>
-<p>Having established a rectangular dataset, albeit a messy one, we should begin to look at the classes that we have. We do not necessarily want to fix the classes at this point, because that can result in lost data. But we look at the class to see what it is, and then compare it to our simulated dataset to see where it needs to get to. We note the columns where it is different.</p>
+<p>Having established a rectangular dataset, albeit a messy one, we should begin to look at the classes that we have. We do not necessarily want to fix the classes at this point, because that can result in lost data. But we look at the class to see what it is, compare it to our simulated dataset, and note the columns where it is different to see what changes need to be made.</p>
 <p>Before changing the class and before going onto more bespoke issues, we should deal with some of the common issues in each class. Some common issues are:</p>
 <ul>
-<li>Commas and other punctuation, such as denomination signs, in columns that should be numeric.</li>
+<li>Commas and other punctuation, such as denomination signs ($, €, £, etc.), in columns that should be numeric.</li>
 <li>Inconsistent formatting of dates, such as “December” and “Dec” and “12”.</li>
 <li>Unexpected character encoding, especially in Unicode, which may not display consistently. By way of background, character encoding is needed for computers, which are based on strings of 0s and 1s, to be able to consider symbols such as alphabets. One source of particularly annoying data cleaning issues is different character encoding, particularly when dealing with foreign languages or odd characters. In general, we use UTF-8. The encoding of a character vector can be found using <code>Encoding()</code>.</li>
 </ul>
@@ -689,8 +689,8 @@ State is California and population is 40 million.</code></pre>
 <p>Let us run through an example with a collection of strings, some of which are slightly wrong. This type of output is typical of OCR, which often gets most of the way there, but not quite.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>messy_string <span class="ot">&lt;-</span> <span class="fu">paste</span>(</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">"Patricia, Ptricia, PatricIa, Patncia, PatricIa"</span>),</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">"Patricia, Patricia, Patric1a, Patricia , 8atricia"</span>),</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">"Patricia, Ptricia, PatricIa, Patric1a, PatricIa"</span>),</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">"PatrIcia, Patricia, Patricia, Patricia , 8atricia"</span>),</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">", "</span></span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -708,11 +708,11 @@ State is California and population is 40 million.</code></pre>
  1 "Patricia" 
  2 "Ptricia"  
  3 "PatricIa" 
- 4 "Patncia"  
+ 4 "Patric1a" 
  5 "PatricIa" 
- 6 "Patricia" 
+ 6 "PatrIcia" 
  7 "Patricia" 
- 8 "Patric1a" 
+ 8 "Patricia" 
  9 "Patricia "
 10 "8atricia" </code></pre>
 </div>
@@ -728,41 +728,41 @@ State is California and population is 40 million.</code></pre>
 1 "Patricia"      3
 2 "PatricIa"      2
 3 "8atricia"      1
-4 "Patncia"       1
-5 "Patric1a"      1
+4 "Patric1a"      1
+5 "PatrIcia"      1
 6 "Patricia "     1
 7 "Ptricia"       1</code></pre>
 </div>
 </div>
-<p>The most common unique observation is the correct one. The next one—“PatricIa”—looks like the “i” has been incorrectly capitalized, and the one after that—“8atricia”—is distinguished by an “8” instead of a “P”. We can fix these issues with <code>str_replace_all()</code> and then redo the count.</p>
+<p>The most common unique observation is the correct one. The next one—“PatricIa”—looks like the “i” has been incorrectly capitalized. This is true for “PatrIcia” as well. We can fix the capitalization issues with <code>str_to_title()</code>, which converts the first letter of each word in a string to uppercase and the rest to lowercase, and then redo the count.</p>
+<!-- We can fix the issues with `str_replace_all()` and then redo the count. -->
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>messy_dataset_fix_I_8 <span class="ot">&lt;-</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  messy_dataset <span class="sc">|&gt;</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">str_replace_all</span>(names, <span class="st">"PatricIa"</span>, <span class="st">"Patricia"</span>),</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">str_replace_all</span>(names, <span class="st">"8atricia"</span>, <span class="st">"Patricia"</span>)</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>messy_dataset_fix_I_8 <span class="sc">|&gt;</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(names, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">str_to_title</span>(names)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>messy_dataset_fix_I_8 <span class="sc">|&gt;</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(names, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 5 × 2
   names           n
   &lt;chr&gt;       &lt;int&gt;
 1 "Patricia"      6
-2 "Patncia"       1
+2 "8atricia"      1
 3 "Patric1a"      1
 4 "Patricia "     1
 5 "Ptricia"       1</code></pre>
 </div>
 </div>
-<p>Already this is much better and 60 per cent of the values are correct, compared with earlier where it was 30 per cent. There are two more obvious errors—“Ptricia” and “Patncia”—with the first missing an “a” and the second having an “n” where the “ri” should be. Again, we can fix those.</p>
+<p>Already this is much better and 60 per cent of the values are correct, compared with earlier where it was 30 per cent. There are two more obvious errors—“8tricia” and “Ptricia”—with the first distinguished by an “8” instead of a “P”, and the second missing an “a”. We can fix these issues with <code>str_replace_all()</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>messy_dataset_fix_a_n <span class="ot">&lt;-</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  messy_dataset_fix_I_8 <span class="sc">|&gt;</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">str_replace_all</span>(names, <span class="st">"Ptricia"</span>, <span class="st">"Patricia"</span>),</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">str_replace_all</span>(names, <span class="st">"Patncia"</span>, <span class="st">"Patricia"</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">str_replace_all</span>(names, <span class="st">"8atricia"</span>, <span class="st">"Patricia"</span>),</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">str_replace_all</span>(names, <span class="st">"Ptricia"</span>, <span class="st">"Patricia"</span>)</span>
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>messy_dataset_fix_a_n <span class="sc">|&gt;</span></span>
@@ -776,7 +776,7 @@ State is California and population is 40 million.</code></pre>
 3 "Patricia "     1</code></pre>
 </div>
 </div>
-<p>We have achieved an 80 per cent outcome with not too much effort. The two remaining issues are more subtle. The first has occurred because the “i” has been incorrectly coded as a “1”. In some fonts this will show up, but in others it will be more difficult to see. This is a common issue, especially with OCR, and something to be aware of. The second is similarly subtle and occurs because of a trailing space. Trailing and leading spaces are another common issue and we can address them with <code>str_trim()</code>. After we fix these two remaining issues then we will have all entries corrected.</p>
+<p>We have achieved an 80 per cent outcome with not too much effort. The final two issues are more subtle. The first has occurred because the “i” has been incorrectly coded as a “1”. In some fonts this will show up, but in others it will be more difficult to see. This is a common issue, especially with OCR, and something to be aware of. The second is similarly subtle and occurs because of a trailing space. Trailing and leading spaces are another common issue and we can address them with <code>str_trim()</code>. After we fix these two remaining issues then we will have all entries corrected.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>cleaned_data <span class="ot">&lt;-</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  messy_dataset_fix_a_n <span class="sc">|&gt;</span></span>
@@ -804,33 +804,33 @@ State is California and population is 40 million.</code></pre>
 <span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="st">"Still have values that are not Patricia!"</span>)</span>
 <span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>We can make things a little more imposing by stopping our code execution if the condition is not met with <code>stopifnot()</code>. To use that we define a condition that we would like met. We could implement this type of check throughout our code. For instance, if we expected there to be a certain number of rows in the dataset, or for a certain column to have various properties, such as being an integer, or a factor.</p>
+<p>We can make things a little more imposing by stopping our code execution if the condition is not met with <code>stopifnot()</code>. To use this function we define a condition that we would like met. We could implement this type of check throughout our code, for instance if we expected there to be a certain number of rows in the dataset, or for a certain column to have various properties, such as being an integer or a factor.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">nrow</span>(check_me) <span class="sc">==</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">nrow</span>(check_me) <span class="sc">==</span> <span class="dv">0</span>)  <span class="co"># Stop if the dataset has a non-zero number of rows</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We can use <code>stopifnot()</code> to ensure that our script is working as expected as it goes through.</p>
 <p>Another way to write tests for our dataset is to use <code>testthat</code> <span class="citation" data-cites="testthat">(<a href="99-references.html#ref-testthat" role="doc-biblioref">Wickham 2011</a>)</span>. Although developed for testing packages, we can use the same functionality to test our datasets. For instance, we can use <code>expect_length()</code> to check the length of a dataset and <code>expect_equal()</code> to check the content.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(testthat)</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="fu">expect_length</span>(check_me, <span class="dv">1</span>)</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="fu">expect_equal</span>(<span class="fu">class</span>(cleaned_data<span class="sc">$</span>names), <span class="st">"character"</span>)</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="fu">expect_equal</span>(<span class="fu">unique</span>(cleaned_data<span class="sc">$</span>names), <span class="st">"Patricia"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="fu">expect_length</span>(check_me, <span class="dv">1</span>)  <span class="co"># Is the dataset of length one?</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="fu">expect_equal</span>(<span class="fu">class</span>(cleaned_data<span class="sc">$</span>names), <span class="st">"character"</span>)  <span class="co"># Are all of the observations characters?</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="fu">expect_equal</span>(<span class="fu">unique</span>(cleaned_data<span class="sc">$</span>names), <span class="st">"Patricia"</span>)  <span class="co"># Is every unique oservation "Patricia"?</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>If the tests pass then nothing happens, but if the tests fail then the script will stop.</p>
 <p>What do we test? It is a difficult problem, and we detail a range of more-specific tests in the next section. But broadly we test what we have, against what we expect. The engineers working on the software for the Apollo program in the 1960s initially considered writing tests to be “busy work” <span class="citation" data-cites="digitalapollo">(<a href="99-references.html#ref-digitalapollo" role="doc-biblioref">Mindell 2008, 170</a>)</span>. But they eventually came to realize that NASA would not have faith that software could be used to send men to the moon unless it was accompanied by a comprehensive suite of tests. And it is the same for data science, even if we are not necessarily sending people to the moon.</p>
-<p>Start with tests for validity. These will typically be aspects such as the class of the variables, and then their unique values. For instance, if we were using a recent dataset then columns that are years could be tested to ensure that all elements have four digits and start with a “2”. <span class="citation" data-cites="peterbaumgartnertesting">Baumgartner (<a href="99-references.html#ref-peterbaumgartnertesting" role="doc-biblioref">2021</a>)</span> describes this as tests on the schema. After that turn to checks of internal consistency. For instance, if there is a column for different responses, then check that the sum of those is equal to the total column, or if it does not then this difference is explainable. Finally, turn to tests for external consistency. Here we want to use outside information to inform our tests. For instance, if we had a column of, say, neonatal mortality rate (NMR) for Germany (this concept was introduced in <a href="02-drinking_from_a_fire_hose.html"><span>Chapter&nbsp;2</span></a>), then we could look at the estimates from, say, the World Health Organization (WHO), and ensure our NMR column is consist with these. Experienced analysts do this all in their head. This is great, but the issue is that it does not scale, can be faulty and inconsistent, and overloads reputation. We return to this issue in <a href="14-ijalm.html"><span>Chapter&nbsp;14</span></a> in the context of modelling.</p>
-<p>We write tests throughout our code, rather than only right at the end. In particular using <code>stopifnot()</code> statements on as many intermediate steps as possible ensures that the dataset is being cleaned in a way that we expect. For instance, when merging two datasets we could check that the column names in the datasets are unique, apart from the column/s to be used as the key. Or that the number of observations of each type is being carried through appropriately. And even that the dimensions of the dataset are not being unexpectedly changed.</p>
+<p>Start with tests for validity. These will typically be aspects such as the class of the variables, and then their unique values. For instance, if we were using a recent dataset then columns that are years could be tested to ensure that all elements have four digits and start with a “2”. <span class="citation" data-cites="peterbaumgartnertesting">Baumgartner (<a href="99-references.html#ref-peterbaumgartnertesting" role="doc-biblioref">2021</a>)</span> describes this as tests on the schema. After that turn to checks of internal consistency. For instance, if there are columns for different numeric responses, then check that the sum of those is equal to the total column, or if it does not then this difference is explainable. Finally, turn to tests for external consistency. Here we want to use outside information to inform our tests. For instance, if we had a column of, say, neonatal mortality rate (NMR) for Germany (this concept was introduced in <span class="quarto-unresolved-ref">?sec-fire-hose</span>), then we could look at the estimates from, say, the World Health Organization (WHO), and ensure our NMR column is consist with these. Experienced analysts do this all in their head. This is great, but the issue is that it does not scale, can be faulty and inconsistent, and overloads reputation. We return to this issue in <span class="quarto-unresolved-ref">?sec-its-just-a-linear-model</span> in the context of modelling.</p>
+<p>We write tests throughout our code, rather than only right at the end. In particular, using <code>stopifnot()</code> statements on as many intermediate steps as possible ensures that the dataset is being cleaned in a way that we expect. For instance, when merging two datasets we could check that the column names in the datasets are unique, apart from the column/s to be used as the key/s. Or that the number of observations of each type is being carried through appropriately. And even that the dimensions of the dataset are not being unexpectedly changed.</p>
 </section>
 <section id="iterate-generalize-and-update" class="level3" data-number="11.2.5">
 <h3 data-number="11.2.5" class="anchored" data-anchor-id="iterate-generalize-and-update"><span class="header-section-number">11.2.5</span> Iterate, generalize, and update</h3>
-<p>We could now iterate the plan. In this most recent case, we started with 10 entries. There is no reason that we could not increase this to 100 or even 1,000. We may need to generalize the cleaning procedures and tests. But eventually we would start to being the dataset into some sort of order.</p>
+<p>We could now iterate the plan. In this most recent case, we started with 10 entries. There is no reason that we could not increase this to 100 or even 1,000. We may need to generalize the cleaning procedures and tests. But eventually we would start to bring the dataset into some sort of order.</p>
 </section>
 </section>
 <section id="checking-and-testing" class="level2" data-number="11.3">
 <h2 data-number="11.3" class="anchored" data-anchor-id="checking-and-testing"><span class="header-section-number">11.3</span> Checking and testing</h2>
-<p>Robert Caro, the biographer of Lyndon Johnson introduced in <a href="05-writing_research.html"><span>Chapter&nbsp;5</span></a>, spent years tracking down everyone connected to the 36th President of the United States. Caro and his wife went so far as to live in Texas Hill Country for three years so that they could better understand where Johnson was from. When Caro heard that Johnson, as a senator, would run to the Senate from where he stayed in D.C., he ran that route multiple times himself to try to understand why Johnson was running. Caro eventually understood it only when he ran the route as the sun was rising—just as Johnson had done; it turns out that the sun hits the Senate Rotunda in a particularly inspiring way <span class="citation" data-cites="caroonworking">(<a href="99-references.html#ref-caroonworking" role="doc-biblioref">Caro 2019, 156</a>)</span>. This background work enabled him to uncover aspects that no one else knew. For instance, Johnson almost surely stole his first election win <span class="citation" data-cites="caroonworking">(<a href="99-references.html#ref-caroonworking" role="doc-biblioref">Caro 2019, 116</a>)</span>. We need to understand our data to this same extent. We must turn every page, and go to every extreme.</p>
-<p>The idea of negative space is well established in design. It refers to that which surrounds the subject. Sometimes negative space is used as an effect, for instance the logo of FedEx, an American logistics company, has negative space between the E and x that creates an arrow. In a similar way, we want to be cognizant of the data that we have, and the data that we do not have <span class="citation" data-cites="citemyboy">(<a href="99-references.html#ref-citemyboy" role="doc-biblioref">Hodgetts 2022</a>)</span>. We are worried that the data that we do not have somehow has meaning, potentially even to the extent of changing our conclusions. When we are cleaning data, we are looking for anomalies. We are interested in values that are in there that should not be, but also the opposite situation—values that are missing that should not be. There are three tools that we use to identify these situations: graphs, counts, and tests.</p>
+<p>Robert Caro, the biographer of Lyndon Johnson introduced in <span class="quarto-unresolved-ref">?sec-on-writing</span>, spent years tracking down everyone connected to the 36th President of the United States. Caro and his wife went so far as to live in Texas Hill Country for three years so that they could better understand where Johnson was from. When Caro heard that Johnson, as a senator, would run to the Senate from where he stayed in D.C., he ran that route multiple times himself to try to understand why Johnson was running. Caro eventually understood it only when he ran the route as the sun was rising, just as Johnson had done; it turns out that the sun hits the Senate Rotunda in a particularly inspiring way <span class="citation" data-cites="caroonworking">(<a href="99-references.html#ref-caroonworking" role="doc-biblioref">Caro 2019, 156</a>)</span>. This background work enabled him to uncover aspects that no one else knew. For instance, Johnson almost surely stole his first election win <span class="citation" data-cites="caroonworking">(<a href="99-references.html#ref-caroonworking" role="doc-biblioref">Caro 2019, 116</a>)</span>. We need to understand our data to this same extent. We must turn every page, and go to every extreme.</p>
+<p>The idea of negative space is well established in design. It refers to that which surrounds the subject. Sometimes negative space is used as an effect, for instance the logo of FedEx, an American logistics company, has negative space between the E and X that creates an arrow. In a similar way, we want to be cognizant of the data that we have, and the data that we do not have <span class="citation" data-cites="citemyboy">(<a href="99-references.html#ref-citemyboy" role="doc-biblioref">Hodgetts 2022</a>)</span>. We are worried that the data that we do not have somehow has meaning, potentially even to the extent of changing our conclusions. When we are cleaning data, we are looking for anomalies. We are interested in values that are in there that should not be, but also the opposite situation—values that are missing that should not be. There are three tools that we use to identify these situations: graphs, counts, and tests.</p>
 <p>We use these tools to ensure that we are not changing good data to bad. Especially when our cleaning and preparation requires many steps, it may be that fixes at one stage are un-done later. We use graphs, counts, and especially tests, to prevent this. The importance of these grows exponentially with dataset size, with small and medium datasets being amenable to manual inspection and other aspects that rely on the analyst, while larger datasets especially requiring tests <span class="citation" data-cites="hand2018statistical">(<a href="99-references.html#ref-hand2018statistical" role="doc-biblioref">Hand 2018</a>)</span>.</p>
 <section id="graphs" class="level3" data-number="11.3.1">
 <h3 data-number="11.3.1" class="anchored" data-anchor-id="graphs"><span class="header-section-number">11.3.1</span> Graphs</h3>
@@ -863,12 +863,22 @@ State is California and population is 40 million.</code></pre>
 <div id="fig-youth-survey" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="11-clean_and_prepare_files/figure-html/fig-youth-survey-1.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">Figure 11.2: The ages in the simulated youth survey dataset clearly identify a likely data issue</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure 11.2: The ages in the simulated youth survey dataset clearly identify a data issue</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-youth-survey">Figure&nbsp;<span>11.2</span></a> shows the unexpected value of 150. The most likely explanation is that the data were incorrectly entered, missing the decimal place, and should be 15.0. We could fix that, document it, and then redo the graph, which would show that everything seemed more valid.</p>
+<p><a href="#fig-youth-survey">Figure&nbsp;<span>11.2</span></a> shows the unexpected value of 150. The most likely explanation is that the data were incorrectly entered, missing the decimal place, and should be 15.0. We could fix that, document it, and then redo the graph, which would show that everything seemed more valid (<a href="#fig-youth-survey-2">Figure&nbsp;<span>11.3</span></a>).</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-youth-survey-2" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="11-clean_and_prepare_files/figure-html/fig-youth-survey-2-1.png" class="img-fluid figure-img" width="672"></p>
+<p></p><figcaption class="figure-caption">Figure 11.3: Ages in the simulated youth survey dataset post-cleaning</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
 </section>
 <section id="counts" class="level3" data-number="11.3.2">
 <h3 data-number="11.3.2" class="anchored" data-anchor-id="counts"><span class="header-section-number">11.3.2</span> Counts</h3>
@@ -909,7 +919,7 @@ State is California and population is 40 million.</code></pre>
 <section id="tests" class="level3" data-number="11.3.3">
 <h3 data-number="11.3.3" class="anchored" data-anchor-id="tests"><span class="header-section-number">11.3.3</span> Tests</h3>
 <p>As we said in <a href="04-workflow.html"><span>Chapter&nbsp;4</span></a>, if you write code, then you are a programmer, but there is a difference between someone coding for fun, and an astronomer writing the code that runs the James Webb Telescope. Following <span class="citation" data-cites="weinbergpsychology">Weinberg (<a href="99-references.html#ref-weinbergpsychology" role="doc-biblioref">1971, 122</a>)</span>, we distinguish between amateurs and professionals based on the end-user. When we first start out coding, we typically write code that only we use. For instance, we may write some code for a paper that we submit for a class. After we get a grade, then in most cases, everything can be forgotten about. In contrast, a professional writes code for, and often with, other people. For instance, much of the academic research in the social sciences relies on code. If that research is to contribute to lasting knowledge, then partly that means the code that underpins it is being written for others and must work for others well after the researcher has moved onto other projects. A professional places appropriate care on tasks that ensure code can be considered by others. A large part of that is tests. As such, we should strive to include tests in our code when possible and where appropriate.</p>
-<p>Some things are so important that we require that the cleaned dataset have them. These are conditions that we should check. They would typically come out of experience, expert knowledge, or the planning and simulation stages. For instance, there should be no negative numbers in an age variable, and no ages above 140. For these we could specifically require that the condition is met. Another example is when doing cross-country analysis, then a list of country names that we know should be in our dataset would be useful. Our test would then be that there were: 1) values not in that list that were in our dataset, or, vice versa; 2) countries that we expected to be in there that were not.</p>
+<p>Some things are so important that we require that the cleaned dataset have them. These are conditions that we should check. They would typically come out of experience, expert knowledge, or the planning and simulation stages. For instance, there should be no negative numbers in an age variable, and no ages above 140. For these we could specifically require that the condition is met. Another example is when doing cross-country analysis, then a list of country names that we know should be in our dataset would be useful. Our test would then be that there were: 1) values not in that list that were in our dataset, or, vice versa; 2) countries that we expected to be in our dataset that were not.</p>
 <p>To have a concrete example, let us consider if we were doing some analysis about the five largest counties in Kenya. From looking it up, we find these are: “Nairobi”, “Kiambu”, “Nakuru”, “Kakamega”, and “Bungoma”. Let us create that variable first.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>correct_kenya_counties <span class="ot">&lt;-</span></span>
@@ -1087,7 +1097,7 @@ State is California and population is 40 million.</code></pre>
 </section>
 <section id="class" class="level3" data-number="11.3.4">
 <h3 data-number="11.3.4" class="anchored" data-anchor-id="class"><span class="header-section-number">11.3.4</span> Class</h3>
-<p>It is sometimes said that Americans are obsessed with money, while the English are obsessed with class. In the case of data cleaning and preparation we need to be English. Class is critical and worthy of special attention. We introduced class in <a href="03-r_essentials.html"><span>Chapter&nbsp;3</span></a> and here we focus on “numeric”, “character”, and “factor”. Explicit checks of the class of variables are essential. Accidentally assigning the wrong class to a variable can have a large effect on subsequent analysis. In particular:</p>
+<p>It is sometimes said that Americans are obsessed with money, while the English are obsessed with class. In the case of data cleaning and preparation we need to be English. Class is critical and worthy of special attention. We introduced class in <a href="03-r_essentials.html"><span>Chapter&nbsp;3</span></a> and here we focus on “numeric”, “character”, and “factor”. Explicit checks of the class of variables are essential. Accidentally assigning the wrong class to a variable can have a large effect on subsequent analysis. In particular, it is important to:</p>
 <ul>
 <li>check whether some value should be a number or a factor; and</li>
 <li>check that values are numbers not characters.</li>
@@ -1104,7 +1114,7 @@ State is California and population is 40 million.</code></pre>
 <span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_as_factor =</span> <span class="fu">as.factor</span>(group),</span>
 <span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let us start with “group” as an integer and use logistic regression, which we cover in more detail in <a href="14-ijalm.html"><span>Chapter&nbsp;14</span></a>. We can then try it as a factor. <a href="#tbl-effect-of-class">Table&nbsp;<span>11.1</span></a> clearly shows how different the results are and highlights the absolute necessity of getting the class of variables used in regression right. The interpretation of the variable is completely different. In the former, where it is an integer, we impose a consistent relationship between the different levels of the observations, whereas in the latter, where it is a factor, we enable more freedom.</p>
+<p>Let us start with “group” as an integer and use logistic regression, which we cover in more detail in <span class="quarto-unresolved-ref">?sec-its-just-a-linear-model</span>. We can then try it as a factor. <a href="#tbl-effect-of-class">Table&nbsp;<span>11.1</span></a> clearly shows how different the results are and highlights the absolute necessity of getting the class of variables used in regression right. The interpretation of the variable is completely different. In the former, where it is an integer, we impose a consistent relationship between the different levels of the observations, whereas in the latter, where it is a factor, we enable more freedom.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(modelsummary)</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1194,14 +1204,9 @@ State is California and population is 40 million.</code></pre>
    <td style="text-align:center;"> −5.545 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> F </td>
-   <td style="text-align:center;"> 0.554 </td>
-   <td style="text-align:center;"> 0.579 </td>
-  </tr>
-  <tr>
    <td style="text-align:left;"> RMSE </td>
-   <td style="text-align:center;"> 0.48 </td>
-   <td style="text-align:center;"> 0.46 </td>
+   <td style="text-align:center;"> 1.30 </td>
+   <td style="text-align:center;"> 1.36 </td>
   </tr>
 </tbody>
 </table>
@@ -1214,7 +1219,7 @@ State is California and population is 40 million.</code></pre>
 <section id="dates" class="level3" data-number="11.3.5">
 <h3 data-number="11.3.5" class="anchored" data-anchor-id="dates"><span class="header-section-number">11.3.5</span> Dates</h3>
 <p>A shibboleth for whether someone has worked with dates before is their reaction when you tell them you are going to be working with dates. If they immediately involuntarily shudder and share a horror story, then they have worked with dates before, and any other reaction means they have not.</p>
-<p>Extensive checking of dates is critical. Ideally, we would like dates to be in the following format: YYYY-MM-DD. There are differences of opinion as to what is an appropriate date format in the broader world, and reasonable people can differ on whether 1 July 2022 or July 1, 2022, is better, but YYYY-MM-DD is the only acceptable format for datasets.</p>
+<p>Extensive checking of dates is critical. Ideally, we would like dates to be in the following format: YYYY-MM-DD. There are differences of opinion as to what is an appropriate date format in the broader world. Reasonable people can differ on whether 1 July 2022 or July 1, 2022 is better, but YYYY-MM-DD is the only acceptable format for datasets.</p>
 <p>A few tests that could be useful include:</p>
 <ul>
 <li>If a column is days of the week, then test that the only components are Monday, Tuesday, … Sunday. Further, test that all seven days are present. Similarly, for month.</li>
@@ -1222,7 +1227,7 @@ State is California and population is 40 million.</code></pre>
 <li>Check whether the dates are in order in the dataset.</li>
 <li>Check that the years are complete and appropriate to the analysis period.</li>
 </ul>
-<p>In <a href="02-drinking_from_a_fire_hose.html"><span>Chapter&nbsp;2</span></a> we introduced a dataset of homeless shelter usage in Toronto in 2021 using <code>opendatatoronto</code> <span class="citation" data-cites="citeSharla">(<a href="99-references.html#ref-citeSharla" role="doc-biblioref">Gelfand 2020</a>)</span>. Here we use that same dataset, but for 2017 to 2020, to illustrate one process for checking dates. We first need to download the data.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>In <span class="quarto-unresolved-ref">?sec-fire-hose</span> we introduced a dataset of homeless shelter usage in Toronto in 2021 using <code>opendatatoronto</code> <span class="citation" data-cites="citeSharla">(<a href="99-references.html#ref-citeSharla" role="doc-biblioref">Gelfand 2020</a>)</span>. Here we use that same dataset, but for 2017 to 2020, to illustrate one process for checking dates. We first need to download the data.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(opendatatoronto)</span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
@@ -1252,18 +1257,17 @@ State is California and population is 40 million.</code></pre>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 14
-   file CAPACITY FACILI…¹ OCCUP…² OCCUP…³ ORGAN…⁴ PROGR…⁵ SECTOR SHELT…⁶ SHELT…⁷
-  &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;  
-1     1       16 COSTI R…      16 2017-0… COSTI … COSTI … Co-ed  100 Li… Toronto
-2     1       17 Christi…      13 2017-0… Christ… Christ… Men    973 La… Toronto
-3     1       63 Christi…      63 2017-0… Christ… Christ… Men    973 La… Toronto
-4     1       70 Christi…      66 2017-0… Christ… Christ… Famil… 43 Chr… Toronto
-5     1       60 Birchmo…      58 2017-0… City o… Birchm… Men    1673 K… Toronto
-6     1      160 Birkdal…     168 2017-0… City o… Birkda… Famil… 1229 E… Toronto
-# … with 4 more variables: SHELTER_NAME &lt;chr&gt;, SHELTER_POSTAL_CODE &lt;chr&gt;,
-#   SHELTER_PROVINCE &lt;chr&gt;, X_id &lt;dbl&gt;, and abbreviated variable names
-#   ¹​FACILITY_NAME, ²​OCCUPANCY, ³​OCCUPANCY_DATE, ⁴​ORGANIZATION_NAME,
-#   ⁵​PROGRAM_NAME, ⁶​SHELTER_ADDRESS, ⁷​SHELTER_CITY</code></pre>
+   file CAPACITY FACILITY_NAME         OCCUPANCY OCCUPANCY_DATE ORGANIZATION_NA…
+  &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;                     &lt;dbl&gt; &lt;chr&gt;          &lt;chr&gt;           
+1     1       16 COSTI Reception Cent…        16 2017-01-01T00… COSTI Immigrant…
+2     1       17 Christie Ossington M…        13 2017-01-01T00… Christie Ossing…
+3     1       63 Christie Ossington M…        63 2017-01-01T00… Christie Ossing…
+4     1       70 Christie Refugee Wel…        66 2017-01-01T00… Christie Refuge…
+5     1       60 Birchmount Res 1673 …        58 2017-01-01T00… City of Toronto 
+6     1      160 Birkdale Residence          168 2017-01-01T00… City of Toronto 
+# … with 8 more variables: PROGRAM_NAME &lt;chr&gt;, SECTOR &lt;chr&gt;,
+#   SHELTER_ADDRESS &lt;chr&gt;, SHELTER_CITY &lt;chr&gt;, SHELTER_NAME &lt;chr&gt;,
+#   SHELTER_POSTAL_CODE &lt;chr&gt;, SHELTER_PROVINCE &lt;chr&gt;, X_id &lt;dbl&gt;</code></pre>
 </div>
 </div>
 <p>We need to make the names easier to type, specify the year based on the file, and only keep relevant columns.</p>
@@ -1360,7 +1364,7 @@ State is California and population is 40 million.</code></pre>
 # … with 156,967 more rows</code></pre>
 </div>
 </div>
-<p>We can check whether the guess of the date orderings was at least plausible by looking at, say, the distribution of <!-- year (@tbl-homelessyearcountworks), month (@fig-homeless-monthcount), and  --> what purports to be the day component (<a href="#fig-homeless-daycount">Figure&nbsp;<span>11.3</span></a>). We are interested in differences between the three years 2017-2019 and 2020.</p>
+<p>We can check whether the guess of the date orderings was at least plausible by looking at, say, the distribution of <!-- year (@tbl-homelessyearcountworks), month (@fig-homeless-monthcount), and  --> what purports to be the day component (<a href="#fig-homeless-daycount">Figure&nbsp;<span>11.4</span></a>). We are interested in differences between the three years 2017-2019 and 2020.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>earlier_toronto_shelters_test_date <span class="ot">&lt;-</span></span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  earlier_toronto_shelters_test_date <span class="sc">|&gt;</span></span>
@@ -1397,16 +1401,16 @@ State is California and population is 40 million.</code></pre>
 <div id="fig-homeless-daycount" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="11-clean_and_prepare_files/figure-html/fig-homeless-daycount-1.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">Figure 11.3: Counts, by third component of occupancy date, of entries for 2017-2020</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure 11.4: Counts, by third component of occupancy date, of entries for 2017-2020</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
-<p>It is clear that our guess that the order was swapped around for 2020 seems right. We would be especially concerned if the distribution of the days was not roughly uniform, or if we had values other than [1-12] in the month.</p>
+<p>It is clear that our guess that the order was swapped around for 2020 seems right. We would be especially concerned if the distribution of the days was not roughly uniform, or if we had values other than [1-31] as the day number.</p>
 <div class="cell">
 
 </div>
-<p>One graph that is especially useful when cleaning a dataset is the order the observations appear in the dataset. For instance, we would generally expect that there would be a rough ordering in terms of date. To examine whether this is the case, we can graph the date variable in the order it appears in the dataset (<a href="#fig-plotorder">Figure&nbsp;<span>11.4</span></a>).</p>
+<p>One graph that is especially useful when cleaning a dataset is the order the observations appear in the dataset. For instance, we would generally expect that there would be a rough ordering in terms of date. To examine whether this is the case, we can graph the date variable in the order it appears in the dataset (<a href="#fig-plotorder">Figure&nbsp;<span>11.5</span></a>).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>earlier_toronto_shelters <span class="sc">|&gt;</span></span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">row_number =</span> <span class="fu">c</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(earlier_toronto_shelters)))) <span class="sc">|&gt;</span></span>
@@ -1421,7 +1425,7 @@ State is California and population is 40 million.</code></pre>
 <div id="fig-plotorder" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="11-clean_and_prepare_files/figure-html/fig-plotorder-1.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">Figure 11.4: Comparison of row number with date</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure 11.5: Comparison of row number with date</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -1442,7 +1446,7 @@ State is California and population is 40 million.</code></pre>
 <span id="cb52-12"><a href="#cb52-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
 <span id="cb52-13"><a href="#cb52-13" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>We are interested in the availability of shelter spots in Toronto for each day (<a href="#fig-plotoccupancy-1">Figure&nbsp;<span>11.5 (a)</span></a>). And we can focus on 2017, as that is where the biggest issue is and facet by month (<a href="#fig-plotoccupancy-2">Figure&nbsp;<span>11.5 (b)</span></a>).</p>
+<p>We are interested in the availability of shelter spots in Toronto for each day (<a href="#fig-plotoccupancy-1">Figure&nbsp;<span>11.6 (a)</span></a>). And we can focus on 2017, as that is where the biggest issue is and facet by month (<a href="#fig-plotoccupancy-2">Figure&nbsp;<span>11.6 (b)</span></a>).</p>
 <div>
 <div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>toronto_shelters_by_day <span class="sc">|&gt;</span></span>
 <span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> date, <span class="at">y =</span> occupancy)) <span class="sc">+</span></span>
@@ -1492,7 +1496,7 @@ State is California and population is 40 million.</code></pre>
 </div>
 </div>
 </div>
-<p></p><figcaption class="figure-caption">Figure 11.5: Occupancy per day in Toronto shelters</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure 11.6: Occupancy per day in Toronto shelters</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -1543,8 +1547,8 @@ State is California and population is 40 million.</code></pre>
 <div class="cell">
 
 </div>
-<p>From <a href="#fig-plotorder">Figure&nbsp;<span>11.4</span></a> it looks like 2020 is roughly as we would expect, although with some potential weirdness at the start. 2019 has a few odd situations, but not too many. 2018 has a small cluster early in the dataset and then possibly something systematic toward the middle. But 2017 has a large number of systematic issues. These affect a lot of observations, so we prioritize and focus our attention here.</p>
-<p>In general, it seems that it might be the case that in 2017 the first 12 days are the wrong way around, i.e.&nbsp;we think it is year-month-day, but it is actually year-day-month, but there are exceptions. As a first pass, we can flip those first 12 days of each month and see if that helps. It will be fairly blunt, but hopefully gets us somewhere.</p>
+<p>From <a href="#fig-plotorder">Figure&nbsp;<span>11.5</span></a> it looks like 2020 is roughly as we would expect, although with some potential weirdness at the start. 2019 has a few odd situations, but not too many. 2018 has a small cluster early in the dataset and then possibly something systematic toward the middle. But 2017 has a large number of systematic issues. These affect a lot of observations, so we prioritize and focus our attention here.</p>
+<p>In general, it seems that it might be the case that in 2017 the first 12 days are the wrong way around, i.e.&nbsp;we think it is year-month-day, but it is actually year-day-month. But there are exceptions. As a first pass, we can flip those first 12 days of each month and see if that helps. It will be fairly blunt, but hopefully gets us somewhere.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>padded_1_to_12 <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(<span class="st">"%02d"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>)</span>
 <span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1568,7 +1572,7 @@ State is California and population is 40 million.</code></pre>
 <span id="cb54-20"><a href="#cb54-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
 <span id="cb54-21"><a href="#cb54-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>year, <span class="sc">-</span>month, <span class="sc">-</span>day)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Now let us take a look (<a href="#fig-sheltersdatebyrowadj">Figure&nbsp;<span>11.6</span></a>). It has not fixed all the issues. For instance, notice there are now no entries below the diagonal (<a href="#fig-sheltersdatebyrowadj-1">Figure&nbsp;<span>11.6 (a)</span></a>). But we can see that has almost entirely taken care of the systematic differences (<a href="#fig-sheltersdatebyrowadj-2">Figure&nbsp;<span>11.6 (b)</span></a>).</p>
+<p>Now let us take a look (<a href="#fig-sheltersdatebyrowadj">Figure&nbsp;<span>11.7</span></a>). It has not fixed all the issues. For instance, notice there are now no entries below the diagonal (<a href="#fig-sheltersdatebyrowadj-1">Figure&nbsp;<span>11.7 (a)</span></a>). But we can see that has almost entirely taken care of the systematic differences (<a href="#fig-sheltersdatebyrowadj-2">Figure&nbsp;<span>11.7 (b)</span></a>). This is where we will leave this example.</p>
 <div>
 <div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
 <span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1621,7 +1625,7 @@ State is California and population is 40 million.</code></pre>
 </div>
 </div>
 </div>
-<p></p><figcaption class="figure-caption">Figure 11.6: Adjusted dates, occupancy in Toronto shelters</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure 11.7: Adjusted dates, occupancy in Toronto shelters</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -1635,7 +1639,7 @@ State is California and population is 40 million.</code></pre>
 </blockquote>
 <p>Names matter. The land on which much of this book was written is today named Canada, but for a long time was known as Turtle Island. Similarly, there is a big rock in the center of Australia. For a long time, it was called Uluru, then it was known as Ayers Rock. Today it has a dual name that combines both. And in parts of the US South, including signage surrounding the South Carolina State House, the US Civil War is referred to as the War of Northern Aggression. In these examples, the name that is used conveys information, not only about the user, but about the circumstances. Even the British Royal Family recognize the power of names. In 1917 they changed from the House of Saxe-Coburg and Gotha to the House of Windsor. It was felt that the former was too Germanic given World War I was ongoing. Names matter in everyday life. And they matter in our code too.</p>
 <!-- Names impart meaning [@kimmerer2013 p. 34]. By ignoring existing names, we ignore what has come before us. The importance of names, and of how existing relationships were ignored by re-naming, was clear in those cases mentioned above, but we see it in data science as well. We need to be careful when we name our datasets, variables, and functions, even our statistical methods! @tukey1962future essentially defined what we today call data science, but it was popularized by folks in computer science in the late 2000s who ignored, either deliberately or through ignorance, what came before them. With that came the renaming of concepts that were well-established in the fields that computer science had expanded into. For instance, the use of binary variables in regression, sometimes called "dummy variables", is often called one-hot encoding in computer science. The social sciences went through a similar experience, starting in the 1980s, with economics expanding in a similarly (and self-described) imperialistic way [@lazear2000economic]. The social sciences now recognize the cost of this, and data science should try to avoid it. No area of study is ever actually without existing claims. And recognizing, adopting, and using existing names and practices is important. -->
-<p>Names are critical and worthy of special attention because <span class="citation" data-cites="hermans2021programmer">(<a href="99-references.html#ref-hermans2021programmer" role="doc-biblioref">Hermans 2021</a>)</span>:</p>
+<p>When coding, names are critical and worthy of special attention because <span class="citation" data-cites="hermans2021programmer">(<a href="99-references.html#ref-hermans2021programmer" role="doc-biblioref">Hermans 2021</a>)</span>:</p>
 <ol type="1">
 <li>they help document our code as they are, by definition, contained in the code;</li>
 <li>they make-up a large proportion of any script;</li>
@@ -1681,7 +1685,7 @@ State is California and population is 40 million.</code></pre>
 1     1                      1                   1                       1</code></pre>
 </div>
 </div>
-<p>“Programs must be written for people to read, and only incidentally for machines to execute” <span class="citation" data-cites="abelson1996structure">(<a href="99-references.html#ref-abelson1996structure" role="doc-biblioref">Abelson and Sussman 1996</a>)</span>. In the same way that we emphasized in <a href="05-writing_research.html"><span>Chapter&nbsp;5</span></a> that we write papers for the reader, here we emphasize that we write code for the reader. Human readable names require an additional layer, and extensively more consideration than machine readable ones. For instance, following <span class="citation" data-cites="jsfcodingstandards">Lockheed Martin (<a href="99-references.html#ref-jsfcodingstandards" role="doc-biblioref">2005, 25</a>)</span>, we should avoid names that only differ by the use of the letter “O”, instead of the number “0” or the letter “D”. Similarly, “S” with “5”. We need to consider other cultures and how they may interpret some of the names that we are using. We also need to consider different experience levels that subsequent users of the dataset may have. This is both in terms of experience with data science, but also experience with similar datasets. For instance, a column called “flag” is often used to signal that a column contains data that needs to be followed up with or treated carefully in some way. An experienced analyst will know this, but a beginner will not. Try to use meaningful names wherever possible <span class="citation" data-cites="lin2020ten">(<a href="99-references.html#ref-lin2020ten" role="doc-biblioref">Lin, Ali, and Wilson 2021</a>)</span>. It has been found that shorter names may take longer to comprehend <span class="citation" data-cites="shorternamestakelonger">(<a href="99-references.html#ref-shorternamestakelonger" role="doc-biblioref">Hofmeister, Siegmund, and Holt 2017</a>)</span>, and so it is often useful to avoid uncommon abbreviations where possible.</p>
+<p>“Programs must be written for people to read, and only incidentally for machines to execute” <span class="citation" data-cites="abelson1996structure">(<a href="99-references.html#ref-abelson1996structure" role="doc-biblioref">Abelson and Sussman 1996</a>)</span>. In the same way that we emphasized in <span class="quarto-unresolved-ref">?sec-on-writing</span> that we write papers for the reader, here we emphasize that we write code for the reader. Human readable names require an additional layer, and extensively more consideration than machine readable ones. For instance, following <span class="citation" data-cites="jsfcodingstandards">Lockheed Martin (<a href="99-references.html#ref-jsfcodingstandards" role="doc-biblioref">2005, 25</a>)</span>, we should avoid names that only differ by the use of the letter “O”, instead of the number “0” or the letter “D”. Similarly, “S” with “5”. We need to consider other cultures and how they may interpret some of the names that we are using. We also need to consider different experience levels that subsequent users of the dataset may have. This is both in terms of experience with data science, but also experience with similar datasets. For instance, a column called “flag” is often used to signal that a column contains data that needs to be followed up with or treated carefully in some way. An experienced analyst will know this, but a beginner will not. Try to use meaningful names wherever possible <span class="citation" data-cites="lin2020ten">(<a href="99-references.html#ref-lin2020ten" role="doc-biblioref">Lin, Ali, and Wilson 2021</a>)</span>. It has been found that shorter names may take longer to comprehend <span class="citation" data-cites="shorternamestakelonger">(<a href="99-references.html#ref-shorternamestakelonger" role="doc-biblioref">Hofmeister, Siegmund, and Holt 2017</a>)</span>, and so it is often useful to avoid uncommon abbreviations where possible.</p>
 <p><span class="citation" data-cites="jennybryanonnames">Bryan (<a href="99-references.html#ref-jennybryanonnames" role="doc-biblioref">2015</a>)</span> recommends that file names, in particular, should consider the default ordering that a file manager will impose. This might mean adding prefixes such as “00-”, “01-”, etc to filenames, which might involve left-padding with zeros depending on the number of files. Critically it means using ISO 8601 for dates, which means that 2 December 2022 would be written “2022-12-02”. The reason for using such file names is to provide information to other people about the order of the files.</p>
 <p>One interesting feature of R is that in certain cases partial matching on names is possible. For instance:</p>
 <div class="cell">
@@ -1701,7 +1705,7 @@ State is California and population is 40 million.</code></pre>
 </div>
 </div>
 <p>Correctly, this behavior is not possible within the <code>tidyverse</code> (for instance if <code>data.frame</code> were replaced with <code>tibble</code> in the above code). Partial matching should almost never be used. It makes it more difficult to understand code after a break, and for others to come to it fresh. This is especially the case with R, where it is not commonly used.</p>
-<p>Names should have a consistent structure. For instance, the naming pattern is <code>verb_noun</code>, for instance <code>read_csv()</code>, then having one function that was <code>noun_verb</code>, for instance, <code>csv_read()</code>, would be inconsistent. That inconsistency imposes a significant cost because it makes it more difficult to remember the name of the function.</p>
+<p>Names should have a consistent structure. For instance, imposing the naming pattern <code>verb_noun</code>, as in <code>read_csv()</code>, then having one function that was <code>noun_verb</code>, perhaps <code>csv_read()</code>, would be inconsistent. That inconsistency imposes a significant cost because it makes it more difficult to remember the name of the function.</p>
 <p>R, Python, and many of the other languages that are commonly used for data science are dynamically typed, as opposed to static typed. This means that class can be defined independently of declaring a variable. One interesting area of data science research is going partially toward static typed by including class in the name. In computer science, a variant of this is known as Hungarian notation and used at Microsoft for Word and Excel <span class="citation" data-cites="hermans2021programmer">(<a href="99-references.html#ref-hermans2021programmer" role="doc-biblioref">Hermans 2021, 74</a>)</span>. While Hungarian notation fell out of favor in computer science, in data science it may bring considerable benefits, and best practice is an area of open research. Indeed, Python <a href="https://peps.python.org/pep-0484/">enabled</a> type hints in 2014 <span class="citation" data-cites="boykistypehints">(<a href="99-references.html#ref-boykistypehints" role="doc-biblioref">Boykis 2019</a>)</span>. While not required, this goes someway to being more explicit about types.</p>
 <p><span class="citation" data-cites="columnnamesascontracts">Riederer (<a href="99-references.html#ref-columnnamesascontracts" role="doc-biblioref">2020</a>)</span> advises using column names as contracts, through establishing a controlled vocabulary for column names. In this way, we would define a set of words that we can use in column names. In the controlled vocabulary of <span class="citation" data-cites="columnnamesascontracts">Riederer (<a href="99-references.html#ref-columnnamesascontracts" role="doc-biblioref">2020</a>)</span> a column could start with an abbreviation for its class, then something specific to what it pertains to, and then various details.</p>
 <p>For instance, we could consider column names of “age” and “sex”. Following <span class="citation" data-cites="columnnamesascontracts">Riederer (<a href="99-references.html#ref-columnnamesascontracts" role="doc-biblioref">2020</a>)</span> we may change these to be more informative of the class and other information. This issue is not settled, and there is not yet best practice. For instance, there are arguments against this in terms of readability.</p>
@@ -1743,12 +1747,12 @@ State is California and population is 40 million.</code></pre>
 </section>
 <section id="example-1996-tanzanian-dhs" class="level2" data-number="11.5">
 <h2 data-number="11.5" class="anchored" data-anchor-id="example-1996-tanzanian-dhs"><span class="header-section-number">11.5</span> Example: 1996 Tanzanian DHS</h2>
-<p>We will now go through the first of two examples. As introduced in <a href="09-gather.html"><span>Chapter&nbsp;9</span></a>, the Demographic and Health Surveys (DHS) play an important role in gathering data in areas where we may not have other datasets. Here we will clean and prepare a DHS table about household populations in Tanzania in 1996.</p>
-<p>We are interested in the distribution of age-groups, gender, and urban/rural. A quick sketch might look like <a href="#fig-tanzaniasketch">Figure&nbsp;<span>11.7</span></a>.</p>
+<p>We will now go through the first of two examples. As introduced in <span class="quarto-unresolved-ref">?sec-gather-data</span>, the Demographic and Health Surveys (DHS) play an important role in gathering data in areas where we may not have other datasets. Here we will clean and prepare a DHS table about household populations in Tanzania in 1996.</p>
+<p>We are interested in the distribution of age-groups, gender, and urban/rural. A quick sketch might look like <a href="#fig-tanzaniasketch">Figure&nbsp;<span>11.8</span></a>.</p>
 <div id="fig-tanzaniasketch" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="figures/tanzania_sketch.png" class="img-fluid figure-img" style="width:70.0%"></p>
-<p></p><figcaption class="figure-caption">Figure 11.7: Quick sketch of a dataset that we might be interested in</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure 11.8: Quick sketch of a dataset that we might be interested in</figcaption><p></p>
 </figure>
 </div>
 <p>We can then simulate a dataset.</p>
@@ -1778,15 +1782,14 @@ State is California and population is 40 million.</code></pre>
 <span id="cb68-23"><a href="#cb68-23" aria-hidden="true" tabindex="-1"></a>simulated_tanzania_dataset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 10
-  age_group urban_male urban_f…¹ urban…² rural…³ rural…⁴ rural…⁵ total…⁶ total…⁷
-  &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;  
-1 0-4       10         11        21      10      11      21      8       8      
-2 5-9       10         10        20      9       11      20      9       11     
-3 Total     100        100       100     100     100     100     100     100    
-4 Number    5000       5500      10500   4000    4500    8500    9000    10000  
-# … with 1 more variable: total_total &lt;chr&gt;, and abbreviated variable names
-#   ¹​urban_female, ²​urban_total, ³​rural_male, ⁴​rural_female, ⁵​rural_total,
-#   ⁶​total_male, ⁷​total_female</code></pre>
+  age_group urban_male urban_female urban_total rural_male rural_female
+  &lt;chr&gt;     &lt;chr&gt;      &lt;chr&gt;        &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;       
+1 0-4       10         11           21          10         11          
+2 5-9       10         10           20          9          11          
+3 Total     100        100          100         100        100         
+4 Number    5000       5500         10500       4000       4500        
+# … with 4 more variables: rural_total &lt;chr&gt;, total_male &lt;chr&gt;,
+#   total_female &lt;chr&gt;, total_total &lt;chr&gt;</code></pre>
 </div>
 </div>
 <p>Based on this simulation we are interested to test:</p>
@@ -1803,7 +1806,7 @@ State is California and population is 40 million.</code></pre>
 <span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">mode =</span> <span class="st">"wb"</span></span>
 <span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>When we have a PDF and want to read the content into R, then <code>pdf_text()</code> from <code>pdftools</code> <span class="citation" data-cites="pdftools">(<a href="99-references.html#ref-pdftools" role="doc-biblioref">Ooms 2019</a>)</span> is useful. It works well for many recently produced PDFs because the content is text which it can extract. But if the PDF is an image, then <code>pdf_text()</code> will not work. Instead, the PDF will first need to go through OCR, which was introduced in <a href="09-gather.html"><span>Chapter&nbsp;9</span></a>.</p>
+<p>When we have a PDF and want to read the content into R, then <code>pdf_text()</code> from <code>pdftools</code> <span class="citation" data-cites="pdftools">(<a href="99-references.html#ref-pdftools" role="doc-biblioref">Ooms 2019</a>)</span> is useful. It works well for many recently produced PDFs because the content is text which it can extract. But if the PDF is an image, then <code>pdf_text()</code> will not work. Instead, the PDF will first need to go through OCR, which was introduced in <span class="quarto-unresolved-ref">?sec-gather-data</span>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pdftools)</span>
 <span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1812,11 +1815,11 @@ State is California and population is 40 million.</code></pre>
 <span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">pdf =</span> <span class="st">"1996_Tanzania_DHS.pdf"</span></span>
 <span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>In this case we are interested in Table 2.1, which is on the 33rd page of the PDF. That page looks like (<a href="#fig-tanzanian-dhs">Figure&nbsp;<span>11.8</span></a>).</p>
+<p>In this case we are interested in Table 2.1, which is on the 33rd page of the PDF. That page looks like (<a href="#fig-tanzanian-dhs">Figure&nbsp;<span>11.9</span></a>).</p>
 <div id="fig-tanzanian-dhs" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="figures/tanzanian_dhs.png" class="img-fluid figure-img" style="width:95.0%"></p>
-<p></p><figcaption class="figure-caption">Figure 11.8: The page of interest in the 1996 Tanzanian DHS</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure 11.9: The page of interest in the 1996 Tanzanian DHS</figcaption><p></p>
 </figure>
 </div>
 <p>We use <code>stri_split_lines()</code> from <code>stringi</code> <span class="citation" data-cites="stringi">(<a href="99-references.html#ref-stringi" role="doc-biblioref">Gagolewski 2020</a>)</span> to focus on that particular page.</p>
@@ -1882,50 +1885,48 @@ State is California and population is 40 million.</code></pre>
 <span id="cb75-26"><a href="#cb75-26" aria-hidden="true" tabindex="-1"></a>tanzania_dhs_separated</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 25 × 10
-   age_group   male_ur…¹ femal…² total…³ male_…⁴ femal…⁵ total…⁶ male_…⁷ femal…⁸
-   &lt;chr&gt;       &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;  
- 1 "Urban"     Rural     Total   &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;   
- 2 ""          &lt;NA&gt;      &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;   
- 3 "Age-group" Male      Female  Total   Male    Female  Total   Male    Female 
- 4 ""          &lt;NA&gt;      &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;   
- 5 ""          &lt;NA&gt;      &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;   
- 6 "0-4"       16.4      13.8    15.1    18.1    17.1    17.6    17.8    16.4   
- 7 "5-9"       13.5      13.0    13.2    17.5    16,0    16.7    16.7    15.4   
- 8 "10-14"     12.6      13.1    12.8    15.3    13.5    14.4    14.8    13.4   
- 9 "15-19"     10.8      11.3    11.1    9.8     8.8     9.3     10.0    9.3    
-10 "20-~"      9.4       12.2    10,8    5.9     8.2     7.1     6.6     9.0    
-# … with 15 more rows, 1 more variable: total_total &lt;chr&gt;, and abbreviated
-#   variable names ¹​male_urban, ²​female_urban, ³​total_urban, ⁴​male_rural,
-#   ⁵​female_rural, ⁶​total_rural, ⁷​male_total, ⁸​female_total</code></pre>
+   age_group   male_urban female_urban total_urban male_rural female_rural
+   &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;        &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;       
+ 1 "Urban"     Rural      Total        &lt;NA&gt;        &lt;NA&gt;       &lt;NA&gt;        
+ 2 ""          &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;        &lt;NA&gt;       &lt;NA&gt;        
+ 3 "Age-group" Male       Female       Total       Male       Female      
+ 4 ""          &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;        &lt;NA&gt;       &lt;NA&gt;        
+ 5 ""          &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;        &lt;NA&gt;       &lt;NA&gt;        
+ 6 "0-4"       16.4       13.8         15.1        18.1       17.1        
+ 7 "5-9"       13.5       13.0         13.2        17.5       16,0        
+ 8 "10-14"     12.6       13.1         12.8        15.3       13.5        
+ 9 "15-19"     10.8       11.3         11.1        9.8        8.8         
+10 "20-~"      9.4        12.2         10,8        5.9        8.2         
+# … with 15 more rows, and 4 more variables: total_rural &lt;chr&gt;,
+#   male_total &lt;chr&gt;, female_total &lt;chr&gt;, total_total &lt;chr&gt;</code></pre>
 </div>
 </div>
-<p>Now we need to clean-up the rows and columns. One helpful approach to work out what we need to remove, is to look at what is left if we temporarily remove everything that we know we want. Whatever is left is then a candidate for being removed. In this case we know that we want the columns to contain numbers.</p>
+<p>Now we need to clean-up the rows and columns. One helpful approach to work out what we need to remove, is to look at what is left if we temporarily remove everything that we know we want. Whatever is left is then a candidate for being removed. In this case we know that we want the columns to contain numbers, so we remove numeric digits from all columns to see what might stand in our way of converting from string to numeric.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>tanzania_dhs_separated <span class="sc">|&gt;</span></span>
 <span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span> <span class="fu">str_remove_all</span>(., <span class="st">"[:digit:]"</span>))) <span class="sc">|&gt;</span></span>
 <span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 15 × 10
-   age_group   male_ur…¹ femal…² total…³ male_…⁴ femal…⁵ total…⁶ male_…⁷ femal…⁸
-   &lt;chr&gt;       &lt;chr&gt;     &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;  
- 1 "Urban"     Rural     Total   &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;   
- 2 ""          &lt;NA&gt;      &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;    &lt;NA&gt;   
- 3 "Age-group" Male      Female  Total   Male    Female  Total   Male    Female 
- 4 "-"         .         .       .       .       .       .       .       .      
- 5 "-"         .         .       .       .       ,       .       .       .      
- 6 "-"         .         .       .       .       .       .       .       .      
- 7 "-~"        .         .       ,       .       .       .       .       .      
- 8 "-"         .         .       ,       ,       ,       ,       ,       .      
- 9 "-"         ,         .       .       .       .       .       .       .      
-10 "-"         .         .       .       .       .       .       .       ,      
-11 "-"         ,         .       .       ;       .       .       .       .      
-12 "-"         .         .       .       ,       .       .       .       .      
-13 "+"         .         .       .       .       .       .       .       .      
-14 "Total"     .         .       .       .       .       .       .       .      
-15 "Number"    ,         ,       ,       .       ,       ,       ,       ,      
-# … with 1 more variable: total_total &lt;chr&gt;, and abbreviated variable names
-#   ¹​male_urban, ²​female_urban, ³​total_urban, ⁴​male_rural, ⁵​female_rural,
-#   ⁶​total_rural, ⁷​male_total, ⁸​female_total</code></pre>
+   age_group   male_urban female_urban total_urban male_rural female_rural
+   &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;        &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;       
+ 1 "Urban"     Rural      Total        &lt;NA&gt;        &lt;NA&gt;       &lt;NA&gt;        
+ 2 ""          &lt;NA&gt;       &lt;NA&gt;         &lt;NA&gt;        &lt;NA&gt;       &lt;NA&gt;        
+ 3 "Age-group" Male       Female       Total       Male       Female      
+ 4 "-"         .          .            .           .          .           
+ 5 "-"         .          .            .           .          ,           
+ 6 "-"         .          .            .           .          .           
+ 7 "-~"        .          .            ,           .          .           
+ 8 "-"         .          .            ,           ,          ,           
+ 9 "-"         ,          .            .           .          .           
+10 "-"         .          .            .           .          .           
+11 "-"         ,          .            .           ;          .           
+12 "-"         .          .            .           ,          .           
+13 "+"         .          .            .           .          .           
+14 "Total"     .          .            .           .          .           
+15 "Number"    ,          ,            ,           .          ,           
+# … with 4 more variables: total_rural &lt;chr&gt;, male_total &lt;chr&gt;,
+#   female_total &lt;chr&gt;, total_total &lt;chr&gt;</code></pre>
 </div>
 </div>
 <p>In this case we can see that some commas, semicolons have been incorrectly considered decimal places. Also, some tildes and blank lines need to be removed. After that we can impose the correct class.</p>
@@ -1951,30 +1952,29 @@ State is California and population is 40 million.</code></pre>
 <span id="cb79-19"><a href="#cb79-19" aria-hidden="true" tabindex="-1"></a>tanzania_dhs_cleaned</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 19 × 10
-   age_group male_urban female…¹ total…² male_…³ femal…⁴ total…⁵ male_…⁶ femal…⁷
-   &lt;chr&gt;          &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
- 1 0-4            16.4     13.8    15.1     18.1    17.1    17.6    17.8    16.4
- 2 5-9            13.5     13      13.2     17.5    16      16.7    16.7    15.4
- 3 10-14          12.6     13.1    12.8     15.3    13.5    14.4    14.8    13.4
- 4 15-19          10.8     11.3    11.1      9.8     8.8     9.3    10       9.3
- 5 20-24           9.4     12.2    10.8      5.9     8.2     7.1     6.6     9  
- 6 25-29           8.4      9.8     9.1      5.6     7.1     6.4     6.2     7.6
- 7 30-34           6.6      6.3     6.4      5.2     5.6     5.4     5.5     5.8
- 8 35-39           5.8      5.9     5.8      4       4.5     4.3     4.4     4.8
- 9 40-44           4.4      3.5     3.9      3.3     3.5     3.4     3.5     3.5
-10 45-49           3.2      2.3     2.7      3.2     3.3     3.2     3.2     3.1
-11 50-54           2        2.4     2.2      2.2     3.4     2.9     2.2     3.2
-12 55-59           1.8      1.8     1.8      2.1     2.9     2.5     2       2.7
-13 60-64           2.1      1.7     1.9      2.4     2       2.2     2.3     2  
-14 65-69           1.3      1.3     1.3      2.2     1.6     1.9     2       1.5
-15 70-74           0.9      0.7     0.8      1.3     1.2     1.2     1.2     1.1
-16 75-79           0.3      0.4     0.4      0.8     0.6     0.7     0.7     0.6
-17 80+             0.3      0.5     0.4      0.9     0.7     0.8     0.8     0.7
-18 Total         100      100     100      100     100     100     100     100  
-19 Number          3.69     3.88    7.57 14775      15.9    30.7    18.5    19.8
-# … with 1 more variable: total_total &lt;dbl&gt;, and abbreviated variable names
-#   ¹​female_urban, ²​total_urban, ³​male_rural, ⁴​female_rural, ⁵​total_rural,
-#   ⁶​male_total, ⁷​female_total</code></pre>
+   age_group male_urban female_urban total_urban male_rural female_rural
+   &lt;chr&gt;          &lt;dbl&gt;        &lt;dbl&gt;       &lt;dbl&gt;      &lt;dbl&gt;        &lt;dbl&gt;
+ 1 0-4            16.4         13.8        15.1        18.1         17.1
+ 2 5-9            13.5         13          13.2        17.5         16  
+ 3 10-14          12.6         13.1        12.8        15.3         13.5
+ 4 15-19          10.8         11.3        11.1         9.8          8.8
+ 5 20-24           9.4         12.2        10.8         5.9          8.2
+ 6 25-29           8.4          9.8         9.1         5.6          7.1
+ 7 30-34           6.6          6.3         6.4         5.2          5.6
+ 8 35-39           5.8          5.9         5.8         4            4.5
+ 9 40-44           4.4          3.5         3.9         3.3          3.5
+10 45-49           3.2          2.3         2.7         3.2          3.3
+11 50-54           2            2.4         2.2         2.2          3.4
+12 55-59           1.8          1.8         1.8         2.1          2.9
+13 60-64           2.1          1.7         1.9         2.4          2  
+14 65-69           1.3          1.3         1.3         2.2          1.6
+15 70-74           0.9          0.7         0.8         1.3          1.2
+16 75-79           0.3          0.4         0.4         0.8          0.6
+17 80+             0.3          0.5         0.4         0.9          0.7
+18 Total         100          100         100         100          100  
+19 Number          3.69         3.88        7.57    14775           15.9
+# … with 4 more variables: total_rural &lt;dbl&gt;, male_total &lt;dbl&gt;,
+#   female_total &lt;dbl&gt;, total_total &lt;dbl&gt;</code></pre>
 </div>
 </div>
 <p>Finally, we may wish to check that the sum of the constituent parts equals the total.</p>
@@ -2025,11 +2025,11 @@ State is California and population is 40 million.</code></pre>
 <span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">pdf =</span> <span class="st">"2019_Kenya_census.pdf"</span></span>
 <span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>In this example we will need to parse many pages, but we can see an example page of the PDF of the 2019 Kenyan census (<a href="#fig-examplekenyancensuspage">Figure&nbsp;<span>11.9</span></a>).</p>
+<p>In this example we will need to parse many pages, but we can see an example page of the PDF of the 2019 Kenyan census in <a href="#fig-examplekenyancensuspage">Figure&nbsp;<span>11.10</span></a>).</p>
 <div id="fig-examplekenyancensuspage" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="figures/2020-04-10-screenshot-of-census.png" class="img-fluid figure-img" style="width:95.0%"></p>
-<p></p><figcaption class="figure-caption">Figure 11.9: Example page from the 2019 Kenyan census</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure 11.10: Example page from the 2019 Kenyan census</figcaption><p></p>
 </figure>
 </div>
 <section id="make-rectangular" class="level4" data-number="11.6.1.1">
@@ -2178,7 +2178,7 @@ State is California and population is 40 million.</code></pre>
 16 ",,"   ",,"   ",," </code></pre>
 </div>
 </div>
-<p>We clearly need to remove commas, underbars, and hyphens. While we could use <code>janitor</code> here, it is worthwhile at least first looking at what is going on because sometimes there is odd stuff that <code>janitor</code> (and other packages) will not deal with issues in a way that we want.</p>
+<p>We clearly need to remove commas, underscores, and hyphens. While we could use <code>janitor</code> here, it is worthwhile at least first looking at what is going on because sometimes there is odd stuff that <code>janitor</code> (and other packages) will not deal with issues in a way that we want.</p>
 <p>We also have an odd situation with some months in what should be a numerical variable. If we look at these issues, which are on page 185, then we see that in this case it seems like Excel or a similar software, has been used which has converted two entries into dates. If we just took the numbers from the variable then we would have 23 and 15 here, but by inspecting the column we can use Excel to reverse the process and enter the correct values of 4,923 and 4,611, respectively.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb92"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a>all_tables <span class="ot">&lt;-</span></span>
@@ -2237,7 +2237,7 @@ State is California and population is 40 million.</code></pre>
 <section id="internal-consistency" class="level4" data-number="11.6.1.3">
 <h4 data-number="11.6.1.3" class="anchored" data-anchor-id="internal-consistency"><span class="header-section-number">11.6.1.3</span> Internal consistency</h4>
 <p></p>
-<p>The next thing to clean is the areas. We know that there are 47 counties in Kenya, and a large number of sub-counties. The Kenyan government purports to provide a list on pages 19 to 22 of the PDF (document pages 7 to 10). But this list is not complete, and there are a few minor issues that we will deal with later. In any case, we first need to fix a few inconsistencies.</p>
+<p>The next thing to clean are the areas. We know that there are 47 counties in Kenya, and a large number of sub-counties. The Kenyan government purports to provide a list on pages 19 to 22 of the PDF (document pages 7 to 10). But this list is not complete, and there are a few minor issues that we will deal with later. In any case, we first need to fix a few inconsistencies.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb96"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fix some area names</span></span>
 <span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>all_tables <span class="ot">&lt;-</span></span>
@@ -2249,7 +2249,7 @@ State is California and population is 40 million.</code></pre>
 <span id="cb96-8"><a href="#cb96-8" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The PDF has county data then sub-counties data, without designating which is which. We can use the names, to a certain extent, but in a handful of cases, there is a sub-county that has the same name as a county, so we need to first fix that.</p>
-<p>The PDF is made-up of three long tables. So, we can first get the names of the counties based on those final two tables and then reconcile them to get a list of the counties.</p>
+<p>The PDF is made-up of three long tables. So, we can first get the names of the counties based on those final two tables and then reconcile them to get a full list of county names.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb97"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a>list_counties <span class="ot">&lt;-</span></span>
 <span id="cb97-2"><a href="#cb97-2" aria-hidden="true" tabindex="-1"></a>  all_tables <span class="sc">|&gt;</span></span>
@@ -2349,19 +2349,19 @@ State is California and population is 40 million.</code></pre>
 <span id="cb101-29"><a href="#cb101-29" aria-hidden="true" tabindex="-1"></a>all_tables</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 59,532 × 8
-   age     male female   total area    table                        page area_…¹
-   &lt;chr&gt;  &lt;int&gt;  &lt;int&gt;   &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;                       &lt;int&gt; &lt;chr&gt;  
- 1 Total 610257 598046 1208303 Mombasa Table 2.3: Distribution of…    30 county 
- 2 0      15111  15009   30120 Mombasa Table 2.3: Distribution of…    30 county 
- 3 1      15805  15308   31113 Mombasa Table 2.3: Distribution of…    30 county 
- 4 2      15088  14837   29925 Mombasa Table 2.3: Distribution of…    30 county 
- 5 3      14660  14031   28691 Mombasa Table 2.3: Distribution of…    30 county 
- 6 4      14061  13993   28054 Mombasa Table 2.3: Distribution of…    30 county 
- 7 0-4    74725  73178  147903 Mombasa Table 2.3: Distribution of…    30 county 
- 8 5      13851  14023   27874 Mombasa Table 2.3: Distribution of…    30 county 
- 9 6      12889  13216   26105 Mombasa Table 2.3: Distribution of…    30 county 
-10 7      13268  13203   26471 Mombasa Table 2.3: Distribution of…    30 county 
-# … with 59,522 more rows, and abbreviated variable name ¹​area_type</code></pre>
+   age     male female   total area    table                      page area_type
+   &lt;chr&gt;  &lt;int&gt;  &lt;int&gt;   &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;                     &lt;int&gt; &lt;chr&gt;    
+ 1 Total 610257 598046 1208303 Mombasa Table 2.3: Distribution …    30 county   
+ 2 0      15111  15009   30120 Mombasa Table 2.3: Distribution …    30 county   
+ 3 1      15805  15308   31113 Mombasa Table 2.3: Distribution …    30 county   
+ 4 2      15088  14837   29925 Mombasa Table 2.3: Distribution …    30 county   
+ 5 3      14660  14031   28691 Mombasa Table 2.3: Distribution …    30 county   
+ 6 4      14061  13993   28054 Mombasa Table 2.3: Distribution …    30 county   
+ 7 0-4    74725  73178  147903 Mombasa Table 2.3: Distribution …    30 county   
+ 8 5      13851  14023   27874 Mombasa Table 2.3: Distribution …    30 county   
+ 9 6      12889  13216   26105 Mombasa Table 2.3: Distribution …    30 county   
+10 7      13268  13203   26471 Mombasa Table 2.3: Distribution …    30 county   
+# … with 59,522 more rows</code></pre>
 </div>
 </div>
 <p>Having dealt with the areas, we can deal with the ages. First, we need to fix some clear errors.</p>
@@ -2417,11 +2417,10 @@ State is California and population is 40 million.</code></pre>
 <span id="cb110-6"><a href="#cb110-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(totals_match <span class="sc">==</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 11
-  age    male female total area      table  page area_…¹ age_t…² check…³ total…⁴
-  &lt;fct&gt; &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;chr&gt;     &lt;chr&gt; &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;     &lt;int&gt;   &lt;dbl&gt;
-1 10        0      1     2 Mt. Keny… Tabl…   187 sub-co… single…       1       0
-# … with abbreviated variable names ¹​area_type, ²​age_type, ³​check_sum,
-#   ⁴​totals_match</code></pre>
+  age    male female total area         table  page area_type age_type check_sum
+  &lt;fct&gt; &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;chr&gt;        &lt;chr&gt; &lt;int&gt; &lt;chr&gt;     &lt;chr&gt;        &lt;int&gt;
+1 10        0      1     2 Mt. Kenya F… Tabl…   187 sub-coun… single-…         1
+# … with 1 more variable: totals_match &lt;dbl&gt;</code></pre>
 </div>
 </div>
 <p>And we can adjust the one that looks to be wrong, based on checking the PDF.</p>
@@ -2494,21 +2493,17 @@ State is California and population is 40 million.</code></pre>
 <span id="cb115-6"><a href="#cb115-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">if_else</span>(total <span class="sc">==</span> total_from_bits, <span class="dv">1</span>, <span class="dv">0</span>),</span>
 <span id="cb115-7"><a href="#cb115-7" aria-hidden="true" tabindex="-1"></a>    total_from_bits <span class="sc">-</span> total</span>
 <span id="cb115-8"><a href="#cb115-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb115-9"><a href="#cb115-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(check_total_is_rural_plus_urban <span class="sc">==</span> <span class="dv">0</span>)</span>
-<span id="cb115-10"><a href="#cb115-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb115-11"><a href="#cb115-11" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(follow_up)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb115-9"><a href="#cb115-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(check_total_is_rural_plus_urban <span class="sc">==</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb115-10"><a href="#cb115-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(total, total_from_bits, <span class="st">`</span><span class="at">total_from_bits - total</span><span class="st">`</span>)</span>
+<span id="cb115-11"><a href="#cb115-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb115-12"><a href="#cb115-12" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(follow_up)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 3 × 16
-  age          male female  total area   area_…¹ age_t…² male_…³ femal…⁴ total…⁵
-  &lt;fct&gt;       &lt;int&gt;  &lt;int&gt;  &lt;int&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;     &lt;int&gt;   &lt;int&gt;   &lt;int&gt;
-1 Not Stated     31     10     41 Nakuru county  single…       8       6      14
-2 Total      434287 441379 875666 Bomet  county  age-gr…  420119  427576  847695
-3 Not Stated      3      2      5 Bomet  county  single…       2       1       3
-# … with 6 more variables: male_urban &lt;int&gt;, female_urban &lt;int&gt;,
-#   total_urban &lt;int&gt;, total_from_bits &lt;int&gt;,
-#   check_total_is_rural_plus_urban &lt;dbl&gt;, `total_from_bits - total` &lt;int&gt;, and
-#   abbreviated variable names ¹​area_type, ²​age_type, ³​male_rural,
-#   ⁴​female_rural, ⁵​total_rural</code></pre>
+<pre><code># A tibble: 3 × 3
+   total total_from_bits `total_from_bits - total`
+   &lt;int&gt;           &lt;int&gt;                     &lt;int&gt;
+1     41              40                        -1
+2 875666          875665                        -1
+3      5               4                        -1</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb117"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(follow_up)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -2553,22 +2548,21 @@ State is California and population is 40 million.</code></pre>
 <span id="cb118-36"><a href="#cb118-36" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(follow_up)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 16
-  age    male female total area  area_…¹ age_t…² male_…³ femal…⁴ total…⁵ male_…⁶
-  &lt;fct&gt; &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;     &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;
-1 0-4       1      5     6 Mt. … sub-co… age-gr…      NA      NA      NA      NA
-2 5-9       1      2     3 Mt. … sub-co… age-gr…      NA      NA      NA      NA
-3 10-14     6      0     6 Mt. … sub-co… age-gr…      NA      NA      NA      NA
-4 15-19     9      1    10 Mt. … sub-co… age-gr…      NA      NA      NA      NA
-5 20-24    21      4    25 Mt. … sub-co… age-gr…      NA      NA      NA      NA
-6 25-29    59      9    68 Mt. … sub-co… age-gr…      NA      NA      NA      NA
-# … with 5 more variables: female_urban &lt;int&gt;, total_urban &lt;int&gt;, groups &lt;chr&gt;,
-#   group_sum &lt;dbl&gt;, difference &lt;dbl&gt;, and abbreviated variable names
-#   ¹​area_type, ²​age_type, ³​male_rural, ⁴​female_rural, ⁵​total_rural,
-#   ⁶​male_urban</code></pre>
+  age    male female total area       area_type age_type male_rural female_rural
+  &lt;fct&gt; &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;chr&gt;      &lt;chr&gt;     &lt;chr&gt;         &lt;int&gt;        &lt;int&gt;
+1 0-4       1      5     6 Mt. Kenya… sub-coun… age-gro…         NA           NA
+2 5-9       1      2     3 Mt. Kenya… sub-coun… age-gro…         NA           NA
+3 10-14     6      0     6 Mt. Kenya… sub-coun… age-gro…         NA           NA
+4 15-19     9      1    10 Mt. Kenya… sub-coun… age-gro…         NA           NA
+5 20-24    21      4    25 Mt. Kenya… sub-coun… age-gro…         NA           NA
+6 25-29    59      9    68 Mt. Kenya… sub-coun… age-gro…         NA           NA
+# … with 7 more variables: total_rural &lt;int&gt;, male_urban &lt;int&gt;,
+#   female_urban &lt;int&gt;, total_urban &lt;int&gt;, groups &lt;chr&gt;, group_sum &lt;dbl&gt;,
+#   difference &lt;dbl&gt;</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb120"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(follow_up)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Mt. Kenya Forest, Aberdare Forest, Kakamega Forest are all slightly off. It does not seem to be in the documentation, but it looks like these have been apportioned between various counties.</p>
+<p>Mt. Kenya Forest is the only sub-county that is slightly off. It does not seem to be in the documentation, but it looks like its population has been apportioned between various counties.</p>
 </section>
 <section id="tidy-up" class="level3" data-number="11.6.3">
 <h3 data-number="11.6.3" class="anchored" data-anchor-id="tidy-up"><span class="header-section-number">11.6.3</span> Tidy-up</h3>
@@ -2616,7 +2610,7 @@ State is California and population is 40 million.</code></pre>
 6 Mombasa county    rural        Total age-group total       NA</code></pre>
 </div>
 </div>
-<p>The original purpose of cleaning this dataset was to make a table that is used by <span class="citation" data-cites="alexander2021bayesian">Alexander and Alkema (<a href="99-references.html#ref-alexander2021bayesian" role="doc-biblioref">2021</a>)</span>. Just to bring this all together, we could make a graph of single-year counts, by gender, for Nairobi (<a href="#fig-monicasnairobigraph">Figure&nbsp;<span>11.10</span></a>).</p>
+<p>The original purpose of cleaning this dataset was to make a table that is used by <span class="citation" data-cites="alexander2021bayesian">Alexander and Alkema (<a href="99-references.html#ref-alexander2021bayesian" role="doc-biblioref">2021</a>)</span>. Just to bring this all together, we could make a graph of single-year counts, by gender, for Nairobi (<a href="#fig-monicasnairobigraph">Figure&nbsp;<span>11.11</span></a>).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb123"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a>all <span class="sc">|&gt;</span></span>
 <span id="cb123-2"><a href="#cb123-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(area_type <span class="sc">==</span> <span class="st">"county"</span>) <span class="sc">|&gt;</span></span>
@@ -2641,12 +2635,12 @@ State is California and population is 40 million.</code></pre>
 <div id="fig-monicasnairobigraph" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="11-clean_and_prepare_files/figure-html/fig-monicasnairobigraph-1.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">Figure 11.10: Distribution of age and gender in Nairobi in 2019, based on Kenyan census</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure 11.11: Distribution of age and gender in Nairobi in 2019, based on Kenyan census</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
-<p>A variety of features are clear from <a href="#fig-monicasnairobigraph">Figure&nbsp;<span>11.10</span></a>, including age-heaping, a slight difference in the ratio of male-female birth, and a substantial difference between ages 15 and 25.</p>
+<p>A variety of features are clear from <a href="#fig-monicasnairobigraph">Figure&nbsp;<span>11.11</span></a>, including age-heaping, a slight difference in the ratio of male-female birth, and a substantial difference between ages 15 and 25.</p>
 <p>Finally, we may wish to use more informative names. For instance, in the Kenyan data example earlier we have the following column names: “area”, “age”, “gender”, and “number”. If we were to use our column names as contracts, then these could be: “chr_area”, “fctr_group_age”, “chr_group_gender”, and “int_group_count”.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb124"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a>column_names_as_contracts <span class="ot">&lt;-</span></span>
@@ -2662,7 +2656,7 @@ State is California and population is 40 million.</code></pre>
 <span id="cb124-11"><a href="#cb124-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"int_group_count"</span> <span class="ot">=</span> <span class="st">"number"</span></span>
 <span id="cb124-12"><a href="#cb124-12" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>We can then use <code>pointblank</code> <span class="citation" data-cites="pointblank">(<a href="99-references.html#ref-pointblank" role="doc-biblioref">Iannone and Vargas 2022</a>)</span> to set-up tests for us (<a href="#fig-pointblankvalidation">Figure&nbsp;<span>11.11</span></a>).</p>
+<p>We can then use <code>pointblank</code> <span class="citation" data-cites="pointblank">(<a href="99-references.html#ref-pointblank" role="doc-biblioref">Iannone and Vargas 2022</a>)</span> to set-up tests for us (<a href="#fig-pointblankvalidation">Figure&nbsp;<span>11.12</span></a>).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb125"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pointblank)</span>
 <span id="cb125-2"><a href="#cb125-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -2682,7 +2676,7 @@ State is California and population is 40 million.</code></pre>
 <div id="fig-pointblankvalidation" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="figures/pointblank_screenshot.png" class="img-fluid figure-img" style="width:70.0%"></p>
-<p></p><figcaption class="figure-caption">Figure 11.11: Example of Pointblank Validation</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure 11.12: Example of Pointblank Validation</figcaption><p></p>
 </figure>
 </div>
 </section>
@@ -2695,7 +2689,7 @@ State is California and population is 40 million.</code></pre>
 <li><em>(Plan)</em> Consider the following scenario: <em>You manage a bar with two bartenders and are interested in modelling their efficiency. The bar opens at 8pm and closes at 2am. The efficiency of the bartenders is mildly correlated and defined by the number of drinks that they prepare. Be clear about whether you assume a negative or positive correlation.</em> Please sketch what that dataset could look like and then sketch a graph that you could build to show all observations.</li>
 <li><em>(Simulate)</em> Please further consider the scenario described and simulate the situation.</li>
 <li><em>(Acquire)</em> Please describe a possible source of such a dataset.</li>
-<li><em>(Explore)</em> Please use <code>ggplot2</code> to build the graph that you sketched.</li>
+<li><em>(Explore)</em> Please use <code>ggplot2</code> to build the graph that you sketched using the simulated data from step 1.</li>
 <li><em>(Communicate)</em> Please write two paragraphs about what you did.</li>
 <li>Where would you save a copy of the raw data?
 <ol type="a">
@@ -2710,7 +2704,7 @@ State is California and population is 40 million.</code></pre>
 <li><code>sample(x = state.name, size = 10)</code></li>
 <li><code>sample(x = us.state, size = 10)</code></li>
 </ol></li>
-<li>If we had a character variable “some_words” with one observation <code>"You know what"</code> within a dataset called “sayings”, then which of the following would split it into its constituent words?
+<li>If we had a character variable “some_words” with one observation <code>"You know what"</code> within a dataset called <code>sayings</code>, then which of the following would split it into its constituent words?
 <ol type="a">
 <li><code>separate(data = sayings, col = some_words, into = c("one", "two", "three"), sep = " ")</code></li>
 <li><code>split(data = sayings, col = some_words, into = c("one", "two", "three"), sep = " ")</code></li>
@@ -2718,7 +2712,7 @@ State is California and population is 40 million.</code></pre>
 <li><code>part(data = sayings, col = some_words, into = c("one", "two", "three"), sep = " ")</code></li>
 <li><code>unattach(data = sayings, col = some_words, into = c("one", "two", "three"), sep = " ")</code></li>
 </ol></li>
-<li>Is the following an example of tidy data?</li>
+<li>Is the following an example of tidy data? Why or why not?</li>
 </ol>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb126"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
@@ -2743,7 +2737,7 @@ State is California and population is 40 million.</code></pre>
 <li><code>str_change(string = "lemons", pattern = "lemons", replacement = "lemonade")</code></li>
 <li><code>chr_change(string = "lemons", pattern = "lemons", replacement = "lemonade")</code></li>
 </ol></li>
-<li>When dealing with ages what is the most likely class for the variable (select all that apply)?
+<li>When dealing with ages, what is a possible class for the variable (select all that apply)?
 <ol type="a">
 <li>integer</li>
 <li>matrix</li>
