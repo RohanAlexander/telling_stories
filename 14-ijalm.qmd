@@ -572,23 +572,43 @@ test_that("Check class", {
   expect_type(sim_run_data$five_km_time, "double")
   expect_type(sim_run_data$was_raining, "character")
 })
+```
+
+We could save the following as "test_observations.R" 
+
+```{r}
+#| eval: false
+
+test_that("Check number of observations is correct", {
+  expect_equal(nrow(sim_run_data), 200)
+})
 
 test_that("Check complete", {
   expect_true(all(complete.cases(sim_run_data)))
 })
 ```
 
-We could then change the regression code to call that test file rather than write them all out.
+And finally, we could save the following as "test_coefficient_estimates.R".
+
+```{r}
+#| eval: false
+
+test_that("Check coefficients", {
+  expect_gt(sim_run_data_rain_model$coefficients[3], 0)
+  expect_lt(sim_run_data_rain_model$coefficients[3], 20)
+})
+
+```
+
+
+We could then change the regression code to call these test files rather than write them all out.
 
 ```{r}
 #| message: false
 
 library(testthat)
 
-stopifnot(
-  nrow(sim_run_data) == 200
-)
-
+test_file("tests/test_observations.R")
 test_file("tests/test_class.R")
 
 sim_run_data_rain_model <-
@@ -597,11 +617,7 @@ sim_run_data_rain_model <-
     data = sim_run_data
   )
 
-stopifnot(between(
-  sim_run_data_rain_model$coefficients[3],
-  0,
-  20
-))
+test_file("tests/test_coefficient_estimates.R")
 ```
 
 It is important to be clear about what we are looking for in the checks of the coefficients. When we simulate data we put in place reasonable guesses for what the data could look like, and it is similarly reasonable guesses that we test. A failing test is not necessarily a reason to go back and change the data or the model, but instead a reminder to look at what is going on in both, and potentially update the test if necessary.
@@ -684,16 +700,6 @@ base +
 #| include: true
 #| label: tbl-modelsummaryruntimes
 #| tbl-cap: "Explaining marathon times based on five-kilometer run times and weather features"
-
-stopifnot(
-  class(sim_run_data$marathon_time) == "numeric",
-  class(sim_run_data$five_km_time) == "numeric",
-  class(sim_run_data$was_raining) == "character",
-  class(sim_run_data$humidity) == "character",
-  all(complete.cases(sim_run_data)),
-  nrow(sim_run_data) == 200,
-  unique(sim_run_data$humidity) %in% c("Low", "High")
-)
 
 sim_run_data_rain_and_humidity_model <-
   lm(
@@ -805,7 +811,7 @@ The estimated coefficients are summarized in the first column of @tbl-modelsumma
 
 ### Inference
 
-Running a regression in a Bayesian setting is similar to frequentist (i.e. `lm()`, `glm()`, etc). The main difference from a regression point of view, is that the parameters involved in the models (i.e. $\beta_0$, $\beta_1$, etc) are considered random variables, and so themselves have associated probability distributions. Before we run a regression in a Bayesian framework, we need to decide on a starting probability distribution for each of these parameters, which we call a 'prior'.
+Running a regression in a Bayesian setting is similar to frequentist (i.e. `lm()`, `glm()`, etc). The main difference from a regression point of view, is that the parameters involved in the models (i.e. $\beta_0$, $\beta_1$, etc) are considered random variables, and so themselves have associated probability distributions. Before we run a regression in a Bayesian framework, we need to decide on a starting probability distribution for each of these parameters, which we call a "prior".
 
 To use Bayesian approaches we must specify a starting point. This is a guess for what we think the distribution of the parameters should look like and is called a prior. This is another reason for the workflow advocated in this book; the simulation stage leads directly to priors. We will again specify the model that we are interested in, but this time we include priors.
 
@@ -883,7 +889,7 @@ sim_run_data_first_model_rstanarm <-
   readRDS(file = "outputs/model/sim_run_data_first_model_rstanarm.rds")
 ```
 
-We use `stan_glm()` with the 'gaussian()' family to specify multiple linear regression and the model is written in the same way as base R and `tidymodels`. We have explicitly added the default priors, although strictly this is not necessary.
+We use `stan_glm()` with the "gaussian()" family to specify multiple linear regression and the model is written in the same way as base R and `tidymodels`. We have explicitly added the default priors, although strictly this is not necessary.
 
 The estimation results, which are in the second column of @tbl-modelsummarybayesbetter, are not quite what we expect. For instance, the comparison between individuals is estimated to be around three, which seems low given the ratio of a five-kilometer run to marathon distance.
 
@@ -1041,8 +1047,6 @@ sim_run_data_second_model_rstanarm <-
 #| tbl-cap: "Forecasting and explanatory models of marathon times based on five-kilometer run times"
 #| warning: false
 
-# library(broom.mixed)
-
 modelsummary::modelsummary(
   list(
     "tidymodels" = sim_run_data_first_model_tidymodels,
@@ -1085,6 +1089,32 @@ posterior_vs_prior(sim_run_data_second_model_rstanarm) +
 ```
 
 With a simple model like this, the differences between the predict and inference approaches are minimal. But as model or data complexity increases these differences can become important.
+
+We have already discussed confidence intervals and the Bayesian equivalent to a confidence interval is called a "credibility interval", and reflects two points such there is a certain probability mass between them, in this case 95 per cent. @tbl-modelsummarybayesbetter shows confidence intervals for `tidymodels` and credible intervals for `rstanarm`, beneath the estimates. Bayesian estimation provides a distribution for each coefficient. This means there are actually an infinite number of points that we could use to generate this interval. We will include credible interval points in tables, because this is commonly needed, but it is important that the entire distribution is shown graphically. This might be using a cross-referenced appendix.
+
+```{r}
+plot(sim_run_data_second_model_rstanarm, 
+     "areas")
+```
+
+The final aspect that we would like to check is a practical matter. The details do not matter for the purposes of this book, but `rstanarm` uses a sampling algorithm called "Markov chain Monte Carlo (MCMC)" to estimate the posterior. We need to quickly check for signs that the algorithm ran into issues. In particular, we consider a trace plot, such as @fig-stanareyouokay-1, and an Rhat plot, such as @fig-stanareyouokay-2. These would typically go in a cross-referenced appendix.
+
+```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-stanareyouokay
+#| fig-cap: "Checking the health of the MCMC algorithm"
+#| fig-subcap: ["Trace plot", "With one 'linear best-fit' line illustrating the implied relationship", "Including standard errors"]
+#| layout-ncol: 2
+
+plot(sim_run_data_second_model_rstanarm, "trace")
+
+plot(sim_run_data_second_model_rstanarm, "rhat")
+```
+
+In the trace plot, we are looking for lines that appear to bounce around, but are horizontal, and have a nice overlap between the chains. The trace plot in @fig-stanareyouokay-1 does not suggest anything out of the ordinary. Similarly, with the Rhat plot, we are looking for everything to be close to 1, and certainly no more than 1.1. Again @fig-stanareyouokay-2 is an example that does not suggest any problems. If these diagnostics do not seem similar to this, then simplify the model and re-run it.
 
 ## Logistic regression
 
@@ -1141,12 +1171,6 @@ where $y_i$ is whether it is a weekday and $x_i$ is the number of cars on the ro
 
 
 ```{r}
-stopifnot(
-  class(week_or_weekday$is_weekday) == "numeric",
-  class(week_or_weekday$number_of_cars) == "numeric",
-  nrow(week_or_weekday) == 1000
-)
-
 week_or_weekday_model <-
   glm(
     is_weekday ~ number_of_cars,
@@ -1155,7 +1179,7 @@ week_or_weekday_model <-
   )
 ```
 
-The results of the estimation are in the first column of @tbl-modelsummarylogistic. The estimated coefficient on the number of cars is 0.19. We have switched to confidence intervals because they have a Bayesian equivalent. This Bayesian equivalent is called a "credibility interval", and reflect two points such there is a certain probability mass between them, in this case 95 per cent.
+The results of the estimation are in the first column of @tbl-modelsummarylogistic. The estimated coefficient on the number of cars is 0.19. 
 
 One reason that logistic regression can be a bit tricky initially is because the coefficients take a bit of work to interpret. The estimate of 0.19 is the average change in the log odds of our observation being a weekday with one extra car. The coefficient is positive which means an increase, but as it is non-linear, if we want a particular change, then this will be different for different observations.
 
@@ -1225,12 +1249,6 @@ week_or_weekday_split <- initial_split(week_or_weekday, prop = 0.80)
 week_or_weekday_train <- training(week_or_weekday_split)
 week_or_weekday_test <- testing(week_or_weekday_split)
 
-stopifnot(
-  class(week_or_weekday_train$is_weekday) == "factor",
-  class(week_or_weekday_train$number_of_cars) == "numeric",
-  nrow(week_or_weekday_train) == 800
-)
-
 week_or_weekday_tidymodels <-
   logistic_reg(mode = "classification") |>
   set_engine("glm") |>
@@ -1266,12 +1284,6 @@ where $y_i$ is whether it is a weekday, and $x_1$ is the number of cars on the r
 #| echo: true
 #| message: false
 #| warning: false
-
-stopifnot(
-  class(week_or_weekday$is_weekday) == "factor",
-  class(week_or_weekday$number_of_cars) == "numeric",
-  nrow(week_or_weekday) == 1000
-)
 
 week_or_weekday_rstanarm <-
   stan_glm(
@@ -1333,7 +1345,7 @@ modelsummary::modelsummary(
 
 ### US political support
 
-One area where logistic regression is often used is political polling. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to 'support' or 'not support'.
+One area where logistic regression is often used is political polling. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to "support" or "not support".
 
 As a reminder, the workflow we advocate in this book: Plan -> Simulate -> Acquire -> Explore -> Share. While the focus here is the exploration of data using linear models, we still need to do the other aspects. We begin by planning. In this case, we are interested in US political support. In particular we are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. That means we are interested in a dataset with variables for who an individual voted for, and some of their characteristics, for instance, gender and education. A quick sketch of such a dataset is @fig-uspoliticalsupportsketch. And we would like our model to average over these points. A quick sketch is @fig-uspoliticalsupportmodel.
 
@@ -1581,8 +1593,9 @@ collect_metrics(ces2020_cross_validation) |>
   )
 
 conf_mat_resampled(ces2020_cross_validation) |>
+  mutate(Proportion = Freq / sum(Freq)) |> 
   knitr::kable(
-    digits = 0,
+    digits = 2,
     booktabs = TRUE,
     linesep = "",
     format.args = list(big.mark = ",")
@@ -1764,13 +1777,6 @@ where $y_i$ is the number of A grades awarded, and $x_1$ is the course.
 We can use `glm()` from base R to get a quick sense of the data. This function is quite general, and we specify Poisson regression by setting the "family" parameter. The estimates are contained in the first column of @tbl-modelsummarypoisson.
 
 ```{r}
-stopifnot(
-  class(count_of_A$department) == "character",
-  class(count_of_A$course) == "character",
-  class(count_of_A$number_of_A) == "integer",
-  nrow(count_of_A) == 78
-)
-
 grades_base <-
   glm(
     number_of_A ~ department,
@@ -1792,13 +1798,6 @@ count_of_A_split <-
   initial_split(count_of_A, prop = 0.80)
 count_of_A_train <- training(count_of_A_split)
 count_of_A_test <- testing(count_of_A_split)
-
-stopifnot(
-  class(count_of_A_train$department) == "character",
-  class(count_of_A_train$course) == "character",
-  class(count_of_A_train$number_of_A) == "integer",
-  nrow(count_of_A_train) == 62
-)
 
 grades_tidymodels <-
   poisson_reg(mode = "regression") |>
@@ -1827,13 +1826,6 @@ $$
 #| message: false
 #| warning: false
 #| eval: false
-
-stopifnot(
-  class(count_of_A$department) == "character",
-  class(count_of_A$course) == "character",
-  class(count_of_A$number_of_A) == "integer",
-  nrow(count_of_A) == 78
-)
 
 grades_rstanarm <-
   stan_glm(
@@ -1910,15 +1902,15 @@ marginaleffects(grades_rstanarm) |>
 
 ### Letters used in *Jane Eyre* 
 
-In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's Aeneid (@HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë. We could then consider the first 10 lines of each chapter and count the number of times either "E" or "e" appears.
+In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë. We could then consider the first 10 lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/E's increases as more words are used. If not, it could suggest that the distribution of e/E's is not consistent, which could be of interest to linguists.
 
 Following the workflow advocated in this book, we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-letterssketch. And a quick sketch our our model is @fig-lettersmodel.
 
 ::: {#fig-letterss layout-ncol=2 layout-valign="bottom" layout="[[50,10,50]]"}
 
-![Quick sketch of a dataset that could be used to examine US political support](figures/IMG_2056.png){#fig-letterssketch}
+![Planned counts, by line and chapter, in *Jane Eyre*](figures/IMG_2056.png){#fig-letterssketch}
 
-![Quick sketch of what we expect from the analysis before finalising either the data of the analysis](figures/IMG_2059.png){#fig-lettersmodel}
+![Planned expected relationship between count of e/E and number of words in the line](figures/IMG_2059.png){#fig-lettersmodel}
 
 Sketches of the expected dataset and analysis force us to consider what we are interested in
 :::
@@ -2053,7 +2045,7 @@ jane_eyre_reduced |>
   head()
 ```
 
-We can verify that the mean and variance of the number of E/e's is roughly similar by plotting all of the data (@fig-janeecounts). The mean, in pink, is 6.7, and the variance, in blue, is 6.2. While they are not entirely the same, they are similar.
+We can verify that the mean and variance of the number of E/e's is roughly similar by plotting all of the data (@fig-janeecounts). The mean, in pink, is 6.7, and the variance, in blue, is 6.2. While they are not entirely the same, they are similar. We include the diagonal in @fig-janeecounts-2 to help with thinking about the data.
 
 ```{r}
 #| echo: true
@@ -2177,7 +2169,7 @@ One of the major restrictions with Poisson regression is the assumption that the
 
 <!-- Before getting to this, it might be worth taking a moment to think about why we are we going through all this trouble. Common practice is to change from counts into a binary and then use logistic regression. The issue with this is that we may lose information when we group responses together. -->
 
-Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance, @maher1982modelling considers both in the context of results from the English Football League and discusses the context in which one may be considered more appropriate than the other. Similarly, @thanksleo considers the 2000 US presidential election and especially the issue of overdispersion in a Poisson analysis.
+Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance, @maher1982modelling considers both in the context of results from the English Football League and discusses the context in which one may be considered more appropriate than the other. Similarly, @thanksleo considers the 2000 US presidential election and especially the issue of overdispersion in a Poisson analysis. And @Osgood2000 compares them in the case of crime data.
 
 <!-- The shape of the negative binomial distribution is determined by two parameters, the probability of success, $p$, and the number of successes, $r$ [@pitman, p. 482]:  -->
 
@@ -2265,8 +2257,7 @@ alberta_cod <-
              )) |>
   janitor::clean_names() |>
   add_count(cause) |>
-  filter(n == 21) |>
-  mutate(cause = str_trunc(cause, 20))
+  mutate(cause = str_trunc(cause, 30))
 ```
 
 
@@ -2284,14 +2275,15 @@ alberta_cod <-
              )
            ) |>
   janitor::clean_names() |>
-  add_count(cause)
+  add_count(cause) |>
+  mutate(cause = str_trunc(cause, 30))
 ```
 
 If we were to look at the top ten causes in 2021, we would notice a variety of interesting aspects (@tbl-albertahuh). For instance, we would expect that the most common causes would be in all 21 years of our data. But we notice that that most common cause, "Other ill-defined and unknown causes of mortality", is only in three years. Naturally, "COVID-19, virus identified", is only in two other years, as there were no COVID deaths in Canada before 2020.
 
 ```{r}
 #| label: tbl-albertahuh
-#| tbl-cap: "Top ten causes of death in 2021"
+#| tbl-cap: "Top ten causes of death in Alberta in 2021"
 #| warning: false
 
 alberta_cod |>
@@ -2305,7 +2297,9 @@ alberta_cod |>
                   "Total deaths",
                   "Number of years"),
     digits = 0,
-    align = c("l", "r", "r", "r", "r")
+    align = c("l", "r", "r", "r", "r"),
+    booktabs = TRUE,
+    linesep = ""
   )
 ```
 
@@ -2364,8 +2358,6 @@ We can implement negative binomial regression when using `stan_glm()` by specify
 #| eval: false
 #| message: false
 #| warning: false
-
-library(rstanarm)
 
 cause_of_death_alberta_poisson <-
   stan_glm(
@@ -2426,7 +2418,7 @@ modelsummary::modelsummary(
     "Poisson" = cause_of_death_alberta_poisson,
     "Negative binomial" = cause_of_death_alberta_neg_binomial
   ),
-  statistic = NULL
+  statistic = "conf.int"
 )
 ```
 
@@ -2465,11 +2457,11 @@ In this case we find that the negative binomial model is a better fit than the P
 
 We have covered a variety of diagnostic aspects for Bayesian models. While it is difficult to be definitive about what is "enough" because it is context specific, the following checklist would be enough for most purposes. These would go into an appendix that was mentioned and cross-referenced in the model section of a paper:
 
-- Prior predictive checks: Construct them yourself based on simulation then use `ggplot2`.
-- Convergence graphs: Use `plot(the_model, "trace", facet_args = list(nrow = 2)) + scale_color_brewer(palette = "Set1")`.
-- Histogram of Rhat values: Use `plot(the_model, "rhat_hist")`.
-- Graphs of distributions: Use `bayesplot::mcmc_areas(the_model, prob = 0.8)`.
-- Graphs of posterior predictive checks: `pp_check()`.
+- Prior predictive checks.
+- Trace plots.
+- Rhat plots.
+- Posterior distributions.
+- Posterior predictive checks.
 
 
 
