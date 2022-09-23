@@ -94,7 +94,7 @@ SpaceX\index{SpaceX}, the US rocket company, uses cycles of 10 or 50 Hertz (equi
 
 To a large extent, the role of data cleaning and preparation\index{data cleaning and preparation} is so great that the only people that understand a dataset, are those that who have cleaned it. Yet, the paradox of data cleaning is that often those that do the cleaning and preparation are those that have the least trust in the resulting dataset. At some point in every data science workflow, those doing the modelling should get their hands dirty with data cleaning. Even though few want to do it [@Sambasivan2021], it can be as influential as modelling. To clean and prepare data is to make many decisions, some of which may have important effects on our results. For instance, @labelsiswrongs find the test sets of some popular datasets in computer science contain, on average, labels that are wrong in around three per cent of cases. This has the potential to result in incorrect conclusions. Like Sam Rayburn wishing that Kennedy's cabinet despite their intelligence, had experience in the nitty-gritty, a data scientist needs to immerse themselves in the messy reality of their dataset.
 
-The reproducibility crisis, which started in psychology but has now extended to many other fields in the physical and social sciences, brought to light issues such as p-value "hacking", researcher degrees of freedom, file-drawer issues, and even data and results fabrication [@gelman2013garden]. Steps are now being put in place to address these. But there has been relatively little focus on the data gathering, cleaning, and preparation aspects of applied statistics, despite evidence that decisions made during these steps greatly affect statistical results [@huntington2021influence]. In this chapter we focus on these issues.
+The reproducibility crisis, which was identified early in psychology [@anniesfind] but has now extended to many other fields in the physical and social sciences, brought to light issues such as p-value "hacking", researcher degrees of freedom, file-drawer issues, and even data and results fabrication [@gelman2013garden]. Steps are now being put in place to address these. But there has been relatively little focus on the data gathering, cleaning, and preparation aspects of applied statistics, despite evidence that decisions made during these steps greatly affect statistical results [@huntington2021influence]. In this chapter we focus on these issues.
 
 While the statistical practices that underpin data science are themselves correct and robust when applied to simulated datasets, data science is not typically conducted with data that follow the assumptions underlying the models commonly that are fit. For instance, data scientists are interested in "messy, unfiltered, and possibly unclean data---tainted by heteroskedasticity, complex dependence and missingness patterns---that until recently were avoided in polite conversations between more traditional statisticians" [@craiu2019hiring]. Big data does not resolve this issue and may even exacerbate it. For instance, population inference based on larger amounts of poor-quality data, without adjusting for data issues, will just lead to more confidently wrong conclusions [@meng2018statistical]. The problems that are found in much of applied statistics research are not necessarily associated with researcher quality, or their biases [@silberzahn2018many]. Instead, they are a result of the context within which data science is conducted. This chapter provides an approach and tools to explicitly think about this work.
 
@@ -126,7 +126,7 @@ The first step is to save the raw data into a separate, local, folder. It is imp
 
 Having locally saved the raw data we must maintain a copy of it in that state, and not modify it. As we begin to clean and prepare it, we instead create a copy of the dataset. Maintaining the initial, raw, state of the dataset, and using scripts to create the dataset that we are interested in analyzing, ensures that our entire workflow is reproducible. 
 
-We may not always be allowed to share that local copy, but we can almost always create it. If we are not even able to create a local copy of the raw data, then it may be that the best we can do is save a copy of as close to the raw data as is possible, create a simulated version of the raw data that conveys the main features, and include detailed access instructions in the README.
+We may not always be allowed to share that local copy, but we can almost always create it. If we are not even able to create a local copy of the raw data, for instance if we are using a restricted-use computer, then it may be that the best we can do is save a copy of as close to the raw data as is possible, create a simulated version of the raw data that conveys the main features, and include detailed access instructions in the README.
 
 
 ### Begin with an end in mind
@@ -215,7 +215,7 @@ tidy_data <-
   separate(
     col = raw,
     into = letters[1:5],
-    sep = "(?<=[[:digit:]]) "  # Separate based on...
+    sep = "(?<=[[:digit:]]) "  # Separate on a bracket preceded by numbers
   ) |>
   pivot_longer(
     cols = letters[1:5],
@@ -225,7 +225,7 @@ tidy_data <-
   separate(
     col = separate_me,
     into = c("state", "population"),
-    sep = " (?=[[:digit:]])"  # Separate according to...
+    sep = " (?=[[:digit:]])"  # Separate on a space followed by a number
   ) |>
   select(-drop_me)
 
@@ -1146,7 +1146,7 @@ In addition to respecting the nature of the data, names need to satisfy two addi
 
 Machine readable names is an easier standard to meet, but usually means avoiding spaces and special characters. A space can be replaced with an underscore. For instance, we prefer "my_data" to "my data". Avoiding spaces enables tab-completion which makes us more efficient. It also helps with reproducibility because spaces are considered differently by different operating systems.
 
-Usually, special characters should be removed because they can be inconsistent between different computers and languages. This is especially the case with slash and backslash, asterisk, and single and double quotation marks, none of which should, almost, ever be used in names. 
+Usually, special characters should be removed because they can be inconsistent between different computers and languages. This is especially the case with slash "/", backslash "\", asterisk "*", and single "'" and double quotation marks """, none of which should almost ever be used in names. 
 
 Names should also be unique within a dataset, and unique within a collection of datasets unless that particular column is being deliberately used as a key to join different datasets. This usually means that the domain is critical for effective names, and when working as part of a team this all gets much difficult [@hermans2017peter]. Names need to not only be unique, but notably different when there is a potential for confusion. For instance, for many years, the language PHP had both `mysql_escape_string` and `mysql_real_escape_string` [@somers2015]. It is easy to see how programmers may have accidentally written one when they meant the other.
 
@@ -1218,6 +1218,7 @@ some_names
 riederer_names
 ```
 
+We do not need to go to every extreme when it comes to names. Even just trying to be a little more explicit and a little more consistent throughout a project typically brings substantial benefits when we come to revisit the project later. Would a rose by any other name smell as sweet? Of course. But we call it a rose, or even better, *Rosa rubiginosa*, because that helps others know what we are talking about, compared with, say, "red_thing", "five_petaled_smell_nice", "flower",  or "r_1". It is clearer, and more efficiently helps others understand.
 
 
 ## Example: 1996 Tanzanian DHS
@@ -1601,7 +1602,7 @@ all_tables <-
 all_tables
 ```
 
-Having identified everything that needs to be removed, we can do the actual removal and convert our character column of numbers to integers.
+If we look at the pages of the original PDF that contain hyphens and underspaces, we notice that they are meant to represent 0. Having identified everything that needs to be removed, we can do the actual removal and convert our character column of numbers to integers.
 
 ```{r}
 #| echo: true
@@ -1780,7 +1781,7 @@ all_tables <-
   )
 ```
 
-The Kenyan census provides different tables for the total of each county and sub-county; and then within each county, for the number in an urban area in that county, and the number in a urban area in that county. Some counties only have an urban count, but we would like to make sure that the sum of rural and urban counts equals the total count. This requires pivoting the data from long to wide.
+The Kenyan census provides different tables for the total of each county and sub-county; and then within each county, for the number in an urban area in that county, and the number in a rural area in that county. Some counties only have an urban count, but we would like to make sure that the sum of rural and urban counts equals the total count. This requires pivoting the data from long to wide.
 
 First, we construct different tables for each of the three. 
 
@@ -2073,7 +2074,7 @@ tibble(
     b. matrix
     c. numeric
     d. factor
-12. Please consider the cities in Germany. Use `testthat` to define three tests that could apply.
+12. Please consider the following cities in Germany: "Berlin", "Hamburg", "Munich", "Cologne", "Frankfurt", "Rostock". Use `testthat` to define three tests that could apply if we had a dataset with a variable "german_cities" that claimed to contain these, and only these, cities.
 13. Which is the only acceptable format for dates in data science?
     a. YYYY-DD-MM
     b.  YYYY-MM-DD
