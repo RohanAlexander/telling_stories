@@ -80,7 +80,7 @@ There is no one correct process or set of steps that are required to undertake a
 
 ## 1975 US states data
 
-As a first example we consider US state populations at at 1975. This dataset is built into R with `state.x77`. Here is what the dataset looks like:
+As a first example we consider US state populations as of 1975. This dataset is built into R with `state.x77`. Here is what the dataset looks like:
 
 ```{r}
 #| message: false
@@ -114,7 +114,7 @@ us_populations |>
   glimpse()
 ```
 
-We are then interested in understanding key statistics, such as the minimum, median, and maximum values for numeric variables with `summary()` from base. We can use `skim` from `skimr` [@skimr] for similar purposes, the advantage being that it provides more information about character variables. We notice that population appears to be right-skewed (with a mean that is considerably larger than the median). And that life expectency varies by six years between the states.
+We are then interested in understanding key statistics, such as the minimum, median, and maximum values for numeric variables with `summary()` from base R. We can use `skim` from `skimr` [@skimr] for similar purposes, the advantage being that it provides more information about character variables. We notice that population appears to be right-skewed (with a mean that is considerably larger than the median). And that life expectency varies by six years between the states.
 
 ```{r}
 library(skimr)
@@ -208,11 +208,11 @@ us_states_with_missing_observations
 
 Having generated a dataset with some missing data, we can now consider a few common approaches for dealing with missing data, and compare the implied values for each state, and the overall US mean population. We consider the following options:
 
-1) Drop the observation with missing data.
+1) Drop the observations with missing data.
 2) Impute the mean of observations without missing data.
 3) Use multiple-imputation, which involves creating many potential datasets, conducting inference, and then bringing them together potentially though averaging [@gelmanandhill, p. 542].
 
-To drop the observations with missing data, we can use `mean()` because by default it will remove observations with missing values. 
+To drop the observations with missing data, we can use `mean()` because by default it will exclude observations with missing values in its calculation. 
 
 To impute the mean, we construct a second dataset with the observations with missing data removed. We then compute the mean of the population column, and impute that into the missing values in the original dataset.
 
@@ -224,17 +224,8 @@ And finally, we can implement multiple-imputation with `mice()` from `mice` [@mi
 
 library(mice)
 
-multiple_imputation <-
-  mice(
-    us_states_with_missing_observations,
-    print = FALSE
-  )
 
-mice_estimates <-
-  complete(multiple_imputation) |>
-  as_tibble()
 
-mice_estimates
 ```
 
 
@@ -301,7 +292,7 @@ tibble(
   )
 ```
 
-@tbl-imputationoptions makes it clear that none of these approaches should be blindly imposed. For instance, we Florida's population should be be 8,277. Imputing the mean across all the states would result in an estimate of 4,308, which is too low, while multiple imputation results in an estimate of of 18,076, which is too high. If imputation is the answer, it is likely that the question is wrong. It it worth pointing out that it was developed for specific circumstances of limiting public disclosure of private information [@myboynick]. Nothing can make up for missing data [@manskiwow]. The conditions under which it makes sense to impute the mean, or the prediction based on multiple imputation are not common, and even more rare is our ability to verify them. Missing data are not a nuisance to be papered over. The correct choice depends on the circumstances and purpose of the analysis. Whatever choice is made, and there is rarely a clear-cut solution, the most important aspect is to clearly document and communicate what was done, and explore the effect of different choices on subsequent estimates.
+@tbl-imputationoptions makes it clear that none of these approaches should be blindly imposed. For instance, Florida's population should be be 8,277. Imputing the mean across all the states would result in an estimate of 4,308, and multiple imputation results in an estimate of of 5,814, both of which are too low. If imputation is the answer, it is likely that the question is wrong. It it worth pointing out that it was developed for specific circumstances of limiting public disclosure of private information [@myboynick]. Nothing can make up for missing data [@manskiwow]. The conditions under which it makes sense to impute the mean or the prediction based on multiple imputation are not common, and even more rare is our ability to verify them. Missing data are not a nuisance to be papered over. The correct choice depends on the circumstances and purpose of the analysis. Whatever choice is made, and there is rarely a clear-cut solution, the most important aspect is to clearly document and communicate what was done, and explore the effect of different choices on subsequent estimates.
 
 Finally, more prosaically, but just as importantly, sometimes missing data is encoded with particular values. For instance, while R has the option of "NA", sometimes numerical data is entered as "-99" or alternatively as a very large integer such as "9999999", if it is missing. It is always worth looking explicitly for values that seem like they do not belong and investigating them. Graphs and tables are especially useful here.
 
@@ -354,7 +345,7 @@ all_2021_ttc_data <- read_csv("inputs/data/all_2021_ttc_data.csv")
 all_2021_ttc_data
 ```
 
-The dataset has a variety of columns, and we can find out more about each of them by downloading the codebook. The reason for the delay is coded, and so we can also download the explanations. One variable of interest appears to be "min_delay", which gives the extent of the delay in minutes. 
+The dataset has a variety of columns, and we can find out more about each of them by downloading the codebook. The reason for each delay is coded, and so we can also download the explanations. One variable of interest appears to be "min_delay", which gives the extent of the delay in minutes. 
 
 ```{r}
 #| eval: false
@@ -426,12 +417,15 @@ table(all_2021_ttc_data$day)
 table(all_2021_ttc_data$line)
 ```
 
-We have likely issues in terms of the subway lines. Some of them have a clear fix, but not all. One option would be to drop them, but we would need to think about whether these errors might be correlated with something that is of interest, because if they were then we may be dropping important information. There is usually no one right answer, because it will usually depend on what we are using the data for. We would note the issue, as we continued with EDA and then decide later about what to do. For now, we will remove all the lines that are not the ones that we know to be correct.
+We have likely issues in terms of the subway lines. Some of them have a clear fix, but not all. One option would be to drop them, but we would need to think about whether these errors might be correlated with something that is of interest, because if they were then we may be dropping important information. There is usually no one right answer, because it will usually depend on what we are using the data for. We would note the issue, as we continued with EDA and then decide later about what to do. For now, we will remove all the lines that are not the ones that we know to be correct based on the codebook.
 
 ```{r}
+delay_codebook |>
+  filter(field_name == "Line")
+
 all_2021_ttc_data_filtered_lines <-
   all_2021_ttc_data |>
-  filter(line %in% c("BD", "YU", "SHP", "SRT"))
+  filter(line %in% c("YU", "BD", "SHP", "SRT"))
 ```
 
 Entire careers are spent understanding missing data, and the presence, or lack, of missing values can haunt an analysis. To get started we could look at known-unknowns, which are the NAs for each variable. For instance we could create counts, by variable.
@@ -450,7 +444,7 @@ Entire careers are spent understanding missing data, and the presence, or lack, 
 <!--   palette = "cb_safe" -->
 <!-- ) -->
 <!-- ``` -->
-In this case we have many missing values in "bound" and two in "line". For these known-unknowns, as discussed in @sec-farm-data, we are interested in whether the they are missing at random. We want to, ideally, show that data happened to just drop out. This is unlikely, and so we are usually trying to look at what is systematic about how our data are missing.
+In this case we have many missing values in "bound" and two in "line". For these known-unknowns, as discussed in @sec-farm-data, we are interested in whether or not they are missing at random. We want to, ideally, show that data happened to just drop out. This is unlikely, and so we are usually trying to look at what is systematic about how our data are missing.
 
 Sometimes data happen to be duplicated. If we did not notice this, then our analysis would be wrong in ways that we would not be able to consistently expect. There are a variety of ways to look for duplicated rows, but `get_dupes()` from `janitor` [@janitor] is especially useful.
 
@@ -476,10 +470,11 @@ The station names are a mess.
 
 ```{r}
 all_2021_ttc_data_no_dupes |>
-  count(station)
+  count(station) |>
+  filter(str_detect(station, "WEST"))
 ```
 
-We could try to quickly bring a little order to the chaos by just taking just the first word (or, the first two if it starts with "ST"). Again, we are just trying to get a sense of the data, not necessarily make binding decisions here. We use `word()` from `stringr` to extract specific words from the station names.
+We could try to quickly bring a little order to the chaos by just taking just the first word or first few words, accounting for names like "ST. CLAIR" and "ST. PATRICK" by checking if the name starts with "ST", as well as distinguishing between stations like "DUNDAS" and "DUNDAS WEST" by checking if the name contains "WEST". Again, we are just trying to get a sense of the data, not necessarily make binding decisions here. We use `word()` from `stringr` to extract specific words from the station names.
 
 ```{r}
 #| eval: true
@@ -487,16 +482,17 @@ We could try to quickly bring a little order to the chaos by just taking just th
 
 all_2021_ttc_data_no_dupes <-
   all_2021_ttc_data_no_dupes |>
-  mutate(station_clean = if_else(
-    str_starts(station, "ST"),
-    word(station, 1, 2),
-    word(station, 1)
+  mutate(station_clean = case_when(
+    str_starts(station, "ST") & str_detect(station, "WEST") ~ word(station, 1, 3),
+    str_starts(station, "ST") ~ word(station, 1, 2),
+    str_detect(station, "WEST") ~ word(station, 1, 2),
+    TRUE ~ word(station, 1)
   ))
 
 all_2021_ttc_data_no_dupes
 ```
 
-We need to see the data in its original state to understand it and we use bar charts, scatterplots, line plots and histograms extensively for this. During EDA we are not as concerned with whether the graph looks nice, but are instead trying to acquire a sense of the data as quickly as possible. We can start by looking at the distribution of "min_delay", which is one outcome of interest.
+We need to see the data in its original state to understand it, and we use bar charts, scatterplots, line plots and histograms extensively for this. During EDA we are not as concerned with whether the graph looks nice, but are instead trying to acquire a sense of the data as quickly as possible. We can start by looking at the distribution of "min_delay", which is one outcome of interest.
 
 ```{r}
 #| eval: true
@@ -554,6 +550,7 @@ all_2021_ttc_data_no_dupes_with_explanation <-
   )
 
 all_2021_ttc_data_no_dupes_with_explanation |>
+  select(station_clean, code, min_delay, code_desc) |>
   arrange(-min_delay)
 ```
 
@@ -694,7 +691,7 @@ These figures, tables, and analysis may not have a place in a final paper. Inste
 
 ### Relationships between variables
 
-We are also interested in looking at the relationship between two variables. We will draw heavily on graphs for this, and appropriate types, for different circumstances, were discussed in @sec-static-communication. Scatter plots are especially useful here for continuous variables, and are a good precursor to modeling. For instance, we may be interested in the relationship between the delay and the gap (@fig-delayvsgap).
+We are also interested in looking at the relationship between two variables. We will draw heavily on graphs for this, and appropriate types, for different circumstances, were discussed in @sec-static-communication. Scatter plots are especially useful here for continuous variables, and are a good precursor to modeling. For instance, we may be interested in the relationship between the delay and the gap, which is the number of minutes between trains (@fig-delayvsgap).
 
 ```{r}
 #| eval: true
@@ -922,7 +919,7 @@ write_csv(airbnb_data, "airbnb_data.csv")
 airbnb_data
 ```
 
-It is extremely important that we refer to this local copy of our data when we run our scripts to explore the data, rather than asking the Inside Airbnb servers for the data each time. Indeed it might be worth even commenting out this call to their servers to ensure that we do not stress their service.
+It is extremely important that we refer to this local copy of our data when we run our scripts to explore the data, rather than asking the Inside Airbnb servers for the data each time. Indeed it might be worth even commenting out this call to their servers to ensure that we do not accidentally stress their service.
 
 ```{r}
 #| eval: false
@@ -1100,7 +1097,7 @@ airbnb_data_less_1000 <-
   filter(price < 1000)
 ```
 
-Superhosts are especially experienced Airbnb hosts, and we might be interested to learn more about them. For instance, a host either is or is not a superhost, and so we would not expect any NAs. But we can see that there are. It might be that the host removed a listing or similar. For now, we will remove them from the dataset.
+Superhosts are especially experienced Airbnb hosts, and we might be interested to learn more about them. For instance, a host either is or is not a superhost, and so we would not expect any NAs. But we can see that there are. It might be that the host removed a listing or similar.
 
 ```{r}
 #| eval: true
@@ -1288,7 +1285,7 @@ airbnb_data_has_reviews |>
   )
 ```
 
-For now, we will remove anyone with a NA in their response time. This will again removes roughly another 20 per cent of the observations.
+For now, we will remove anyone with a NA in their response time. This will again remove roughly another 20 per cent of the observations.
 
 ```{r}
 #| eval: true
@@ -1310,7 +1307,7 @@ airbnb_data_selected |>
   filter(listings_count_is_same == 0)
 ```
 
-As there are no differences in this dataset, we can just remove one variable for now and have a look at the other one (@fig-airbnbhostlisting).
+As there are no differences in this dataset, we can just remove one version of the variable for now and have a look at the other one (@fig-airbnbhostlisting).
 
 ```{r}
 #| eval: true
@@ -1334,7 +1331,7 @@ airbnb_data_selected |>
   )
 ```
 
-Based on @fig-airbnbhostlisting we can see there are a large number who have somewhere in the 2-500 properties range, but the usual long tail. The number with many listings is unexpected and worth following up on. And there are a bunch with NA that we will need to deal with.
+Based on @fig-airbnbhostlisting we can see there are a large number who have somewhere in the 2-500 properties range, by the usual long tail. The number with many listings is unexpected and worth following up on. And there are a bunch with NA that we will need to deal with.
 
 ```{r}
 #| eval: true
@@ -1345,7 +1342,7 @@ airbnb_data_selected |>
   head()
 ```
 
-There is nothing that immediately jumps out as odd about the people with more than 10 listings, but there must be something going on. For now, we will focus on only those with one property for simplicity.
+There is nothing that immediately jumps out as odd about the people with more than 10 listings, but there must be something going on. For now, we will move on and focus on only those with one property for simplicity.
 
 ```{r}
 #| eval: true
@@ -1442,7 +1439,7 @@ airbnb_data_selected |>
 ```
 
 
-We will now run some models on our dataset. We will cover modeling in more detail in @sec-its-just-a-linear-model, but we can use models during EDA to help get a better sense of relationships that may exist between multiple variables in a dataset. For instance, we may like to see whether we can forecast whether someone is a super host, and the factors that go into explaining that. As the dependent variable is binary, this is a good opportunity to use logistic regression. We expect that better reviews will be associated with faster responses and higher reviews. Specifically, the model that we estimate is:
+We will now run some models on our dataset. We will cover modeling in more detail in @sec-its-just-a-linear-model, but we can use models during EDA to help get a better sense of relationships that may exist between multiple variables in a dataset. For instance, we may like to see whether we can forecast whether someone is a super host, and the factors that go into explaining that. As the dependent variable is binary, this is a good opportunity to use logistic regression. We expect that super host status will be associated with faster responses and better reviews. Specifically, the model that we estimate is:
 
 $$\mbox{Prob(Is super host} = 1) = \mbox{logit}^{-1}\left( \beta_0 + \beta_1 \mbox{Response time} + \beta_2 \mbox{Reviews} + \epsilon\right)$$
 
@@ -1627,7 +1624,7 @@ We see that each of the levels is positively associated with the probability of 
 1. In your own words what is exploratory data analysis (this will be difficult, but please write only one nuanced paragraph)?
 2. In Tukey's words, what is exploratory data analysis (please write one paragraph)?
 3. Who was Tukey (please write a paragraph or two)? 
-6. If you have a dataset called "my_data", which has two columns: "first_col" and "second_col", then could you please write some rough R code that would generate a graph (the type of graph does not matter).
+6. Suppose you have a dataset called "my_data", which has two columns: "first_col" and "second_col". Please write some rough R code that would generate a graph (the type of graph does not matter).
 7. Consider a dataset that has 500 rows and 3 columns, so there are 1,500 cells. If 100 of the cells are missing data for at least one of the columns, then would you remove the whole row your dataset or try to run your analysis on the data as is, or some other procedure? What if your dataset had 10,000 rows instead, but the same number of missing cells?
 8. Please note three ways of identifying unusual values.
 9. What is the difference between a categorical and continuous variable?
@@ -1641,7 +1638,7 @@ We see that each of the levels is positively associated with the probability of 
     5. Repeat that process, but without contributions from the candidates themselves.
     6. How many contributors gave money to more than one candidate?
 13. Name three geoms that produce graphs that have bars on them in `ggplot()`.
-14. Consider a dataset 10,000 observations and 27 variables. For each observation, there is at least one missing variable. Please discuss, in a paragraph or two, the steps that you would take to understand what is going on.
+14. Consider a dataset with 10,000 observations and 27 variables. For each observation, there is at least one missing variable. Please discuss, in a paragraph or two, the steps that you would take to understand what is going on.
 15. Known missing data, are those that leave holes in your dataset. But what about data that were never collected? Please look at @mcclelland2019lock and @luscombe2020policing. Look into how they gathered their dataset and what it took to put this together. What is in the dataset and why? What is missing and why? How could this affect the results? How might similar biases enter into other datasets that you have used or read about? 
 
 ### Tutorial {.unnumbered}
