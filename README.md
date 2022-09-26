@@ -21,6 +21,10 @@ politics_datasets <-
 ### 28 August 2022
 
 Need to add an example of differential privacy.
+
+### 25 Spetember 2022
+
+Logistic regression is getting flipped at some point. Need to trace through Biden/Trump and work out where it is.
   
 
 ### Check
