@@ -16,7 +16,7 @@ engine: knitr
 
 - Running an experiment is not always possible, but we can use various approaches to nonetheless be able to speak to causality to some extent. The first step is to be clear about the relationships that we expect by building a DAG.
 - We need to be careful of common paradoxes including Simpson's paradox and Berkson's paradox, and be aware of pitfalls from matching.
-- We can use difference in differences when we have data on both treated and untreated units at both time periods. Regression discontinuity is useful when a group is either treated or not, but apart from the treatment, they are very similar. And instrumental variables is an approach used to estimate causality indirectly through another variable.
+- We can use difference in differences when we have data on both treated and untreated units at both time periods. Regression discontinuity is useful when a group is either treated or not, but the two groups are very similar apart from the treatment. And instrumental variables is an approach used to estimate causality indirectly through another variable.
 - In general, these approaches need to be used with humility and concern for weaknesses and assumptions, both those that we can test and those that we cannot.
 
 **Key packages and functions**
@@ -51,14 +51,14 @@ engine: knitr
 
 Life is grand when we can conduct experiments to be able to speak to causality. But there are circumstances in which we cannot run an experiment, yet nonetheless want to be able to make causal claims. And data from outside experiments have value that experiments do not have. In this chapter we discuss the circumstances and methods that allow us to speak to causality using observational data. We use relatively simple methods, in sophisticated ways, drawing from statistics, but also a variety of social sciences, including economics, and political science, as well as epidemiology.
 
-For instance, @dagan2021bnt162b2 use observational data to confirm the effectiveness of the Pfizer-BioNTech vaccine. They discuss how one concern with using observational data in this way is confounding, which is where we are concerned that there is some variable that affects both the explanatory and dependent variables and can lead to spurious relationships. @dagan2021bnt162b2 adjust for this by first making a list of potential confounders, such as age, sex, geographic location, healthcare usage and then adjusting for each of them, by matching, one-to-one between people that were vaccinated and those that were not. The experimental data guided the use of observational data, and the larger size of the later enabled a focus on specific age-groups and extent of disease.
+For instance, @dagan2021bnt162b2 use observational data to confirm the effectiveness of the Pfizer-BioNTech vaccine. They discuss how one concern with using observational data in this way is confounding, which is where we are concerned that there is some variable that affects both the explanatory and dependent variables and can lead to spurious relationships. @dagan2021bnt162b2 adjust for this by first making a list of potential confounders, such as age, sex, geographic location, healthcare usage and then adjusting for each of them, by matching, one-to-one between people that were vaccinated and those that were not. The experimental data guided the use of observational data, and the larger size of the latter enabled a focus on specific age-groups and extent of disease.
 
 This chapter is about using observational data in sophisticated ways. How we can nonetheless be comfortable making causal statements, even when we cannot run A/B tests or RCTs. Indeed, in what circumstances may we prefer to not run those or to run observational-based approaches in addition to them. We cover three of the major methods: difference in differences; regression discontinuity; and instrumental variables.
 
 
 ## Directed acyclic graphs
 
-When we are discussing causality, it can help to be specific about what we mean. It is easy to get caught up in observational data and trick ourselves. It is important to think hard, and to use all the tools available to us. For instance, in that earlier example, @dagan2021bnt162b2 were able to use experimental data as a guide. Most of the time, we will not be so lucky as to have both experimental data and observational data available to us. One framework that can help with thinking hard about our data is the use of directed acyclic graph (DAG). DAGs are a fancy name for a flow diagram and involves drawing arrows and lines between the variables to indicate the relationship between them. 
+When we are discussing causality, it can help to be specific about what we mean. It is easy to get caught up in observational data and trick ourselves. It is important to think hard, and to use all the tools available to us. For instance, in that earlier example, @dagan2021bnt162b2 were able to use experimental data as a guide. Most of the time, we will not be so lucky as to have both experimental data and observational data available to us. One framework that can help with thinking hard about our data is the use of directed acyclic graphs (DAG). DAGs are a fancy name for a flow diagram and involves drawing arrows and lines between the variables to indicate the relationship between them. 
 
 To construct them we use Graphviz, which is an open-source package for package graph visualization and is built into Quarto. The code needs to be wrapped in a "dot" chunk rather than "R", and the chunk options are set with "//|" instead of "#|". Alternatives that do not require this include the use of `DiagrammeR` [@citeDiagrammeR] and `ggdag` [@citeggdag]. We provide the whole chunk for the first DAG, but then, only provide the code for the others.
 
@@ -94,7 +94,7 @@ digraph D {
 }
 ```
 
-In @fig-dot-firstdag, we think that *x* causes *y*. We could build another DAG where the situation is less clear. To make the examples a little easier to follow, we will switch to thinking about a hypothetical relationship between income and happiness, with consideration of variables that could affect that relationship. In this first one we consider the relationship between income and happiness, along with education (@fig-dot-educationasconfounder).
+In @fig-dot-firstdag, we are saying that we think *x* causes *y*. We could build another DAG where the situation is less clear. To make the examples a little easier to follow, we will switch to thinking about a hypothetical relationship between income and happiness, with consideration of variables that could affect that relationship. In this first one we consider the relationship between income and happiness, along with education (@fig-dot-educationasconfounder).
 
 <!-- ```{r} -->
 <!-- #| fig-cap: "A DAG showing education as a confounder" -->
@@ -229,15 +229,15 @@ digraph D {
 
 In this case, exercise is called a "collider" and if we were to condition on it, then we would create a misleading relationship. Income influences exercise, but a person's happiness also affects this. Exercise is a collider because both the independent and dependent variable of interest influence it.
 
-It is important to be clear about this: we must create the DAG ourselves, in the same way that we must put together the model ourselves. There is nothing that will create it for us. This means that we need to think carefully about the situation. Because it is one thing to see something in the DAG and then do something about it. But it is another to not even know that it is there. @citemcelreath [p. 180] describes these as haunted DAGs. DAGs are helpful, but they are just a tool to help us think deeply about our situation. 
+It is important to be clear about this: we must create the DAG ourselves, in the same way that we must put together the model ourselves. There is nothing that will create it for us. This means that we need to think carefully about the situation. Because it is one thing to see something in the DAG and then do something about it, but it is another to not even know that it is there. @citemcelreath [p. 180] describes these as haunted DAGs. DAGs are helpful, but they are just a tool to help us think deeply about our situation. 
 
 When we are building models, it can be tempting to include as many independent variables as possible. DAGs show clearly why we need to be more thoughtful. For instance, if a variable is a confounder, then we would want to adjust for it, whereas if a variable was a collider then we would not. We can never know the truth, and we are informed by aspects such as theory, what we are interested in, research design, limitations of the data, or our own limitations as researchers, to name a few. Knowing the limits is as important as reporting the model. Data and models with flaws are still useful, if you acknowledge those flaws. The work of thinking about a situation is never done, and relies on others, which is why we need to make all our work as reproducible as possible.
 
 ## Two common paradoxes
 
-### Simpson's paradox
-
 There are two situations where data can trick us that are so common that we will explicitly go through them. These are: 1) Simpson's paradox, and 2) Berkson's paradox. It is important to keep these situations in mind, and the use of DAGs can help identify them. 
+
+### Simpson's paradox
 
 Simpson's paradox occurs when we estimate some relationship for subsets of our data, but a different relationship when we consider the entire dataset [@simpson1951interpretation]. It is a particular case of the ecological fallacy, which is when we try to make claims about individuals, based on their group. For instance, it may be that there is a positive relationship between undergraduate grades and performance in graduate school in two departments when considering each department individually. But if undergraduate grades tended to be higher in one department than another while graduate school performance tended to be opposite, we may find a negative relationship between undergraduate grades and performance in graduate school. We can simulate some data to show this more clearly (@fig-simpsonsparadox).
 
@@ -301,7 +301,7 @@ both_departments |>
   theme(legend.position = "bottom")
 ```
 
-Simpson's paradox is often illustrated using real-world data from University of California, Berkeley, on graduate admissions [@bickel1975sex]. This paper was mentioned in @sec-on-writing as having one of the greatest sub-titles ever published. More recently, as mentioned in its documentation, the "penguins" dataset from `palmerpenguins` [@palmerpenguins] provides an example of Simpson's paradox, using real-world data (@fig-simpsonsparadoxinpenguins).
+Simpson's paradox is often illustrated using real-world data from University of California, Berkeley, on graduate admissions [@bickel1975sex]. This paper was mentioned in @sec-on-writing as having one of the greatest sub-titles ever published. More recently, as mentioned in its documentation, the "penguins" dataset from `palmerpenguins` [@palmerpenguins] provides an example of Simpson's paradox, using real-world data on the relationship between body mass and bill depth in different species of penguins (@fig-simpsonsparadoxinpenguins). The overall negative trend occurs because Gentoo penguins tend to be heavier but with shorter bills compared to Adelie and Chinstrap penguins.
 
 ```{r}
 #| eval: true
@@ -334,7 +334,7 @@ penguins |>
 
 ### Berkson's paradox
 
-Berkson's paradox occurs when we estimate some relationship based on the dataset that we have. But because the dataset is so selected, the relationship is different in a more general dataset [@citeberkson]. For instance, if we have a dataset of professional cyclists then we might find there is no relationship between their VO2 max and their chance of winning a bike race [@vomaxpaper; @anothernicevomaxpaper]. But if we had a dataset of the general population then we might find a relationship between these two variables. The professional dataset has just been so selected that the relationship disappears; one cannot become a professional cyclist unless one has a good-enough VO2 max, but among professional cyclists everyone has a good-enough VO2 max. Again, we can simulate some data to show this more clearly (@fig-berksonsparadox).
+Berkson's paradox occurs when we estimate some relationship based on the dataset that we have, but because the dataset is so selected the relationship is different in a more general dataset [@citeberkson]. For instance, if we have a dataset of professional cyclists then we might find there is no relationship between their VO2 max and their chance of winning a bike race [@vomaxpaper; @anothernicevomaxpaper]. But if we had a dataset of the general population then we might find a relationship between these two variables. The professional dataset has just been so selected that the relationship disappears; one cannot become a professional cyclist unless one has a good-enough VO2 max, but among professional cyclists everyone has a good-enough VO2 max. Again, we can simulate some data to show this more clearly (@fig-berksonsparadox).
 
 ```{r}
 #| eval: true
@@ -405,7 +405,7 @@ With observational data, sometimes there are differences between our two groups 
 
 Consider wanting to know the effect of a new tennis racket on serve speed. One way to test this would be to measure the difference between, say, Roger Federer's serve speed without the tennis racket and the serve speed of an enthusiastic amateur, let us call them Ville, with the tennis racket. Yes, we would find a difference, but would we know how much to attribute to the tennis racket? Another way would be to consider the difference between Ville's serve speed without the new tennis racket and Ville's serve speed with the new tennis racket. But what if serves were just getting faster naturally over time? Instead, we combine the two approaches to look at the difference in the differences.
 
-We begin by measuring Federer's serve speed and compare it to Ville's serve speed, both without the new racket. We then measure Federer's serve speed again, and measure Ville's serve speed with the new racket. That difference in the differences would then be the estimate of the effect of the new racket. There are a few key assumptions that we need to make for this analysis to be appropriate:
+We begin by measuring Federer's serve speed and compare it to Ville's serve speed, both without the new racket. We then measure Federer's serve speed again, and measure Ville's serve speed with the new racket. That difference in the differences would then be the estimate of the effect of the new racket. There are a few key questions we must ask to see if this analysis is appropriate:
 
 1) Is there something else that may have affected only Ville, and not Federer that could affect Ville's serve speed?
 2) Is it likely that Federer and Ville have the same trajectory of serve speed improvement? This is the "parallel trends" assumption, and it dominates many discussions of difference in differences analysis. 
@@ -497,8 +497,11 @@ average_differences <-
   ) |>
   mutate(difference = time_1 - time_0) |>
   group_by(treatment_group) |>
+  # Average difference between old racket and new racket serve speed, 
+  # within groups (pro and amateur)
   summarize(average_difference = mean(difference))
 
+# Difference between the average differences of each group
 average_differences$average_difference[2] - average_differences$average_difference[1]
 ```
 
@@ -586,7 +589,7 @@ modelsummary(
 
 ### Assumptions
 
-If we want to use difference in differences, then we need to satisfy the assumptions. There were three that were touched on earlier, but here we will focus on one: the "parallel trends" assumption. The parallel trends assumption haunts everything to do with difference in differences analysis because we can never prove it, we can just be convinced of it, and try to convince others.
+If we want to use difference in differences, then we need to satisfy the assumptions. There were three that were touched on earlier, but here we will focus on one: the "parallel trends" assumption. The parallel trends assumption haunts everything to do with difference in differences analysis because we can never prove it; we can just be convinced of it, and try to convince others.
 
 To see why we can never prove it, consider an example in which we want to know the effect of a new stadium on a professional sports team's wins/loses. To do this we consider two teams: the Golden State Warriors and the Toronto Raptors. The Warriors changed stadiums at the start of the 2019-20 season, while the Raptors did not, so we will consider four time periods: the 2016-17 season, 2017-18 season, 2018-19 season, and finally we will compare the performance with the one after they moved, so the 2019-20 season. The Raptors here act as our counterfactual. This means that we assume the relationship between the Warriors and the Raptors, in the absence of a new stadium, would have continued to change in a consistent way. But the fundamental problem of causal inference means that we can never know that for certain. We must present sufficient evidence to assuage any concerns that a reader may have. 
 
@@ -610,7 +613,7 @@ There are four main threats to validity when we use difference in differences, a
 
 In this case study we introduce @angelucci2019newspapers, and replicate its main findings. 
 
-The business model of newspapers was challenged by the internet and many local newspapers have closed. And this issue is not new. When television was introduced, there were similar concerns. @angelucci2019newspapers use the introduction of television advertising in France, announced in 1967, to examine the effect of decreased advertising revenue on newspapers. They create a dataset of French newspapers from 1960 to 1974 and then use difference in differences to examine the effect of the reduction in advertising revenues on newspapers' content and prices. The change that they focus on is the introduction of television advertising, which they argue affected national newspapers more than local newspapers. They find that this change results in both less journalism-content in the newspapers and lower newspaper prices. Focusing on this change, and analyzing it using difference in differences, is important because it allows us to disentangle a few competing effects. For instance, did newspapers become redundant because they could no longer charge high prices for their advertisements, or because consumers preferred to get their news from the television?
+The business model of newspapers has been challenged by the internet and many local newspapers have closed. And this issue is not new. When television was introduced, there were similar concerns. @angelucci2019newspapers use the introduction of television advertising in France, announced in 1967, to examine the effect of decreased advertising revenue on newspapers. They create a dataset of French newspapers from 1960 to 1974 and then use difference in differences to examine the effect of the reduction in advertising revenues on newspapers' content and prices. The change that they focus on is the introduction of television advertising, which they argue affected national newspapers more than local newspapers. They find that this change results in both less journalism-content in the newspapers and lower newspaper prices. Focusing on this change, and analyzing it using difference in differences, is important because it allows us to disentangle a few competing effects. For instance, did newspapers become redundant because they could no longer charge high prices for their advertisements, or because consumers preferred to get their news from the television?
 
 We can get free access to the [data](https://www.openicpsr.org/openicpsr/project/116438/version/V1/view) that underpins @angelucci2019newspapers after registration. The dataset is in the Stata data format, ".dta", which we can read with `read_dta()` from `haven` [@citehaven]. The file that we are interested in is "Angelucci_Cage_AEJMicro_dataset.dta", which is the "dta" folder.
 
@@ -891,7 +894,7 @@ modelsummary(
 )
 ```
 
-In general, we are able to replicate the main results of @angelucci2019newspapers and find that in many cases there appears to be a difference from 1967 onward. Our results are similar to @angelucci2019newspapers. @angelucci2019newspapers [pp. 353-358] also includes an excellent example of the discussion of interpretation, external validity, and robustness that is required for difference in differences models.
+In general, we are able to replicate the main results of @angelucci2019newspapers and find that in many cases there appears to be a difference from 1967 onward. @angelucci2019newspapers [pp. 353-358] also includes an excellent example of the discussion of interpretation, external validity, and robustness that is required for difference in differences models.
 
 
 
@@ -951,9 +954,9 @@ Difference in differences is a powerful analysis framework. But it can be tough 
 
 We can only match based on observable variables. For instance, age-group or education. At two different times we compare smoking rates in 18-year-olds in one city with smoking rates in 18-year-olds in another city. This would be a coarse match because we know that there are many differences between 18-year-olds, even in terms of the variables that we commonly observe, say gender and education. One way to deal with this would be to create sub-groups: 18-year-old males with a high school education, etc. But then the sample sizes quickly become small. We also have the issue of how to deal with continuous variables. And, is a 18-year-old really that different to a 19-year-old? Why not also compare with them?
 
-One way to proceed is to consider a nearest neighbor approach. But there can be limited concern for uncertainty with this approach. There can also be an issue with having many variables because we end up with a high-dimension graph. This leads to propensity score matching. Here we will explain the process of propensity score matching, but it is not something that should be widely used [@king2019propensity], and we will then go through why that is the case.
+One way to proceed is to consider a nearest neighbour approach, but there can be limited concern for uncertainty with this approach. There can also be an issue with having many variables because we end up with a high-dimension graph. This leads to propensity score matching. Here we will explain the process of propensity score matching, how it is not something that should be widely used [@king2019propensity], and why that is the case.
 
-Propensity score matching involves assigning some probability to each observation. We construct that probability based on the observation's values for the independent variables, before treatment. That probability is our best guess at the probability of the observation being treated, regardless of whether it was treated or not. For instance, if 18-year-old males were treated but 19-year-old males were not, then as there is not much difference between 18-year-old males and 19-year-old males our assigned probability would be similar. We can then compare the outcomes of observations with similar propensity scores.
+Propensity score matching involves assigning some probability to each observation. We construct that probability based on the observation's values for the independent variables, before treatment. That probability is our best guess at the probability of the observation being treated, regardless of whether it was treated or not. For instance, if 18-year-old males were treated but 19-year-old males were not, then, as there is not much difference between 18-year-old males and 19-year-old males in general, our assigned probability would be similar. We can then compare the outcomes of observations with similar propensity scores.
 
 One advantage of propensity score matching is that is allows us to easily consider many independent variables at once, and it can be constructed using logistic regression. To be more specific we can simulate some data. We will pretend that we work for a large online retailer. We are going to treat some individuals with free shipping to see what happens to their average purchase.
 
@@ -1104,13 +1107,13 @@ modelsummary(propensity_score_regression)
 We cover propensity score matching because it is widely used. But there are many issues with propensity score matching that mean that humility is needed [@king2019propensity]. These include:
 
 1. Unobservables. Propensity score matching cannot match on unobserved variables. This may be fine in a classroom setting, but in more realistic settings it will likely cause issues. It is very difficult to understand why individuals that appear to be so similar, would have received different treatments, unless there is something unobserved that causes the difference. As propensity score matching cannot account for these, it is difficult to know which features are actually being brought together.
-2. Modelling. The results of propensity score matching, tend to be specific to the model that is used. As there is considerable flexibility as to which model is used, this enables researchers to pick through matches to find that suits. Additionally, because the two regression steps (the matching and the analysis) are conducted separately, there is no propagation of uncertainty.
+2. Modelling. The results of propensity score matching tend to be specific to the model that is used. As there is considerable flexibility as to which model is used, this enables researchers to pick through matches to find one that suits. Additionally, because the two regression steps (the matching and the analysis) are conducted separately, there is no propagation of uncertainty.
 
 The fundamental problem of unobservables can never be shown to be inconsequential because that would require the unobserved data. Those who want to use propensity score matching, and other matching methods, need to be able to argue convincingly that it is appropriate. @mckenzieforthedefence presents a few cases where this is possible, for instance, when there are capacity limits. As is the common theme of this book, such cases will require focusing, with extreme zeal, on the data and a deep understanding of the situation that produced it.
 
 ## Regression discontinuity design
 
-Regression discontinuity design (RDD) was established by @thistlethwaite1960regression and is a popular way to get causality when there is a continuous variable with cut-offs that determine treatment. Is there a difference between a student who gets 79 per cent and a student who gets 80 per cent? Probably not much, but one may get an A-, while the other may get a B+, and seeing that on a transcript could affect who gets a job which could affect income. In this case the percentage is a "forcing variable" and the cut-off for an A- is a "threshold". As the treatment is determined by the forcing variable we need to control for that variable. And, these seemingly arbitrary cut-offs can be seen all the time. Hence, there has been a great deal of work using RDD.
+Regression discontinuity design (RDD) was established by @thistlethwaite1960regression and is a popular way to get causality when there is a continuous variable with cut-offs that determine treatment. Is there a difference between a student who gets 79 per cent and a student who gets 80 per cent? Probably not much, but one may get an A-, while the other may get a B+, and seeing that on a transcript could affect who gets a job which could affect income. In this case the percentage is a "forcing variable" or "forcing variable" and the cut-off for an A- is a "threshold". As the treatment is determined by the forcing variable we need to control for that variable. And, these seemingly arbitrary cut-offs can be seen all the time. Hence, there has been a great deal of work using RDD.
 
 There is sometimes slightly different terminology used when it comes to RDD. For instance, @Cunningham2021 refers to the forcing function as a running variable. The exact terminology that is used does not matter provided we use it consistently.  
 
@@ -1180,7 +1183,7 @@ rdd_example_data |>
   )
 ```
 
-We can use a binary variable with linear regression to estimate the effect. We expect the coefficient to be around two, which is what we simulated, and what we find (@tbl-rddexample).
+We can use a binary variable with linear regression to estimate the effect of getting a mark over 80 on income. We expect the coefficient to be around two, which is what we simulated, and what we find (@tbl-rddexample).
 
 ```{r}
 #| echo: true
@@ -1260,7 +1263,7 @@ modelsummary(
 )
 ```
 
-There are various caveats to this estimate that we will discuss, but the essentials of RDD are here. Given an appropriate set-up, and model, an RDD can compare favorably to randomized trials [@bloombellreiman2020].
+There are various caveats to this estimate that we will discuss, but the essentials of RDD are here. Given an appropriate set-up, and model, an RDD can compare favourably to randomized trials [@bloombellreiman2020].
 
 We could also implement RDD using `rdrobust` [@rdrobust]. The advantage of this approach is that many common extensions are easily available. 
 
@@ -1287,9 +1290,9 @@ The key assumptions of RDD are [@Cunningham2021, p. 163]:
 
 The first assumption is largely about being unable to manipulate the cut-off, and ensures that the cut-off has meaning. The second assumption enables us to be confident that people on either side of the threshold are similar, apart from just happening to just fall on either side of the threshold.
 
-When we discussed randomized control trials and A/B testing in @sec-hunt-data the randomized assignment of the treatment meant that the control and treatment groups were the same, but for the treatment. Then we moved to difference in differences, and we assumed that there was a common trend between the treated and control groups. We allowed that the groups could be different, but that we could "difference out" their differences. Finally, we considered matching, and we said that even if we the control and treatment groups seemed quite different, we were able to match, to some extent, those who were treated with a group that were similar to them in all ways, apart from the fact that they were not treated.
+When we discussed randomized control trials and A/B testing in @sec-hunt-data the randomized assignment of the treatment meant that the control and treatment groups were the same, but for the treatment. Then we moved to difference in differences, and we assumed that there was a common trend between the treated and control groups. We allowed that the groups could be different, but that we could "difference out" their differences. Finally, we considered matching, and we said that even if the control and treatment groups seemed quite different, we were able to match, to some extent, those who were treated with a group that were similar to them in all ways, apart from the fact that they were not treated.
 
-In regression discontinuity we consider a slightly different setting. The two groups are completely different in terms of the forcing variable. They are on either side of the threshold. There is no overlap at all. But we know the threshold and believe that those on either side are essentially matched. Let us consider the 2019 NBA Eastern Conference Semifinals - Toronto and the Philadelphia. Game 1: Raptors win 108-95; Game 2: 76ers win 94-89; Game 3: 76ers win 116-95; Game 4: Raptors win 101-96; Game 5: Raptors win 125-89; Game 6: 76ers win 112-101; and finally, Game 7: Raptors win 92-90, because of a ball that win in after bouncing on the rim four times. Was there really that much difference between the teams?
+In regression discontinuity we consider a slightly different setting. The two groups are completely different in terms of the forcing variable. They are on either side of the threshold. There is no overlap at all. But we know the threshold and believe that those on either side are essentially matched. Let us consider the 2019 NBA Eastern Conference Semifinals - Toronto and Philadelphia. Game 1: Raptors win 108-95; Game 2: 76ers win 94-89; Game 3: 76ers win 116-95; Game 4: Raptors win 101-96; Game 5: Raptors win 125-89; Game 6: 76ers win 112-101; and finally, Game 7: Raptors win 92-90, because of a ball that win in after bouncing on the rim four times. Was there really that much difference between the teams?
 
 The continuity assumption is important, but we cannot test this as it is based on a counterfactual. Instead, we need to convince people of it. Ways to do this include: 
 
@@ -1302,7 +1305,7 @@ The continuity assumption is important, but we cannot test this as it is based o
 
 The threshold is also important. For instance, is there an actual shift or is there a non-linear relationship?
 
-There are a variety of weaknesses of RDD including: 
+There are a variety of weaknesses of RDD, including: 
 
 - External validity may be difficult. For instance, when we think about the A-/B+ example, it is hard to see those generalizing to also B-/C+ students.
 - The important responses are those that are close to the cut-off. This means that even if we have many A and B students, they do not help much. Hence, we need a lot of data or we may have concerns about our ability to support our claims [@green2009testing].
@@ -1356,14 +1359,14 @@ both |>
   theme(legend.position = "bottom")
 ```
 
-The result is that our estimate is dependent on the choice of model. We see this issue occur often in RDD [@gelmanonrdd] and it is especially recommended that higher order polynomials not be used, and instead a the choice of models be either linear, quadratic, or some other smooth function [@gelmanimbensrdd].
+The result is that our estimate of the difference in outcome is dependent on the choice of model. We see this issue occur often in RDD [@gelmanonrdd] and it is especially recommended that higher order polynomials not be used, and instead a the choice of models be either linear, quadratic, or some other smooth function [@gelmanimbensrdd].
 
 
 ### Alcohol and crime in California
 
 <!-- Voting and political interest in Ghent;  -->
 
-There are many opportunities to use regression discontinuity design. For instance, we often see it used in elections where one candidate barely wins. In US House elections between 1942 an 2008 @caugheysekhon2011 showed that there is actually considerable difference between bare winners and bare losers, and highlight the fact that one of the advantages of regression discontinuity is the fact that the assumptions can be tested. Another common use is where there is a somewhat arbitrary cut-off. For instance, in much of the USA the legal drinking age is 21. @carpenterdobkin consider the possible effect of alcohol on crime by comparing arrest and other records of those who are either side of 21 in California. They find those who are slightly over 21 are slightly more likely to be arrested than those slightly under 21. We will 
+There are many opportunities to use regression discontinuity design. For instance, we often see it used in elections where one candidate barely wins. In US House elections between 1942 and 2008 @caugheysekhon2011 showed that there is actually considerable difference between bare winners and bare losers, and highlight that one of the advantages of regression discontinuity is the fact that the assumptions can be tested. Another common use is when there is a somewhat arbitrary cut-off. For instance, in much of the USA the legal drinking age is 21. @carpenterdobkin consider the possible effect of alcohol on crime by comparing arrests and other records of those who are either side of 21 in California. They find those who are slightly over 21 are slightly more likely to be arrested than those slightly under 21. We will 
 <!-- first revisit X in the context of elections in Ghent, and  -->
 revisit @carpenterdobkin in the context of crime in California.
 
@@ -1398,7 +1401,7 @@ revisit @carpenterdobkin in the context of crime in California.
 <!-- ``` -->
 
 
-We can obtain their replication data [@carpenterdobkinreplicationdata] from [here](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/27070). @carpenterdobkin consider a large number of variables and construct a rate, and average this rate over a fortnight, but for simplicity, we will just consider numbers for a few variables: assault, aggravated_assault, DUI, and traffic violations (@fig-californiaarrests).
+We can obtain their replication data [@carpenterdobkinreplicationdata] from [here](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/27070). @carpenterdobkin consider a large number of variables and construct a rate, and average this rate over a fortnight, but for simplicity, we will just consider numbers for a few variables: assault, aggravated assault, DUI, and traffic violations (@fig-californiaarrests).
 
 ```{r}
 #| eval: false
@@ -1715,10 +1718,13 @@ Finally, we can use the tax rate as an instrumental variable to estimate the eff
 health_on_tax <- lm(health ~ tax, data = iv_example_data)
 smoker_on_tax <- lm(smoker ~ tax, data = iv_example_data)
 
-coef(health_on_tax)["tax"] / coef(smoker_on_tax)["tax"]
+tibble(coefficient = c('health ~ tax', 'smoker ~ tax', 'ratio'),
+       value = c(coef(health_on_tax)["tax"],
+         coef(smoker_on_tax)["tax"],
+         coef(health_on_tax)["tax"] / coef(smoker_on_tax)["tax"]))
 ```
 
-We find that if you smoke then your health is likely to be worse than if you do not smoke.
+By understanding the effect of tax rates on both smoking and health, we find that if you smoke then your health is likely to be worse than if you do not smoke.
 
 Equivalently, we can think of instrumental variables in a two-stage regression context. 
 
@@ -1853,7 +1859,7 @@ When considering an instrumental variable approach, it is important to spend con
 3. *(Acquire)* Please describe a possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
 5. *(Communicate)* Please write two paragraphs about what you did.
-1. For three months Sharla Gelfand shared two functions each day: one that was new to them and another that they already knew and love. Please go the "Two Functions Most Days" GitHub [repo](https://github.com/sharlagelfand/twofunctionsmostdays), and find a package that they mention that you have never used. Find the relevant website for the package, and then in a paragraph or two, describe what the package does and a context in which it could be useful to you.
+1. For three months Sharla Gelfand shared two functions each day: one that was new to them and another that they already knew and loved. Please go the "Two Functions Most Days" GitHub [repo](https://github.com/sharlagelfand/twofunctionsmostdays), and find a package that they mention that you have never used. Find the relevant website for the package, and then in a paragraph or two, describe what the package does and a context in which it could be useful to you.
 2. Please again, go to Sharla's "Two Functions Most Days" GitHub [repo](https://github.com/sharlagelfand/twofunctionsmostdays), and find a function that they mention that you have never used. Please look at the help file for that function, and then detail the arguments of the function, and a context in which it could be useful to you.
 3. What is propensity score matching? If you were matching people, then what are some of the features that you would like to match on? What sort of ethical questions does collecting and storing such information raise for you?
 4. Putting the ethical issues to one side, following @king2019propensity, in at least two paragraphs, please describe some of the statistical concerns with propensity score matching.
