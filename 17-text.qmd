@@ -54,11 +54,11 @@ engine: knitr
 
 ## Introduction
 
-Text is all around us. In many cases text is the earliest type of data that we are exposed to. Increases in computational power, the development of new methods, and the enormous availability of text, means that there has been a great deal of interest in using text as data. And they are an exciting option to have. For instance, text analysis of state-run newspapers in African countries can identify manipulation by governments [@Hassan2022]. The analysis of notes in Electronic Health Records (EHR) can improve the efficiency of disease prediction [@jessgronsbell]. And analysis of US congressional records indicates just how much women legislators are interrupted than men [@millersutherland2022].
+Text is all around us. In many cases text is the earliest type of data that we are exposed to. Increases in computational power, the development of new methods, and the enormous availability of text, means that there has been a great deal of interest in using text as data. And they are an exciting option to have. For instance, text analysis of state-run newspapers in African countries can identify manipulation by governments [@Hassan2022]. The analysis of notes in Electronic Health Records (EHR) can improve the efficiency of disease prediction [@jessgronsbell]. And analysis of US congressional records indicates just how much women legislators are interrupted by men [@millersutherland2022].
 
-Earlier approaches to the analysis of text tend to convert words into numbers, divorced of context. They could then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text, which can bring additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, you can do more by knowing that a crocodile could eat you, while a tree probably would not.
+Earlier approaches to the analysis of text tend to convert words into numbers, divorced of context. They could then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text, which can bring additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, you can do more by knowing that a crocodile could eat you while a tree probably would not.
 
-Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with very wide data, insofar as often each variable is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with one variable of words and another of the counts. Considering text as data naturally requires some abstraction from its context. But it is important it is not entirely separated as this can perpetuate historical inequities. For instance, @koenecke2020 find that automated speech recognition systems perform much worse for Black compared with white speakers, and @davidson2019racial find that tweets that use Black American English, which is specifically defined technical term, are classified at hate speech at higher rates than similar tweets in Standard American English, which again is a technical term.
+Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with very wide data, insofar as often each variable is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with one variable of words and another of the counts. Considering text as data naturally requires some abstraction from its context. But it is important it is not entirely separated as this can perpetuate historical inequities. For instance, @koenecke2020 find that automated speech recognition systems perform much worse for Black compared with white speakers, and @davidson2019racial find that tweets that use Black American English, which is a specifically defined technical term, are classified at hate speech at higher rates than similar tweets in Standard American English, which again is a technical term.
 
 In this chapter we cover a variety of approaches that enable us to consider text as data. One exciting aspect of text data is that it is typically not generated for the purposes of our analysis. The trade-off is that we typically must do a bunch more work to get it into a form that we can work with. And there are a lot of decisions to be made in the data cleaning and preparation stages.
 
@@ -144,10 +144,18 @@ stop_word_list <-
   paste(stopwords(source = "snowball"), collapse = " | ")
 
 bookshelf |>
-  mutate(no_stops = str_replace_all(
+  mutate(extra_space = str_replace_all(
     string = first_sentence,
+    pattern = "([ ,.])",  # Spaces and punctuation marks present in text
+    replacement = " \\1"  # Add a space before any of the detected characters
+  )) |>
+  mutate(no_stops = str_replace_all(  # Remove stop words
+    string = extra_space,
     pattern = stop_word_list,
-    replacement = " "
+    replacement = ""
+  )) |>
+  mutate(no_stops = str_squish(  # Remove extra spaces within string
+    string = no_stops
   )) |>
   select(no_stops, first_sentence)
 ```
@@ -155,17 +163,27 @@ bookshelf |>
 There are many different lists of stop words that have been put together by others. For instance, `stopwords()` can use lists including: "snowball", "stopwords-iso", "smart", "marimo", "ancient", and "nltk". More generally, if we decide to use stop words then we often need to augment such lists with project-specific words. We can do this by creating a count of individual words in the corpus, and then sorting by the most common and adding those to the stop words list as appropriate.
 
 ```{r}
+
 stop_word_list_updated <-
   paste("village |", "spiteful |", "possibility |", 
         stop_word_list, collapse = " | ")
 
 bookshelf |>
-  mutate(no_stops = str_replace_all(
+  mutate(extra_space = str_replace_all(  # Add double spaces
     string = first_sentence,
+    pattern = " ",  
+    replacement = "  " 
+  )) |>
+  mutate(no_stops = str_replace_all(  # Remove stop words
+    string = extra_space,
     pattern = stop_word_list_updated,
-    replacement = " "
+    replacement = ""
+  )) |>
+  mutate(no_stops = str_squish(  # Remove extra spaces within string
+    string = no_stops
   )) |>
   select(no_stops)
+
 ```
 
 We can integrate the removal of stopwords into our construction of the DFM with `dfm_remove()`.
@@ -184,7 +202,7 @@ There are times when all we care about is the word, not the case nor punctuation
 ```{r}
 bookshelf |>
   mutate(lower_sentence = str_to_lower(string = first_sentence)) |>
-  select(first_sentence, lower_sentence)
+  select(lower_sentence)
 ```
 
 
@@ -195,7 +213,7 @@ bookshelf |>
     pattern = "[:punct:]",
     replacement = " "
   )) |>
-  select(first_sentence)
+  select(no_punctuation)
 ```
 
 
@@ -208,7 +226,7 @@ bookshelf |>
       replacement = " "
     )
   ) |>
-  select(first_sentence)
+  select(no_numbers)
 ```
 
 As an aside, we can remove letters, numbers, and punctuation with "[:graph:]" in `str_replace_all()`. While this is rarely needed in textbook examples, it is especially useful with real datasets, because they will typically have a small number of unexpected symbols that we need to identify and then remove. We use it to remove everything that we are used to, leaving only that which we are not.
@@ -222,7 +240,7 @@ bookshelf |>
       replacement = " "
     )
   ) |>
-  select(first_sentence, remove_obvious)
+  select(remove_obvious)
 ```
 
 More generally, we can use arguments in `tokens()` from `quanteda()` to do this. 
@@ -247,7 +265,7 @@ books_corpus |>
 
 ### Tuples
 
-A tuple is an ordered list of elements, and in the context of text it is a series of words. If it is two words then we term this a "bi-gram", three words is a "tri-gram", etc. These are an issue when it comes to text cleaning and preparation because we typically need to separate terms based on a space, and this would result in inappropriate separation. 
+A tuple is an ordered list of elements, and in the context of text, it is a series of words. If it is two words then we term this a "bi-gram", three words is a "tri-gram", etc. These are an issue when it comes to text cleaning and preparation because we typically need to separate terms based on a space, and this would result in inappropriate separation. 
 
 This is a clear issue when it comes to place names. For instance, consider "British Columbia", "New Hampshire", "United Kingdom", and "Port Hedland". One way forward is to create a list of such places and then use `str_replace_all()` to add an underbar, for instance, "British_Columbia", "New_Hampshire", "United_Kingdom", and "Port_Hedland". Another option, is to use `tokens_compound()` from `quanteda`.
 
@@ -259,17 +277,44 @@ tokens(a_sentence) |>
   tokens_compound(pattern = phrase(some_places))
 ```
 
-In that case, we knew what the tuples were. But it might be that we were not sure what the common tuples were in the corpus. We could then use `tokens_ngrams()` to identify them. We could ask for, say, all tri-grams, or specify that we were interested in different groups.
+In that case, we knew what the tuples were. But it might be that we were not sure what the common tuples were in the corpus. We could then use `tokens_ngrams()` to identify them. We could ask for, say, all bi-grams in an exerpt from the book "Don Quixote".
 
 ```{r}
-ngrams <- tokens_ngrams(tokens(books_corpus), n = 3)
+library(gutenbergr)
+
+don_quixote <- gutenberg_download(996) |>
+  filter(text != "") |>
+  slice_tail(n = 1000)
+
+don_q_text <- tibble(book = "Don Quixote", 
+                           text = paste(don_quixote$text, collapse = " ") |>
+                             str_replace_all(
+                               pattern = "[:punct:]",
+                               replacement = " "
+                               ) |>
+                             str_replace_all(  # Add double spaces
+                               pattern = " ",
+                               replacement = "  "
+                               ) |>
+                             str_replace_all(  # Remove stop words
+                               pattern = stop_word_list,
+                               replacement = ""
+                               ) |>
+  str_squish())
+                           
+don_q_corpus <-
+  corpus(don_quixote_text, docid_field = "book", text_field = "text")
+  
+ngrams <- tokens_ngrams(tokens(don_q_corpus), n = 2)
 
 ngram_counts <-
   tibble(ngrams = unlist(ngrams)) |>
   count(ngrams, sort = TRUE)
+
+head(ngram_counts)
 ```
 
-Having identifying the common tri-grams we could add them to the list to be changed.
+Having identifying some common bi-grams, we could add them to the list to be changed. This example includes names like Don Quixote and Sancho Panza which would need to remain together for analysis.
 
 ### Stemming and lemmatizing
 
@@ -345,6 +390,8 @@ horoscopes_by_word <-
 horoscopes_counts_by_word <-
   horoscopes_by_word |>
   count(zodiacsign, word, sort = TRUE)
+
+head(horoscopes_counts_by_word)
 ```
 
 We can see that the most popular words appear to be similar for the different zodiacs. At this point, we could use the data in a variety of ways. We might be interested to know which words characterize each group---that is to say, which words are commonly used only in each group. We can do that by first looking at a word's term frequency (TF), which is how many times a word is used in the horoscopes for each zodiac sign. The issue is that there are a lot of words that are commonly used regardless of context. As such, we may also like to look at the inverse document frequency (IDF) in which we "penalize" words that occur in the horoscopes for many zodiac signs. A word that occurs in the horoscopes of many zodiac signs would have a lower IDF than a word that only occurs in the horoscopes of one. The term frequency–inverse document frequency (tf-idf) is then the product of these.
@@ -611,7 +658,7 @@ horoscopes_counts_by_word_tf_idf |>
 
 Sometimes we have a statement, and we want to know what it is about. Sometimes this will be easy, but we do not always have titles for statements, and even when we do, sometimes we do not have titles that define topics in a well-defined and consistent way. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA) method of @Blei2003latent, as implemented by `stm` [@stm].
 
-The key assumption behind the LDA method is that each statement, "a document", is made by a person who decides the topics they would like to talk about in that document, and then chooses words, "terms", that are appropriate to those topics. A topic could be thought of as a collection of terms, and a document as a collection of topics. The topics are not specified *ex ante*; they are an outcome of the method. Terms are not necessarily unique to a particular topic, and a document could be about more than one topic. This provides more flexibility than other approaches such as a strict word count method. The goal is to have the words found in documents group themselves to define topics.
+The key assumption behind the LDA method is that each statement, "a document", is made by a person who decides the topics they would like to talk about in that document, and who then chooses words, "terms", that are appropriate to those topics. A topic could be thought of as a collection of terms, and a document as a collection of topics. The topics are not specified *ex ante*; they are an outcome of the method. Terms are not necessarily unique to a particular topic, and a document could be about more than one topic. This provides more flexibility than other approaches such as a strict word count method. The goal is to have the words found in documents group themselves to define topics.
 
 LDA considers each statement to be a result of a process where a person first chooses the topics they want to speak about. After choosing the topics, the person then chooses appropriate words to use for each of those topics. More generally, the LDA topic model works by considering each document as having been generated by some probability distribution over topics. For instance, if there were five topics and two documents, then the first document may be comprised mostly of the first few topics; the other document may be mostly about the final few topics (@fig-topicsoverdocuments).
 
@@ -852,7 +899,7 @@ hansard_canada_2018 <-
 hansard_canada_2018
 ```
 
-The use of `filter()` at the end is needed because sometime aspects such as "directions" and similar non-speech aspects, are included in the Hansard. For instance, if we do not include that `filter()` then the first line is "The House resumed from November 9, 2017, consideration of the motion.". We can then construct a corpus.
+The use of `filter()` at the end is needed because sometime aspects such as "directions" and similar non-speech aspects, are included in the Hansard. For instance, if we do not include that `filter()` then the first line is "The House resumed from November 9, 2017, consideration of the motion." We can then construct a corpus.
 
 ```{r}
 #| warning: false
@@ -940,6 +987,8 @@ hansard_topics <- read_rds(
 We can look at the words in each topic with `labelTopics()`.
 
 ```{r}
+#| message: false
+
 library(stm)
 labelTopics(hansard_topics)
 ```
