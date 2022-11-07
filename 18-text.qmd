@@ -277,34 +277,81 @@ tokens(a_sentence) |>
   tokens_compound(pattern = phrase(some_places))
 ```
 
-In that case, we knew what the tuples were. But it might be that we were not sure what the common tuples were in the corpus. We could then use `tokens_ngrams()` to identify them. We could ask for, say, all bi-grams in an exerpt from the book "Don Quixote".
+In that case, we knew what the tuples were. But it might be that we were not sure what the common tuples were in the corpus. We could then use `tokens_ngrams()` to identify them. We could ask for, say, all bi-grams in an excerpt from the book "Don Quixote".
 
 ```{r}
+#| eval: false
+#| echo: true
+
 library(gutenbergr)
 
-don_quixote <- gutenberg_download(996) |>
+don_quixote <- 
+  gutenberg_download(
+    gutenberg_id = 996) |>
   filter(text != "") |>
-  slice_tail(n = 1000)
+  slice_sample(n = 1000)
 
-don_q_text <- tibble(book = "Don Quixote", 
-                           text = paste(don_quixote$text, collapse = " ") |>
-                             str_replace_all(
-                               pattern = "[:punct:]",
-                               replacement = " "
-                               ) |>
-                             str_replace_all(  # Add double spaces
-                               pattern = " ",
-                               replacement = "  "
-                               ) |>
-                             str_replace_all(  # Remove stop words
-                               pattern = stop_word_list,
-                               replacement = ""
-                               ) |>
-  str_squish())
-                           
+write_csv(don_quixote, "books-don_quixote.csv")
+```
+
+```{r}
+#| eval: false
+#| echo: false
+
+# INTERNAL
+
+write_csv(don_quixote, "inputs/data/books-don_quixote.csv")
+```
+
+
+
+```{r}
+#| eval: false
+#| echo: true
+
+don_quixote <- read_csv(
+  "books-don_quixote.csv",
+  col_types = cols(
+    gutenberg_id = col_integer(),
+    text = col_character()
+  )
+)
+```
+
+```{r}
+#| eval: true
+#| echo: false
+
+# INTERNAL
+
+don_quixote <- read_csv(
+  "inputs/data/books-don_quixote.csv",
+  col_types = cols(
+    gutenberg_id = col_integer(),
+    text = col_character()
+  )
+)
+```
+
+
+```{r}
+don_q_text <- tibble(
+  book = "Don Quixote",
+  text = paste(don_quixote$text, collapse = " ") |>
+    str_replace_all(pattern = "[:punct:]",
+                    replacement = " ") |>
+    str_replace_all(# Add double spaces
+      pattern = " ",
+      replacement = "  ") |>
+    str_replace_all(# Remove stop words
+      pattern = stop_word_list,
+      replacement = "") |>
+    str_squish()
+)
+
 don_q_corpus <-
-  corpus(don_quixote_text, docid_field = "book", text_field = "text")
-  
+  corpus(don_q_text, docid_field = "book", text_field = "text")
+
 ngrams <- tokens_ngrams(tokens(don_q_corpus), n = 2)
 
 ngram_counts <-
