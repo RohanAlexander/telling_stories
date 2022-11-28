@@ -98,7 +98,7 @@ Australia is a parliamentary democracy with 151 seats in the House of Representa
 
 For this example, we need to plan two aspects. The first is what the dataset that we need will look like, and the second is what the final graph will look like.
 
-The basic requirement for the dataset is that it has the name of the seat (sometimes called a "division" in Australia) and the party of the person elected. So, a quick sketch of the dataset that we would need could look something like @fig-australiaexample-data.
+The basic requirement for the dataset is that it has the name of the seat (sometimes called a "division" in Australia) and the party of the person elected. A quick sketch of the dataset that we would need could look something like @fig-australiaexample-data.
 
 ::: {#fig-australiaexample layout-ncol=2 layout-valign="bottom"}
 
@@ -151,13 +151,13 @@ An example of installing the packages follows (excessive comments have been adde
 #| echo: true
 
 #### Workspace set-up ####
-install.packages("tidyverse") # Only need to do this once per computer
-install.packages("janitor") # Only need to do this once per computer
+install.packages("tidyverse") # Do this once per computer
+install.packages("janitor") # This also
 ```
 
 ![Screenshot of australian_elections.qmd highlighting the green arrow to run the chunk](figures/02-rstudio_cloud-4.png){#fig-quarto-australian-elections-4 width=75% fig-align="center"}
 
-Now that the packages are installed, they need to be loaded. As that installation step only needs to be done once per computer, that code can be commented out so that it is not accidentally run.
+Now that the packages are installed, they need to be loaded. As that installation step only needs to be done once per computer, that code can be commented out so that it is not accidentally run, but equally could just be removed.
 
 ```{r}
 #| echo: true
@@ -166,8 +166,8 @@ Now that the packages are installed, they need to be loaded. As that installatio
 #| message: false
 
 #### Workspace set-up ####
-# install.packages("tidyverse") # Only need to do this once per computer
-# install.packages("janitor") # Only need to do this once per computer
+# install.packages("tidyverse") # Could just be removed
+# install.packages("janitor") # This also
 
 library(tidyverse) # A collection of data-related packages
 library(janitor) # Helps clean datasets
@@ -189,7 +189,7 @@ simulated_data <-
   tibble(
     # Use 1 through to 151 to represent each division
     "Division" = 1:151,
-    # Randomly pick one of five options, with replacement, 151 times
+    # Randomly pick an options, with replacement, 151 times
     "Party" = sample(
       x = c(
         "Liberal",
@@ -232,6 +232,7 @@ Click "Create public gist". We can then share the URL to this Gist with whoever 
 
 Now we want to get the actual data. The data we need is from the Australian Electoral Commission (AEC), which is the non-partisan agency that organizes Australian federal elections. We can pass a page of their website to `read_csv()` from `readr` [@citereadr]. We do not need to explicitly load `readr` because it is part of the `tidyverse`. The `<-` or "assignment operator" is allocating the output of `read_csv()` to an object called "raw_elections_data". 
 
+::: {.content-visible when-format="pdf"}
 
 ```{r}
 #| eval: false
@@ -241,6 +242,32 @@ Now we want to get the actual data. The data we need is from the Australian Elec
 raw_elections_data <-
   read_csv(
     file =
+      paste0("https://results.aec.gov.au/27966/website/Downloads/",
+             "HouseMembersElectedDownload-27966.csv"),
+    show_col_types = FALSE,
+    skip = 1
+  )
+
+# We have read the data from the AEC website. We may like to save
+# it in case something happens or they move it.
+write_csv(
+  x = raw_elections_data,
+  file = "australian_voting.csv"
+)
+```
+
+:::
+
+::: {.content-visible unless-format="pdf"}
+
+```{r}
+#| eval: false
+#| echo: true
+
+#### Read in the data ####
+raw_elections_data <-
+  read_csv(
+    file = 
       "https://results.aec.gov.au/27966/website/Downloads/HouseMembersElectedDownload-27966.csv",
     show_col_types = FALSE,
     skip = 1
@@ -253,6 +280,8 @@ write_csv(
   file = "australian_voting.csv"
 )
 ```
+
+:::
 
 ```{r}
 #| eval: false
@@ -486,8 +515,8 @@ To build the graph that we are interested in, we use `ggplot2` [@citeggplot] whi
 #| warning: false
 
 cleaned_elections_data |>
-  ggplot(aes(x = elected_party)) + # aes abbreviates "aesthetics" and
-  # enables us to specify the x axis variable
+  ggplot(aes(x = elected_party)) + # aes abbreviates "aesthetics" 
+  # and enables us to specify the x axis variable
   geom_bar()
 ```
 
@@ -556,7 +585,7 @@ In RStudio Cloud make a new Quarto Document, save it, and make a new R code chun
 #| echo: true
 
 #### Preamble ####
-# Purpose: Get data about 2021 houseless shelter usage and make a table
+# Purpose: Get data on 2021 homeless shelter usage and make table
 # Author: Rohan Alexander
 # Email: rohan.alexander@utoronto.ca
 # Date: 1 July 2022
@@ -587,7 +616,7 @@ library(opendatatoronto)
 library(tidyverse)
 ```
 
-To add a bit more detail to the earlier example, packages contain code that other people have written. There are a few common ones that you will see regularly, especially the `tidyverse`. To use a package, we must first install it and then we need to load it. A package only needs to be installed once per computer but must be loaded every time. So, the packages that we installed earlier do not need to be reinstalled here.
+To add a bit more detail to the earlier example, packages contain code that other people have written. There are a few common ones that you will see regularly, especially the `tidyverse`. To use a package, we must first install it and then we need to load it. A package only needs to be installed once per computer but must be loaded every time. This means the packages that we installed earlier do not need to be reinstalled here.
 
 :::{.callout-note}
 ## Shoulders of giants
@@ -620,7 +649,7 @@ set.seed(853)
 simulated_occupancy_data <-
   tibble(
     date = rep(x = as.Date("2021-01-01") + c(0:364), times = 3),
-    # Based on Dirk Eddelbuettel: https://stackoverflow.com/a/21502386
+    # Based on Eddelbuettel: https://stackoverflow.com/a/21502386
     shelter = c(
       rep(x = "Shelter 1", times = 365),
       rep(x = "Shelter 2", times = 365),
@@ -642,19 +671,22 @@ In this simulation we first create a list of all the dates in 2021. We repeat th
 
 We use data made available about Toronto homeless shelters by the City of Toronto. The premise of the data is that each night at 4am a count is made of the occupied beds. To access the data, we use `opendatatoronto` [@citeSharla] and then save our own copy. 
 
+
+::: {.content-visible when-format="pdf"}
+
 ```{r}
 #| eval: false
 #| echo: true
 
 #### Acquire ####
 toronto_shelters <-
-  # Each package is associated with a unique id which can be found
-  # in the "For Developers" tab of the relevant page from Open Data Toronto
-  # https://open.toronto.ca/dataset/daily-shelter-overnight-service-occupancy-capacity/
+  # Each package is associated with a unique id  found in the "For 
+  # Developers" tab of the relevant page from Open Data Toronto
   list_package_resources("21c83b32-d5a8-4106-a54f-010dbe49f6f2") |>
   # Within that package, we are interested in the 2021 dataset
-  filter(name == "daily-shelter-overnight-service-occupancy-capacity-2021") |>
-  # Having reduce the dataset down to one row we can get the resource
+  filter(name == 
+    "daily-shelter-overnight-service-occupancy-capacity-2021") |>
+  # Having reduced the dataset to one row we can get the resource
   get_resource()
 
 write_csv(
@@ -664,6 +696,38 @@ write_csv(
 
 head(toronto_shelters)
 ```
+
+:::
+
+::: {.content-visible unless-format="pdf"}
+
+```{r}
+#| eval: false
+#| echo: true
+
+#### Acquire ####
+toronto_shelters <-
+  # Each package is associated with a unique id  found in the "For 
+  # Developers" tab of the relevant page from Open Data Toronto
+  # https://open.toronto.ca/dataset/daily-shelter-overnight-service-occupancy-capacity/
+  list_package_resources("21c83b32-d5a8-4106-a54f-010dbe49f6f2") |>
+  # Within that package, we are interested in the 2021 dataset
+  filter(name == 
+    "daily-shelter-overnight-service-occupancy-capacity-2021") |>
+  # Having reduced the dataset to one row we can get the resource
+  get_resource()
+
+write_csv(
+  x = toronto_shelters,
+  file = "toronto_shelters.csv"
+)
+
+head(toronto_shelters)
+```
+
+:::
+
+
 
 ```{r}
 #| eval: false
@@ -993,6 +1057,33 @@ Having passed these tests, we can have confidence in the simulated dataset. More
 
 The UN Inter-agency Group for Child Mortality Estimation (IGME) [provides](https://childmortality.org/) estimates of the NMR that we can download and save.
 
+
+::: {.content-visible when-format="pdf"}
+
+```{r}
+#| eval: false
+#| echo: true
+#| warning: false
+
+#### Acquire data ####
+raw_igme_data <-
+  read_csv(
+    file =
+      paste0("https://childmortality.org/",
+             "wp-content/uploads/2021/09/UNIGME-2021.csv"),
+    show_col_types = FALSE
+  )
+
+write_csv(
+  x = raw_igme_data,
+  file = "igme.csv"
+)
+```
+
+:::
+
+::: {.content-visible unless-format="pdf"}
+
 ```{r}
 #| eval: false
 #| echo: true
@@ -1011,6 +1102,10 @@ write_csv(
   file = "igme.csv"
 )
 ```
+
+:::
+
+
 
 ```{r}
 #| eval: true

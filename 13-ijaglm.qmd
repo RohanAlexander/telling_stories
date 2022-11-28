@@ -1,0 +1,1854 @@
+---
+engine: knitr
+---
+
+# Generalized linear models {#sec-its-just-a-generalized-linear-model}
+
+**Required material**
+
+- Read *Regression and Other Stories*, Chapters 13 "Logistic regression", and 15 "Other generalized linear models", [@gelmanhillvehtari2020]
+- Read *An Introduction to Statistical Learning with Applications in R*, Chapter 4 "Classification", [@islr]
+- Read *Machine learning is going real-time*, [@chiphuyenone]
+- Watch *Democratizing R with Plumber APIs*, [@democratizingr]
+- Read *Science Storms the Cloud*, [@Gentemann2021]
+
+**Key concepts and skills**
+
+- Linear regression can be generalized for alternative types of dependent variables. For instance, logistic and Poisson regression have a binary and integer count dependent variable, respectively.
+- Putting a model into production - i.e. using it in a real-world setting - requires an additional set of skills, including a familiarity with a cloud provider and the ability to create an API.
+
+**Key packages and functions**
+
+- Base R [@citeR]
+  - `binomial()`
+  - `glm()`
+  - `lm()`
+  - `rexp()`
+  - `rnorm()`
+  - `rpois()`
+  - `sample()`
+  - `set.seed()`
+  - `summary()`
+- `analogsea` [@citeanalogsea]
+  - `debian_apt_get_install()`
+  - `droplets()`
+  - `install_github()`
+  - `install_r_package()`
+  - `key_create()`
+- `beepr` [@beepr]
+  - `beep()`
+- `broom` [@broom]
+  - `augment()`
+  - `glance()`
+  - `tidy()`
+- `gutenbergr` [@gutenbergr]
+	- `gutenberg_download()`
+	- `gutenberg_works()`
+- `marginaleffects` [@marginaleffects]
+  - `marginaleffects()`
+- `modelsummary` [@citemodelsummary]
+  - `modelsummary()`
+- `plumber` [@plumber]
+  - `do_deploy_api()`
+  - `do_provision()`
+  - `plumb()`
+- `plumberDeploy` [@plumberdeploy]
+- `poissonreg` [@poissonreg]
+  - `poisson_reg()`
+- `rstanarm` [@citerstanarm]
+	- `default_prior_coef()`
+	- `default_prior_intercept()`
+	- `exponential()`
+	- `gaussian()`
+	- `loo()`
+  - `loo_compare()`
+	- `posterior_vs_prior()`
+	- `pp_check()`
+	- `prior_summary()`
+	- `stan_glm()`
+- `ssh` [@ssh]
+  - `ssh_key_info()`
+- `tidymodels` [@citeTidymodels]
+  - `parsnip` [@parsnip]
+    - `fit()`
+    - `linear_reg()`
+    - `logistic_reg()`
+    - `poisson_reg()`
+    - `set_engine()`
+  - `recipes` [@recipes]
+    - `recipe()`
+  - `rsample` [@rsample]
+    - `initial_split()`
+    - `testing()`
+    - `training()`
+    - `vfold_cv()`
+  - `tune` [@tune]    
+    - `collect_metrics()`
+    - `collect_predictions()`
+    - `conf_mat_resampled()`
+    - `fit_resamples()`
+  - `yarkdstick` [@yardstick]    
+    - `conf_mat()`
+
+
+
+## Introduction
+
+Linear models, covered in @sec-its-just-a-linear-model, have evolved substantially over the past century. Francis Galton, mentioned in @sec-hunt-data, and others of his generation, some of whom were eugenicists, used linear regression in earnest in the late 1800s and early 1900s. Binary outcomes quickly became of interest and needed special treatment, leading to the development and wide adaption of logistic regression and similar methods in the mid-1900s [@cramer2002origins]. The generalized linear model framework came into being, in a formal sense, in the 1970s with @nelder1972generalized. Generalized linear models (GLMs) broaden the types of outcomes that are allowed. We still model outcomes as a linear function, but we are less constrained. The outcome can be anything in the exponential family, and popular choices include the logistic distribution and the Poisson distribution. A further generalization of GLMs is generalized additive models (GAMs) where we broaden the structure of the explanatory side. We still explain the dependent variable as an additive function of various bits and pieces, but those bits and pieces can be functions. This framework was proposed in the 1990s by @hastie1990generalized.
+
+:::{.callout-note}
+## Shoulders of giants
+
+Dr Robert Tibshirani is Professor in the Departments of Statistics and Biomedical Data Science at Stanford University. After taking a PhD in Statistics from Stanford University in 1981, he joined the University of Toronto as an assistant professor. He was promoted to full professor in 1994 and moved to Stanford in 1998. He made fundamental contributions including GAMs, mentioned above, and lasso regression, which is a way of automated variable selection and will be covered in @sec-text-as-data. He is an author of @islr. He was awarded the COPSS Presidents' Award in 1996 and was appointed a Fellow of the Royal Society in 2019.
+:::
+
+
+In this chapter we consider logistic, Poisson, and negative binomial regression. 
+
+
+
+## Logistic regression
+
+Linear regression is a useful way to better understand our data. But it assumes a continuous outcome variable that can take any number on the real line. We would like some way to use this same machinery when we cannot satisfy this condition. We turn to logistic and Poisson regression for binary and count outcome variables, respectively, noting they are still linear models, because the independent variables enter in a linear fashion.
+
+Logistic regression, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it.
+
+The foundation of this is the Bernoulli distribution where there is a certain probability, $p$, of outcome "1" and the remainder, $1-p$, for outcome "0". We can use `rbernoulli()` to simulate data from the Bernoulli distribution. 
+
+```{r}
+#| message: false
+#| warning: false
+
+library(tidyverse)
+
+set.seed(853)
+
+Bernoulli_example <-
+  tibble(draws = rbernoulli(n = 20, p = 0.1))
+
+Bernoulli_example |> pull(draws)
+```
+
+One reason to use logistic regression is that we will be modelling a probability and so it will be bounded between 0 and 1. Whereas with linear regression we may end up with values outside this. The foundation of logistic regression is the logit function:
+
+$$
+\mbox{logit}(x) = \log\left(\frac{x}{1-x}\right).
+$$
+This will transpose values between 0 and 1, onto the real line. For instance, `logit(0.1) = -2.2`, `logit(0.5) = 0`, and `logit(0.9) = 2.2`.
+
+To illustrate logistic regression, we will simulate data on whether it is a weekday or weekend, based on the number of cars on the road. We will assume that on weekdays the road is busier.
+
+```{r}
+#| message: false
+#| warning: false
+
+set.seed(853)
+
+week_or_weekday <-
+  tibble(
+    number_of_cars = runif(n = 1000, min = 0, 100),
+    noise = rnorm(n = 1000, mean = 0, sd = 10),
+    is_weekday = if_else(number_of_cars + noise > 50, 1, 0)
+  ) |>
+  mutate(number_of_cars = round(number_of_cars)) |>
+  select(-noise)
+
+week_or_weekday
+```
+
+We can use `glm()` from base R to do a quick estimation. In this case we will try to work out whether it is a weekday or weekend, based on the number of cars we can see. We are interested in estimating @eq-logisticexample:^[THERE'S NO EXPLAINATION OF HOW WE GOT HERE, MAYBE SHOULD SHOULD THAT $E[Y] = LOGIT(XBETA)$, AND THAT $Y ~ BERN(SIGMOID(XBETA))$]
+$$
+\mbox{Pr}(y_i=1) = \mbox{logit}^{-1}\left(\beta_0+\beta_1 x_i\right)
+$$ {#eq-logisticexample}
+where $y_i$ is whether it is a weekday and $x_i$ is the number of cars on the road.
+
+
+```{r}
+week_or_weekday_model <-
+  glm(
+    is_weekday ~ number_of_cars,
+    data = week_or_weekday,
+    family = "binomial"
+  )
+```
+
+The results of the estimation are in the first column of @tbl-modelsummarylogistic. The estimated coefficient on the number of cars is 0.19.
+
+The interpretation of the logistic regression's coefficients is more more complicated that linear regression as they relate to changes in the log-odds of the binary outcome. For instance, the estimate of 0.19 is the average change in the log odds of it being a weekday with observing one extra car on the road. The coefficient is positive which means an increase, but as it is non-linear, if we want to specify a particular change, then this will be different for different baseline levels of the observation (e.g. an increase of 0.19 log odds has a larger impact when the baseline log odds are 0, compared to 2).
+
+We can translate our estimate into the probability of it being a weekday, for a given number of cars. `predictions()` from `marginaleffects` [@marginaleffects] can be used to add the implied probability that it is a weekday for each observation.
+
+```{r}
+library(marginaleffects)
+
+week_or_weekday_predictions <-
+  predictions(week_or_weekday_model) |>
+  as_tibble()
+
+week_or_weekday_predictions
+```
+
+And we can then graph the probability that our model implies, for each observation, of it being a weekday (@fig-dayornightprobs).
+
+```{r}
+#| eval: true
+#| fig-cap: "Logistic regression probability results with simulated data of whether it is a weekday or weekend based on the number of cars that are around"
+#| include: true
+#| label: fig-dayornightprobs
+#| message: false
+#| warning: false
+
+week_or_weekday_predictions |>
+  mutate(is_weekday = factor(is_weekday)) |>
+  ggplot(aes(
+    x = number_of_cars,
+    y = predicted,
+    color = is_weekday
+  )) +
+  geom_jitter(width = 0.01, height = 0.01, alpha = 0.3) +
+  labs(
+    x = "Number of cars that were seen",
+    y = "Estimated probability it is a weekday",
+    color = "Was actually weekday"
+  ) +
+  theme_classic() +
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+```
+
+The marginal effect at each observation is of interest because it provides a sense of how this probability is changing. It enables us to say that at the mean (which in this case is if we were to see 50 cars) the probability of it being a weekday, increases by almost five per cent if we were to see another one (@tbl-marginaleffectcar).
+
+```{r}
+#| label: tbl-marginaleffectcar
+#| tbl-cap: "Marginal effect of another car on the probability that it is a weekday, at the mean"
+
+marginaleffects(week_or_weekday_model, newdata = "mean") |>
+  select(term, dydx, std.error) |>
+  knitr::kable(
+    col.names = c("Term", "Slope", "Standard error")
+  )
+```
+
+We could use `tidymodels` to run this if we wanted. To do that, we first need to change the class of our dependent variable into a factor because this is required for classification models.
+
+```{r}
+set.seed(853)
+
+library(tidymodels)
+
+week_or_weekday <-
+  week_or_weekday |>
+  mutate(is_weekday = as_factor(is_weekday))
+
+week_or_weekday_split <- initial_split(week_or_weekday, prop = 0.80)
+week_or_weekday_train <- training(week_or_weekday_split)
+week_or_weekday_test <- testing(week_or_weekday_split)
+
+week_or_weekday_tidymodels <-
+  logistic_reg(mode = "classification") |>
+  set_engine("glm") |>
+  fit(
+    is_weekday ~ number_of_cars,
+    data = week_or_weekday_train
+  )
+```
+
+As before, we can make a graph of the actual results compared with our estimates. But one nice aspect of this is that we could use our test dataset to evaluate our model's forecasting ability more thoroughly, for instance through a confusion matrix, which specifies the count of each prediction by what the truth was. We find that the model does well on the held-out dataset. There were 90 observations where the model predicted it was a weekday, and it was actually a weekday, and 95 where the model predicted it was a weekend, and it was a weekend. It was wrong for 15 observations, and these were split across seven where it forecast a weekday, but it was a weekend, and eight where it was the opposite case.^[STUDENTS PROBABLY WON'T UNDERSTAND THAT IMPICIT IN THE PREDICTED LABEL IS AN OPERATING THRESHOLD, I WOULD HAVE AT LEAST ONE SENTENCE EXPLAINING THAT THIS IS A BUILT IN ASSUMPION IN THE PREDICT() METHOD THAT CAN BE ADJUSTED AND ADJUSTING THIS WILL IMPACT SENSITIVITY VS PRECISION WHICH CAN BE DISCUSSED LATER]
+
+```{r}
+week_or_weekday_tidymodels |>
+  predict(new_data = week_or_weekday_test) |>
+  cbind(week_or_weekday_test) |>
+  conf_mat(truth = is_weekday, estimate = .pred_class)
+```
+
+We might be interested in inference, and so want to build a Bayesian model using `rstanarm`. Again, we will specify priors for our model, but use the default priors that `rstanarm` uses:
+
+$$
+\begin{aligned}
+y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
+\mbox{logit}(\pi_i) & = \left(\beta_0+\beta_1 x_i\right) \\
+\beta_0 & \sim \mbox{Normal}(0, 2.5)\\
+\beta_1 & \sim \mbox{Normal}(0, 2.5)
+\end{aligned}
+$$
+where $y_i$ is whether it is a weekday (actually 0 or 1), $x_i$ is the number of cars on the road, and $\pi_i$ is the probability that observations $i$ is a weekday.
+
+```{r}
+#| eval: false
+#| echo: true
+#| message: false
+#| warning: false
+
+library(rstanarm)
+
+week_or_weekday_rstanarm <-
+  stan_glm(
+    is_weekday ~ number_of_cars,
+    data = week_or_weekday,
+    family = binomial(link = "logit"),
+    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  week_or_weekday_rstanarm,
+  file = "week_or_weekday_rstanarm.rds"
+)
+```
+
+```{r}
+#| eval: false
+#| include: false
+#| message: false
+#| warning: false
+
+# INTERNAL
+saveRDS(
+  week_or_weekday_rstanarm,
+  file = "outputs/model/week_or_weekday_rstanarm.rds"
+)
+```
+
+```{r}
+#| eval: true
+#| include: false
+#| message: false
+#| warning: false
+
+week_or_weekday_rstanarm <-
+  readRDS(file = "outputs/model/week_or_weekday_rstanarm.rds")
+```
+
+We can compare our different models (@tbl-modelsummarylogistic).
+
+```{r}
+#| label: tbl-modelsummarylogistic
+#| tbl-cap: "Forecasting and explanatory models of whether it is day or night, based on the number of cars on the road"
+
+modelsummary::modelsummary(
+  list(
+    "base R" = week_or_weekday_model,
+    "tidymodels" = week_or_weekday_tidymodels,
+    "rstanarm" = week_or_weekday_rstanarm
+  ),
+  statistic = "conf.int"
+)
+```
+
+@tbl-modelsummarylogistic makes it clear that each of the approaches is similar in this case. They agree on the direction of the effect of seeing an extra car on the probability of it being a weekday. And even the magnitude of the effect is estimated to be similar.
+
+
+### US political support
+
+One area where logistic regression is often used is political polling. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to "support" or "not support".
+
+As a reminder, the workflow we advocate in this book: $\mbox{Plan} \rightarrow \mbox{Simulate} \rightarrow \mbox{Acquire} \rightarrow \mbox{Explore} \rightarrow \mbox{Share}$. While the focus here is the exploration of data using linear models, we still need to do the other aspects. We begin by planning. In this case, we are interested in US political support. In particular we are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. That means we are interested in a dataset with variables for who an individual voted for, and some of their characteristics, for instance, gender and education. A quick sketch of such a dataset is @fig-uspoliticalsupportsketch. And we would like our model to average over these points. A quick sketch is @fig-uspoliticalsupportmodel.
+
+::: {#fig-uspoliticalsuppor layout-ncol=2 layout-valign="bottom"}
+
+![Quick sketch of a dataset that could be used to examine US political support](figures/IMG_2054.png){#fig-uspoliticalsupportsketch}
+
+![Quick sketch of what we expect from the analysis before finalizing either the data of the analysis](figures/IMG_2055.png){#fig-uspoliticalsupportmodel}
+
+Sketches of the expected dataset and analysis focus and clarify our thinking even if they will be updated later
+:::
+
+We will simulate a dataset where the chance that a person supports Biden depends on their gender and education.
+
+```{r}
+number_of_observations <- 1000
+
+us_political_preferences <-
+  tibble(
+    education = sample(1:5, size = number_of_observations, replace = TRUE),
+    gender = sample(1:2, size = number_of_observations, replace = TRUE),
+    support_prob = 1 - 1 / (education + gender)
+  ) |>
+  rowwise() |>
+  mutate(supports_biden = sample(
+    c("yes", "no"),
+    size = 1,
+    replace = TRUE,
+    prob = c(support_prob, 1 - support_prob)
+  )) |>
+  ungroup() |>
+  select(-support_prob, supports_biden, gender, education)
+
+us_political_preferences
+```
+
+We can use the 2020 Cooperative Election Study (CES) [@cooperativeelectionstudyus], which is a long-standing annual survey of US political opinion. In 2020, there were 61,000 respondents who completed the post-election survey. While the sampling methodology, detailed in @guidetothe2020ces [p. 13], is not a perfect random sample and relies on matching, it is widely used and accepted approach that balances sampling concerns and cost.
+
+We can access the CES using `get_dataframe_by_name()` from `dataverse` [@dataverse], which was an approach that was introduced in @sec-gather-data and @sec-store-and-share. We save the data that are of interest to us, and then refer to that saved dataset.
+
+```{r}
+#| echo: true
+#| eval: false
+
+library(dataverse)
+
+ces2020 <-
+  get_dataframe_by_name(
+    filename = "CES20_Common_OUTPUT_vv.csv",
+    dataset = "10.7910/DVN/E9N6PH",
+    server = "dataverse.harvard.edu",
+    .f = readr::read_csv
+  ) |>
+  select(votereg, CC20_410, gender, educ)
+
+write_csv(ces2020, "ces2020.csv")
+```
+
+```{r}
+#| echo: false
+#| eval: false
+
+# INTERNAL
+
+write_csv(ces2020, "inputs/data/ces2020.csv")
+```
+
+```{r}
+#| echo: true
+#| eval: false
+
+ces2020 <-
+  read_csv(
+    "ces2020.csv",
+    col_types =
+      cols(
+        "votereg" = col_integer(),
+        "CC20_410" = col_integer(),
+        "gender" = col_integer(),
+        "educ" = col_integer()
+      )
+  )
+
+ces2020
+```
+
+```{r}
+#| echo: false
+#| eval: true
+
+# INTERNAL
+
+ces2020 <-
+  read_csv(
+    "inputs/data/ces2020.csv",
+    col_types =
+      cols(
+        "votereg" = col_integer(),
+        "CC20_410" = col_integer(),
+        "gender" = col_integer(),
+        "educ" = col_integer()
+      )
+  )
+
+ces2020
+```
+
+When we look at the actual data, there are concerns that we did not anticipate in our sketches. We only want respondents who are registered to vote, and we are only interested in those that voted for either Biden or Trump. We can filter to only those respondents and then add more informative labels. Gender of "female" and "male" is what is available from the CES.
+
+```{r}
+ces2020 <-
+  ces2020 |>
+  filter(
+    votereg == 1,
+    CC20_410 %in% c(1, 2)
+  ) |>
+  mutate(
+    voted_for = if_else(CC20_410 == 1, "Biden", "Trump"),
+    voted_for = as_factor(voted_for),
+    gender = if_else(gender == 1, "Male", "Female"),
+    education = case_when(
+      educ == 1 ~ "No HS",
+      educ == 2 ~ "High school graduate",
+      educ == 3 ~ "Some college",
+      educ == 4 ~ "2-year",
+      educ == 5 ~ "4-year",
+      educ == 6 ~ "Post-grad"
+    ),
+    education = factor(
+      education,
+      levels = c(
+        "No HS",
+        "High school graduate",
+        "Some college",
+        "2-year",
+        "4-year",
+        "Post-grad"
+      )
+    )
+  ) |>
+  select(voted_for, gender, education)
+```
+
+In the end we are left with 43,554 respondents (@fig-cesissogooditslikecheating). 
+
+```{r}
+#| eval: true
+#| echo: true
+#| message: false
+#| warning: false
+#| fig-cap: "The distribution of presidential preferences, by gender, and highest education"
+#| label: fig-cesissogooditslikecheating
+
+ces2020 |>
+  ggplot(aes(x = education, fill = voted_for)) +
+  stat_count(position = "dodge") +
+  facet_wrap(facets = vars(gender)) +
+  theme_minimal() +
+  labs(
+    x = "Highest education",
+    y = "Number of respondents",
+    fill = "Voted for"
+  ) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+```
+
+One approach is to use `tidymodels` to build a prediction-focused logistic regression model in the same way as before i.e. a validation set approach [@islr, p. 176]. In this case, the probability will be that of voting for Biden.
+
+```{r}
+set.seed(853)
+
+ces2020_split <- initial_split(ces2020, prop = 0.80)
+ces2020_train <- training(ces2020_split)
+ces2020_test <- testing(ces2020_split)
+
+ces_tidymodels <-
+  logistic_reg(mode = "classification") |>
+  set_engine("glm") |>
+  fit(
+    voted_for ~ gender + education,
+    data = ces2020_train
+  )
+
+ces_tidymodels
+```
+
+And then evaluate it on the test set. It appears as though the model is having difficulty identifying Trump supporters.
+
+```{r}
+ces_tidymodels |>
+  predict(new_data = ces2020_test) |>
+  cbind(ces2020_test) |>
+  conf_mat(truth = voted_for, estimate = .pred_class)
+```
+
+When we introduced `tidymodels`, we discussed the importance of randomly constructing training and test sets. We use the training dataset to estimate parameters, and then evaluate the model on the test set. It is natural to ask why we should be subject to the whims of randomness and whether we are making the most of our data. For instance, what if a good model is poorly evaluated because of some random inclusion in the test set? And what if we do not have a large test set?
+
+One commonly used resampling method that goes some way to addressing this is $k$-fold cross-validation. In this approach we create $k$ different samples, or "folds", from the dataset without replacement. We then fit the model to the first $k-1$ folds, and then evaluate it on the last fold. We do this $k$ times, once for every fold, such that every observation will be used for training $k-1$ times and for testing once. The $k$-fold cross-validation estimate is then the average mean squared error [@islr, p. 181].
+
+We can use `vfold_cv()` from `tidymodels` to create, say, 10 folds.
+
+```{r}
+set.seed(853)
+
+ces2020_10_folds <- vfold_cv(ces2020, v = 10)
+```
+
+We then fit our model across the different combinations of folds with `fit_resamples()`. In this case, the model will be fit 10 times.
+
+```{r}
+ces2020_cross_validation <-
+  fit_resamples(
+    object = logistic_reg(mode = "classification") |> set_engine("glm"),
+    preprocessor = recipe(
+      voted_for ~ gender + education,
+      data = ces2020
+    ),
+    resamples = ces2020_10_folds,
+    metrics = metric_set(accuracy, sens, spec),
+    control = control_resamples(save_pred = TRUE)
+  )
+```
+
+We might be interested to understand the performance of our model and we can use `collect_metrics()` to aggregate them across the folds (@tbl-metricsvoters-1). These types of details would typically be mentioned in passing in the main content of the paper, but included in great detail in an appendix. The average accuracy of our model across the folds is 0.61, while the average sensitivity is 0.19 and the average specificity is 0.90.
+
+```{r}
+#| label: tbl-metricsvoters
+#| tbl-cap: "Average metrics across the 10 folds of a logistic regression to forecast voter preference"
+#| layout-ncol: 2
+#| tbl-subcap: ["Key performance metrics", "Confusion matrix"]
+
+collect_metrics(ces2020_cross_validation) |>
+  select(.metric, mean) |>
+  knitr::kable(
+    col.names = c(
+      "Metric",
+      "Mean"
+    ),
+    digits = 2,
+    booktabs = TRUE,
+    linesep = "",
+    format.args = list(big.mark = ",")
+  )
+
+conf_mat_resampled(ces2020_cross_validation) |>
+  mutate(Proportion = Freq / sum(Freq)) |>
+  knitr::kable(
+    digits = 2,
+    booktabs = TRUE,
+    linesep = "",
+    format.args = list(big.mark = ",")
+  )
+```
+
+What does this mean? Accuracy is the proportion of observations that were correctly classified. The result of 0.61 suggests the model is doing better than a coin toss, but not much more. Sensitivity is the proportion of true observations that are identified as true [@islr, p. 145]. In this case would mean that the model predicted a respondent voted for Trump and they did. And specificity is the proportion of false observations that are identified as false [@islr, p. 145]. In this case it is the proportion of voters that voted for Biden, that were predicted to vote for Biden. This confirms our initial thought that model is having trouble identifying Trump supporters.
+
+We can see this in more detail by looking at the confusion matrix (@tbl-metricsvoters-2). When used with resampling approaches, such as cross-validation, the confusion matrix is computed for each fold and then averaged. The model is predicting Biden much more than we might expect from our knowledge of how close the 2020 election was. It suggests that our model may need additional variables to do a better job.
+
+Finally, it may be the case that we are interested in individual-level results, and we can add these to our dataset with `collect_predictions()`.
+
+```{r}
+ces2020_with_predictions <-
+  cbind(
+    ces2020,
+    collect_predictions(ces2020_cross_validation) |>
+      arrange(.row) |>
+      select(.pred_class)
+  ) |>
+  as_tibble()
+```
+
+For instance, we can see that model is essentially predicting support for Biden for all individuals apart from males with no high school, high school graduates, or 2 years of college (@tbl-omgthismodelishorriblelol).
+
+```{r}
+#| label: tbl-omgthismodelishorriblelol
+#| tbl-cap: "The model is forecasting support for Biden for all females, and for many males, regardless of education"
+
+ces2020_with_predictions |>
+  group_by(gender, education, voted_for) |>
+  count(.pred_class) |>
+  knitr::kable(
+    col.names = c(
+      "Gender",
+      "Education",
+      "Voted for",
+      "Predicted vote",
+      "Number"
+    ),
+    digits = 0,
+    booktabs = TRUE,
+    linesep = "",
+    format.args = list(big.mark = ",")
+  )
+```
+
+
+## Poisson regression
+
+When we have count data we should initially think to take advantage of the Poisson distribution. The Poisson distribution is governed by one parameter, $\lambda$. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. As such, the Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. The Poisson probability mass function is [@pitman, p. 121]: 
+$$P_{\lambda}(k) = e^{-\lambda}\lambda^k/k!\mbox{, for }k=0,1,2,...$$
+We can simulate $n=20$ draws from the Poisson distribution with `rpois()`, where $\lambda$ here is equal to three. 
+
+```{r}
+rpois(n = 20, lambda = 3)
+```
+
+We can also look at what happens to the distribution as we change the value of $\lambda$ (@fig-poissondistributiontakingshape).
+
+```{r}
+#| eval: true
+#| include: true
+#| message: false
+#| warning: false
+#| fig-cap: "The Poisson distribution is governed by the value of the mean, which is the same as its variance"
+#| label: fig-poissondistributiontakingshape
+
+set.seed(853)
+
+poisson_takes_shape <-
+  tibble(
+    lambda = c(),
+    draw = c()
+  )
+
+number_of_each <- 100
+
+for (i in c(0, 1, 2, 4, 7, 10, 15, 25, 50)) {
+  draws_i <-
+    tibble(
+      lambda = c(rep(i, number_of_each)),
+      draw = c(rpois(n = number_of_each, lambda = i))
+    )
+
+  poisson_takes_shape <- rbind(poisson_takes_shape, draws_i)
+  rm(draws_i)
+}
+
+poisson_takes_shape |>
+  mutate(
+    lambda = paste("Lambda =", lambda),
+    lambda = factor(
+      lambda,
+      levels = c(
+        "Lambda = 0",
+        "Lambda = 1",
+        "Lambda = 2",
+        "Lambda = 4",
+        "Lambda = 7",
+        "Lambda = 10",
+        "Lambda = 15",
+        "Lambda = 25",
+        "Lambda = 50"
+      )
+    )
+  ) |>
+  ggplot(aes(x = draw)) +
+  geom_density() +
+  facet_wrap(
+    vars(lambda),
+    scales = "free_y"
+  ) +
+  theme_minimal() +
+  labs(
+    x = "Integer",
+    y = "Density"
+  )
+```
+
+To illustrate the situation, we could simulate data about the number of A grades that are awarded in each university course. In this simulated example, we consider three departments, each of which has many courses. Each course will award a different number of A grades.
+
+```{r}
+set.seed(853)
+
+class_size <- 26
+
+count_of_A <-
+  tibble(
+    # From Chris DuBois: https://stackoverflow.com/a/1439843
+    department = c(rep.int("1", 26), rep.int("2", 26), rep.int("3", 26)),
+    course = c(
+      paste0("DEP_1_", letters),
+      paste0("DEP_2_", letters),
+      paste0("DEP_3_", letters)
+    ),
+    number_of_A = c(
+      rpois(n = class_size, lambda = 5),
+      rpois(n = class_size, lambda = 10),
+      rpois(n = class_size, lambda = 20)
+    )
+  )
+
+count_of_A
+```
+
+```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-cap: "Simulated number of A grades in various classes across three departments"
+#| label: fig-simgradesdepartments
+
+count_of_A |>
+  ggplot(aes(x = number_of_A)) +
+  geom_histogram(aes(fill = department), position = "dodge") +
+  labs(
+    x = "Number of A grades awarded",
+    y = "Number of classes",
+    fill = "Department"
+  ) +
+  theme_classic() +
+  scale_fill_brewer(palette = "Set1")
+```
+
+Our simulated dataset has the number of A grades awarded by courses, which are structured within departments (@fig-simgradesdepartments). In @sec-multilevel-regression-with-post-stratification, we will take advantage of this departmental structure, but for now we just ignore it.
+
+The model that we are interested in estimating is:
+
+$$
+\begin{aligned}
+y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
+\log(\lambda_i) & = \beta_0 + \beta_1 x_i
+\end{aligned}
+$$
+where $y_i$ is the number of A grades awarded, and $x_i$ is the course.
+
+We can use `glm()` from base R to get a quick sense of the data. This function is quite general, and we specify Poisson regression by setting the "family" parameter. The estimates are contained in the first column of @tbl-modelsummarypoisson.
+
+```{r}
+grades_base <-
+  glm(
+    number_of_A ~ department,
+    data = count_of_A,
+    family = "poisson"
+  )
+```
+
+As with logistic regression, the interpretation of the coefficients from Poisson regression can be difficult. The interpretation of the coefficient on "department2" is that it is the log of the expected difference between departments. We expect $e^{0.883} \approx 2.4$ and $e^{1.703} \approx 5.5$ as many A grades in departments 2 and 3, respectively, compared with department 1 (@tbl-modelsummarypoisson).
+
+If we were interested in prediction, then we could use `tidymodels` to estimate Poisson models with `poissonreg` [@poissonreg] (@tbl-modelsummarypoisson).
+
+```{r}
+library(poissonreg)
+
+set.seed(853)
+
+count_of_A_split <-
+  initial_split(count_of_A, prop = 0.80)
+count_of_A_train <- training(count_of_A_split)
+count_of_A_test <- testing(count_of_A_split)
+
+grades_tidymodels <-
+  poisson_reg(mode = "regression") |>
+  set_engine("glm") |>
+  fit(
+    number_of_A ~ department,
+    data = count_of_A_train
+  )
+```
+
+The results of this estimation are in the second column of @tbl-modelsummarypoisson. They are similar to the estimates from `glm()`, but the number of observations is less because of the split.
+
+Finally, we could build a Bayesian model and estimate it with `rstanarm` (@tbl-modelsummarypoisson).
+
+$$
+\begin{aligned}
+y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
+\log(\lambda_i) & = \beta_0 + \beta_1 x_i\\
+\beta_0 & \sim \mbox{Normal}(0, 2.5)\\
+\beta_1 & \sim \mbox{Normal}(0, 2.5)
+\end{aligned}
+$$
+
+```{r}
+#| include: true
+#| message: false
+#| warning: false
+#| eval: false
+
+grades_rstanarm <-
+  stan_glm(
+    number_of_A ~ department,
+    data = count_of_A,
+    family = poisson(link = "log"),
+    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  grades_rstanarm,
+  file = "grades_rstanarm.rds"
+)
+```
+
+```{r}
+#| eval: false
+#| include: false
+#| message: false
+#| warning: false
+
+# INTERNAL
+saveRDS(
+  grades_rstanarm,
+  file = "outputs/model/grades_rstanarm.rds"
+)
+```
+
+```{r}
+#| eval: true
+#| include: false
+#| message: false
+#| warning: false
+
+grades_rstanarm <-
+  readRDS(file = "outputs/model/grades_rstanarm.rds")
+```
+
+The results are contained in the third column of @tbl-modelsummarypoisson.
+
+```{r}
+#| label: tbl-modelsummarypoisson
+#| tbl-cap: "Forecasting and explanatory models of marathon times based on five-kilometer run times"
+
+modelsummary::modelsummary(
+  list(
+    "base R" = grades_base,
+    "tidymodels" = grades_tidymodels,
+    "rstanarm" = grades_rstanarm
+  ),
+  statistic = "conf.int"
+)
+```
+
+As with logistic regression, we can use `marginaleffects()` from [@marginaleffects] to help with interpreting these results. It may be useful to consider how we expect the number of A grades to change as we go from one department to another. @tbl-marginaleffectspoisson suggests that in our dataset classes in Department 2 tend to have around five additional A grades, compared with Department 1. And that classes in Department 3, tend to have around 17 more A grades, compared with Department 1.^[THE TABLE BELOW IS A BIT DIFFICULT TO READ, NOT ENOUGH SPACE BETWEEN THE COLUMNS.] 
+
+```{r}
+#| label: tbl-marginaleffectspoisson
+#| tbl-cap: "The estimated difference in the number of A grades awarded at each department"
+
+marginaleffects(grades_rstanarm) |>
+  summary() |>
+  select(-type, -term) |>
+  knitr::kable(
+    digits = 2,
+    col.names = c("Departmental comparison", "Estimate", "2.5%", "97.5%"),
+    booktabs = TRUE,
+    linesep = ""
+  )
+```
+
+
+### Letters used in *Jane Eyre* 
+
+In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë. We could then consider the first 10 lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/E's increases as more words are used. If not, it could suggest that the distribution of e/E's is not consistent, which could be of interest to linguists.
+
+Following the workflow advocated in this book, we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-letterssketch. And a quick sketch of our model is @fig-lettersmodel.
+
+::: {#fig-letterss layout-ncol=2 layout-valign="bottom" layout="[[50,10,50]]"}
+
+![Planned counts, by line and chapter, in *Jane Eyre*](figures/IMG_2056.png){#fig-letterssketch}
+
+![Planned expected relationship between count of e/E and number of words in the line](figures/IMG_2075.png){#fig-lettersmodel}
+
+Sketches of the expected dataset and analysis force us to consider what we are interested in
+:::
+
+We will simulate a dataset the number of e/E letters is distributed following the Poisson distribution (@fig-simenum).
+
+```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-cap: "Simulated counts of e/E letters"
+#| label: fig-simenum
+
+count_of_e_simulation <-
+  tibble(
+    chapter = c(rep(1, 10), rep(2, 10), rep(3, 10)),
+    line = rep(1:10, 3),
+    number_words_in_line = runif(min = 0, max = 15, n = 30) |> round(0),
+    number_e = rpois(n = 30, lambda = 10)
+  )
+
+count_of_e_simulation |>
+  ggplot(aes(y = number_e, x = number_words_in_line)) +
+  geom_point() +
+  labs(
+    x = "Number of words in line",
+    y = "Number of e/E letters in the chapter"
+  ) +
+  theme_classic() +
+  scale_fill_brewer(palette = "Set1")
+```
+
+We can now gather and prepare our data.
+
+```{r}
+#| eval: false
+#| echo: true
+
+library(gutenbergr)
+
+gutenberg_id_of_janeeyre <- 1260
+
+jane_eyre <-
+  gutenberg_download(
+    gutenberg_id = gutenberg_id_of_janeeyre,
+    mirror = "https://gutenberg.pglaf.org/"
+  )
+
+jane_eyre
+
+write_csv(jane_eyre, "jane_eyre.csv")
+```
+
+We will download it and then use our local copy to avoid overly imposing on the Project Gutenberg servers.
+
+```{r}
+#| eval: false
+#| echo: false
+
+# INTERNAL
+
+write_csv(jane_eyre, "inputs/jane_eyre.csv")
+```
+
+```{r}
+#| eval: false
+#| echo: true
+
+jane_eyre <- read_csv(
+  "jane_eyre.csv",
+  col_types = cols(
+    gutenberg_id = col_integer(),
+    text = col_character()
+  )
+)
+
+jane_eyre
+```
+
+```{r}
+#| eval: true
+#| echo: false
+
+# INTERNAL
+
+jane_eyre <- read_csv(
+  "inputs/jane_eyre.csv",
+  col_types = cols(
+    gutenberg_id = col_integer(),
+    text = col_character()
+  )
+)
+
+jane_eyre
+```
+
+We are interested in only those lines that have content, so we remove those empty lines that are just there for spacing. Then we can create counts of the number of times "e" or "E" occurs in that line, for the first 10 lines of each chapter. For instance, we can look at the first few lines and see that there are 5 e/E's in the first line and 8 in the second.
+
+```{r}
+jane_eyre_reduced <-
+  jane_eyre |>
+  filter(!is.na(text)) |> # Remove empty lines
+  mutate(chapter = if_else(
+    str_detect(text, "CHAPTER") == TRUE,
+    text,
+    NA_character_
+  )) |> # Find start of chapter
+  fill(chapter, .direction = "down") |> # Add chapter number to each line
+  group_by(chapter) |>
+  mutate(chapter_line = row_number()) |> # Add line number of each chapter
+  filter(
+    !is.na(chapter),
+    chapter_line %in% c(2:11)
+  ) |> # Start at 2 to get rid of text "CHAPTER I" etc
+  select(text, chapter) |>
+  mutate(
+    chapter = str_remove(chapter, "CHAPTER "),
+    chapter = str_remove(chapter, "—CONCLUSION"),
+    chapter = as.integer(as.roman(chapter))
+  ) # Change chapters to integers
+
+jane_eyre_reduced <-
+  jane_eyre_reduced |>
+  mutate(count_e = str_count(text, "e|E")) |>
+  # Based on: https://stackoverflow.com/a/38058033
+  mutate(word_count = str_count(text, "\\w+"))
+```
+
+
+```{r}
+jane_eyre_reduced |>
+  select(chapter, word_count, count_e, text) |>
+  head()
+```
+
+We can verify that the mean and variance of the number of E/e's is roughly similar by plotting all of the data (@fig-janeecounts). The mean, in pink, is 6.7, and the variance, in blue, is 6.2. While they are not entirely the same, they are similar. We include the diagonal in @fig-janeecounts-2 to help with thinking about the data. If the data were on the $y=x$ line, then on average the is one E/e per word. As it is below that point, means that on average there is less than one per word.
+
+```{r}
+#| echo: true
+#| eval: true
+#| fig-cap: "Number of 'E' or 'e' in the first ten lines of each chapter in Jane Eyre"
+#| label: fig-janeecounts
+#| message: false
+#| warning: false
+#| layout-ncol: 2
+#| fig-subcap: ["Distribution of the number of e/E's", "Comparison of the number of e/E's in the line and the number of words in the line"]
+
+mean_e <- mean(jane_eyre_reduced$count_e)
+variance_e <- var(jane_eyre_reduced$count_e)
+
+jane_eyre_reduced |>
+  ggplot(aes(x = count_e)) +
+  geom_histogram() +
+  geom_vline(xintercept = mean_e, linetype = "dashed", color = "#C64191") +
+  geom_vline(xintercept = variance_e, linetype = "dashed", color = "#0ABAB5") +
+  theme_minimal() +
+  labs(
+    y = "Count",
+    x = "Number of e's per line for first ten lines"
+  )
+
+jane_eyre_reduced |>
+  ggplot(aes(x = word_count, y = count_e)) +
+  geom_jitter(alpha = 0.5) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  theme_minimal() +
+  labs(
+    x = "Number of words in the line",
+    y = "Number of e/E's in the line"
+  )
+```
+
+We could consider the following model:
+
+$$
+\begin{aligned}
+y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
+\log(\lambda_i) & = \beta_0 + \beta_1 x_i\\
+\beta_0 & \sim \mbox{Normal}(0, 2.5)\\
+\beta_1 & \sim \mbox{Normal}(0, 2.5)
+\end{aligned}
+$$
+where $y_i$ is the number of e/E's in the line and $x_i$ is the number of words in the line. We could estimate the parameters using `stan_glm()`. 
+
+```{r}
+#| eval: false
+#| echo: true
+#| message: false
+#| warning: false
+
+jane_e_counts <-
+  stan_glm(
+    count_e ~ word_count,
+    data = jane_eyre_reduced,
+    family = poisson(link = "log"),
+    seed = 853
+  )
+
+saveRDS(
+  jane_e_counts,
+  file = "jane_e_counts.rds"
+)
+```
+
+```{r}
+#| eval: false
+#| echo: false
+
+# INTERNAL
+
+saveRDS(
+  jane_e_counts,
+  file = "outputs/model/jane_e_counts.rds"
+)
+```
+
+```{r}
+#| eval: true
+#| include: false
+#| message: false
+#| warning: false
+
+library(rstanarm)
+
+jane_e_counts <-
+  readRDS(file = "outputs/model/jane_e_counts.rds")
+```
+
+<!-- (@tbl-modelsummaryjanee). -->
+
+<!-- ```{r} -->
+<!-- #| label: tbl-modelsummaryjanee -->
+<!-- #| tbl-cap: "Forecasting and explanatory models of whether it is day or night, based on the number of cars on the road" -->
+
+<!-- modelsummary::modelsummary( -->
+<!--   list( -->
+<!--     "rstanarm" = jane_e_counts -->
+<!--   ), -->
+<!--   statistic = "conf.int" -->
+<!-- ) -->
+<!-- ``` -->
+
+While we would normally be interested in the table of estimates, as we have seen that a few times now, rather than again creating a table of the estimates, we introduce `plot_cap()` from `marginaleffects` [@marginaleffects]. We can use this to show the number of e/E's predicted by the model, for each line, based on the number of words in that line. @fig-predictionsjaneecounts makes it clear that we expect a positive relationship.
+
+```{r}
+#| label: fig-predictionsjaneecounts
+#| fig-cap: "The predicted number of e/E's in each line based on the number of words"
+
+plot_cap(jane_e_counts, condition = "word_count") +
+  labs(
+    x = "Number of words",
+    y = "Average number of e/E in the first 10 lines"
+  )
+```
+
+## Negative binomial regression
+
+One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion and can use a close variant, negative binomial regression. 
+
+<!-- Before getting to this, it might be worth taking a moment to think about why we are we going through all this trouble. Common practice is to change from counts into a binary and then use logistic regression. The issue with this is that we may lose information when we group responses together. -->
+
+Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance, @maher1982modelling considers both in the context of results from the English Football League and discusses situations in which one may be considered more appropriate than the other. Similarly, @thanksleo considers the 2000 US presidential election and especially the issue of overdispersion in a Poisson analysis. And @Osgood2000 compares them in the case of crime data.
+
+<!-- The shape of the negative binomial distribution is determined by two parameters, the probability of success, $p$, and the number of successes, $r$ [@pitman, p. 482]:  -->
+
+<!-- $$P(F_r = n) = {n+r-1\choose r-1}p^r(1-p)^n\mbox{, for }n=0,1,2,...$$ -->
+<!-- where $F_r$ is the number of failures, before the $r$th success in Bernoulli trials. -->
+
+<!-- For instance, if we were to consider the number of k's in those same lines of *Jane Eyre*, then we would have many zeros (@fig-janeecountsk).  -->
+
+<!-- ```{r} -->
+<!-- jane_eyre_reduced <- -->
+<!--   jane_eyre_reduced |> -->
+<!--   mutate(count_k = str_count(text, "k|K")) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| echo: true -->
+<!-- #| eval: true -->
+<!-- #| fig-cap: "Number of 'K' or 'k' in the first ten lines of each chapter in Jane Eyre" -->
+<!-- #| label: fig-janeecountsk -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+
+<!-- mean_k <- mean(jane_eyre_reduced$count_k) -->
+<!-- variance_k <- var(jane_eyre_reduced$count_k) -->
+
+<!-- jane_eyre_reduced |> -->
+<!--   ggplot(aes(y = chapter, x = count_k)) + -->
+<!--   geom_point(alpha = 0.5) + -->
+<!--   geom_vline(xintercept = mean_k, linetype = "dashed", color = "#C64191") + -->
+<!--   geom_vline(xintercept = variance_k, linetype = "dashed", color = "#0ABAB5") + -->
+<!--   theme_minimal() + -->
+<!--   labs( -->
+<!--     x = "Number of k's per line for first ten lines", -->
+<!--     y = "Chapter" -->
+<!--   ) -->
+<!-- ``` -->
+
+### Mortality in Alberta
+
+Consider, somewhat morbidly, that every year each individual either dies or does not. From the perspective of a geographic area, we could gather data on the number of people who died each year, by their cause of death. The Canadian province of Alberta makes [available](https://open.alberta.ca/opendata/leading-causes-of-death) the number of deaths, by cause, since 2001, for the top 30 causes each year. 
+
+As always we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-albertadatasketch And a quick sketch of our model is @fig-albertamodelsketch
+
+::: {#fig-letterss layout-ncol=2 layout-valign="bottom"}
+
+![Quick sketch of a dataset that could be used to examine cause of death in Alberta](figures/IMG_2076.png){#fig-albertadatasketch}
+
+![Quick sketch of what we expect from the analysis of cause of death in Alberta before finalizing either the data or the analysis](figures/IMG_2061.png){#fig-albertamodelsketch}
+
+Sketches of the expected dataset and analysis for cause of death in Alberta
+:::
+
+We will simulate a dataset of cause of death distributed following the negative binomial distribution.
+
+```{r}
+alberta_death_simulation <-
+  tibble(
+    cause = rep(x = c("Heart", "Stroke", "Diabetes"), times = 10),
+    year = rep(x = 2016:2018, times = 10),
+    deaths = rnbinom(n = 30, size = 20, prob = 0.1)
+  )
+
+alberta_death_simulation
+```
+
+We download that data, and save it as "alberta_COD.csv". We can look at the distribution of these deaths, by year and cause (@fig-albertacod). We have truncated the full cause of death because some are quite long. As some causes are not always in the top 30 each year, not all causes have the same number of occurrences.
+
+<!-- :::{.callout-note} -->
+<!-- ## Oh, you think we have good data on that! -->
+
+<!-- Cause of death -->
+<!-- ::: -->
+
+```{r}
+#| eval: false
+#| echo: true
+
+alberta_cod <-
+  read_csv(
+    "alberta_COD.csv",
+    col_types = cols(
+      `Calendar Year` = col_integer(),
+      Cause = col_character(),
+      Ranking = col_integer(),
+      `Total Deaths` = col_integer()
+    )
+  ) |>
+  janitor::clean_names() |>
+  add_count(cause) |>
+  mutate(cause = str_trunc(cause, 30))
+```
+
+
+```{r}
+#| eval: true
+#| echo: false
+
+alberta_cod <-
+  read_csv(
+    "inputs/alberta_COD.csv",
+    col_types = cols(
+      `Calendar Year` = col_integer(),
+      Cause = col_character(),
+      Ranking = col_integer(),
+      `Total Deaths` = col_integer()
+    )
+  ) |>
+  janitor::clean_names() |>
+  add_count(cause) |>
+  mutate(cause = str_trunc(cause, 30))
+```
+
+If we were to look at the top ten causes in 2021, we would notice a variety of interesting aspects (@tbl-albertahuh). For instance, we would expect that the most common causes would be in all 21 years of our data. But we notice that that most common cause, "Other ill-defined and unknown causes of mortality", is only in three years. Naturally, "COVID-19, virus identified", is only in two other years, as there were no COVID deaths in Canada before 2020.
+
+```{r}
+#| label: tbl-albertahuh
+#| tbl-cap: "Top ten causes of death in Alberta in 2021"
+#| warning: false
+
+alberta_cod |>
+  filter(
+    calendar_year == 2021,
+    ranking <= 10
+  ) |>
+  mutate(total_deaths = format(total_deaths, big.mark = ",")) |>
+  knitr::kable(
+    col.names = c(
+      "Year",
+      "Cause",
+      "Ranking",
+      "Total deaths",
+      "Number of years"
+    ),
+    digits = 0,
+    align = c("l", "r", "r", "r", "r"),
+    booktabs = TRUE,
+    linesep = ""
+  )
+```
+
+In this case, for simplicity, we will restrict ourselves to the five most common causes of death in 2021, that have been present every year.
+
+```{r}
+alberta_cod_top_five <-
+  alberta_cod |>
+  filter(
+    calendar_year == 2021,
+    n == 21
+  ) |>
+  slice_max(order_by = desc(ranking), n = 5) |>
+  pull(cause)
+
+alberta_cod <-
+  alberta_cod |>
+  filter(cause %in% alberta_cod_top_five)
+```
+
+
+```{r}
+#| fig-cap: "Annual number of deaths for the top 5 causes in 2021, since 2001, for Alberta, Canada"
+#| label: fig-albertacod
+#| message: false
+#| warning: false
+
+alberta_cod |>
+  ggplot(aes(x = calendar_year, y = total_deaths, color = cause)) +
+  geom_line(alpha = 0.5) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  labs(
+    x = "Year",
+    y = "Annual number of deaths in Alberta",
+    color = "Cause"
+  )
+```
+
+One thing that we notice is that the mean, 1,273, is different to the variance, 182,378 (@tbl-ohboyalberta).
+
+```{r}
+#| echo: false
+#| eval: true
+#| label: tbl-ohboyalberta
+#| tbl-cap: "Summary statistics of the number of yearly deaths, by cause, in Alberta"
+library(modelsummary)
+
+datasummary(
+  total_deaths ~ Min + Mean + Max + SD + Var + N,
+  fmt = 0,
+  data = alberta_cod
+)
+```
+
+We can implement negative binomial regression when using `stan_glm()` by specifying that distribution in "family". In this case, we run both Poisson and negative binomial.
+
+```{r}
+#| echo: true
+#| eval: false
+#| message: false
+#| warning: false
+
+cause_of_death_alberta_poisson <-
+  stan_glm(
+    total_deaths ~ cause,
+    data = alberta_cod,
+    family = poisson(link = "log"),
+    seed = 853
+  )
+
+cause_of_death_alberta_neg_binomial <-
+  stan_glm(
+    total_deaths ~ cause,
+    data = alberta_cod,
+    family = neg_binomial_2(link = "log"),
+    seed = 853
+  )
+```
+
+
+```{r}
+#| echo: false
+#| eval: false
+
+# INTERNAL
+
+saveRDS(
+  cause_of_death_alberta_poisson,
+  file = "outputs/model/cause_of_death_alberta_poisson.rds"
+)
+
+saveRDS(
+  cause_of_death_alberta_neg_binomial,
+  file = "outputs/model/cause_of_death_alberta_neg_binomial.rds"
+)
+```
+
+```{r}
+#| eval: true
+#| echo: false
+
+cause_of_death_alberta_poisson <-
+  readRDS(file = "outputs/model/cause_of_death_alberta_poisson.rds")
+
+cause_of_death_alberta_neg_binomial <-
+  readRDS(file = "outputs/model/cause_of_death_alberta_neg_binomial.rds")
+```
+
+We can compare our different models (@tbl-modelsummarypoissonvsnegbinomial) (we need to load `broom.mixed` [@mixedbroom] because this is needed under the hood).
+
+```{r}
+#| label: tbl-modelsummarypoissonvsnegbinomial
+#| tbl-cap: "Modelling the most prevelent cause of deaths in Alberta, 2001-2020"
+
+library(broom.mixed)
+
+modelsummary::modelsummary(
+  list(
+    "Poisson" = cause_of_death_alberta_poisson,
+    "Negative binomial" = cause_of_death_alberta_neg_binomial
+  ),
+  statistic = "conf.int"
+)
+```
+
+We could use posterior predictive checks to more clearly show that the negative binomial approach is a better choice for this circumstance (@fig-ppcheckpoissonvsbinomial).
+
+```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-ppcheckpoissonvsbinomial
+#| layout-ncol: 2
+#| fig-cap: "Comparing posterior prediction checks for Poisson and negative binomial models"
+#| fig-subcap: ["Poisson model", "Negative binomial model"]
+
+pp_check(cause_of_death_alberta_poisson) +
+  theme(legend.position = "bottom")
+
+pp_check(cause_of_death_alberta_neg_binomial) +
+  theme(legend.position = "bottom")
+```
+
+Finally, we can compare between the models using the resampling method leave-one-out (LOO) cross-validation. This is a variant of cross-validation, introduced earlier, where the size of each fold is one. That is to say, if there was a dataset with 100 observations this LOO is equivalent to 100-fold cross validation. We can implement this in `rstanarm` with `loo()` for each model, and then compare between them with `loo_compare()`. Strictly speaking LOO-CV is not actually done by `loo()`, because it would be too computationally intensive. Instead an approximation is done provides the expected log point wise predictive density (ELPD), where the higher the better.
+
+```{r}
+#| message: false
+#| warning: false
+
+poisson <- loo(cause_of_death_alberta_poisson, cores = 2)
+neg_binomial <- loo(cause_of_death_alberta_neg_binomial, cores = 2)
+
+loo_compare(poisson, neg_binomial)
+```
+
+In this case we find that the negative binomial model is a better fit than the Poisson, because ELPD is larger.
+
+We have covered a variety of diagnostic aspects for Bayesian models. While it is difficult to be definitive about what is "enough" because it is context specific, the following checklist would be enough for most purposes. These would go into an appendix that was mentioned and cross-referenced in the model section of a paper:
+
+- Prior predictive checks.
+- Trace plots.
+- Rhat plots.
+- Posterior distributions.
+- Posterior predictive checks.
+
+
+
+<!-- ### Proportional hazards -->
+
+<!-- Could do like how long someone has to wait for something? -->
+
+
+
+
+## Deploying models
+
+Having done the work to develop a dataset and explore it with a model that we are confident can be used, we may wish to enable this to be used more widely than just our own computer. There are a variety of ways of doing this, including:
+
+- using the cloud,
+- creating R packages,
+- making `shiny` applications, and
+- using `plumber` to create an API.
+
+The general idea here is that we need to know, and allow others to come to trust, the whole workflow. That is what our approach to this point brings. After this, then we may like to use our model more broadly. Say we have been able to scrape some data from a website, bring some order to that chaos, make some charts, appropriately model it, and write this all up. In most academic settings that is more than enough. But in many industry settings we would like to use the model to do something. For instance, setting up a website that allows a model to be used to generate an insurance quote given several inputs.
+
+In this chapter, we begin by moving our compute from our local computer to the cloud. We then describe the use of R packages and Shiny for sharing models. That works well, but in some settings other users may like to interact with our model in ways that we are not focused on. One way to allow this is to make our results available to other computers, and for that we will want to make an APIs. Hence, we introduce `plumber` [@plumber], which is a way of creating APIs.
+
+### Amazon Web Services
+
+Comment^[I FEEL LIKE THE AWS SECTION SHOULD BE IN THE APPENDIX. ITS PROVIDING A LOT OF NITTY-GRITTY DETAILS WHICH MAY BECOME OUTDATED OVERTIME AS WEB SERVICES CHANGE OPTION SETS, ETC.]
+
+Apocryphally the cloud is just another name for someone else's computer. And while that is true to various degrees, for our purposes that is enough. Learning to use someone else's computer can be great for a number of reasons including:
+
+- Scalability: It can be quite expensive to buy a new computer, especially if we only need it to run something every now and then, but by using the cloud, we can just rent for a few hours or days. This allows use to amortize this cost and work out what we actually need before committing to a purchase. It also allows us to easily increase or decrease the compute scale if we suddenly have a substantial increase in demand.
+- Portability: If we can shift our analysis workflow from a local computer to the cloud, then that suggests that there is we are likely doing good things in terms of reproducibility and portability. At the very least, code can run both locally and on the cloud, which is a big step in terms of reproducibility.
+- Set-and-forget: If we are doing something that will take a while, then it can be great to not have to worry about our own computer needing to run overnight. Additionally, on many cloud options, open-source statistical software, such as R and Python, is either already available, or relatively easy to set-up.
+
+That said, there are downsides, including:
+
+- Cost: While most cloud options are cheap, they are rarely free. To provide an idea of cost, using a well-featured AWS instance for a few days may end up being a few dollars. It is also easy to accidentally forget about something, and generate unexpectedly large bills, especially initially.
+- Public: It can be easy to make mistakes and accidentally make everything public.
+- Time: It takes time to get set-up and comfortable on the cloud.
+
+When we use the cloud, we are typically running code on a "virtual machine" (VM). This is an allocation that is part of a larger collection of computers that has been designed to act like a computer with specific features. For instance, we may specify that our virtual machine has, say, 8 GB RAM, 128 GB storage, and 4 CPUs. The VM would then act like a computer with those specifications. The cost to use cloud options increases based on the VM specifications.
+
+In a sense, we started with a cloud option, through our initial recommendation in @sec-fire-hose of using RStudio Cloud, before we moved to our local computer in @sec-r-essentials. That cloud option was specifically designed for beginners. We will now introduce a more general cloud option: Amazon Web Services (AWS). Often a particular business will use a particular cloud option, such as Google, AWS, or Azure, but developing familiarity with one will make the use of the others easier.
+
+Amazon Web Services is a cloud service from Amazon. To get started we need to create an AWS Developer account [here](https://aws.amazon.com/developer/) (@fig-awsone).
+
+::: {#fig-ipums layout-nrow=2}
+
+![AWS Developer website](figures/aws_one.png){#fig-awsone}
+
+![AWS Developer console](figures/aws_two.png){#fig-awstwo}
+
+![Launching an AWSinstance](figures/aws_three.png){#fig-awsthree}
+
+![Establishing a key-pair](figures/aws_five.png){#fig-awsfive}
+
+Overview of getting Amazon AWS set-up
+:::
+
+After we have created an account, we need to select a region where the computer that we will access is located. After this, we want to "Launch a virtual machine" with EC2 (@fig-awstwo).
+
+The first step is to choose an Amazon Machine Image (AMI). This provides the details of the computer that you will be using. For instance, a local computer may be a MacBook running Monterey. Louis Aslett provides AMIs that are already set-up with RStudio and much else [here](http://www.louisaslett.com/RStudio_AMI/). We can either search for the AMI of the region that we registered for, or click on the relevant link on Aslett's website. For instance, to use the AMI set-up for the Canadian central region we search for "ami-0bdd24fd36f07b638". The benefit of using these AMIs is that they are set-up specifically for RStudio, but the trade-off is that they are a little outdated, as they were compiled in August 2020.
+
+In the next step we can choose how powerful the computer will be. The free tier is basic computer, but we can choose better ones when we need them. At this point we can pretty much just launch the instance (@fig-awsthree). If we start using AWS more seriously, then we could go back and select different options, especially around the security of the account. AWS relies on key pairs. And so, we will need to create a PEM and save it locally (@fig-awsfive). We can then launch the instance.
+
+After a few minutes, the instance will be running. We can use it by pasting the "public DNS" into a browser. The username is "rstudio" and the password is the instance ID.
+
+We should have RStudio running, which is exciting. The first thing to do is probably to change the default password using the instructions in the instance.
+
+We do not need to install, say, the `tidyverse`, instead we can just call the library and keep going. This is because this AMI comes with many packages already installed. We can see the list of packages that are installed with `installed.packages()`. For instance, `rstan` is already installed, and we could set-up an instance with GPUs if we needed.
+
+Perhaps as important as being able to start an AWS instance is being able to stop it (so that we do not get billed). The free tier is useful, but we do need to turn it off. To stop an instance, in the AWS instances page, select it, then "Actions -> Instance State -> Terminate".
+
+
+
+
+
+
+<!-- ## R packages -->
+
+<!-- To this point we have largely been using R Packages to do things for us. However, another way is to have them loaded -->
+
+
+
+<!-- ## Shiny -->
+
+
+
+### Plumber and model APIs
+
+Comment^[I WOULD EXPLAIN WHAT EXACTLY APIS ARE FOR AND WHY THEY ARE USEFUL, ALSO I THINK THIS SHOULD BE A DIFFERENT SECTION. BUT I WOULD KEEP LINEAR REG & GLM IN THE SAME SECTION TO BE CLEAR. THE IDEA OF DEPLOYING A MODEL IS COMPLETELY INDEPENDENT ABOUT WHETHER IT IS LINEAR OR NOT]
+
+The general idea behind the `plumber` package [@plumber] is that we can train a model and make it available via an API that we can call when we want a forecast.
+
+Just to get something working, let us make a function that returns "Hello Toronto" regardless of the output. Open a new R file, add the following, and then save it as "plumber.R" (you may need to install the `plumber` package if you have not done that yet).
+
+```{r}
+#| eval: false
+
+library(plumber)
+
+#* @get /print_toronto
+print_toronto <- function() {
+  result <- "Hello Toronto"
+  return(result)
+}
+```
+
+After that is saved, in the top right of the editor you should get a button to "Run API". Click that, and your API should load. It will be a "Swagger" application, which provides a GUI around our API. Expand the GET method, and then click "Try it out" and "Execute". In the response body, you should get "Hello Toronto". 
+
+To more closely reflect the fact that this is an API designed for computers, you can copy/paste the "Request URL" into a browser and it should return "Hello Toronto".
+
+
+#### Local model
+
+Now, we are going to update the API so that it serves a model output, given some input. This follows @buhrplumber.
+
+At this point, we should start a new R Project. To get started, let us simulate some data and then train a model on it. In this case we are interested in forecasting how long a baby may sleep overnight, given we know how long they slept during their afternoon nap.
+
+```{r} 
+#| warning: false
+#| message: false
+#| eval: true
+
+library(tidyverse)
+set.seed(853)
+
+number_of_observations <- 1000
+
+baby_sleep <-
+  tibble(
+    afternoon_nap_length = rnorm(number_of_observations, 120, 5) |> abs(),
+    noise = rnorm(number_of_observations, 0, 120),
+    night_sleep_length = afternoon_nap_length * 4 + noise,
+  )
+
+baby_sleep |>
+  ggplot(aes(x = afternoon_nap_length, y = night_sleep_length)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    x = "Baby's afternoon nap length (minutes)",
+    y = "Baby's overnight sleep length (minutes)"
+  ) +
+  theme_classic()
+```
+
+Let us now use `tidymodels` to quickly make a model.
+
+```{r} 
+#| warning: false
+#| message: false
+#| eval: false
+
+library(tidymodels)
+
+set.seed(853)
+
+baby_sleep_split <- initial_split(baby_sleep, prop = 0.80)
+baby_sleep_train <- training(baby_sleep_split)
+baby_sleep_test <- testing(baby_sleep_split)
+
+model <-
+  linear_reg() |>
+  set_engine(engine = "lm") |>
+  fit(
+    night_sleep_length ~ afternoon_nap_length,
+    data = baby_sleep_train
+  )
+
+write_rds(x = model, file = "baby_sleep.rds")
+```
+
+At this point, we have a model. One difference from what you might be used to is that we have saved the model as an ".rds" file. We are going to read that in.
+
+Now that we have our model we want to put that into a file that we will use the API to access, again called "plumber.R". And we also want a file that sets up the API, called "server.R". Make an R script called "server.R" and add the following content:
+
+```{r}
+#| eval: false
+
+library(plumber)
+
+serve_model <- plumb("plumber.R")
+serve_model$run(port = 8000)
+```
+
+Then in "plumber.R" add the following content:
+
+```{r}
+#| eval: false
+
+library(plumber)
+library(tidyverse)
+
+model <- readRDS("baby_sleep.rds")
+
+version_number <- "0.0.1"
+
+variables <-
+  list(
+    afternoon_nap_length = "A value in minutes, likely between 0 and 240.",
+    night_sleep_length = "A forecast, in minutes, likely between 0 and 1000."
+  )
+
+#* @param afternoon_nap_length
+#* @get /survival
+predict_sleep <- function(afternoon_nap_length = 0) {
+  afternoon_nap_length <- as.integer(afternoon_nap_length)
+
+  payload <- data.frame(afternoon_nap_length = afternoon_nap_length)
+
+  prediction <- predict(model, payload)
+
+  result <- list(
+    input = list(payload),
+    response = list("estimated_night_sleep" = prediction),
+    status = 200,
+    model_version = version_number
+  )
+
+  return(result)
+}
+```
+
+Again, after we save the "plumber.R" file we should have an option to "Run API". Click that and you can try out the API locally in the same way as before. In this case, click "Try It Out" and then input an afternoon nap length in minutes. The response body will contain the prediction based on the data and model we set up.
+
+
+#### Cloud model
+
+To this point, we have got an API working on our own machine, but what we really want to do is to get it working on a computer such that the API can be accessed by anyone. To do this we are going to use [DigitalOcean](https://www.digitalocean.com). It is a charged service, but when you create an account, it will come with $200 in credit, which will be enough to get started.
+
+This set-up process will take some time, but we only need to do it once. Two additional packages that will assist here are `plumberDeploy` [@plumberdeploy] and `analogsea` [@citeanalogsea] (which will need to be installed from GitHub: `remotes::install_github("sckott/analogsea")`).
+
+Now we need to connect the local computer with the DigitalOcean account. 
+
+```{r}
+#| eval: false
+
+library(analogsea)
+
+account()
+```
+
+Now we need to authenticate the connection, and this is done using a SSH public key.
+
+```{r}
+#| eval: false
+
+key_create()
+```
+
+What you want is to have a ".pub" file on our computer. Then copy the public key aspect in that file, and add it to the SSH keys section in the account security settings. When we have the key on our local computer, then we can check this using `ssh`.
+
+```{r}
+#| eval: false
+library(ssh)
+
+ssh_key_info()
+```
+
+Again, this will all take a while to validate. DigitalOcean calls every computer that we start a "droplet". If we start three computers, then we will have started three droplets. We can check the droplets that are running.
+ 
+```{r}
+#| eval: false
+
+droplets()
+```
+
+If everything is set-up properly, then this will print the information about all droplets that you have associated with the account (which at this point, is probably none). We must first create a droplet.
+
+```{r}
+#| eval: false
+library(plumberDeploy)
+
+id <- do_provision(example = FALSE)
+```
+
+Then we get asked for the SSH passphrase and then it will just set-up a bunch of things. After this we are going to need to install a whole bunch of things onto our droplet.
+
+```{r}
+#| eval: false
+
+install_r_package(
+  droplet = id,
+  c(
+    "plumber",
+    "remotes",
+    "here"
+  )
+)
+
+debian_apt_get_install(
+  id,
+  "libssl-dev",
+  "libsodium-dev",
+  "libcurl4-openssl-dev"
+)
+
+debian_apt_get_install(
+  id,
+  "libxml2-dev"
+)
+
+install_r_package(
+  id,
+  c(
+    "config",
+    "httr",
+    "urltools",
+    "plumber"
+  )
+)
+
+install_r_package(id, c("xml2"))
+install_r_package(id, c("tidyverse"))
+install_r_package(id, c("tidymodels"))
+```
+
+And then when that is finally set-up (it will take 30 minutes or so) we can deploy our API.
+
+```{r}
+#| eval: false
+
+do_deploy_api(
+  droplet = id,
+  path = "example",
+  localPath = getwd(),
+  port = 8000,
+  docs = TRUE,
+  overwrite = TRUE
+)
+```
+
+
+
+
+
+
+
+
+## Exercises and tutorial
+
+
+### Exercises {.unnumbered}
+
+1. *(Plan)* Consider the following scenario: *A person is interested in the number of deaths, attributed to cancer, in Sydney They collect data from the five largest hospitals.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+2. *(Simulate)* Please further consider the scenario described and simulate the situation, along with three independent variables that are associated the number of deaths, by cause.
+3. *(Acquire)* Please describe one possible source of such a dataset.
+4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
+5. *(Communicate)* Please write two paragraphs about what you did.
+14. When should we use logistic regression (pick one)?
+    a. Continuous dependent variable.
+    b. Binary dependent variable.
+    c. Count dependent variable.
+15. We are interested in studying how voting intentions in the recent US presidential election vary by an individual's income. We set up a logistic regression model to study this relationship. In this study, one possible dependent variable would be (pick one)?
+    a. Whether the respondent is a US citizen (yes/no)
+    b. The respondent's personal income (high/low)
+    c. Whether the respondent is going to vote for Trump (yes/no)
+    d. Who the respondent voted for in 2016 (Trump/Clinton)
+16. We are interested in studying how voting intentions in the recent US presidential election vary by an individual's income. We set up a logistic regression model to study this relationship. In this study, one possible dependent variable would be (pick one)?
+    a. The race of the respondent (white/not white)
+    b. The respondent's marital status (married/not)
+    c. Whether the respondent is registered to vote (yes/no)
+    d. Whether the respondent is going to vote for Biden (yes/no)
+18. The mean of a Poisson distribution is equal to its?
+    a. Median.
+    b. Standard deviation.
+    c. Variance.
+22. Please redo the `tidymodels` example of US elections but include additional variables. Which variable did you choose, and how did the performance of the model improve?
+23. Please create the graph of the density of the Poisson distribution when $\lambda = 75$.
+24. From @gelmanhillvehtari2020, what is the offset in Poisson regression?
+25. Redo the *Jane Eyre* example, but for "A/a".
+
+
+### Tutorial {.unnumbered}
+
+Please consider @maher1982modelling or @thanksleo. Build a simplified version of their model. Obtain some recent relevant data, estimate the model, and discuss your choice between Poisson and negative binomial regression.
+
+
+
