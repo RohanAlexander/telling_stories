@@ -256,6 +256,23 @@ We typically use a bar chart when we have a categorical variable that we want to
 
 We will use a dataset from the 1997-2001 British Election Panel Study that was put together by @fox2006effect.
 
+::: {.content-visible when-format="pdf"}
+```{r}
+#| include: true
+#| eval: false
+
+# Vincent Arel Bundock provides access to this dataset.
+beps <-
+  read_csv(
+    file =
+      paste0(
+      "https://vincentarelbundock.github.io/Rdatasets/",
+      "csv/carData/BEPS.csv")
+  )
+```
+:::
+
+::: {.content-visible unless-format="pdf"}
 ```{r}
 #| include: true
 #| eval: false
@@ -267,6 +284,7 @@ beps <-
       "https://vincentarelbundock.github.io/Rdatasets/csv/carData/BEPS.csv"
   )
 ```
+:::
 
 ```{r}
 #| include: false
@@ -1423,6 +1441,24 @@ world_bank_data |>
 
 We can use `datasummary()` from `modelsummary` to create tables of summary statistics from our dataset. 
 
+::: {.content-visible when-format="pdf"}
+
+We remove "population" for reasons of space.
+
+```{r}
+#| message: false
+#| warning: false
+
+library(modelsummary)
+
+world_bank_data |>
+  select(-population) |>
+  rename(unem_rate = unemployment_rate) |> 
+  datasummary_skim(histogram = FALSE)
+```
+:::
+
+::: {.content-visible unless-format="pdf"}
 ```{r}
 #| message: false
 #| warning: false
@@ -1432,6 +1468,7 @@ library(modelsummary)
 world_bank_data |>
   datasummary_skim()
 ```
+:::
 
 By default, `datasummary()` summarizes the "numeric" variables, but we can ask for the "categorical" variables (@tbl-testdatasummary). Additionally we can add cross-references in the same way as `kable()`, that is, include a title and then cross-reference the name of the R chunk.
 
@@ -1450,10 +1487,11 @@ We can create a table that shows the correlation between variables using `datasu
 #| tbl-cap: "Correlation between the economic indicator variables for four countries (Australia, Ethiopia, India, and the US)"
 
 world_bank_data |>
+  rename(unem_rate = unemployment_rate) |> 
   datasummary_correlation()
 ```
 
-We typically need a table of descriptive statistics that we could add to our paper (@tbl-descriptivestats). This contrasts with @tbl-testdatasummary) which would likely not be included in a paper. We can add a note about the source of the data using "notes".
+We typically need a table of descriptive statistics that we could add to our paper (@tbl-descriptivestats). This contrasts with @tbl-testdatasummary which would likely not be included in a paper. We can add a note about the source of the data using `notes`.
 
 ```{r}
 #| label: tbl-descriptivestats
@@ -1462,7 +1500,8 @@ We typically need a table of descriptive statistics that we could add to our pap
 
 datasummary_balance(
   formula = ~country,
-  data = world_bank_data,
+  data = world_bank_data |> filter(country %in% c("Australia", "Ethiopia")),
+  dinm = FALSE,
   notes = "Data source: World Bank."
 )
 ```
@@ -1635,13 +1674,36 @@ Once you have defined the bounding box, then the function `get_stamenmap()` will
 #| warning: false
 #| message: false
 
-canberra_stamen_map <- get_stamenmap(bbox, zoom = 11, maptype = "toner-lite")
+canberra_stamen_map <- get_stamenmap(bbox, 
+                                     zoom = 11, 
+                                     maptype = "toner-lite")
 
 ggmap(canberra_stamen_map)
 ```
 
 Once we have a map then we can use `ggmap()` to plot it. Now we want to get some data that we plot on top of our tiles. We will just plot the location of the polling places, based on which "division" it is. This is available [from the Australian Electoral Commission (AEC)](https://results.aec.gov.au/20499/Website/Downloads/HouseTppByPollingPlaceDownload-20499.csv). The AEC is the official government agency that is responsible for elections in Australia.
 
+::: {.content-visible when-format="pdf"}
+```{r}
+#| warning: false
+#| message: false
+
+# Read in the booths data for each year
+booths <-
+  readr::read_csv(
+    paste0(
+      "https://results.aec.gov.au/24310/Website/Downloads/",
+      "GeneralPollingPlacesDownload-24310.csv"
+    ),
+    skip = 1,
+    guess_max = 10000
+  )
+
+head(booths)
+```
+:::
+
+::: {.content-visible unless-format="pdf"}
 ```{r}
 #| warning: false
 #| message: false
@@ -1656,6 +1718,7 @@ booths <-
 
 head(booths)
 ```
+:::
 
 This dataset is for the whole of Australia, but as we are just going to plot the area around Canberra, we filter to that and only to booths that are geographic (the AEC has various options for people who are in hospital, or not able to get to a booth, etc, and these are still "booths" in this dataset).
 
@@ -1663,12 +1726,12 @@ This dataset is for the whole of Australia, but as we are just going to plot the
 #| warning: false
 #| message: false
 
-# Reduce the booths data to only rows with that have latitude and longitude
+# Reduce to only rows with latitude and longitude
 booths_reduced <-
   booths |>
   filter(State == "ACT") |>
   select(PollingPlaceID, DivisionNm, Latitude, Longitude) |>
-  filter(!is.na(Longitude)) |> # Remove rows that do not have a geography
+  filter(!is.na(Longitude)) |> # Remove rows without geography
   filter(Longitude < 165) # Remove Norfolk Island
 ```
 
@@ -1746,7 +1809,7 @@ We will look at the locations of US military bases in: Germany, Japan, and Austr
 
 library(ggmap)
 
-# Based on: https://data.humdata.org/dataset/bounding-boxes-for-countries
+# From: https://data.humdata.org/dataset/bounding-boxes-for-countries
 bbox_germany <-
   c(
     left = 5.867,
@@ -2016,3 +2079,16 @@ Using Quarto, please create a graph using `ggplot2` and a map using `ggmap` and 
 Then, with regard the graph you created, please reflect on @vanderplas2020testing and add a few paragraphs about the different options that you considered that the graph more effective. (If you have not now got at least two pages about your graph you have likely written too little.)
 
 And finally, with regard to the map that you created, please reflect on the following quote from Heather Krause, founder of [We All Count](https://weallcount.com): "maps only show people who aren't invisible to the makers" as well as Chapter 3 from @datafeminism2020 and add a few paragraphs related to this. (Again, if you have not now got at least two pages about your map you have likely written too little.)
+
+
+### Paper {.unnumbered}
+
+::: {.content-visible when-format="pdf"}
+At about this point the *Mawson* Paper from Online Appendix [Papers](https://tellingstorieswithdata.com/23-assessment.html) would be appropriate.
+:::
+
+::: {.content-visible unless-format="pdf"}
+At about this point the *Mawson* Paper from [Appendix -@sec-papers] would be appropriate.
+:::
+
+

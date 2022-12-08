@@ -222,7 +222,7 @@ bibliography: bibliography.bib
 ---
 ```
 
-We would need to make a separate file called "bibliography.bib" and save it next to the Quarto file. In the BibTeX file we need an entry for the item that is to be referenced. For instance, the citation for R can be obtained with `citation()` and this can be added to the "bibliography.bib" file. Similarly, the citation for a package can be found by including the package name, for instance `citation("tidyverse")`. It can be helpful to use Google Scholar, or doi2bib, to get citations for books or articles.
+We would need to make a separate file called "bibliography.bib" and save it next to the Quarto file. In the BibTeX file we need an entry for the item that is to be referenced. For instance, the citation for R can be obtained with `citation()` and this can be added to the "bibliography.bib" file. Similarly, the citation for a package can be found by including the package name, for instance `citation("tidyverse")`. It can be helpful to use [Google Scholar](https://scholar.google.com), or [doi2bib](https://www.doi2bib.org), to get citations for books or articles.
 
 ```
 @Manual{,
@@ -235,7 +235,7 @@ We would need to make a separate file called "bibliography.bib" and save it next
   }
 @Article{,
     title = {Welcome to the {tidyverse}},
-    author = {Hadley Wickham and Mara Averick and Jennifer Bryan and Winston Chang and Lucy D'Agostino McGowan and Romain François and Garrett Grolemund and Alex Hayes and Lionel Henry and Jim Hester and Max Kuhn and Thomas Lin Pedersen and Evan Miller and Stephan Milton Bache and Kirill Müller and Jeroen Ooms and David Robinson and Dana Paige Seidel and Vitalie Spinu and Kohske Takahashi and Davis Vaughan and Claus Wilke and Kara Woo and Hiroaki Yutani},
+    author = {Hadley Wickham and Mara Averick and Jennifer Bryan and...},
     year = {2019},
     journal = {Journal of Open Source Software},
     volume = {4},
@@ -273,6 +273,27 @@ The reference list at the end of the paper is automatically built based on calli
 
 It can be useful to cross-reference figures, tables, and equations. This makes it easier to refer to them in the text. To do this for a figure we refer to the name of the R chunk that creates or contains the figure. For instance, consider the following code.
 
+::: {.content-visible when-format="pdf"}
+```{r}
+#| echo: fenced
+#| label: fig-theuniquename
+#| fig-cap: Number of illnesses in the past two weeks...
+#| warning: false
+
+library(tidyverse)
+library(AER)
+
+data("DoctorVisits", package = "AER")
+
+DoctorVisits |>
+  ggplot(aes(x = illness)) +
+  geom_histogram(stat = "count")
+```
+
+Then `(@fig-theuniquename)` would produce: (@fig-theuniquename) as the name of the R chunk is `fig-theuniquename`. We need to add "fig" to the start of the chunk name so that Quarto knows that this is a figure. We then include a "fig-cap:" in the R chunk that specifies a caption.
+:::
+
+::: {.content-visible unless-format="pdf"}
 ```{r}
 #| echo: fenced
 #| label: fig-uniquename
@@ -290,6 +311,9 @@ DoctorVisits |>
 ```
 
 Then `(@fig-uniquename)` would produce: (@fig-uniquename) as the name of the R chunk is `fig-uniquename`. We need to add "fig" to the start of the chunk name so that Quarto knows that this is a figure. We then include a "fig-cap:" in the R chunk that specifies a caption.
+:::
+
+
 
 We can add `#| layout-ncol: 2` in an R chunk within a Quarto document to have two graphs appear side-by-side (@fig-doctorgraphsidebyside). Here @fig-doctorgraphsidebyside-1 uses the minimal theme, and @fig-doctorgraphsidebyside-2 uses the classic theme. These both cross-reference the same label `#| label: fig-doctorgraphsidebyside` in the R chunk, with an additional option added in the R chunk of `#| fig-subcap: ["Number of illnesses","Number of visits to the doctor"]` which provides the sub-cations. The addition of letters in-text is accomplished, by adding "-1" and "-2" to the end of the label when it is used in-text: `(@fig-doctorgraphsidebyside)`, `@fig-doctorgraphsidebyside-1`, and `@fig-doctorgraphsidebyside-2`.
 
@@ -299,7 +323,7 @@ We can add `#| layout-ncol: 2` in an R chunk within a Quarto document to have tw
 #| label: fig-doctorgraphsidebyside
 #| echo: fenced
 #| fig-cap: "Two variants of Doctor Visits"
-#| fig-subcap: ["Number of illnesses","Number of visits to the doctor"]
+#| fig-subcap: ["Illnesses","Visits to the doctor"]
 #| layout-ncol: 2
 
 DoctorVisits |>
@@ -310,6 +334,26 @@ DoctorVisits |>
   ggplot(aes(x = visits)) +
   geom_histogram(stat = "count")
 ```
+
+
+
+::: {.content-visible when-format="pdf"}
+
+We can take a similar approach to cross-reference tables. For instance, `(@tbl-visittable)` will produce: (@tbl-visittable). In this case we specify "tbl" at the start of the label so that Quarto knows that it is a table. And we specify a caption for the table with "tbl-cap:".
+
+```{r}
+#| label: tbl-visittable
+#| echo: fenced
+#| tbl-cap: "Number of visits to the doctor in the past two weeks"
+
+DoctorVisits |>
+  count(visits) |>
+  knitr::kable()
+```
+
+:::
+
+::: {.content-visible unless-format="pdf"}
 
 We can take a similar approach to cross-reference tables. For instance, `(@tbl-docvisittable)` will produce: (@tbl-docvisittable). In this case we specify "tbl" at the start of the label so that Quarto knows that it is a table. And we specify a caption for the table with "tbl-cap:".
 
@@ -322,6 +366,8 @@ DoctorVisits |>
   count(visits) |>
   knitr::kable()
 ```
+
+:::
 
 Finally, we can also cross-reference equations. To that we need to add a tag `{#eq-macroidentity}` which we then reference. 
 
@@ -946,6 +992,7 @@ toc()
     d.  A reproducible example that demonstrates you have actually tried to help yourself.
 21. The following code produces an error.  Please use `reprex` [@citereprex]  to build a reproducible example that you could use to get help with it, and submit the reprex using a GitHub Gist. You should simplify many aspects including reducing the number of packages, changing the dataset, and simplying the `filter()` and `mutate()`.
 
+::: {.content-visible when-format="pdf"}
 ```{r}
 #| eval: false
 #| include: true
@@ -953,7 +1000,11 @@ toc()
 library(tidyverse)
 
 oecd_gdp <-
-  read_csv("https://stats.oecd.org/sdmx-json/data/DP_LIVE/.QGDP.../OECD?contentType=csv&detail=code&separator=comma&csv-lang=en")
+  read_csv(
+    paste0(
+      "https://stats.oecd.org/sdmx-json/data/DP_LIVE/.QGDP",
+      ".../OECD?contentType=csv&detail=code&separator=comma",
+      "&csv-lang=en"))
 
 head(oecd_gdp)
 
@@ -966,16 +1017,8 @@ oecd_gdp_most_recent <-
     TIME == "2021-Q3",
     SUBJECT == "TOT",
     LOCATION %in% c(
-      "AUS",
-      "CAN",
-      "CHL",
-      "DEU",
-      "GBR",
-      "IDN",
-      "ESP",
-      "NZL",
-      "USA",
-      "ZAF"
+      "AUS", "CAN", "CHL", "DEU", "GBR",
+      "IDN", "ESP", "NZL", "USA", "ZAF"
     ),
     MEASURE == "PC_CHGPY"
   ) |>
@@ -1000,6 +1043,56 @@ oecd_gdp_most_recent |>
   ggplot(mapping = aes(x = LOCATION, y = Value)) |>
   geom_bar(stat = "identity")
 ```
+:::
+
+::: {.content-visible unless-format="pdf"}
+```{r}
+#| eval: false
+#| include: true
+
+library(tidyverse)
+
+oecd_gdp <-
+  read_csv("https://stats.oecd.org/sdmx-json/data/DP_LIVE/.QGDP.../OECD?contentType=csv&detail=code&separator=comma&csv-lang=en")
+
+head(oecd_gdp)
+
+library(forcats)
+library(dplyr)
+
+oecd_gdp_most_recent <-
+  oecd_gdp |>
+  filter(
+    TIME == "2021-Q3",
+    SUBJECT == "TOT",
+    LOCATION %in% c(
+      "AUS", "CAN", "CHL", "DEU", "GBR",
+      "IDN", "ESP", "NZL", "USA", "ZAF"
+    ),
+    MEASURE == "PC_CHGPY"
+  ) |>
+  mutate(
+    european = if_else(
+      LOCATION %in% c("DEU", "GBR", "ESP"),
+      "European",
+      "Not european"
+    ),
+    hemisphere = if_else(
+      LOCATION %in%
+        c("CAN", "DEU", "GBR", "ESP", "USA"),
+      "Northern Hemisphere",
+      "Southern Hemisphere"
+    ),
+  )
+
+library(ggplot)
+library(patchwork)
+
+oecd_gdp_most_recent |>
+  ggplot(mapping = aes(x = LOCATION, y = Value)) |>
+  geom_bar(stat = "identity")
+```
+:::
 
 
 
@@ -1011,6 +1104,12 @@ Code review is an important part of working as a professional [@codereview]. Ple
 
 ### Paper {.unnumbered}
 
+::: {.content-visible when-format="pdf"}
+At about this point the *Donaldson* Paper from Online Appendix [Papers](https://tellingstorieswithdata.com/23-assessment.html) would be appropriate.
+:::
+
+::: {.content-visible unless-format="pdf"}
 At about this point the *Donaldson* Paper from [Appendix -@sec-papers] would be appropriate.
+:::
 
 

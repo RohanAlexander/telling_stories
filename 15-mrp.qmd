@@ -204,53 +204,19 @@ library(gutenbergr)
 
 dups_and_letters_shakespeare <-
   c(
-    2270,
-    4774,
-    5137,
-    9077,
-    10606,
-    12578,
-    22791,
-    23041,
-    23042,
-    23043,
-    23044,
-    23045,
-    23046,
-    28334,
-    45128,
-    47518,
-    47715,
-    47960,
-    49007,
-    49008,
-    49297,
-    50095,
-    50559
+    2270, 4774, 5137, 9077, 10606, 12578, 22791, 
+    23041, 23042, 23043, 23044, 23045, 23046, 
+    28334, 45128, 47518, 47715, 47960, 49007, 
+    49008, 49297, 50095, 50559
   )
 
 dups_and_letters_bronte <- c(31100, 42078)
 
 dups_and_letters_dickens <-
   c(
-    25852,
-    25853,
-    25854,
-    30368,
-    32241,
-    35536,
-    37121,
-    40723,
-    42232,
-    43111,
-    43207,
-    46675,
-    47529,
-    47530,
-    47531,
-    47534,
-    47535,
-    49927,
+    25852, 25853, 25854, 30368, 32241, 35536,
+    37121, 40723, 42232, 43111, 43207, 46675,
+    47529, 47530, 47531, 47534, 47535, 49927,
     50334
   )
 
@@ -436,7 +402,7 @@ library(broom.mixed)
 modelsummary::modelsummary(
   list(
     "Negative binomial" = author_lines_rstanarm,
-    "Negative binomial with multilevel modelling" = author_lines_rstanarm_multilevel
+    "Negative binomial with multilevel" = author_lines_rstanarm_multilevel
   ),
   statistic = "conf.int"
 )
@@ -676,12 +642,12 @@ poststratification_dataset |>
 In an ideal world we have individual-level data in our post-stratification dataset (that is the case above). In that world we can apply our model to each individual. The more likely situation, in reality, is that we just have counts by groups, so we are going to try to construct an estimate for each group.
 
 ```{r}
-poststratification_dataset_grouped <-
+poststrat_dataset_grouped <-
   poststratification_dataset |>
   group_by(age_group, toilet_trained) |>
   count()
 
-poststratification_dataset_grouped |>
+poststrat_dataset_grouped |>
   head()
 ```
 
@@ -691,17 +657,17 @@ poststratification_dataset_grouped |>
 Now we create an estimate for each group, and add some confidence intervals.
 
 ```{r}
-poststratification_dataset_grouped <-
+poststrat_dataset_grouped <-
   mrp_example_model |>
-  predict(newdata = poststratification_dataset_grouped, interval = "confidence") |>
+  predict(newdata = poststrat_dataset_grouped, interval = "confidence") |>
   as_tibble() |>
-  cbind(poststratification_dataset_grouped)
+  cbind(poststrat_dataset_grouped)
 ```
 
 At this point we can have a look at our MRP estimates (circles) along with their confidence intervals, and compare them the raw estimates from the biased sample data (squares). In this case, because we know the truth, we can also compare them to the known truth (triangles), but that is not something we can do normally.
 
 ```{r}
-poststratification_dataset_grouped |>
+poststrat_dataset_grouped |>
   ggplot(aes(x = age_group, y = fit)) +
   geom_point(
     data = population_for_mrp_example_summarised,
@@ -1020,9 +986,13 @@ raw_estimates_sample <- sample_for_australian_polling |>
 post_stratified_estimates |>
   ggplot(aes(y = mean, x = forcats::fct_inorder(state))) +
   geom_point(aes(color = "MRP estimate"), shape = 16, size = 2.5) +
-  geom_errorbar(aes(ymin = lower, ymax = upper, color = "MRP estimate"), width = 0) +
-  geom_point(data = raw_estimates_sample, aes(color = "Raw estimate (biased sample)"), shape = 15, size = 2.5) +
-  geom_point(data = raw_estimates, aes(color = "Raw estimate"), shape = 18, size = 3) +
+  geom_errorbar(aes(ymin = lower, ymax = upper, color = "MRP estimate"), 
+                width = 0) +
+  geom_point(data = raw_estimates_sample, 
+             aes(color = "Raw estimate (biased sample)"), 
+             shape = 15, size = 2.5) +
+  geom_point(data = raw_estimates, aes(color = "Raw estimate"), 
+             shape = 18, size = 3) +
   labs(
     y = "Proportion ALP support",
     x = "State"
@@ -1032,12 +1002,16 @@ post_stratified_estimates |>
   theme(legend.position = "bottom") +
   theme(legend.title = element_blank()) +
   coord_flip() +
-  guides(color = guide_legend(override.aes = list(shape = c(16, 18, 15), linetype = c(1, 0, 0))))
+  guides(color = guide_legend(override.aes = list(shape = c(16, 18, 15), 
+                                                  linetype = c(1, 0, 0))))
 ```
 
 Similarly, we may like to plot the distribution of the coefficients. We can work out which coefficients to be passed to `gather_draws()` with `tidybayes::get_variables(model)`; in this example we passed "b_.", but that will not always be the case.
 
 ```{r}
+#| warning: false
+#| message: false
+
 library(rstanarm)
 pp_check(improved_alp_support) +
   theme_classic() +
@@ -1136,13 +1110,13 @@ nationscape_data <-
       education == "Middle School - Grades 4 - 8" ~ "High school or less",
       education == "Completed some high school" ~ "High school or less",
       education == "High school graduate" ~ "High school or less",
-      education == "Other post high school vocational training" ~ "Some post secondary",
-      education == "Completed some college, but no degree" ~ "Some post secondary",
-      education == "Associate Degree" ~ "Post secondary or higher",
-      education == "College Degree (such as B.A., B.S.)" ~ "Post secondary or higher",
-      education == "Completed some graduate, but no degree" ~ "Post secondary or higher",
-      education == "Masters degree" ~ "Graduate degree",
-      education == "Doctorate degree" ~ "Graduate degree",
+      education == "Other post high school vocational training" ~ "Some post sec",
+      education == "Completed some college, but no degree" ~ "Some post sec",
+      education == "Associate Degree" ~ "Post sec +",
+      education == "College Degree (such as B.A., B.S.)" ~ "Post sec +",
+      education == "Completed some graduate, but no degree" ~ "Post sec +",
+      education == "Masters degree" ~ "Grad degree",
+      education == "Doctorate degree" ~ "Grad degree",
       TRUE ~ "Trouble"
     )
   ) |>
@@ -1270,13 +1244,13 @@ poststrat_data <-
       educd == "12th grade, no diploma" ~ "High school or less",
       educd == "regular high school diploma" ~ "High school or less",
       educd == "ged or alternative credential" ~ "High school or less",
-      educd == "some college, but less than 1 year" ~ "Some post secondary",
-      educd == "1 or more years of college credit, no degree" ~ "Some post secondary",
-      educd == "associate's degree, type not specified" ~ "Post secondary or higher",
-      educd == "bachelor's degree" ~ "Post secondary or higher",
-      educd == "master's degree" ~ "Graduate degree",
-      educd == "professional degree beyond a bachelor's degree" ~ "Graduate degree",
-      educd == "doctoral degree" ~ "Graduate degree",
+      educd == "some college, but less than 1 year" ~ "Some post sec",
+      educd == "1 or more years of college credit, no degree" ~ "Some post sec",
+      educd == "associate's degree, type not specified" ~ "Post sec +",
+      educd == "bachelor's degree" ~ "Post sec +",
+      educd == "master's degree" ~ "Grad degree",
+      educd == "professional degree beyond a bachelor's degree" ~ "Grad degree",
+      educd == "doctoral degree" ~ "Grad degree",
       educd == "no schooling completed" ~ "High school or less",
       TRUE ~ "Trouble"
     )
@@ -1337,7 +1311,7 @@ library(rstanarm)
 
 us_election_model <-
   stan_glmer(
-    vote_biden ~ factor(gender) + (1 | age_group) + (1 | stateicp) + (1 | education_level),
+vote_biden ~ factor(gender) + (1|age_group) + (1|stateicp) + (1|education_level),
     data = nationscape_data,
     family = binomial(link = "logit"),
     prior = normal(
@@ -1503,4 +1477,10 @@ d. Could you please detail the protections that you would put in place in terms 
 
 ### Paper {.unnumbered}
 
-At about this point the *Spofforth* Paper in [Appendix -@sec-papers] would be appropriate.
+::: {.content-visible when-format="pdf"}
+At about this point the *Spofforth* Paper from online appendices [Papers](https://tellingstorieswithdata.com/23-assessment.html) would be appropriate.
+:::
+
+::: {.content-visible unless-format="pdf"}
+At about this point the *Spofforth* Paper from [Appendix -@sec-papers] would be appropriate.
+:::

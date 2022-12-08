@@ -139,16 +139,51 @@ data_from_arxiv
 
 To consider another example, each day NASA provides the Astronomy Picture of the Day (APOD) through its [APOD API](https://api.nasa.gov). We can again use `GET()` to obtain the URL for the photo on particular dates and then display it. 
 
+::: {.content-visible when-format="pdf"}
 ```{r}
+common_url_part <- 
+  "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&date="
+
 NASA_APOD_20211226 <-
+  GET(paste0(common_url_part, "2021-12-26"))
+
+NASA_APOD_20190719 <-
+  GET(paste0(common_url_part, "2019-07-19"))
+```
+:::
+
+::: {.content-visible unless-format="pdf"}
+```{r}
+NASA_APOD_20190719 <-
   GET("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&date=2021-12-26")
 
 NASA_APOD_20190719 <-
   GET("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&date=2019-07-19")
 ```
+:::
 
 Examining the returned data using `content()`, we can see that we are provided with various fields, such as date, title, explanation, and a URL. And we can provide that URL to `include_graphics()` from `knitr` to display it (@fig-nasaone).
 
+::: {.content-visible when-format="pdf"}
+
+(Note that we truncate certain calls to fit into the page width.)
+
+```{r}
+# APOD December 26, 2021
+content(NASA_APOD_20211226)$date
+content(NASA_APOD_20211226)$title |> stringr::str_trunc(width = 70)
+content(NASA_APOD_20211226)$explanation |> stringr::str_trunc(width = 70)
+content(NASA_APOD_20211226)$url
+
+# APOD July 19, 2019
+content(NASA_APOD_20190719)$date
+content(NASA_APOD_20190719)$title |> stringr::str_trunc(width = 70)
+content(NASA_APOD_20190719)$explanation |> stringr::str_trunc(width = 70)
+content(NASA_APOD_20190719)$url
+```
+:::
+
+::: {.content-visible unless-format="pdf"}
 ```{r}
 # APOD December 26, 2021
 content(NASA_APOD_20211226)$date
@@ -162,6 +197,7 @@ content(NASA_APOD_20190719)$title
 content(NASA_APOD_20190719)$explanation
 content(NASA_APOD_20190719)$url
 ```
+:::
 
 ::: {#fig-nasaone layout-ncol=2}
 
@@ -728,7 +764,10 @@ We now need to clean the data. First we want to separate the title and the autho
 all_books <-
   all_books |>
   mutate(books = str_squish(books)) |>
-  separate(books, into = c("author", "title"), sep = "\\, [[:digit:]]{4}\\, ")
+  separate(books, 
+           into = c("author", "title"), 
+           sep = "\\, [[:digit:]]{4}\\, "
+           )
 
 all_books
 ```
@@ -828,6 +867,22 @@ raw_data <-
 write_html(raw_data, "inputs/wiki/pms.html") # Note that we save the file as a HTML file.
 ```
 
+::: {.content-visible when-format="pdf"}
+```{r} 
+#| echo: true
+#| eval: false
+#| include: true
+
+raw_data <-
+  read_html(
+    paste0("https://en.wikipedia.org/wiki/",
+    "List_of_prime_ministers_of_the_United_Kingdom")
+  )
+write_html(raw_data, "pms.html")
+```
+:::
+
+::: {.content-visible unless-format="pdf"}
 ```{r} 
 #| echo: true
 #| eval: false
@@ -839,6 +894,7 @@ raw_data <-
   )
 write_html(raw_data, "pms.html")
 ```
+:::
 
 As with the earlier case study, we are looking for patterns in the HTML that we can use to help us get closer to the data that we want. This is an iterative process and requires a lot of trial and error. Even simple examples will take time. 
 
@@ -972,19 +1028,26 @@ head(initial_clean)
 cleaned_data <-
   initial_clean |>
   select(Name, Date) |>
-  separate(Date, into = c("Birth", "Died"), sep = "–", remove = FALSE) |> # The
-  # PMs who have died have their birth and death years separated by a hyphen,
-  # but we need to be careful with the hyphen as it seems to be a slightly odd
-  # type of hyphen and we need to copy/paste it.
+  # The PMs who have died have their birth and death years 
+  # separated by a hyphen, but we need to be careful with 
+  # the hyphen as it seems to be a slightly odd type of 
+  # hyphen and we need to copy/paste it.
+  separate(Date, into = c("Birth", "Died"), 
+           sep = "–", 
+           remove = FALSE) |> 
   mutate(
     Birth = str_remove_all(Birth, "born"),
     Birth = str_trim(Birth)
   ) |> # Alive PMs have slightly different format
   select(-Date) |>
-  mutate(Name = str_remove(Name, "\n")) |> # Remove some HTML tags that remain
-  mutate_at(vars(Birth, Died), ~ as.integer(.)) |> # Change birth and death to integers
-  mutate(Age_at_Death = Died - Birth) |> # Add column of the number of years they lived
-  distinct() # Some of the PMs had two goes at it.
+  # Remove some HTML tags that remain
+  mutate(Name = str_remove(Name, "\n")) |> 
+  # Change birth and death to integers
+  mutate_at(vars(Birth, Died), ~ as.integer(.)) |> 
+  # Add column of the number of years they lived
+  mutate(Age_at_Death = Died - Birth) |> 
+  # Some of the PMs had two goes at it.
+  distinct() 
 
 head(cleaned_data)
 ```
@@ -1000,7 +1063,10 @@ Our dataset looks similar to the one that we said we wanted at the start (@tbl-c
 cleaned_data |>
   head() |>
   knitr::kable(
-    col.names = c("Prime Minister", "Birth year", "Death year", "Age at death"),
+    col.names = c("Prime Minister", 
+                  "Birth year", 
+                  "Death year", 
+                  "Age at death"),
     booktabs = TRUE,
     linesep = ""
   )
@@ -1052,14 +1118,16 @@ First we set-up a dataframe that has the information that we need.
 
 library(tidyverse)
 
+common_url_bit <- "https://www.rba.gov.au/publications/smp/2021/"
+
 statements_of_interest <-
   tibble(
     address =
       c(
-        "https://www.rba.gov.au/publications/smp/2021/nov/pdf/00-overview.pdf",
-        "https://www.rba.gov.au/publications/smp/2021/aug/pdf/00-overview.pdf",
-        "https://www.rba.gov.au/publications/smp/2021/may/pdf/00-overview.pdf",
-        "https://www.rba.gov.au/publications/smp/2021/feb/pdf/00-overview.pdf"
+        paste0(common_url_bit, "nov/pdf/00-overview.pdf"),
+        paste0(common_url_bit, "aug/pdf/00-overview.pdf"),
+        paste0(common_url_bit, "may/pdf/00-overview.pdf"),
+        paste0(common_url_bit, "feb/pdf/00-overview.pdf")
       ),
     local_save_name = c(
       "2021-11.pdf",
@@ -1160,7 +1228,7 @@ first_example
 
 We can see that the PDF has been correctly read in, as a character vector.
 
-We will now try a slightly more complicated example that consists of the first few paragraphs of *Jane Eyre* (@fig-secondpdfexample). Also notice that now we have the chapter heading as well.
+We will now try a slightly more complicated example that consists of the first few paragraphs of *Jane Eyre* (@fig-secondpdfexample). Now we have the chapter heading as well.
 
 ![First few paragraphs of Jane Eyre](inputs/pdfs/second_example.png){#fig-secondpdfexample width=90% fig-align="center"}
 
@@ -1171,22 +1239,32 @@ We use the same function as before.
 #| echo: true
 
 second_example <- pdftools::pdf_text("second_example.pdf")
-
-second_example
-
 class(second_example)
+second_example
 ```
 
+
+::: {.content-visible when-format="pdf"}
 ```{r}
 #| eval: true
 #| echo: false
 
 second_example <- pdftools::pdf_text("inputs/pdfs/second_example.pdf")
-
-second_example
-
 class(second_example)
+second_example |> stringr::str_trunc(width = 70)
 ```
+:::
+
+::: {.content-visible unless-format="pdf"}
+```{r}
+#| eval: true
+#| echo: false
+
+second_example <- pdftools::pdf_text("inputs/pdfs/second_example.pdf")
+class(second_example)
+second_example
+```
+:::
 
 Again, we have a character vector. The end of each line is signaled by "\\n", but other than that it looks pretty good. Finally, we consider the first two pages.
 
@@ -1195,23 +1273,31 @@ Again, we have a character vector. The end of each line is signaled by "\\n", bu
 #| echo: true
 
 third_example <- pdftools::pdf_text("third_example.pdf")
-
-third_example
-
 class(third_example)
+third_example
 ```
 
-
+::: {.content-visible when-format="pdf"}
 ```{r}
 #| eval: true
 #| echo: false
 
 third_example <- pdftools::pdf_text("inputs/pdfs/third_example.pdf")
-
-third_example
-
 class(third_example)
+third_example |> stringr::str_trunc(width = 70)
 ```
+:::
+
+::: {.content-visible unless-format="pdf"}
+```{r}
+#| eval: true
+#| echo: false
+
+third_example <- pdftools::pdf_text("inputs/pdfs/third_example.pdf")
+class(third_example)
+third_example
+```
+:::
 
 Notice that the first page is the first element of the character vector, and the second page is the second element. As we are most familiar with rectangular data, we will try to get it into that format as quickly as possible. And then we can use our regular `tidyverse` functions to deal with it.
 
@@ -1254,7 +1340,7 @@ The first step when getting data out of a PDF is to sketch out what we eventuall
 
 ![Planned dataset of TFR for each year and US state](figures/tfr_dataset_sketch.png){#fig-tfrdesired width=40% fig-align="center"}
 
-There are 19 different PDFs, and we are interested in a particular column in a particular table in each of them. Unfortunately, there is nothing magical about what is coming. This first step requires finding each PDF online, working out the link for each, and manually searching for the page and column name that is of interest. In the end, this looks like @tbl-dhslinks.^[If you want the data to run this code yourself then use: `summary_tfr_dataset <- read_csv("https://raw.githubusercontent.com/RohanAlexander/telling_stories/main/inputs/tfr_tables_info.csv")`.]
+There are 19 different PDFs, and we are interested in a particular column in a particular table in each of them. Unfortunately, there is nothing magical about what is coming. This first step requires finding each PDF online, working out the link for each, and manually searching for the page and column name that is of interest. In the end, this looks like @tbl-dhslinks.^[To run this code use: `summary_tfr_dataset <- read_csv("https://raw.githubusercontent.com/RohanAlexander/telling_stories/main/inputs/tfr_tables_info.csv")`.]
 
 ```{r}
 #| include: true
@@ -1262,7 +1348,7 @@ There are 19 different PDFs, and we are interested in a particular column in a p
 #| warning: false
 #| message: false
 #| label: tbl-dhslinks
-#| tbl-cap: "First ten rows of a dataset of economic indicators for Australia, Ethiopia, India, and the US"
+#| tbl-cap: "Year and associated data for TFR tables"
 
 summary_tfr_dataset <- read_csv("inputs/tfr_tables_info.csv")
 
@@ -1270,7 +1356,8 @@ summary_tfr_dataset |>
   select(year, page, table, column_name, url) |>
   knitr::kable(
     col.names = c("Year", "Page", "Table", "Column", "URL")
-  )
+  ) |> 
+  kableExtra::kable_styling(font_size = 7)
 ```
 
 The first step is to get some code that works for one of them. We step through the code in a lot more detail than normal because we are going to use these pieces a lot. 
@@ -1444,7 +1531,9 @@ And we are done for that year. Now we want to take these pieces, put them into a
 #| eval: false
 #| echo: true
 
-download.file(url = summary_tfr_dataset$url[1], destfile = "year_2000.pdf")
+download.file(url = summary_tfr_dataset$url[1], 
+              destfile = "year_2000.pdf"
+              )
 ```
 
 To modify this we need:
@@ -1592,59 +1681,7 @@ Now we need to clean up the state names and then filter on them.
 #| warning: false
 #| echo: true
 
-states <- c(
-  "Alabama",
-  "Alaska",
-  "Arizona",
-  "Arkansas",
-  "California",
-  "Colorado",
-  "Connecticut",
-  "Delaware",
-  "Florida",
-  "Georgia",
-  "Hawaii",
-  "Idaho",
-  "Illinois",
-  "Indiana",
-  "Iowa",
-  "Kansas",
-  "Kentucky",
-  "Louisiana",
-  "Maine",
-  "Maryland",
-  "Massachusetts",
-  "Michigan",
-  "Minnesota",
-  "Mississippi",
-  "Missouri",
-  "Montana",
-  "Nebraska",
-  "Nevada",
-  "New Hampshire",
-  "New Jersey",
-  "New Mexico",
-  "New York",
-  "North Carolina",
-  "North Dakota",
-  "Ohio",
-  "Oklahoma",
-  "Oregon",
-  "Pennsylvania",
-  "Rhode Island",
-  "South Carolina",
-  "South Dakota",
-  "Tennessee",
-  "Texas",
-  "Utah",
-  "Vermont",
-  "Virginia",
-  "Washington",
-  "West Virginia",
-  "Wisconsin",
-  "Wyoming",
-  "District of Columbia"
-)
+states <- c(state.name, "District of Columbia")
 
 raw_dhs_data <-
   raw_dhs_data |>
