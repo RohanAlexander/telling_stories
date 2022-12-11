@@ -376,7 +376,12 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./98-cocktails.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">Cocktails</span></a>
+  <a href="./26-deploy.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">Deploying models into production</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./98-cocktails.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Cocktails</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -408,12 +413,7 @@ div.csl-indent {
   <ul class="collapse">
   <li><a href="#mortality-in-alberta" id="toc-mortality-in-alberta" class="nav-link" data-scroll-target="#mortality-in-alberta"><span class="toc-section-number">13.4.1</span>  Mortality in Alberta</a></li>
   </ul></li>
-  <li><a href="#deploying-models" id="toc-deploying-models" class="nav-link" data-scroll-target="#deploying-models"><span class="toc-section-number">13.5</span>  Deploying models</a>
-  <ul class="collapse">
-  <li><a href="#amazon-web-services" id="toc-amazon-web-services" class="nav-link" data-scroll-target="#amazon-web-services"><span class="toc-section-number">13.5.1</span>  Amazon Web Services</a></li>
-  <li><a href="#plumber-and-model-apis" id="toc-plumber-and-model-apis" class="nav-link" data-scroll-target="#plumber-and-model-apis"><span class="toc-section-number">13.5.2</span>  Plumber and model APIs</a></li>
-  </ul></li>
-  <li><a href="#exercises-and-tutorial" id="toc-exercises-and-tutorial" class="nav-link" data-scroll-target="#exercises-and-tutorial"><span class="toc-section-number">13.6</span>  Exercises and tutorial</a>
+  <li><a href="#exercises-and-tutorial" id="toc-exercises-and-tutorial" class="nav-link" data-scroll-target="#exercises-and-tutorial"><span class="toc-section-number">13.5</span>  Exercises and tutorial</a>
   <ul class="collapse">
   <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
   <li><a href="#tutorial" id="toc-tutorial" class="nav-link" data-scroll-target="#tutorial">Tutorial</a></li>
@@ -756,7 +756,7 @@ Shoulders of giants
 ✖ dplyr::lag()      masks stats::lag()
 ✖ yardstick::spec() masks readr::spec()
 ✖ recipes::step()   masks stats::step()
-• Learn how to get started at https://www.tidymodels.org/start/</code></pre>
+• Use suppressPackageStartupMessages() to eliminate package startup messages</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>week_or_weekday <span class="ot">&lt;-</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  week_or_weekday <span class="sc">|&gt;</span></span>
@@ -2629,279 +2629,8 @@ cause_of_death_alberta_poisson      -4536.7    1089.5</code></pre>
 <!-- Could do like how long someone has to wait for something? -->
 </section>
 </section>
-<section id="deploying-models" class="level2" data-number="13.5">
-<h2 data-number="13.5" class="anchored" data-anchor-id="deploying-models"><span class="header-section-number">13.5</span> Deploying models</h2>
-<p>Having done the work to develop a dataset and explore it with a model that we are confident can be used, we may wish to enable this to be used more widely than just our own computer. There are a variety of ways of doing this, including:</p>
-<ul>
-<li>using the cloud,</li>
-<li>creating R packages,</li>
-<li>making <code>shiny</code> applications, and</li>
-<li>using <code>plumber</code> to create an API.</li>
-</ul>
-<p>The general idea here is that we need to know, and allow others to come to trust, the whole workflow. That is what our approach to this point brings. After this, then we may like to use our model more broadly. Say we have been able to scrape some data from a website, bring some order to that chaos, make some charts, appropriately model it, and write this all up. In most academic settings that is more than enough. But in many industry settings we would like to use the model to do something. For instance, setting up a website that allows a model to be used to generate an insurance quote given several inputs.</p>
-<p>In this chapter, we begin by moving our compute from our local computer to the cloud. We then describe the use of R packages and Shiny for sharing models. That works well, but in some settings other users may like to interact with our model in ways that we are not focused on. One way to allow this is to make our results available to other computers, and for that we will want to make an APIs. Hence, we introduce <code>plumber</code> <span class="citation" data-cites="plumber">(<a href="99-references.html#ref-plumber" role="doc-biblioref">Schloerke and Allen 2021</a>)</span>, which is a way of creating APIs.</p>
-<section id="amazon-web-services" class="level3" data-number="13.5.1">
-<h3 data-number="13.5.1" class="anchored" data-anchor-id="amazon-web-services"><span class="header-section-number">13.5.1</span> Amazon Web Services</h3>
-<p>Comment<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
-<p>Apocryphally the cloud is just another name for someone else’s computer. And while that is true to various degrees, for our purposes that is enough. Learning to use someone else’s computer can be great for a number of reasons including:</p>
-<ul>
-<li>Scalability: It can be quite expensive to buy a new computer, especially if we only need it to run something every now and then, but by using the cloud, we can just rent for a few hours or days. This allows use to amortize this cost and work out what we actually need before committing to a purchase. It also allows us to easily increase or decrease the compute scale if we suddenly have a substantial increase in demand.</li>
-<li>Portability: If we can shift our analysis workflow from a local computer to the cloud, then that suggests that there is we are likely doing good things in terms of reproducibility and portability. At the very least, code can run both locally and on the cloud, which is a big step in terms of reproducibility.</li>
-<li>Set-and-forget: If we are doing something that will take a while, then it can be great to not have to worry about our own computer needing to run overnight. Additionally, on many cloud options, open-source statistical software, such as R and Python, is either already available, or relatively easy to set-up.</li>
-</ul>
-<p>That said, there are downsides, including:</p>
-<ul>
-<li>Cost: While most cloud options are cheap, they are rarely free. To provide an idea of cost, using a well-featured AWS instance for a few days may end up being a few dollars. It is also easy to accidentally forget about something, and generate unexpectedly large bills, especially initially.</li>
-<li>Public: It can be easy to make mistakes and accidentally make everything public.</li>
-<li>Time: It takes time to get set-up and comfortable on the cloud.</li>
-</ul>
-<p>When we use the cloud, we are typically running code on a “virtual machine” (VM). This is an allocation that is part of a larger collection of computers that has been designed to act like a computer with specific features. For instance, we may specify that our virtual machine has, say, 8 GB RAM, 128 GB storage, and 4 CPUs. The VM would then act like a computer with those specifications. The cost to use cloud options increases based on the VM specifications.</p>
-<p>In a sense, we started with a cloud option, through our initial recommendation in <a href="02-drinking_from_a_fire_hose.html"><span>Chapter&nbsp;2</span></a> of using RStudio Cloud, before we moved to our local computer in <a href="20-r_essentials.html"><span>Appendix&nbsp;A</span></a>. That cloud option was specifically designed for beginners. We will now introduce a more general cloud option: Amazon Web Services (AWS). Often a particular business will use a particular cloud option, such as Google, AWS, or Azure, but developing familiarity with one will make the use of the others easier.</p>
-<p>Amazon Web Services is a cloud service from Amazon. To get started we need to create an AWS Developer account <a href="https://aws.amazon.com/developer/">here</a> (<a href="#fig-awsone">Figure&nbsp;<span>13.13 (a)</span></a>).</p>
-<div id="fig-ipums" class="quarto-layout-panel">
-<figure class="figure">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="quarto-layout-cell quarto-layout-cell-subref" style="flex-basis: 50.0%;justify-content: center;">
-<div id="fig-awsone" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="figures/aws_one.png" class="img-fluid figure-img" data-ref-parent="fig-ipums"></p>
-<p></p><figcaption class="figure-caption">(a) AWS Developer website</figcaption><p></p>
-</figure>
-</div>
-</div>
-<div class="quarto-layout-cell quarto-layout-cell-subref" style="flex-basis: 50.0%;justify-content: center;">
-<div id="fig-awstwo" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="figures/aws_two.png" class="img-fluid figure-img" data-ref-parent="fig-ipums"></p>
-<p></p><figcaption class="figure-caption">(b) AWS Developer console</figcaption><p></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="quarto-layout-cell quarto-layout-cell-subref" style="flex-basis: 50.0%;justify-content: center;">
-<div id="fig-awsthree" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="figures/aws_three.png" class="img-fluid figure-img" data-ref-parent="fig-ipums"></p>
-<p></p><figcaption class="figure-caption">(c) Launching an AWSinstance</figcaption><p></p>
-</figure>
-</div>
-</div>
-<div class="quarto-layout-cell quarto-layout-cell-subref" style="flex-basis: 50.0%;justify-content: center;">
-<div id="fig-awsfive" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="figures/aws_five.png" class="img-fluid figure-img" data-ref-parent="fig-ipums"></p>
-<p></p><figcaption class="figure-caption">(d) Establishing a key-pair</figcaption><p></p>
-</figure>
-</div>
-</div>
-</div>
-<p></p><figcaption class="figure-caption">Figure&nbsp;13.13: Overview of getting Amazon AWS set-up</figcaption><p></p>
-</figure>
-</div>
-<p>After we have created an account, we need to select a region where the computer that we will access is located. After this, we want to “Launch a virtual machine” with EC2 (<a href="#fig-awstwo">Figure&nbsp;<span>13.13 (b)</span></a>).</p>
-<p>The first step is to choose an Amazon Machine Image (AMI). This provides the details of the computer that you will be using. For instance, a local computer may be a MacBook running Monterey. Louis Aslett provides AMIs that are already set-up with RStudio and much else <a href="http://www.louisaslett.com/RStudio_AMI/">here</a>. We can either search for the AMI of the region that we registered for, or click on the relevant link on Aslett’s website. For instance, to use the AMI set-up for the Canadian central region we search for “ami-0bdd24fd36f07b638”. The benefit of using these AMIs is that they are set-up specifically for RStudio, but the trade-off is that they are a little outdated, as they were compiled in August 2020.</p>
-<p>In the next step we can choose how powerful the computer will be. The free tier is basic computer, but we can choose better ones when we need them. At this point we can pretty much just launch the instance (<a href="#fig-awsthree">Figure&nbsp;<span>13.13 (c)</span></a>). If we start using AWS more seriously, then we could go back and select different options, especially around the security of the account. AWS relies on key pairs. And so, we will need to create a PEM and save it locally (<a href="#fig-awsfive">Figure&nbsp;<span>13.13 (d)</span></a>). We can then launch the instance.</p>
-<p>After a few minutes, the instance will be running. We can use it by pasting the “public DNS” into a browser. The username is “rstudio” and the password is the instance ID.</p>
-<p>We should have RStudio running, which is exciting. The first thing to do is probably to change the default password using the instructions in the instance.</p>
-<p>We do not need to install, say, the <code>tidyverse</code>, instead we can just call the library and keep going. This is because this AMI comes with many packages already installed. We can see the list of packages that are installed with <code>installed.packages()</code>. For instance, <code>rstan</code> is already installed, and we could set-up an instance with GPUs if we needed.</p>
-<p>Perhaps as important as being able to start an AWS instance is being able to stop it (so that we do not get billed). The free tier is useful, but we do need to turn it off. To stop an instance, in the AWS instances page, select it, then “Actions -&gt; Instance State -&gt; Terminate”.</p>
-<!-- ## R packages -->
-<!-- To this point we have largely been using R Packages to do things for us. However, another way is to have them loaded -->
-<!-- ## Shiny -->
-</section>
-<section id="plumber-and-model-apis" class="level3" data-number="13.5.2">
-<h3 data-number="13.5.2" class="anchored" data-anchor-id="plumber-and-model-apis"><span class="header-section-number">13.5.2</span> Plumber and model APIs</h3>
-<p>Comment<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
-<p>The general idea behind the <code>plumber</code> package <span class="citation" data-cites="plumber">(<a href="99-references.html#ref-plumber" role="doc-biblioref">Schloerke and Allen 2021</a>)</span> is that we can train a model and make it available via an API that we can call when we want a forecast.</p>
-<p>Just to get something working, let us make a function that returns “Hello Toronto” regardless of the output. Open a new R file, add the following, and then save it as “plumber.R” (you may need to install the <code>plumber</code> package if you have not done that yet).</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(plumber)</span>
-<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a><span class="co">#* @get /print_toronto</span></span>
-<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>print_toronto <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
-<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>  result <span class="ot">&lt;-</span> <span class="st">"Hello Toronto"</span></span>
-<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(result)</span>
-<span id="cb68-7"><a href="#cb68-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>After that is saved, in the top right of the editor you should get a button to “Run API”. Click that, and your API should load. It will be a “Swagger” application, which provides a GUI around our API. Expand the GET method, and then click “Try it out” and “Execute”. In the response body, you should get “Hello Toronto”.</p>
-<p>To more closely reflect the fact that this is an API designed for computers, you can copy/paste the “Request URL” into a browser and it should return “Hello Toronto”.</p>
-<section id="local-model" class="level4" data-number="13.5.2.1">
-<h4 data-number="13.5.2.1" class="anchored" data-anchor-id="local-model"><span class="header-section-number">13.5.2.1</span> Local model</h4>
-<p>Now, we are going to update the API so that it serves a model output, given some input. This follows <span class="citation" data-cites="buhrplumber">Buhr (<a href="99-references.html#ref-buhrplumber" role="doc-biblioref">2017</a>)</span>.</p>
-<p>At this point, we should start a new R Project. To get started, let us simulate some data and then train a model on it. In this case we are interested in forecasting how long a baby may sleep overnight, given we know how long they slept during their afternoon nap.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>number_of_observations <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
-<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a>baby_sleep <span class="ot">&lt;-</span></span>
-<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">afternoon_nap_length =</span> <span class="fu">rnorm</span>(number_of_observations, <span class="dv">120</span>, <span class="dv">5</span>) <span class="sc">|&gt;</span> <span class="fu">abs</span>(),</span>
-<span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">noise =</span> <span class="fu">rnorm</span>(number_of_observations, <span class="dv">0</span>, <span class="dv">120</span>),</span>
-<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">night_sleep_length =</span> afternoon_nap_length <span class="sc">*</span> <span class="dv">4</span> <span class="sc">+</span> noise,</span>
-<span id="cb69-11"><a href="#cb69-11" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb69-12"><a href="#cb69-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb69-13"><a href="#cb69-13" aria-hidden="true" tabindex="-1"></a>baby_sleep <span class="sc">|&gt;</span></span>
-<span id="cb69-14"><a href="#cb69-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> afternoon_nap_length, <span class="at">y =</span> night_sleep_length)) <span class="sc">+</span></span>
-<span id="cb69-15"><a href="#cb69-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb69-16"><a href="#cb69-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb69-17"><a href="#cb69-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Baby's afternoon nap length (minutes)"</span>,</span>
-<span id="cb69-18"><a href="#cb69-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Baby's overnight sleep length (minutes)"</span></span>
-<span id="cb69-19"><a href="#cb69-19" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb69-20"><a href="#cb69-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<p><img src="13-ijaglm_files/figure-html/unnamed-chunk-64-1.png" class="img-fluid" width="672"></p>
-</div>
-</div>
-<p>Let us now use <code>tidymodels</code> to quickly make a model.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
-<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>baby_sleep_split <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(baby_sleep, <span class="at">prop =</span> <span class="fl">0.80</span>)</span>
-<span id="cb70-6"><a href="#cb70-6" aria-hidden="true" tabindex="-1"></a>baby_sleep_train <span class="ot">&lt;-</span> <span class="fu">training</span>(baby_sleep_split)</span>
-<span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a>baby_sleep_test <span class="ot">&lt;-</span> <span class="fu">testing</span>(baby_sleep_split)</span>
-<span id="cb70-8"><a href="#cb70-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb70-9"><a href="#cb70-9" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span></span>
-<span id="cb70-10"><a href="#cb70-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">linear_reg</span>() <span class="sc">|&gt;</span></span>
-<span id="cb70-11"><a href="#cb70-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="at">engine =</span> <span class="st">"lm"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb70-12"><a href="#cb70-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(</span>
-<span id="cb70-13"><a href="#cb70-13" aria-hidden="true" tabindex="-1"></a>    night_sleep_length <span class="sc">~</span> afternoon_nap_length,</span>
-<span id="cb70-14"><a href="#cb70-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> baby_sleep_train</span>
-<span id="cb70-15"><a href="#cb70-15" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb70-16"><a href="#cb70-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb70-17"><a href="#cb70-17" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(<span class="at">x =</span> model, <span class="at">file =</span> <span class="st">"baby_sleep.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>At this point, we have a model. One difference from what you might be used to is that we have saved the model as an “.rds” file. We are going to read that in.</p>
-<p>Now that we have our model we want to put that into a file that we will use the API to access, again called “plumber.R”. And we also want a file that sets up the API, called “server.R”. Make an R script called “server.R” and add the following content:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(plumber)</span>
-<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>serve_model <span class="ot">&lt;-</span> <span class="fu">plumb</span>(<span class="st">"plumber.R"</span>)</span>
-<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>serve_model<span class="sc">$</span><span class="fu">run</span>(<span class="at">port =</span> <span class="dv">8000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Then in “plumber.R” add the following content:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(plumber)</span>
-<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"baby_sleep.rds"</span>)</span>
-<span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a>version_number <span class="ot">&lt;-</span> <span class="st">"0.0.1"</span></span>
-<span id="cb72-7"><a href="#cb72-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb72-8"><a href="#cb72-8" aria-hidden="true" tabindex="-1"></a>variables <span class="ot">&lt;-</span></span>
-<span id="cb72-9"><a href="#cb72-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
-<span id="cb72-10"><a href="#cb72-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">afternoon_nap_length =</span> <span class="st">"A value in minutes, likely between 0 and 240."</span>,</span>
-<span id="cb72-11"><a href="#cb72-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">night_sleep_length =</span> <span class="st">"A forecast, in minutes, likely between 0 and 1000."</span></span>
-<span id="cb72-12"><a href="#cb72-12" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb72-13"><a href="#cb72-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb72-14"><a href="#cb72-14" aria-hidden="true" tabindex="-1"></a><span class="co">#* @param afternoon_nap_length</span></span>
-<span id="cb72-15"><a href="#cb72-15" aria-hidden="true" tabindex="-1"></a><span class="co">#* @get /survival</span></span>
-<span id="cb72-16"><a href="#cb72-16" aria-hidden="true" tabindex="-1"></a>predict_sleep <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">afternoon_nap_length =</span> <span class="dv">0</span>) {</span>
-<span id="cb72-17"><a href="#cb72-17" aria-hidden="true" tabindex="-1"></a>  afternoon_nap_length <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(afternoon_nap_length)</span>
-<span id="cb72-18"><a href="#cb72-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb72-19"><a href="#cb72-19" aria-hidden="true" tabindex="-1"></a>  payload <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">afternoon_nap_length =</span> afternoon_nap_length)</span>
-<span id="cb72-20"><a href="#cb72-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb72-21"><a href="#cb72-21" aria-hidden="true" tabindex="-1"></a>  prediction <span class="ot">&lt;-</span> <span class="fu">predict</span>(model, payload)</span>
-<span id="cb72-22"><a href="#cb72-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb72-23"><a href="#cb72-23" aria-hidden="true" tabindex="-1"></a>  result <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb72-24"><a href="#cb72-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">input =</span> <span class="fu">list</span>(payload),</span>
-<span id="cb72-25"><a href="#cb72-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">response =</span> <span class="fu">list</span>(<span class="st">"estimated_night_sleep"</span> <span class="ot">=</span> prediction),</span>
-<span id="cb72-26"><a href="#cb72-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">status =</span> <span class="dv">200</span>,</span>
-<span id="cb72-27"><a href="#cb72-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">model_version =</span> version_number</span>
-<span id="cb72-28"><a href="#cb72-28" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb72-29"><a href="#cb72-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb72-30"><a href="#cb72-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(result)</span>
-<span id="cb72-31"><a href="#cb72-31" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Again, after we save the “plumber.R” file we should have an option to “Run API”. Click that and you can try out the API locally in the same way as before. In this case, click “Try It Out” and then input an afternoon nap length in minutes. The response body will contain the prediction based on the data and model we set up.</p>
-</section>
-<section id="cloud-model" class="level4" data-number="13.5.2.2">
-<h4 data-number="13.5.2.2" class="anchored" data-anchor-id="cloud-model"><span class="header-section-number">13.5.2.2</span> Cloud model</h4>
-<p>To this point, we have got an API working on our own machine, but what we really want to do is to get it working on a computer such that the API can be accessed by anyone. To do this we are going to use <a href="https://www.digitalocean.com">DigitalOcean</a>. It is a charged service, but when you create an account, it will come with $200 in credit, which will be enough to get started.</p>
-<p>This set-up process will take some time, but we only need to do it once. Two additional packages that will assist here are <code>plumberDeploy</code> <span class="citation" data-cites="plumberdeploy">(<a href="99-references.html#ref-plumberdeploy" role="doc-biblioref">Allen 2021</a>)</span> and <code>analogsea</code> <span class="citation" data-cites="citeanalogsea">(<a href="99-references.html#ref-citeanalogsea" role="doc-biblioref">Chamberlain, Wickham, and Chang 2021</a>)</span> (which will need to be installed from GitHub: <code>remotes::install_github("sckott/analogsea")</code>).</p>
-<p>Now we need to connect the local computer with the DigitalOcean account.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(analogsea)</span>
-<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a><span class="fu">account</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Now we need to authenticate the connection, and this is done using a SSH public key.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="fu">key_create</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>What you want is to have a “.pub” file on our computer. Then copy the public key aspect in that file, and add it to the SSH keys section in the account security settings. When we have the key on our local computer, then we can check this using <code>ssh</code>.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ssh)</span>
-<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh_key_info</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Again, this will all take a while to validate. DigitalOcean calls every computer that we start a “droplet”. If we start three computers, then we will have started three droplets. We can check the droplets that are running.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="fu">droplets</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>If everything is set-up properly, then this will print the information about all droplets that you have associated with the account (which at this point, is probably none). We must first create a droplet.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(plumberDeploy)</span>
-<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>id <span class="ot">&lt;-</span> <span class="fu">do_provision</span>(<span class="at">example =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Then we get asked for the SSH passphrase and then it will just set-up a bunch of things. After this we are going to need to install a whole bunch of things onto our droplet.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install_r_package</span>(</span>
-<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">droplet =</span> id,</span>
-<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(</span>
-<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"plumber"</span>,</span>
-<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"remotes"</span>,</span>
-<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"here"</span></span>
-<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb78-8"><a href="#cb78-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb78-9"><a href="#cb78-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb78-10"><a href="#cb78-10" aria-hidden="true" tabindex="-1"></a><span class="fu">debian_apt_get_install</span>(</span>
-<span id="cb78-11"><a href="#cb78-11" aria-hidden="true" tabindex="-1"></a>  id,</span>
-<span id="cb78-12"><a href="#cb78-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"libssl-dev"</span>,</span>
-<span id="cb78-13"><a href="#cb78-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"libsodium-dev"</span>,</span>
-<span id="cb78-14"><a href="#cb78-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"libcurl4-openssl-dev"</span></span>
-<span id="cb78-15"><a href="#cb78-15" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb78-16"><a href="#cb78-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb78-17"><a href="#cb78-17" aria-hidden="true" tabindex="-1"></a><span class="fu">debian_apt_get_install</span>(</span>
-<span id="cb78-18"><a href="#cb78-18" aria-hidden="true" tabindex="-1"></a>  id,</span>
-<span id="cb78-19"><a href="#cb78-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">"libxml2-dev"</span></span>
-<span id="cb78-20"><a href="#cb78-20" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb78-21"><a href="#cb78-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb78-22"><a href="#cb78-22" aria-hidden="true" tabindex="-1"></a><span class="fu">install_r_package</span>(</span>
-<span id="cb78-23"><a href="#cb78-23" aria-hidden="true" tabindex="-1"></a>  id,</span>
-<span id="cb78-24"><a href="#cb78-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(</span>
-<span id="cb78-25"><a href="#cb78-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"config"</span>,</span>
-<span id="cb78-26"><a href="#cb78-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"httr"</span>,</span>
-<span id="cb78-27"><a href="#cb78-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"urltools"</span>,</span>
-<span id="cb78-28"><a href="#cb78-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"plumber"</span></span>
-<span id="cb78-29"><a href="#cb78-29" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb78-30"><a href="#cb78-30" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb78-31"><a href="#cb78-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb78-32"><a href="#cb78-32" aria-hidden="true" tabindex="-1"></a><span class="fu">install_r_package</span>(id, <span class="fu">c</span>(<span class="st">"xml2"</span>))</span>
-<span id="cb78-33"><a href="#cb78-33" aria-hidden="true" tabindex="-1"></a><span class="fu">install_r_package</span>(id, <span class="fu">c</span>(<span class="st">"tidyverse"</span>))</span>
-<span id="cb78-34"><a href="#cb78-34" aria-hidden="true" tabindex="-1"></a><span class="fu">install_r_package</span>(id, <span class="fu">c</span>(<span class="st">"tidymodels"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>And then when that is finally set-up (it will take 30 minutes or so) we can deploy our API.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">do_deploy_api</span>(</span>
-<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">droplet =</span> id,</span>
-<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">path =</span> <span class="st">"example"</span>,</span>
-<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">localPath =</span> <span class="fu">getwd</span>(),</span>
-<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">port =</span> <span class="dv">8000</span>,</span>
-<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">docs =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb79-7"><a href="#cb79-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
-<span id="cb79-8"><a href="#cb79-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</section>
-</section>
-</section>
-<section id="exercises-and-tutorial" class="level2" data-number="13.6">
-<h2 data-number="13.6" class="anchored" data-anchor-id="exercises-and-tutorial"><span class="header-section-number">13.6</span> Exercises and tutorial</h2>
+<section id="exercises-and-tutorial" class="level2" data-number="13.5">
+<h2 data-number="13.5" class="anchored" data-anchor-id="exercises-and-tutorial"><span class="header-section-number">13.5</span> Exercises and tutorial</h2>
 <section id="exercises" class="level3 unnumbered">
 <h3 class="unnumbered anchored" data-anchor-id="exercises">Exercises</h3>
 <ol type="1">
@@ -2977,9 +2706,6 @@ Bolker, Ben, and David Robinson. 2022. <em><span class="nocase">broom.mixed: Tid
 </div>
 <div id="ref-boltonruth" class="csl-entry" role="doc-biblioentry">
 Bolton, Ruth, and Randall Chapman. 1986. <span>“Searching for Positive Returns at the Track.”</span> <em>Management Science</em> 32 (August): 1040–60. <a href="https://doi.org/10.1287/mnsc.32.8.1040">https://doi.org/10.1287/mnsc.32.8.1040</a>.
-</div>
-<div id="ref-buhrplumber" class="csl-entry" role="doc-biblioentry">
-Buhr, Ray. 2017. <em><span class="nocase">Using R as a Production Machine Learning Language (Part I)</span></em>. <a href="https://raybuhr.github.io/blog/posts/making-predictions-over-http/">https://raybuhr.github.io/blog/posts/making-predictions-over-http/</a>.
 </div>
 <div id="ref-citeanalogsea" class="csl-entry" role="doc-biblioentry">
 Chamberlain, Scott, Hadley Wickham, and Winston Chang. 2021. <em>Analogsea: Interface to <span>“Digital Ocean”</span></em>. <a href="https://github.com/sckott/analogsea">https://github.com/sckott/analogsea</a>.
@@ -3083,8 +2809,6 @@ Wang, Wei, David Rothschild, Sharad Goel, and Andrew Gelman. 2015. <span>“Fore
 <li id="fn1"><p>THERE’S NO EXPLAINATION OF HOW WE GOT HERE, MAYBE SHOULD SHOULD THAT <span class="math inline">\(E[Y] = LOGIT(XBETA)\)</span>, AND THAT <span class="math inline">\(Y ~ BERN(SIGMOID(XBETA))\)</span><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2"><p>STUDENTS PROBABLY WON’T UNDERSTAND THAT IMPICIT IN THE PREDICTED LABEL IS AN OPERATING THRESHOLD, I WOULD HAVE AT LEAST ONE SENTENCE EXPLAINING THAT THIS IS A BUILT IN ASSUMPION IN THE PREDICT() METHOD THAT CAN BE ADJUSTED AND ADJUSTING THIS WILL IMPACT SENSITIVITY VS PRECISION WHICH CAN BE DISCUSSED LATER<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn3"><p>THE TABLE BELOW IS A BIT DIFFICULT TO READ, NOT ENOUGH SPACE BETWEEN THE COLUMNS.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn4"><p>I FEEL LIKE THE AWS SECTION SHOULD BE IN THE APPENDIX. ITS PROVIDING A LOT OF NITTY-GRITTY DETAILS WHICH MAY BECOME OUTDATED OVERTIME AS WEB SERVICES CHANGE OPTION SETS, ETC.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn5"><p>I WOULD EXPLAIN WHAT EXACTLY APIS ARE FOR AND WHY THEY ARE USEFUL, ALSO I THINK THIS SHOULD BE A DIFFERENT SECTION. BUT I WOULD KEEP LINEAR REG &amp; GLM IN THE SAME SECTION TO BE CLEAR. THE IDEA OF DEPLOYING A MODEL IS COMPLETELY INDEPENDENT ABOUT WHETHER IT IS LINEAR OR NOT<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
 
