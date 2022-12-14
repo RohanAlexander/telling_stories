@@ -424,8 +424,9 @@ div.csl-indent {
   <ul class="collapse">
   <li><a href="#sharing-a-code-environment" id="toc-sharing-a-code-environment" class="nav-link" data-scroll-target="#sharing-a-code-environment"><span class="toc-section-number">3.6.1</span>  Sharing a code environment</a></li>
   <li><a href="#code-linting-and-styling" id="toc-code-linting-and-styling" class="nav-link" data-scroll-target="#code-linting-and-styling"><span class="toc-section-number">3.6.2</span>  Code linting and styling</a></li>
-  <li><a href="#code-review-and-refactoring" id="toc-code-review-and-refactoring" class="nav-link" data-scroll-target="#code-review-and-refactoring"><span class="toc-section-number">3.6.3</span>  Code review and refactoring</a></li>
-  <li><a href="#parallel-processing" id="toc-parallel-processing" class="nav-link" data-scroll-target="#parallel-processing"><span class="toc-section-number">3.6.4</span>  Parallel processing</a></li>
+  <li><a href="#code-review" id="toc-code-review" class="nav-link" data-scroll-target="#code-review"><span class="toc-section-number">3.6.3</span>  Code review</a></li>
+  <li><a href="#code-refactoring" id="toc-code-refactoring" class="nav-link" data-scroll-target="#code-refactoring"><span class="toc-section-number">3.6.4</span>  Code refactoring</a></li>
+  <li><a href="#parallel-processing" id="toc-parallel-processing" class="nav-link" data-scroll-target="#parallel-processing"><span class="toc-section-number">3.6.5</span>  Parallel processing</a></li>
   </ul></li>
   <li><a href="#exercises-and-tutorial" id="toc-exercises-and-tutorial" class="nav-link" data-scroll-target="#exercises-and-tutorial"><span class="toc-section-number">3.7</span>  Exercises and tutorial</a>
   <ul class="collapse">
@@ -1086,7 +1087,7 @@ raw_data &lt;- readr::read_csv("inputs/data/raw_data.csv")
 ...
 </code></pre>
 <p>Examples of nicely commented code include those from: <a href="https://github.com/wren-lang/wren/blob/46c1ba92492e9257aba6418403161072d640cb29/src/wren_value.h">Bob Nystrom</a>, <span class="citation" data-cites="AhadyDolatsara2021">Dolatsara et al. (<a href="99-references.html#ref-AhadyDolatsara2021" role="doc-biblioref">2021</a>)</span>, <a href="https://github.com/mathewhauer/IRS-migration-data/tree/master/R">Mathew Hauer and James Byars</a>, and <a href="https://osf.io/zgdfr/">Jason Burton, Nicole Cruz, and Ulrike Hahn</a> <span class="citation" data-cites="burton2021reconsidering">(<a href="99-references.html#ref-burton2021reconsidering" role="doc-biblioref">Burton, Cruz, and Hahn 2021</a>)</span>.</p>
-<p>Finally, never rely on a user commenting and uncommenting code, or any other manual step, such as directory specification, for code to work. This will preclude the use of automated code checking and testing.</p>
+<p>Finally, never rely on a user commenting and uncommenting code, or any other manual step, such as directory specification, for code to work. This will preclude the use of automated code checking and testing. This all takes time. As a rough rule of thumb, you should expect to spend at least as much time commenting and improving your code as you spent writing it.</p>
 </section>
 <section id="tests" class="level3" data-number="3.5.5">
 <h3 data-number="3.5.5" class="anchored" data-anchor-id="tests"><span class="header-section-number">3.5.5</span> Tests</h3>
@@ -1122,7 +1123,7 @@ raw_data &lt;- readr::read_csv("inputs/data/raw_data.csv")
 </section>
 <section id="code-linting-and-styling" class="level3" data-number="3.6.2">
 <h3 data-number="3.6.2" class="anchored" data-anchor-id="code-linting-and-styling"><span class="header-section-number">3.6.2</span> Code linting and styling</h3>
-<p>Being fast is valuable but it is mostly about being able to iterate fast, not necessarily having code that runs fast. <span class="citation" data-cites="oldlanguages">Backus (<a href="99-references.html#ref-oldlanguages" role="doc-biblioref">1981, 26</a>)</span> describes how even in 1954 a programmer cost at least as much as a computer, and these days compute is usually much cheaper than a programmer. Hence, it is important to use other people’s time efficiently.</p>
+<p>Being fast is valuable but it is mostly about being able to iterate fast, not necessarily having code that runs fast. <span class="citation" data-cites="oldlanguages">Backus (<a href="99-references.html#ref-oldlanguages" role="doc-biblioref">1981, 26</a>)</span> describes how even in 1954 a programmer cost at least as much as a computer, and these days compute is usually much cheaper than a programmer. Performant code is important, but it is more important to use other people’s time efficiently.</p>
 <p>Linting and styling is the process of checking code, mostly for stylistic issues, and re-arranging code to make it easier to read. (There is another aspect of linting, which is dealing with programming errors, such as forgetting a closing bracket, but here we focus on stylistic issues.) In general, the best efficiency gain that we can make is to make it easier for others to read our code, even if this is just ourselves returning to the code after a break. Jane Street, the US proprietary trading firm, place a very strong focus on ensuring their code is readable, as a core part of risk mitigation <span class="citation" data-cites="minsky2011ocaml">(<a href="99-references.html#ref-minsky2011ocaml" role="doc-biblioref">Minsky 2011</a>)</span>. While we may not all have billions of dollars under the mecurial management of our code, we all would likely prefer that our code does not produce errors.</p>
 <p>We use <code>lint()</code> from <code>lintr</code> <span class="citation" data-cites="lintr">(<a href="99-references.html#ref-lintr" role="doc-biblioref">Hester et al. 2022</a>)</span> to lint our code. For instance, consider the following R code (saved as “linting_example.R”).</p>
 <div class="cell">
@@ -1169,119 +1170,148 @@ raw_data &lt;- readr::read_csv("inputs/data/raw_data.csv")
 </div>
 <p>This will automatically make changes, such as spacing and indentation, so it is important to do this regularly, rather than only once at the end of a project, so as to be able to review the changes.</p>
 </section>
-<section id="code-review-and-refactoring" class="level3" data-number="3.6.3">
-<h3 data-number="3.6.3" class="anchored" data-anchor-id="code-review-and-refactoring"><span class="header-section-number">3.6.3</span> Code review and refactoring</h3>
+<section id="code-review" class="level3" data-number="3.6.3">
+<h3 data-number="3.6.3" class="anchored" data-anchor-id="code-review"><span class="header-section-number">3.6.3</span> Code review</h3>
 <p>Having dealt with all of these aspects of style, we can turn to code review. This is the process of having another person go through and critique the code. Code review is a critical part of writing code, and <span class="citation" data-cites="researchsoftware">Irving et al. (<a href="99-references.html#ref-researchsoftware" role="doc-biblioref">2021, 465</a>)</span> describe it as “the most effective way to find bugs”. It is especially helpful, although quite daunting, when learning to code because getting feedback is a great way to improve.</p>
-<p>When reviewing another person’s code, it is important to go out of the way to be polite. Small aspects to do with style, things like spacing and separation, should have been taken care of by a linter and styler, but if not, then we might make a general recommendation about that. We are more looking for important aspects such as:</p>
-<ol type="1">
-<li>Does the code follow best practice style?</li>
-<li>Are all the file names and variable names consistent, informative, and meaningful?</li>
-<li>Are there sufficient comments, so that it is possible to understand why something is being done?</li>
-<li>Are there appropriate and sufficient tests?</li>
-<li>Are there any magic numbers that could be changed to variables and explained?</li>
-<li>Is there any duplicated code that could be changed?</li>
-<li>Are there any outstanding warnings?</li>
-<li>Can the functions be understood, and are they well-documented?</li>
+<p>When reviewing another person’s code, it is important to go out of the way to be polite and collegial. Small aspects to do with style, things like spacing and separation, should have been taken care of by a linter and styler, but if not, then make a general recommendation about that. Do not review too much code at any one time. At most a few hundred lines, which should take around an hour, because after this efficacy may wear off <span class="citation" data-cites="cohen2006best">(<a href="99-references.html#ref-cohen2006best" role="doc-biblioref">Cohen, Teleki, and Brown 2006, 79</a>)</span>. Most of your time as a reviewer in data science should be spent on aspects such as:</p>
+<ol start="0" type="1">
+<li>Is there an informative README and how could it be improved?</li>
+<li>Are the file names and variable names consistent, informative, and meaningful?</li>
+<li>Do the comments allow you to understand why something is being done?</li>
+<li>Are the tests both appropriate and sufficient? Are there edge cases or corner solutions that are not considered? Similarly, are there unnecessary tests that could be removed?</li>
+<li>Are there magic numbers that could be changed to variables and explained?</li>
+<li>Is there duplicated code that could be changed?</li>
+<li>Are there any outstanding warnings that should be addressed?</li>
 <li>Are there any especially large functions or pipes that could be separated into smaller ones?</li>
-<li>Are corner solutions considered? Are there any other corner solutions or edge cases that have been missed?</li>
 <li>Is the structure of the project appropriate and helps to understand what is happening and why?</li>
-<li>Are there any especially hard-to-understand aspects of the code?</li>
-<li>Are there defects that have been missed?</li>
-<li>Can we change any of the code to data <span class="citation" data-cites="researchsoftware">(<a href="99-references.html#ref-researchsoftware" role="doc-biblioref">Irving et al. 2021, 462</a>)</span>? To understand this, consider if we had some code that looked for the names of prime ministers and presidents. When we first wrote this code we likely added the relevant names into the function. Instead, we could create a small dataset of the names, and then have the code look-up that dataset.</li>
+<li>Can we change any of the code to data <span class="citation" data-cites="researchsoftware">(<a href="99-references.html#ref-researchsoftware" role="doc-biblioref">Irving et al. 2021, 462</a>)</span>?</li>
 </ol>
+<p>For instance, consider some code that looked for the names of prime ministers and presidents. When we first wrote this code we likely added the relevant names directly into the code. But as part of code review, we might instead recommend that this be changed. For instance, we might recommend creating a small dataset of relevant names, and then re-writing the code to have it look-up that dataset.</p>
 <p>Code review ensures that the code can be understood by at least one other person. This is a critical part of building knowledge about the world. At Google, code review is not primarily about finding defects although that may happen but is instead about ensuring readability and maintainability as well as education <span class="citation" data-cites="codereview">(<a href="99-references.html#ref-codereview" role="doc-biblioref">Sadowski et al. 2018</a>)</span>. This is also the case at Jane Street, where they use code review to catch bugs, share institutional knowledge through ensure what is known by one programmer is also known by others, assist with training, and oblige staff to write code that can be read <span class="citation" data-cites="ocamlyaronpodcast">(<a href="99-references.html#ref-ocamlyaronpodcast" role="doc-biblioref">Minsky 2015</a>)</span>.</p>
 <p>Finally, code review does not have to, and should not, be an onerous days-consuming process of reading all the code. The best code review is a quick review of just one file, focused on suggesting changes to just a handful of lines. Indeed, it may be better to have a review done by a small team of people rather than one individual.</p>
-<p>Having had code reviewed, then we may need to refactor it. To refactor code means to re-write it so that the new code achieves the same outcome as the old code, it is just that the new code does it better. For instance, <span class="citation" data-cites="refactornature">Chawla (<a href="99-references.html#ref-refactornature" role="doc-biblioref">2020</a>)</span> discuss how the code underpinning an important UK COVID model was initially written by epidemiologists, and months later clarified and cleaned-up by a team from the Royal Society, Microsoft, and GitHub. This was valuable because it provided more confidence in the model, even though both versions produced the same outputs, given the same inputs.</p>
-<p>When we start to refactor our code, we want to make sure that the re-written code achieves the same outcomes as the original code. This means that it is important to have an extensive suite of appropriate tests written. We rewrite to make it easier for others to understand, which in turn allows more confidence in our conclusions. Go through the checklist, and address all comments.</p>
-<p>We also want to make sure that our code is satisfying best practice. <span class="citation" data-cites="Trisovic2022">Trisovic et al. (<a href="99-references.html#ref-Trisovic2022" role="doc-biblioref">2022</a>)</span> details some core recommendations based on examining 9,000 R scripts, and a refactor is a great opportunity to ensure that these are met.</p>
-<ol type="1">
-<li>Removing any absolute paths, and ensuring that only relative paths (in relation to the “.rproj” file) are used.</li>
-<li>Ensuring there is a clear order of execution. We have recommended using numbers in filenames to achieve this, but more sophisticated approaches, such as <code>targets</code> <span class="citation" data-cites="targets">(<a href="99-references.html#ref-targets" role="doc-biblioref">Landau 2021</a>)</span>, could be used instead.</li>
-<li>Having someone else run everything on their computer.</li>
-</ol>
-<!-- Start with an example of bad code, and then how it gets fixed. -->
 </section>
-<section id="parallel-processing" class="level3" data-number="3.6.4">
-<h3 data-number="3.6.4" class="anchored" data-anchor-id="parallel-processing"><span class="header-section-number">3.6.4</span> Parallel processing</h3>
+<section id="code-refactoring" class="level3" data-number="3.6.4">
+<h3 data-number="3.6.4" class="anchored" data-anchor-id="code-refactoring"><span class="header-section-number">3.6.4</span> Code refactoring</h3>
+<p>To refactor code means to re-write it so that the new code achieves the same outcome as the old code, it is just that the new code does it better. For instance, <span class="citation" data-cites="refactornature">Chawla (<a href="99-references.html#ref-refactornature" role="doc-biblioref">2020</a>)</span> discuss how the code underpinning an important UK COVID model was initially written by epidemiologists, and months later clarified and cleaned-up by a team from the Royal Society, Microsoft, and GitHub. This was valuable because it provided more confidence in the model, even though both versions produced the same outputs, given the same inputs.</p>
+<p>We typically refer to code refactoring in relation to code that someone else wrote. (Although it may be that we actually wrote the code, and it was just that it was some time ago.) When we start to refactor code, we want to make sure that the re-written code achieves the same outcomes as the original code. This means that it is important to have a suite of appropriate tests written that we are able to depend on. If these do not exist then we may need to create them.</p>
+<p>We rewrite code to make it easier for others to understand, which in turn allows more confidence in our conclusions. But before we can do that, we need to understand what the existing code is doing. One way to get started is to go through the code and add extensive comments. These comments are different to normal code chunks and are our active process of coming to terms with trying to understand what is each code chunk trying to do and how could this be improved.</p>
+<p>Refactoring code is a great opportunity to ensure that it satisfies best practice. <span class="citation" data-cites="Trisovic2022">Trisovic et al. (<a href="99-references.html#ref-Trisovic2022" role="doc-biblioref">2022</a>)</span> details some core recommendations based on examining 9,000 R scripts, and a refactor is a great opportunity to ensure that these are met. For instance, some of them include:</p>
+<ol type="1">
+<li>Removing <code>setwd()</code> and any absolute paths, and ensuring that only relative paths, in relation to the “.rproj” file, are used.</li>
+<li>Ensuring there is a clear order of execution. We have recommended using numbers in filenames to achieve this, but more sophisticated approaches, such as <code>targets</code> <span class="citation" data-cites="targets">(<a href="99-references.html#ref-targets" role="doc-biblioref">Landau 2021</a>)</span>, could be used instead.</li>
+<li>Ensuring that code runs on more than one computer.</li>
+</ol>
+<p>For instance, consider the following code:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"/Users/rohanalexander/Documents/telling_stories"</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>d <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"cars.csv"</span>)</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>mtcars <span class="ot">=</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  mtcars <span class="sc">|&gt;</span> </span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">K_P_L =</span> mpg <span class="sc">/</span> <span class="fl">2.352</span>)</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(datasauRus)</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>datasaurus_dozen</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We could change that, starting by creating an R project which enables us to remove <code>setwd()</code>, grouping all the <code>library()</code> calls at the top, using “&lt;-” instead of “=”, and being consistent with variable names:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(datasauRus)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>cars_data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"cars.csv"</span>)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>mpg_to_kpl_conversion_factor <span class="ot">&lt;-</span> <span class="fl">2.352</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>mtcars <span class="ot">&lt;-</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  mtcars <span class="sc">|&gt;</span> </span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">kpl =</span> mpg <span class="sc">/</span> mpg_to_kpl_conversion_factor)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="parallel-processing" class="level3" data-number="3.6.5">
+<h3 data-number="3.6.5" class="anchored" data-anchor-id="parallel-processing"><span class="header-section-number">3.6.5</span> Parallel processing</h3>
 <p>Sometimes code is slow because the computer needs to do the same thing many times. Sometimes it is possible to take advantage of this and enable these jobs to be done at the same time using parallel processing. This will be especially useful in <a href="12-ijalm.html"><span>Chapter&nbsp;12</span></a> for modelling.</p>
 <p>To get started we can use <code>tic()</code> and <code>toc()</code> from <code>tictoc</code> <span class="citation" data-cites="Izrailev2014">(<a href="99-references.html#ref-Izrailev2014" role="doc-biblioref">Izrailev 2014</a>)</span> to time various aspects of our code. This is useful with parallel processing, but also more generally, to help us find out where the largest delays are.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tictoc)</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"First bit of code"</span>)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Fast code"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tictoc)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"First bit of code"</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Fast code"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Fast code"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>First bit of code: 0.002 sec elapsed</code></pre>
+<pre><code>First bit of code: 0.001 sec elapsed</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"Second bit of code"</span>)</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.sleep</span>(<span class="dv">3</span>)</span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Slow code"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"Second bit of code"</span>)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.sleep</span>(<span class="dv">3</span>)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Slow code"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Slow code"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Second bit of code: 3.008 sec elapsed</code></pre>
+<pre><code>Second bit of code: 3.009 sec elapsed</code></pre>
 </div>
 </div>
 <p>And so we know that there is something slowing down the code; which in this artificial case is <code>Sys.sleep()</code> causing a delay of 3 seconds.</p>
 <p>We could use <code>parallel</code> which is part of base R to run functions in parallel. We could also use <code>future</code> <span class="citation" data-cites="future">(<a href="99-references.html#ref-future" role="doc-biblioref">Bengtsson 2021</a>)</span> which brings additional features. To get started with <code>future</code> we use <code>plan()</code> to specify whether we want to run things sequentially “sequential” or in parallel “multisession”. We then wrap whatever we want this applied to within <code>future()</code>.</p>
 <p>To see this in action we will create a dataset and then implement a function on a row-wise basis.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(future)</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tictoc)</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>simulated_data <span class="ot">&lt;-</span></span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">random_draws =</span> <span class="fu">runif</span>(</span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">n =</span> <span class="dv">1000000</span>,</span>
-<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">min =</span> <span class="dv">0</span>,</span>
-<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">max =</span> <span class="dv">1000</span></span>
-<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">round</span>(),</span>
-<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">more_random_draws =</span> <span class="fu">runif</span>(</span>
-<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">n =</span> <span class="dv">100000</span>,</span>
-<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">min =</span> <span class="dv">0</span>,</span>
-<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">max =</span> <span class="dv">1000</span></span>
-<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">round</span>()</span>
-<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(sequential)</span>
-<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-23"><a href="#cb35-23" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
-<span id="cb35-24"><a href="#cb35-24" aria-hidden="true" tabindex="-1"></a>simulated_data <span class="ot">&lt;-</span></span>
-<span id="cb35-25"><a href="#cb35-25" aria-hidden="true" tabindex="-1"></a>  simulated_data <span class="sc">|&gt;</span></span>
-<span id="cb35-26"><a href="#cb35-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowwise</span>() <span class="sc">|&gt;</span></span>
-<span id="cb35-27"><a href="#cb35-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb35-28"><a href="#cb35-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">which_is_smaller =</span></span>
-<span id="cb35-29"><a href="#cb35-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">min</span>(<span class="fu">c</span>(</span>
-<span id="cb35-30"><a href="#cb35-30" aria-hidden="true" tabindex="-1"></a>        random_draws,</span>
-<span id="cb35-31"><a href="#cb35-31" aria-hidden="true" tabindex="-1"></a>        more_random_draws</span>
-<span id="cb35-32"><a href="#cb35-32" aria-hidden="true" tabindex="-1"></a>      ))</span>
-<span id="cb35-33"><a href="#cb35-33" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb35-34"><a href="#cb35-34" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb35-35"><a href="#cb35-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-36"><a href="#cb35-36" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession)</span>
-<span id="cb35-37"><a href="#cb35-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-38"><a href="#cb35-38" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
-<span id="cb35-39"><a href="#cb35-39" aria-hidden="true" tabindex="-1"></a>simulated_data <span class="ot">&lt;-</span></span>
-<span id="cb35-40"><a href="#cb35-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">future</span>(</span>
-<span id="cb35-41"><a href="#cb35-41" aria-hidden="true" tabindex="-1"></a>    simulated_data <span class="sc">|&gt;</span></span>
-<span id="cb35-42"><a href="#cb35-42" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rowwise</span>() <span class="sc">|&gt;</span></span>
-<span id="cb35-43"><a href="#cb35-43" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
-<span id="cb35-44"><a href="#cb35-44" aria-hidden="true" tabindex="-1"></a>        <span class="at">which_is_smaller =</span></span>
-<span id="cb35-45"><a href="#cb35-45" aria-hidden="true" tabindex="-1"></a>          <span class="fu">min</span>(<span class="fu">c</span>(</span>
-<span id="cb35-46"><a href="#cb35-46" aria-hidden="true" tabindex="-1"></a>            random_draws,</span>
-<span id="cb35-47"><a href="#cb35-47" aria-hidden="true" tabindex="-1"></a>            more_random_draws</span>
-<span id="cb35-48"><a href="#cb35-48" aria-hidden="true" tabindex="-1"></a>          ))</span>
-<span id="cb35-49"><a href="#cb35-49" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb35-50"><a href="#cb35-50" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb35-51"><a href="#cb35-51" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(future)</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tictoc)</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>simulated_data <span class="ot">&lt;-</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">random_draws =</span> <span class="fu">runif</span>(</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">n =</span> <span class="dv">1000000</span>,</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">min =</span> <span class="dv">0</span>,</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">max =</span> <span class="dv">1000</span></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">round</span>(),</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">more_random_draws =</span> <span class="fu">runif</span>(</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">n =</span> <span class="dv">100000</span>,</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">min =</span> <span class="dv">0</span>,</span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">max =</span> <span class="dv">1000</span></span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">round</span>()</span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(sequential)</span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
+<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a>simulated_data <span class="ot">&lt;-</span></span>
+<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a>  simulated_data <span class="sc">|&gt;</span></span>
+<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowwise</span>() <span class="sc">|&gt;</span></span>
+<span id="cb37-27"><a href="#cb37-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb37-28"><a href="#cb37-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">which_is_smaller =</span></span>
+<span id="cb37-29"><a href="#cb37-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">min</span>(<span class="fu">c</span>(</span>
+<span id="cb37-30"><a href="#cb37-30" aria-hidden="true" tabindex="-1"></a>        random_draws,</span>
+<span id="cb37-31"><a href="#cb37-31" aria-hidden="true" tabindex="-1"></a>        more_random_draws</span>
+<span id="cb37-32"><a href="#cb37-32" aria-hidden="true" tabindex="-1"></a>      ))</span>
+<span id="cb37-33"><a href="#cb37-33" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb37-34"><a href="#cb37-34" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
+<span id="cb37-35"><a href="#cb37-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-36"><a href="#cb37-36" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession)</span>
+<span id="cb37-37"><a href="#cb37-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-38"><a href="#cb37-38" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
+<span id="cb37-39"><a href="#cb37-39" aria-hidden="true" tabindex="-1"></a>simulated_data <span class="ot">&lt;-</span></span>
+<span id="cb37-40"><a href="#cb37-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">future</span>(</span>
+<span id="cb37-41"><a href="#cb37-41" aria-hidden="true" tabindex="-1"></a>    simulated_data <span class="sc">|&gt;</span></span>
+<span id="cb37-42"><a href="#cb37-42" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rowwise</span>() <span class="sc">|&gt;</span></span>
+<span id="cb37-43"><a href="#cb37-43" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
+<span id="cb37-44"><a href="#cb37-44" aria-hidden="true" tabindex="-1"></a>        <span class="at">which_is_smaller =</span></span>
+<span id="cb37-45"><a href="#cb37-45" aria-hidden="true" tabindex="-1"></a>          <span class="fu">min</span>(<span class="fu">c</span>(</span>
+<span id="cb37-46"><a href="#cb37-46" aria-hidden="true" tabindex="-1"></a>            random_draws,</span>
+<span id="cb37-47"><a href="#cb37-47" aria-hidden="true" tabindex="-1"></a>            more_random_draws</span>
+<span id="cb37-48"><a href="#cb37-48" aria-hidden="true" tabindex="-1"></a>          ))</span>
+<span id="cb37-49"><a href="#cb37-49" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb37-50"><a href="#cb37-50" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb37-51"><a href="#cb37-51" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
@@ -1408,47 +1438,47 @@ raw_data &lt;- readr::read_csv("inputs/data/raw_data.csv")
 </ol>
 <div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>oecd_gdp <span class="ot">&lt;-</span></span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(<span class="st">"https://stats.oecd.org/sdmx-json/data/DP_LIVE/.QGDP.../OECD?contentType=csv&amp;detail=code&amp;separator=comma&amp;csv-lang=en"</span>)</span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(oecd_gdp)</span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forcats)</span>
-<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>oecd_gdp_most_recent <span class="ot">&lt;-</span></span>
-<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>  oecd_gdp <span class="sc">|&gt;</span></span>
-<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
-<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>    TIME <span class="sc">==</span> <span class="st">"2021-Q3"</span>,</span>
-<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>    SUBJECT <span class="sc">==</span> <span class="st">"TOT"</span>,</span>
-<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>    LOCATION <span class="sc">%in%</span> <span class="fu">c</span>(</span>
-<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>      <span class="st">"AUS"</span>, <span class="st">"CAN"</span>, <span class="st">"CHL"</span>, <span class="st">"DEU"</span>, <span class="st">"GBR"</span>,</span>
-<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">"IDN"</span>, <span class="st">"ESP"</span>, <span class="st">"NZL"</span>, <span class="st">"USA"</span>, <span class="st">"ZAF"</span></span>
-<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a>    MEASURE <span class="sc">==</span> <span class="st">"PC_CHGPY"</span></span>
-<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">european =</span> <span class="fu">if_else</span>(</span>
-<span id="cb36-24"><a href="#cb36-24" aria-hidden="true" tabindex="-1"></a>      LOCATION <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"DEU"</span>, <span class="st">"GBR"</span>, <span class="st">"ESP"</span>),</span>
-<span id="cb36-25"><a href="#cb36-25" aria-hidden="true" tabindex="-1"></a>      <span class="st">"European"</span>,</span>
-<span id="cb36-26"><a href="#cb36-26" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Not european"</span></span>
-<span id="cb36-27"><a href="#cb36-27" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb36-28"><a href="#cb36-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">hemisphere =</span> <span class="fu">if_else</span>(</span>
-<span id="cb36-29"><a href="#cb36-29" aria-hidden="true" tabindex="-1"></a>      LOCATION <span class="sc">%in%</span></span>
-<span id="cb36-30"><a href="#cb36-30" aria-hidden="true" tabindex="-1"></a>        <span class="fu">c</span>(<span class="st">"CAN"</span>, <span class="st">"DEU"</span>, <span class="st">"GBR"</span>, <span class="st">"ESP"</span>, <span class="st">"USA"</span>),</span>
-<span id="cb36-31"><a href="#cb36-31" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Northern Hemisphere"</span>,</span>
-<span id="cb36-32"><a href="#cb36-32" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Southern Hemisphere"</span></span>
-<span id="cb36-33"><a href="#cb36-33" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb36-34"><a href="#cb36-34" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb36-35"><a href="#cb36-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-36"><a href="#cb36-36" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot)</span>
-<span id="cb36-37"><a href="#cb36-37" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
-<span id="cb36-38"><a href="#cb36-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-39"><a href="#cb36-39" aria-hidden="true" tabindex="-1"></a>oecd_gdp_most_recent <span class="sc">|&gt;</span></span>
-<span id="cb36-40"><a href="#cb36-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> LOCATION, <span class="at">y =</span> Value)) <span class="sc">|&gt;</span></span>
-<span id="cb36-41"><a href="#cb36-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>oecd_gdp <span class="ot">&lt;-</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(<span class="st">"https://stats.oecd.org/sdmx-json/data/DP_LIVE/.QGDP.../OECD?contentType=csv&amp;detail=code&amp;separator=comma&amp;csv-lang=en"</span>)</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(oecd_gdp)</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forcats)</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>oecd_gdp_most_recent <span class="ot">&lt;-</span></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>  oecd_gdp <span class="sc">|&gt;</span></span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>    TIME <span class="sc">==</span> <span class="st">"2021-Q3"</span>,</span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>    SUBJECT <span class="sc">==</span> <span class="st">"TOT"</span>,</span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>    LOCATION <span class="sc">%in%</span> <span class="fu">c</span>(</span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>      <span class="st">"AUS"</span>, <span class="st">"CAN"</span>, <span class="st">"CHL"</span>, <span class="st">"DEU"</span>, <span class="st">"GBR"</span>,</span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">"IDN"</span>, <span class="st">"ESP"</span>, <span class="st">"NZL"</span>, <span class="st">"USA"</span>, <span class="st">"ZAF"</span></span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a>    MEASURE <span class="sc">==</span> <span class="st">"PC_CHGPY"</span></span>
+<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb38-23"><a href="#cb38-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">european =</span> <span class="fu">if_else</span>(</span>
+<span id="cb38-24"><a href="#cb38-24" aria-hidden="true" tabindex="-1"></a>      LOCATION <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"DEU"</span>, <span class="st">"GBR"</span>, <span class="st">"ESP"</span>),</span>
+<span id="cb38-25"><a href="#cb38-25" aria-hidden="true" tabindex="-1"></a>      <span class="st">"European"</span>,</span>
+<span id="cb38-26"><a href="#cb38-26" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Not european"</span></span>
+<span id="cb38-27"><a href="#cb38-27" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb38-28"><a href="#cb38-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">hemisphere =</span> <span class="fu">if_else</span>(</span>
+<span id="cb38-29"><a href="#cb38-29" aria-hidden="true" tabindex="-1"></a>      LOCATION <span class="sc">%in%</span></span>
+<span id="cb38-30"><a href="#cb38-30" aria-hidden="true" tabindex="-1"></a>        <span class="fu">c</span>(<span class="st">"CAN"</span>, <span class="st">"DEU"</span>, <span class="st">"GBR"</span>, <span class="st">"ESP"</span>, <span class="st">"USA"</span>),</span>
+<span id="cb38-31"><a href="#cb38-31" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Northern Hemisphere"</span>,</span>
+<span id="cb38-32"><a href="#cb38-32" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Southern Hemisphere"</span></span>
+<span id="cb38-33"><a href="#cb38-33" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb38-34"><a href="#cb38-34" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb38-35"><a href="#cb38-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-36"><a href="#cb38-36" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot)</span>
+<span id="cb38-37"><a href="#cb38-37" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
+<span id="cb38-38"><a href="#cb38-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-39"><a href="#cb38-39" aria-hidden="true" tabindex="-1"></a>oecd_gdp_most_recent <span class="sc">|&gt;</span></span>
+<span id="cb38-40"><a href="#cb38-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> LOCATION, <span class="at">y =</span> Value)) <span class="sc">|&gt;</span></span>
+<span id="cb38-41"><a href="#cb38-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </section>
@@ -1511,6 +1541,9 @@ Chawla, Dalmeet Singh. 2020. <span>“Critiqued Coronavirus Simulation Gets Thum
 </div>
 <div id="ref-chouldechova18a" class="csl-entry" role="doc-biblioentry">
 Chouldechova, Alexandra, Diana Benavides-Prado, Oleksandr Fialko, and Rhema Vaithianathan. 2018. <span>“A Case Study of Algorithm-Assisted Decision Making in Child Maltreatment Hotline Screening Decisions.”</span> In <em>Proceedings of the 1st Conference on Fairness, Accountability and Transparency</em>, edited by Sorelle Friedler and Christo Wilson, 81:134–48. Proceedings of Machine Learning Research. <a href="https://proceedings.mlr.press/v81/chouldechova18a.html">https://proceedings.mlr.press/v81/chouldechova18a.html</a>.
+</div>
+<div id="ref-cohen2006best" class="csl-entry" role="doc-biblioentry">
+Cohen, Jason, Steven Teleki, and Eric Brown. 2006. <em>Best Kept Secrets of Peer Code Review</em>. Smart Bear Incorporated.
 </div>
 <div id="ref-gitcreds" class="csl-entry" role="doc-biblioentry">
 Csárdi, Gábor. 2020. <em><span class="nocase">gitcreds: Query <span>“git”</span> Credentials from <span>“R”</span></span></em>. <a href="https://CRAN.R-project.org/package=gitcreds">https://CRAN.R-project.org/package=gitcreds</a>.

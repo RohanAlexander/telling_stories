@@ -618,7 +618,7 @@ If you write code, then you are a programmer, regardless of how you do it, what 
 
 Code must be commented. Comments should focus on why certain code was written, (and to a lesser extent, why a common option is not selected). Indeed, it can be a good idea to write the comments before you write the code, explaining what you want to do and why, and then returning to write the code [@refactoringbook, p. 59].
 
-There is no one way to write code, especially in R. However, there are some general guidelines that will make it easier for you even if you are just working on your own. It is important to recognize that most projects will evolve over time, and one purpose served by code comments are as "[m]essages left for your future self (or near-future others) [that] help retrace and justify your decisions" [@bowers2016improve].
+There is no one way to write code, especially in R. However, there are some general guidelines that will make it easier for you even if you are just working on your own. It is important to recognize that most projects will evolve over time, and one purpose served by code comments are as "[m]essages left for your future self (or near-future others) [that] help retrace and justify your decisions" [@bowers2016improve]. 
 
 Comments in R script files can be added by including the # symbol. We do not have to put a comment at the start of the line, it can be midway through. In general, we do not need to comment what every aspect of your code is doing but we should comment parts that are not obvious. For instance, if we read in some value then we may like to comment where it is coming from.
 
@@ -660,7 +660,7 @@ raw_data <- readr::read_csv("inputs/data/raw_data.csv")
 
 Examples of nicely commented code include those from: [Bob Nystrom](https://github.com/wren-lang/wren/blob/46c1ba92492e9257aba6418403161072d640cb29/src/wren_value.h), @AhadyDolatsara2021, [Mathew Hauer and James Byars](https://github.com/mathewhauer/IRS-migration-data/tree/master/R), and [Jason Burton, Nicole Cruz, and Ulrike Hahn](https://osf.io/zgdfr/) [@burton2021reconsidering].
 
-Finally, never rely on a user commenting and uncommenting code, or any other manual step, such as directory specification, for code to work. This will preclude the use of automated code checking and testing.
+Finally, never rely on a user commenting and uncommenting code, or any other manual step, such as directory specification, for code to work. This will preclude the use of automated code checking and testing. This all takes time. As a rough rule of thumb, you should expect to spend at least as much time commenting and improving your code as you spent writing it.
 
 
 ### Tests
@@ -712,7 +712,7 @@ Someone coming to this project from outside, could then use `restore()` which wo
 
 ### Code linting and styling
 
-Being fast is valuable but it is mostly about being able to iterate fast, not necessarily having code that runs fast. @oldlanguages [p. 26] describes how even in 1954 a programmer cost at least as much as a computer, and these days compute is usually much cheaper than a programmer. Hence, it is important to use other people's time efficiently. 
+Being fast is valuable but it is mostly about being able to iterate fast, not necessarily having code that runs fast. @oldlanguages [p. 26] describes how even in 1954 a programmer cost at least as much as a computer, and these days compute is usually much cheaper than a programmer. Performant code is important, but it is more important to use other people's time efficiently. 
 
 Linting\index{lint} and styling is the process of checking code, mostly for stylistic issues, and re-arranging code to make it easier to read. (There is another aspect of linting, which is dealing with programming errors, such as forgetting a closing bracket, but here we focus on stylistic issues.) In general, the best efficiency gain that we can make is to make it easier for others to read our code, even if this is just ourselves returning to the code after a break. Jane Street, the US proprietary trading firm, place a very strong focus on ensuring their code is readable, as a core part of risk mitigation [@minsky2011ocaml]. While we may not all have billions of dollars under the mecurial management of our code, we all would likely prefer that our code does not produce errors.
 
@@ -782,46 +782,79 @@ style_file(path = "linting_example.R")
 
 This will automatically make changes, such as spacing and indentation, so it is important to do this regularly, rather than only once at the end of a project, so as to be able to review the changes.
 
-### Code review and refactoring
+### Code review
 
 Having dealt with all of these aspects of style, we can turn to code review\index{code review}. This is the process of having another person go through and critique the code. Code review is a critical part of writing code, and @researchsoftware [p. 465] describe it as "the most effective way to find bugs". It is especially helpful, although quite daunting, when learning to code because getting feedback is a great way to improve.
 
-When reviewing another person's code, it is important to go out of the way to be polite. Small aspects to do with style, things like spacing and separation, should have been taken care of by a linter and styler, but if not, then we might make a general recommendation about that. We are more looking for important aspects such as:
+When reviewing another person's code, it is important to go out of the way to be polite and collegial. Small aspects to do with style, things like spacing and separation, should have been taken care of by a linter and styler, but if not, then make a general recommendation about that. Do not review too much code at any one time. At most a few hundred lines, which should take around an hour, because after this efficacy may wear off [@cohen2006best, p. 79]. Most of your time as a reviewer in data science should be spent on aspects such as:
 
-1) Does the code follow best practice style?
-2) Are all the file names and variable names consistent, informative, and meaningful?
-3) Are there sufficient comments, so that it is possible to understand why something is being done?
-4) Are there appropriate and sufficient tests?
-5) Are there any magic numbers that could be changed to variables and explained?
-6) Is there any duplicated code that could be changed?
-7) Are there any outstanding warnings?
-8) Can the functions be understood, and are they well-documented?
-9) Are there any especially large functions or pipes that could be separated into smaller ones?
-10) Are corner solutions considered? Are there any other corner solutions or edge cases that have been missed?
-11) Is the structure of the project appropriate and helps to understand what is happening and why?
-12) Are there any especially hard-to-understand aspects of the code?
-13) Are there defects that have been missed?
-14) Can we change any of the code to data [@researchsoftware, p. 462]? To understand this, consider if we had some code that looked for the names of prime ministers and presidents. When we first wrote this code we likely added the relevant names into the function. Instead, we could create a small dataset of the names, and then have the code look-up that dataset.
+0) Is there an informative README and how could it be improved?
+1) Are the file names and variable names consistent, informative, and meaningful?
+2) Do the comments allow you to understand why something is being done?
+3) Are the tests both appropriate and sufficient? Are there edge cases or corner solutions that are not considered? Similarly, are there unnecessary tests that could be removed?
+4) Are there magic numbers that could be changed to variables and explained?
+5) Is there duplicated code that could be changed?
+6) Are there any outstanding warnings that should be addressed?
+7) Are there any especially large functions or pipes that could be separated into smaller ones?
+8) Is the structure of the project appropriate and helps to understand what is happening and why?
+9) Can we change any of the code to data [@researchsoftware, p. 462]? 
+
+For instance, consider some code that looked for the names of prime ministers and presidents. When we first wrote this code we likely added the relevant names directly into the code. But as part of code review, we might instead recommend that this be changed. For instance, we might recommend creating a small dataset of relevant names, and then re-writing the code to have it look-up that dataset.
 
 Code review ensures that the code can be understood by at least one other person. This is a critical part of building knowledge about the world. At Google, code review is not primarily about finding defects although that may happen but is instead about ensuring readability and maintainability as well as education [@codereview]. This is also the case at Jane Street, where they use code review to catch bugs, share institutional knowledge through ensure what is known by one programmer is also known by others, assist with training, and oblige staff to write code that can be read [@ocamlyaronpodcast].
 
 Finally, code review does not have to, and should not, be an onerous days-consuming process of reading all the code. The best code review is a quick review of just one file, focused on suggesting changes to just a handful of lines. Indeed, it may be better to have a review done by a small team of people rather than one individual.
 
-Having had code reviewed, then we may need to refactor it. To refactor code means to re-write it so that the new code achieves the same outcome as the old code, it is just that the new code does it better. For instance, @refactornature discuss how the code underpinning an important UK COVID model was initially written by epidemiologists, and months later clarified and cleaned-up by a team from the Royal Society, Microsoft, and GitHub. This was valuable because it provided more confidence in the model, even though both versions produced the same outputs, given the same inputs.
+### Code refactoring
 
-When we start to refactor our code, we want to make sure that the re-written code achieves the same outcomes as the original code. This means that it is important to have an extensive suite of appropriate tests written. We rewrite to make it easier for others to understand, which in turn allows more confidence in our conclusions. Go through the checklist, and address all comments. 
+To refactor code means to re-write it so that the new code achieves the same outcome as the old code, it is just that the new code does it better. For instance, @refactornature discuss how the code underpinning an important UK COVID model was initially written by epidemiologists, and months later clarified and cleaned-up by a team from the Royal Society, Microsoft, and GitHub. This was valuable because it provided more confidence in the model, even though both versions produced the same outputs, given the same inputs.
 
-We also want to make sure that our code is satisfying best practice. @Trisovic2022 details some core recommendations based on examining 9,000 R scripts, and a refactor is a great opportunity to ensure that these are met. 
+We typically refer to code refactoring in relation to code that someone else wrote. (Although it may be that we actually wrote the code, and it was just that it was some time ago.) When we start to refactor code, we want to make sure that the re-written code achieves the same outcomes as the original code. This means that it is important to have a suite of appropriate tests written that we are able to depend on. If these do not exist then we may need to create them.
 
-1. Removing any absolute paths, and ensuring that only relative paths (in relation to the ".rproj" file) are used.
+We rewrite code to make it easier for others to understand, which in turn allows more confidence in our conclusions. But before we can do that, we need to understand what the existing code is doing. One way to get started is to go through the code and add extensive comments. These comments are different to normal code chunks and are our active process of coming to terms with trying to understand what is each code chunk trying to do and how could this be improved.
+
+Refactoring code is a great opportunity to ensure that it satisfies best practice. @Trisovic2022 details some core recommendations based on examining 9,000 R scripts, and a refactor is a great opportunity to ensure that these are met. For instance, some of them include:
+
+1. Removing `setwd()` and any absolute paths, and ensuring that only relative paths, in relation to the ".rproj" file, are used.
 2. Ensuring there is a clear order of execution. We have recommended using numbers in filenames to achieve this, but more sophisticated approaches, such as `targets` [@targets], could be used instead.
-3. Having someone else run everything on their computer.
+3. Ensuring that code runs on more than one computer.
 
+For instance, consider the following code:
 
+```{r}
+#| eval: false
 
+setwd("/Users/rohanalexander/Documents/telling_stories")
 
-<!-- Start with an example of bad code, and then how it gets fixed. -->
+library(tidyverse)
 
+d = read_csv("cars.csv")
+
+mtcars =
+  mtcars |> 
+  mutate(K_P_L = mpg / 2.352)
+
+library(datasauRus)
+
+datasaurus_dozen
+```
+
+We could change that, starting by creating an R project which enables us to remove `setwd()`, grouping all the `library()` calls at the top, using "<-" instead of "=", and being consistent with variable names:
+
+```{r}
+#| eval: false
+
+library(tidyverse)
+library(datasauRus)
+
+cars_data <- read_csv("cars.csv")
+
+mpg_to_kpl_conversion_factor <- 2.352
+
+mtcars <-
+  mtcars |> 
+  mutate(kpl = mpg / mpg_to_kpl_conversion_factor)
+```
 
 
 ### Parallel processing
