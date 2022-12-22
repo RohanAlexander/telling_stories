@@ -1,61 +1,9 @@
 # Telling Stories with Data
 
-This is a book about foundational data skills, tentatively titled *Telling Stories With Data*. It was accepted for publication by CRC Press in May 2021. Much of the content is still in draft form, and I would appreciate comments, suggestions, or pull requests.
+This book will help you tell stories with data. It establishes a foundation on which you can build and share knowledge about an aspect of the world of interest to you based on data that you observe. Telling stories in small groups around a fire played a critical role in the development of humans and society (Wiessner 2014). Today our stories, based on data, can influence millions.
 
+The online version is freely available: https://tellingstorieswithdata.com
 
-### 16 August 2022
+A print version was accepted for publication by CRC Press, and (hopefully) will be available in 2023.
 
-Removed the `gt` examples in Ch 6 because it doesn't seem to work with Quarto. In May they said there will be updates to `gt` coming to make it play nicely with Quarto PDFs, so can probably add this back in at some point. 
-
-### 28 August 2022
-
-Issue with the `dataverse`. So have commented out:
-
-```
-library(jsonlite)
-
-politics_datasets <-
-  fromJSON("https://demo.dataverse.org/api/search?q=politics")
-```
-  
-### 28 August 2022
-
-Need to add an example of differential privacy.
-
-### 25 Spetember 2022
-
-Logistic regression is getting flipped at some point. Need to trace through Biden/Trump and work out where it is.
-  
-
-### Check
-
-- Check about installing `tidyverse` packages unnecessarily. And similarly, loading `tidyverse` unnecessarily.
-
-### Phrases
-
-Remove:
-
-- "it is clear that"
-- "easily"
-- "In particular, " 
-- "just"
-
-Change:
-
-- "folks" -> "people"
-- one particular -> one
-- and also -> and
-- a large number of -> many
-- take advantage of -> use
-- 'tidyverse' -> 'the tidyverse'
-- "we will" -> "we" (sometimes)
-
-So there are a lot of unnecessary "So " at the start of sentences that can just be removed.
-
-
-### Styler
-
-- https://github.com/gadenbuie/grkstyle
-- https://styler.r-lib.org/articles/styler.html
-- Use build from here because of Quarto: https://issuehint.com/issue/r-lib/styler/913
-
+I would appreciate comments, suggestions, or pull requests and can be contacted at rohan.alexander@utoronto.ca.
