@@ -659,7 +659,7 @@ simulated_class_data <-
   )
 ```
 
-Let us start with "group" as an integer and use logistic regression, which we cover in more detail in @sec-its-just-a-linear-model. We can then try it as a factor. @tbl-effect-of-classshows how different the results are and highlights the absolute necessity of getting the class of variables used in regression right. The interpretation of the variable is completely different. In the former, where it is an integer, we impose a consistent relationship between the different levels of the observations, whereas in the latter, where it is a factor, we enable more freedom.
+Let us start with "group" as an integer and use logistic regression, which we cover in more detail in @sec-its-just-a-linear-model. We can then try it as a factor. @tbl-effect-of-class shows how different the results are and highlights the absolute necessity of getting the class of variables used in regression right. The interpretation of the variable is completely different. In the former, where it is an integer, we impose a consistent relationship between the different levels of the observations, whereas in the latter, where it is a factor, we enable more freedom.
 
 ```{r}
 #| label: tbl-effect-of-class
@@ -687,11 +687,47 @@ Class is so important, subtle, and can have such a pernicious effect on analysis
 
 There are many open questions around the effect and implications of type, but there has been some work. For instance, @Gao2017 find that the use of a static type system would have caught around 15 per cent of errors in production JavaScript systems. Languages have been developed, such as Typescript, where the primary difference, in this case from JavaScript, is that they are strongly typed. @Turcotte2020 examine some of the considerations for adding a type system in R. They develop a prototype that goes some way to addressing the technical issues, but acknowledge that large-scale implementation would be challenging for many reasons including the need for users to change.
 
+To this point, when we have used `read_csv()`, and other functions for importing data, we have allowed the function to guess the class of the variables. From this point onward, we will be more deliberate and instead specify it ourselves using "col_types". For instance, instead of:
+
+```{r}
+#| eval: false
+#| echo: true
+
+raw_igme_data <-
+  read_csv(
+    file =
+      "https://childmortality.org/wp-content/uploads/2021/09/UNIGME-2021.csv",
+    show_col_types = FALSE
+  )
+```
+
+We could use:
+
+```{r}
+#| eval: false
+#| echo: true
+
+raw_igme_data <-
+  read_csv(
+    file =
+      "https://childmortality.org/wp-content/uploads/2021/09/UNIGME-2021.csv",
+    col_select = c(`Geographic area`,
+                   TIME_PERIOD,
+                   OBS_VALUE),
+    col_types = cols(
+      `Geographic area` = col_character(),
+      TIME_PERIOD = col_character(),
+      OBS_VALUE = col_double(),
+    )
+  )
+```
+
+This is typically an iterative process of initially reading in the dataset, getting a quick sense of it, and then reading it in properly with only the necessary columns and classes specified. While this will require a little extra work of us, it is important that we are clear about class.
 
 
 ### Dates
 
-A shibboleth for whether someone has worked with dates before is their reaction when you tell them you are going to be working with dates. If they immediately involuntarily shudder and share a horror story, then they have worked with dates before, and any other reaction means they have not. 
+A shibboleth for whether someone has worked with dates before is their reaction when you tell them you are going to be working with dates. If they immediately involuntarily shudder and share a horror story, then they have worked with dates before, and any other reaction means they have not!
 
 Extensive checking of dates is critical. Ideally, we would like dates to be in the following format: YYYY-MM-DD. There are differences of opinion as to what is an appropriate date format in the broader world. Reasonable people can differ on whether 1 July 2022 or July 1, 2022 is better, but YYYY-MM-DD is the only acceptable format for datasets.
 
