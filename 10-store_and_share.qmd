@@ -94,7 +94,13 @@ data_location <-
   )
 
 starter_data <-
-  read_csv(file = data_location)
+  read_csv(file = data_location,
+           col_types = cols(
+             first_col = col_character(),
+             second_col = col_character(),
+             third_col = col_character()
+             )
+           )
 
 starter_data
 ```
@@ -571,7 +577,11 @@ We can pass this list to `read_csv()` and it will read them in and combine them.
 year_of_data <-
   read_csv(
     files_of_interest,
-    show_col_types = FALSE
+    col_types = cols(
+      user = col_double(),
+      month = col_character(),
+      comments = col_double(),
+    )
   )
 
 year_of_data
@@ -581,12 +591,17 @@ year_of_data
 #| eval: true
 #| echo: false
 
-files_of_interest <- dir_ls(path = "inputs/data/user_data/", glob = "*.csv")
+files_of_interest <-
+  dir_ls(path = "inputs/data/user_data/", glob = "*.csv")
 
 year_of_data <-
   read_csv(
     files_of_interest,
-    show_col_types = FALSE
+    col_types = cols(
+      user = col_double(),
+      month = col_character(),
+      comments = col_double(),
+    )
   )
 
 year_of_data
@@ -980,159 +995,6 @@ read_csv(
 ```
 
 @arrowcookbook provides further information about specific tasks and @navarro2021getting provides helpful examples of implementation.
-
-
-
-
-<!-- For instance, we may have run a survey, stratified by US state, to understand people's favorite numbers and letters. -->
-
-<!-- We might be interested to understand the average favorite number by state and letter. -->
-
-<!-- ```{r} -->
-<!-- #| echo: true -->
-<!-- #| eval: false -->
-
-<!-- library(tictoc) -->
-
-<!-- tic.clearlog() -->
-
-<!-- tic("CSV - Everything") -->
-<!-- tic("CSV - Reading") -->
-<!-- some_larger_data <- read_csv("some_larger_data.csv") -->
-<!-- class(some_larger_data) -->
-<!-- toc() -->
-<!-- tic("CSV - Doing") -->
-<!-- some_larger_data |>  -->
-<!--   group_by(state, fav_letter) |>  -->
-<!--   summarise(average_favorite_number = mean(fav_number)) -->
-<!-- toc() -->
-<!-- toc() -->
-
-<!-- tic("arrow - Everything") -->
-<!-- tic("arrow - Reading") -->
-<!-- some_larger_data <- read_csv_arrow("some_larger_data.csv") -->
-<!-- class(some_larger_data) -->
-<!-- toc() -->
-<!-- tic("arrow - Doing") -->
-<!-- some_larger_data |>  -->
-<!--   group_by(state, fav_letter) |>  -->
-<!--   summarise(average_favorite_number = mean(fav_number)) -->
-<!-- toc() -->
-<!-- toc() -->
-
-<!-- ``` -->
-
-
-
-<!-- We can see these size and speed benefits more easily in @fig-readwrite which considers a variety of different options. -->
-
-<!-- ```{r} -->
-<!-- #| eval: false -->
-<!-- #| include: false -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-
-<!-- # INTERNAL -->
-
-<!-- library(arrow) -->
-<!-- library(tictoc) -->
-<!-- library(tidyverse) -->
-
-<!-- tic.clearlog() -->
-<!-- for (number_of_draws in c( -->
-<!--   10000, -->
-<!--   100000, -->
-<!--   1000000, -->
-<!--   10000000, -->
-<!--   100000000, -->
-<!--   1000000000 -->
-<!-- )) { -->
-<!--   some_data <- -->
-<!--     tibble( -->
-<!--       first = runif(n = number_of_draws), -->
-<!--       second = sample( -->
-<!--         x = LETTERS, -->
-<!--         size = number_of_draws, -->
-<!--         replace = TRUE -->
-<!--       ) -->
-<!--     ) -->
-
-<!--   tic(paste("CSV write", number_of_draws)) -->
-<!--   write_csv( -->
-<!--     x = some_data, -->
-<!--     file = "some_data.csv" -->
-<!--   ) -->
-<!--   toc(log = TRUE, quiet = TRUE) -->
-
-<!--   tic(paste("CSV read", number_of_draws)) -->
-<!--   the_data <- read_csv( -->
-<!--     file = "some_data.csv", -->
-<!--     show_col_types = FALSE -->
-<!--   ) -->
-<!--   toc(log = TRUE, quiet = TRUE) -->
-<!--   rm(the_data) -->
-
-<!--   tic(paste("Parquet write", number_of_draws)) -->
-<!--   write_parquet( -->
-<!--     x = some_data, -->
-<!--     sink = "some_data.parquet" -->
-<!--   ) -->
-<!--   toc(log = TRUE, quiet = TRUE) -->
-
-<!--   tic(paste("Parquet read", number_of_draws)) -->
-<!--   the_data <- read_parquet(file = "some_data.parquet") -->
-<!--   toc(log = TRUE, quiet = TRUE) -->
-<!--   rm(some_data) -->
-<!--   rm(the_data) -->
-
-<!--   file.remove("some_data.csv") -->
-<!--   file.remove("some_data.parquet") -->
-<!-- } -->
-
-<!-- log_txt <- tic.log(format = TRUE) -->
-<!-- tic.clearlog() -->
-
-<!-- writeLines(unlist(log_txt)) -->
-
-<!-- need_for_speed <- -->
-<!--   tibble( -->
-<!--     raw = unlist(log_txt) -->
-<!--   ) -->
-
-<!-- need_for_speed <- -->
-<!--   need_for_speed |> -->
-<!--   separate(raw, into = c("thing", "time"), sep = ": ") |> -->
-<!--   mutate( -->
-<!--     time = str_remove(time, " sec elapsed"), -->
-<!--     time = as.numeric(time) -->
-<!--   ) |> -->
-<!--   separate(thing, into = c("file_type", "task", "num_rows"), sep = " ") -->
-
-<!-- write_csv(need_for_speed, file = "inputs/data/need_for_speed.csv") -->
-<!-- ``` -->
-
-
-
-<!-- ```{r} -->
-<!-- #| echo: false -->
-<!-- #| eval: true -->
-<!-- #| fig-cap: "Read and write time, as the file size increases, for CSV and Parquet" -->
-<!-- #| label: fig-readwrite -->
-
-<!-- need_for_speed <- -->
-<!--   read_csv( -->
-<!--     "inputs/data/need_for_speed.csv", -->
-<!--     show_col_types = FALSE -->
-<!--   ) -->
-
-<!-- need_for_speed |> -->
-<!--   ggplot(aes(x = num_rows, y = time, color = file_type)) + -->
-<!--   geom_point() + -->
-<!--   facet_wrap(facets = vars(task)) + -->
-<!--   scale_x_log10() + -->
-<!--   scale_y_log10() -->
-<!-- ``` -->
-
 
 
 

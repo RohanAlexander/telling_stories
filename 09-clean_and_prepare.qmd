@@ -255,8 +255,7 @@ Before changing the class and before going onto more bespoke issues, we should d
 
 - Commas and other punctuation, such as denomination signs ($, €, £, etc.), in columns that should be numeric.
 - Inconsistent formatting of dates, such as "December" and "Dec" and "12".
-- Unexpected character encoding, especially in Unicode, which may not display consistently. By way of background, character encoding is needed for computers, which are based on strings of 0s and 1s, to be able to consider symbols such as alphabets. One source of particularly annoying data cleaning issues is different character encoding, particularly when dealing with foreign languages or odd characters. In general, we use UTF-8. The encoding of a character vector can be found using `Encoding()`.
-
+- Unexpected character encoding, especially in Unicode, which may not display consistently.^[By way of background, character encoding is needed for computers, which are based on strings of 0s and 1s, to be able to consider symbols such as alphabets. One source of particularly annoying data cleaning issues is different character encoding, particularly when dealing with foreign languages or odd characters. In general, we use UTF-8. The encoding of a character vector can be found using `Encoding()`.]
 
 Typically, we want to fix anything immediately obvious. For instance, we should remove commas that have been used to group digits in currencies. However, the situation will typically quickly become dire and feel overwhelming. What we need to do is to look at the unique values in each variable, and then triage what we will fix. We make the decision of how to triage based on what is likely to have the largest impact. That usually means starting with counts of the observations, sorting them in descending order, and then dealing with each as they come.
 
@@ -488,6 +487,8 @@ australian_names_data |>
 
 The use of this count identifies where we should spend our time: changing "Australie" to "Australia" would almost double the amount of usable data.
 
+Turning, briefly, to numeric data, @Preece1981 recommends plotting counts of the final digit of each observation in a variable. For instance, if the observations of the variable were "41.2", "80.3", "20.7", "1.2", "46.5", "96.2", "32.7", "44.3", "5.1", and "49.0". Then we note that 0, 1 and 5 all occur once, 3 and 7 occur twice, and 2 occurs three times. We might naively expect that there should be a uniform distribution of these final digits, but that is surprisingly often not the case, and the ways in which it differs can be informative. For instance, it may be that data were rounded, or recorded by different collectors.
+
 ### Tests
 
 As we said in @sec-reproducible-workflows, if you write code, then you are a programmer, but there is a difference between someone coding for fun, and an astronomer writing the code that runs the James Webb Telescope. Following @weinbergpsychology [p. 122], we distinguish between amateurs and professionals based on the end-user. When we first start out coding, we typically write code that only we use. For instance, we may write some code for a paper that we submit for a class. After we get a grade, then in most cases, everything can be forgotten about. In contrast, a professional writes code for, and often with, other people. For instance, much of the academic research in the social sciences relies on code. If that research is to contribute to lasting knowledge, then partly that means the code that underpins it is being written for others and must work for others well after the researcher has moved onto other projects. A professional places appropriate care on tasks that ensure code can be considered by others. A large part of that is tests. As such, we should strive to include tests in our code when possible and where appropriate.
@@ -626,6 +627,7 @@ summary(out)
 
 In this case, we can see that there are issues with the final three rules that we established. More generally, @datavalidationbook provides many example tests that can be used.
 
+As mentioned in @sec-farm-data, gender is something that we need to be especially careful about. We will typically have a small number of responses that are neither "male" or "female". The correct way to deal with the situation depends on context. But if responses other than "male" or "female" are going to be removed from the dataset and ignored, because there are too few of them, then the least that we can do, in order to show some respect for the respondent, is to go through those observations qualitatively to enable a brief discussion of how they were similar or different to the rest of the dataset. Potentially plots or a more extensive discussion could then be included in an appendix.
 
 
 ### Class
@@ -1371,7 +1373,7 @@ library(pdftools)
 tanzania_dhs <- pdf_text("inputs/pdfs/1996_Tanzania_DHS.pdf")
 ```
 
-In this case we are interested in Table 2.1, which is on the 33rd page of the PDF. That page looks like (@fig-tanzanian-dhs).
+In this case we are interested in Table 2.1, which is on the 33rd page of the PDF (@fig-tanzanian-dhs).
 
 ![The page of interest in the 1996 Tanzanian DHS](figures/tanzanian_dhs.png){#fig-tanzanian-dhs width=95% fig-align="center"}
 
@@ -1534,7 +1536,7 @@ kenya_census <-
 kenya_census <- pdf_text("inputs/pdfs/2019_Kenya_census.pdf")
 ```
 
-In this example we will need to parse many pages, but we can see an example page of the PDF of the 2019 Kenyan census in @fig-examplekenyancensuspage).
+In this example we will need to parse many pages, but we can see an example page of the PDF of the 2019 Kenyan census in @fig-examplekenyancensuspage.
 
 ![Example page from the 2019 Kenyan census](figures/2020-04-10-screenshot-of-census.png){#fig-examplekenyancensuspage width=95% fig-align="center"}
 
@@ -2077,6 +2079,7 @@ column_names_as_contracts <-
   )
 ```
 
+::: {.content-visible when-format="pdf"}
 We can then use `pointblank` [@pointblank] to set-up tests for us (@fig-pointblankvalidation).
 
 ```{r}
@@ -2102,6 +2105,34 @@ agent
 ```
 
 ![Example of Pointblank Validation](figures/pointblank_screenshot.png){#fig-pointblankvalidation width=70% fig-align="center"}
+:::
+
+::: {.content-visible unless-format="pdf"}
+We can then use `pointblank` [@pointblank] to set-up tests for us.
+
+```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+
+library(pointblank)
+
+agent <-
+  create_agent(tbl = column_names_as_contracts) |>
+  col_is_character(columns = vars(chr_area, chr_group_gender)) |>
+  col_is_factor(columns = vars(fctr_group_age)) |>
+  col_is_integer(columns = vars(int_group_count)) |>
+  col_vals_in_set(
+    columns = chr_group_gender,
+    set = c("male", "female", "total")
+  ) |>
+  interrogate()
+
+agent
+```
+:::
+
 
 
 
@@ -2162,6 +2193,18 @@ tibble(
     e.  The interchange of the letter "S" with the number "5"
     f.  The interchange of the letter "Z" with the number 2
     g.  The interchange of the letter "n" with the letter "h"
+15. Using the help file for `col_types`, which of the following are options (select all that apply)?
+    a.  col_logical()
+    b.  col_integer()
+    c.  col_big_integer()
+    d.  col_double()
+    e.  col_character()
+    f.  col_factor()
+    g.  col_date()
+    h.  col_time()
+    i.  col_datetime()
+    j.  col_number()
+16. With regard to @Preece1981 please discuss two ways in which final digits can be informative. Write at least a paragraph about each.
 
 ### Tutorial {.unnumbered}
 
