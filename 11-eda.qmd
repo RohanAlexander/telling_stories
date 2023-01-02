@@ -101,7 +101,7 @@ us_populations
 
 ### Distribution and properties of individual variables
 
-We want to get a quick sense of the data. The first step is to have a look at the top and bottom of it with `head()` and `tail()`, and to focus on the variables and their class with `glimpse()`.
+We want to get a quick sense of the data. The first step is to have a look at the top and bottom of it with `head()` and `tail()`, then a random selection, and finally to focus on the variables and their class with `glimpse()`. The random selection is an important aspect, and anytime you use `head()` you should also quickly consider a random selection.
 
 ```{r}
 us_populations |>
@@ -109,6 +109,9 @@ us_populations |>
 
 us_populations |>
   tail()
+
+us_populations |>
+  slice_sample(n = 10)
 
 us_populations |>
   glimpse()
@@ -180,7 +183,7 @@ In the case of the populations of US states, we know that larger states, such as
 
 ### Missing data
 
-We have discussed missing data a lot throughout this book, and understanding missing data is something that is a substantial focus of EDA. One tempting strategy is to either remove rows that have missing data, or to infill the missing data, say with a average of the column, or using multiple imputation to fill it based on a few different options. These approaches have their place, but need to be used with humility, and extensively communicated. To understand why, we will consider the US populations data, remove various aspects, and look at the effect on summary statistics.
+We have discussed missing data a lot throughout this book, and understanding missing data is something that is a substantial focus of EDA. One tempting strategy is to either remove rows that have missing data, or to infill the missing data, say with a average of the column, or using multiple imputation to fill it based on a few different options. These approaches have their place, but need to be used with humility, and extensively communicated. The use of simulation is critical. To understand why, we will consider the US populations data, remove various aspects, and look at the effect on summary statistics.
 
 We can start by removing the population data for three, randomly selected, states. 
 
@@ -212,11 +215,7 @@ Having generated a dataset with some missing data, we can now consider a few com
 2) Impute the mean of observations without missing data.
 3) Use multiple-imputation, which involves creating many potential datasets, conducting inference, and then bringing them together potentially though averaging [@gelmanandhill, p. 542].
 
-To drop the observations with missing data, we can use `mean()` because by default it will exclude observations with missing values in its calculation. 
-
-To impute the mean, we construct a second dataset with the observations with missing data removed. We then compute the mean of the population column, and impute that into the missing values in the original dataset.
-
-And finally, we can implement multiple-imputation with `mice()` from `mice` [@mice].
+To drop the observations with missing data, we can use `mean()` because by default it will exclude observations with missing values in its calculation. To impute the mean, we construct a second dataset with the observations with missing data removed. We then compute the mean of the population column, and impute that into the missing values in the original dataset. And finally, we can implement multiple-imputation with `mice()` from `mice` [@mice].
 
 ```{r}
 #| message: false
@@ -299,7 +298,9 @@ tibble(
   )
 ```
 
-@tbl-imputationoptions makes it clear that none of these approaches should be blindly imposed. For instance, Florida's population should be be 8,277. Imputing the mean across all the states would result in an estimate of 4,308, and multiple imputation results in an estimate of of 5,814, both of which are too low. If imputation is the answer, it is likely that the question is wrong. It it worth pointing out that it was developed for specific circumstances of limiting public disclosure of private information [@myboynick]. Nothing can make up for missing data [@manskiwow]. The conditions under which it makes sense to impute the mean or the prediction based on multiple imputation are not common, and even more rare is our ability to verify them. Missing data are not a nuisance to be papered over. The correct choice depends on the circumstances and purpose of the analysis. Whatever choice is made, and there is rarely a clear-cut solution, the most important aspect is to clearly document and communicate what was done, and explore the effect of different choices on subsequent estimates.
+@tbl-imputationoptions makes it clear that none of these approaches should be blindly imposed. For instance, Florida's population should be be 8,277. Imputing the mean across all the states would result in an estimate of 4,308, and multiple imputation results in an estimate of of 5,814, both of which are too low. If imputation is the answer, it is likely that the question is wrong. It it worth pointing out that it was developed for specific circumstances of limiting public disclosure of private information [@myboynick]. 
+
+Nothing can make up for missing data [@manskiwow]. The conditions under which it makes sense to impute the mean or the prediction based on multiple imputation are not common, and even more rare is our ability to verify them. Missing data are not a nuisance to be papered over. The correct choice depends on the circumstances and purpose of the analysis. Simulating the removal of observations that we actually have to better understand the trade-off in the particular situation is critical. Whatever choice is made, and there is rarely a clear-cut solution, the most important aspect is to clearly document and communicate what was done, and explore the effect of different choices on subsequent estimates. One way to proceed is to do exactly what we have done here---simulate different scenarios by removing some of the data that we do have, and evaluating how the approaches differ.
 
 Finally, more prosaically, but just as importantly, sometimes missing data is encoded with particular values. For instance, while R has the option of "NA", sometimes numerical data is entered as "-99" or alternatively as a very large integer such as "9999999", if it is missing. It is always worth looking explicitly for values that seem like they do not belong and investigating them. Graphs and tables are especially useful here.
 
@@ -1624,7 +1625,7 @@ We see that each of the levels is positively associated with the probability of 
 
 
 
-## Exercises and tutorial
+## Practice
 
 
 ### Exercises {.unnumbered}
@@ -1663,3 +1664,8 @@ Repeat the missing data exercise conducted for the US states and population, but
 **Option 2:**
 
 Carry out an Airbnb EDA but for Paris. Please submit a PDF.
+
+**Option 3:**
+
+Please write at least two pages about the topic: "what is missing data and what should you do about it?"
+

@@ -77,29 +77,8 @@ digraph D {
 ```
 
 In @fig-dot-firstdag-pdf, we are saying that we think *x* causes *y*. 
-:::
-
-::: {.content-visible unless-format="pdf"}
-```{dot}
-//| label: fig-dot-firstdag-quarto
-//| fig-cap: "We expect a causal relationship between x and y, where x influences y"
-//| echo: fenced
-//| fig-width: 4
-digraph D {
-  node [shape=plaintext, fontname = "helvetica"];
-  
-  {rank=same x y};
-  
-  x -> y;
-}
-```
-
-In @fig-dot-firstdag-quarto, we are saying that we think *x* causes *y*. 
-
-:::
 
 We could build another DAG where the situation is less clear. To make the examples a little easier to follow, we will switch to thinking about a hypothetical relationship between income and happiness, with consideration of variables that could affect that relationship. In this first one we consider the relationship between income and happiness, along with education (@fig-dot-educationasconfounder).
-
 
 ```{dot}
 //| label: fig-dot-educationasconfounder
@@ -129,26 +108,6 @@ If there are confounders, but we are still interested in causal effects, then we
 
 In @fig-dot-luxuryasmediator we again consider that income causes happiness. But, if income also causes children, and children also cause happiness, then we have a situation where it would be tricky to understand the effect of income on happiness.
 
-<!-- ```{r} -->
-<!-- #| fig-cap: "A DAG showing luxury tastes as a mediator" -->
-<!-- #| label: fig-luxuryasmediator -->
-
-<!-- grViz(" -->
-<!-- digraph { -->
-<!--   graph [ranksep = 0.2] -->
-<!--   node [shape = plaintext, fontsize = 10, fontname = Helvetica] -->
-<!--     a [label = 'Income'] -->
-<!--     b [label = 'Happiness'] -->
-<!--     c [label = 'Luxury tastes'] -->
-<!--   edge [minlen = 2, arrowhead = vee] -->
-<!--     a->b -->
-<!--     a->c -->
-<!--     c->b -->
-<!--   { rank = same; a; b } -->
-<!-- } -->
-<!-- ", height = 300) -->
-<!-- ``` -->
-
 ```{dot}
 //| label: fig-dot-luxuryasmediator
 //| fig-cap: "Children as a mediator between income and happiness"
@@ -173,28 +132,6 @@ In @fig-dot-luxuryasmediator, children is called a "mediator" and we would not a
 
 Finally, in @fig-dot-residenceascollider we have yet another similar situation, where we think that income causes happiness. But this time both income and happiness also cause exercise. For instance, if you have more money then it may be easier to exercise, but also it may be easier to exercise if you are happier.
 
-<!-- ```{r} -->
-<!-- #| fig-cap: "A DAG showing residence as a collider" -->
-<!-- #| label: fig-residenceascollider -->
-
-<!-- library(DiagrammeR) -->
-
-<!-- grViz(" -->
-<!-- digraph { -->
-<!--   graph [ranksep = 0.2] -->
-<!--   node [shape = plaintext, fontsize = 10, fontname = Helvetica] -->
-<!--     a [label = 'Income'] -->
-<!--     b [label = 'Happiness'] -->
-<!--     c [label = 'Place of residence'] -->
-<!--   edge [minlen = 2, arrowhead = vee] -->
-<!--     a->b -->
-<!--     a->c -->
-<!--     b->c -->
-<!--   { rank = same; a; b } -->
-<!-- } -->
-<!-- ", height = 300) -->
-<!-- ``` -->
-
 ```{dot}
 //| label: fig-dot-residenceascollider
 //| fig-cap: "Exercise as a collider affecting the relationship between income and happiness"
@@ -216,6 +153,101 @@ digraph D {
 ```
 
 In this case, exercise is called a "collider" and if we were to condition on it, then we would create a misleading relationship. Income influences exercise, but a person's happiness also affects this. Exercise is a collider because both the independent and dependent variable of interest influence it.
+:::
+
+::: {.content-visible unless-format="pdf"}
+```{dot}
+//| label: fig-dot-firstdag-quarto
+//| fig-cap: "We expect a causal relationship between x and y, where x influences y"
+//| echo: fenced
+//| fig-width: 4
+digraph D {
+  node [shape=plaintext, fontname = "helvetica"];
+  
+  {rank=same x y};
+  
+  x -> y;
+}
+```
+
+In @fig-dot-firstdag-quarto, we are saying that we think *x* causes *y*. 
+
+We could build another DAG where the situation is less clear. To make the examples a little easier to follow, we will switch to thinking about a hypothetical relationship between income and happiness, with consideration of variables that could affect that relationship. In this first one we consider the relationship between income and happiness, along with education (@fig-dot-educationasconfounder-quarto).
+
+```{dot}
+//| label: fig-dot-educationasconfounder-quarto
+//| fig-cap: "Education is a confounder that affects the relationship between income and happiness"
+//| echo: true
+//| fig-width: 4
+digraph D {
+  
+  node [shape=plaintext, fontname = "helvetica"];
+  
+  a [label = "Income"];
+  b [label = "Happiness"];
+  c [label = "Education"];
+  
+  { rank=same a b};
+  
+  a->b;
+  c->{a, b};
+}
+```
+
+In @fig-dot-educationasconfounder-quarto, we think income causes happiness. But we also think that education causes happiness, and that education also causes income. That relationship is a "backdoor path", and failing to adjust for education in a regression could overstate the extent of the relationship, or even create a spurious relationship, between income and happiness in our analysis. That is, we may think that changes in income are causing changes in happiness, but it could be that education is changing them both. That variable, in this case, education, is called a "confounder".
+
+@hernanrobins2020 [p. 83] discuss an interesting case where a researcher was interested in whether one person looking up at the sky makes others look up at the sky also. There was a clear relationship between the responses of both people. But it was also the case that there was noise in the sky. It was unclear whether the second person looked up because the first person looked up, or they both looked up because of the noise. When using experimental data, randomization allows us to avoid this concern, but with observational data we cannot rely on that. It is also not the case that bigger data necessarily get around this problem for us. Instead, it is important to think carefully about the situation, and DAGs can help with that. 
+
+If there are confounders, but we are still interested in causal effects, then we need to adjust for them. One way is to include them in the regression. But the validity of this requires several assumptions. In particular, @gelmanandhill [p. 169] warn that our estimate will only correspond to the average causal effect in the sample if we include all of the confounders and have the right model. Putting the second requirement to one side, and focusing only on the first, if we do not think about and observe a confounder, then it can be difficult to adjust for it. And this is an area where both domain expertise and theory can bring a lot to an analysis. 
+
+In @fig-dot-luxuryasmediator-quarto we again consider that income causes happiness. But, if income also causes children, and children also cause happiness, then we have a situation where it would be tricky to understand the effect of income on happiness.
+
+```{dot}
+//| label: fig-dot-luxuryasmediator-quarto
+//| fig-cap: "Children as a mediator between income and happiness"
+//| echo: true
+//| fig-width: 4
+digraph D {
+
+  node [shape=plaintext, fontname = "helvetica"];
+  
+  a [label = "Income"];
+  b [label = "Happiness"];
+  c [label = "Children"];
+  
+  { rank=same a b};
+  
+  a->{b, c};
+  c->b;
+}
+```
+
+In @fig-dot-luxuryasmediator-quarto, children is called a "mediator" and we would not adjust for it if we were interested in the effect of income on happiness. If we were to adjust for it, then some of what we are attributing to income, would be due to children.
+
+Finally, in @fig-dot-residenceascollider-quarto we have yet another similar situation, where we think that income causes happiness. But this time both income and happiness also cause exercise. For instance, if you have more money then it may be easier to exercise, but also it may be easier to exercise if you are happier.
+
+```{dot}
+//| label: fig-dot-residenceascollider-quarto
+//| fig-cap: "Exercise as a collider affecting the relationship between income and happiness"
+//| echo: true
+//| fig-width: 4
+digraph D {
+
+  node [shape=plaintext, fontname = "helvetica"];
+  
+  a [label = "Income"];
+  b [label = "Happiness"];
+  c [label = "Exercise"];
+  
+  { rank=same a b};
+  
+  a->{b c};
+  b->c;
+}
+```
+
+In this case, exercise is called a "collider" and if we were to condition on it, then we would create a misleading relationship. Income influences exercise, but a person's happiness also affects this. Exercise is a collider because both the independent and dependent variable of interest influence it.
+:::
 
 It is important to be clear about this: we must create the DAG ourselves, in the same way that we must put together the model ourselves. There is nothing that will create it for us. This means that we need to think carefully about the situation. Because it is one thing to see something in the DAG and then do something about it, but it is another to not even know that it is there. @citemcelreath [p. 180] describes these as haunted DAGs. DAGs are helpful, but they are just a tool to help us think deeply about our situation. 
 
@@ -1349,6 +1381,8 @@ both |>
 
 The result is that our estimate of the difference in outcome is dependent on the choice of model. We see this issue occur often in RDD [@gelmanonrdd] and it is especially recommended that higher order polynomials not be used, and instead a the choice of models be either linear, quadratic, or some other smooth function [@gelmanimbensrdd].
 
+RDD is a popular approach, but meta-analysis suggests that standard error are often inappropriately small and this could result in spurious results [@stommessaysno]. If you use RDD it is critical that you discuss the possibility of much wider standard errors than are reported by software packages, and what effect this would have on your conclusions.
+
 
 ### Alcohol and crime in California
 
@@ -1841,7 +1875,7 @@ When considering an instrumental variable approach, it is important to spend con
 
 
 
-## Exercises and tutorial
+## Practice
 
 
 ### Exercises {.unnumbered}
