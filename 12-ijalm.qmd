@@ -121,7 +121,8 @@ $$
 $$
 
 If $\hat{\sigma}_x$ is the estimate of the standard deviation, then the standard error of $\bar{x}$ is:
-$$\mbox{SE}(\bar{x}) = \frac{\hat{\sigma}_{x}}{\sqrt{n}}.$$^[(WHY AREN'T YOU USING THE FINITE-SAMPLE ADJUSTMENT HERE, AND SHOULDN'T YOU EXPLAIN THE DIFFERENCE BETWEEN THE SD AND SE?]
+$$\mbox{SE}(\bar{x}) = \frac{\hat{\sigma}_{x}}{\sqrt{n}}.$$
+The standard error is a comment about the estimate of the mean compared with the actual mean, while the standard deviation is a comment about how widely distributed the data are. Given the small sample size in the example of 20, we strictly should use the finite-sample adjustment, but as this is not the focus of this book we will move forward with the general approach.
 
 We can implement these in code using our simulated data to see how close our estimates are.
 
@@ -155,7 +156,7 @@ knitr::kable(
 )
 ```
 
-We should not be too worried that our estimates are slightly off (@tbl-meanstdexample), relative to the "true" mean and SD of 0 and 1. We only considered 20 observations. It will typically take a larger number of draws before we get the expected shape, and our estimated parameters get close to the actual parameters, but it will almost surely happen (@fig-normaldistributiontakingshape). @wasserman [p. 76] considers our certainty of this, which is due to the Law of Large Numbers, as a crowning accomplishment of probability.
+We should not be too worried that our estimates are slightly off (@tbl-meanstdexample), relative to the "true" mean and SD of 0 and 1. We only considered 20 observations. It will typically take a larger number of draws before we get the expected shape, and our estimated parameters get close to the actual parameters, but it will almost surely happen (@fig-normaldistributiontakingshape). @wasserman [p. 76] considers our certainty of this, which is due to the Law of Large Numbers, as a crowning accomplishment of probability, although @wood [p. 15], perhaps more prosaically, describes it as "almost" a statement "of the obvious"!
 
 ```{r}
 #| eval: true
@@ -212,9 +213,9 @@ $$
 Y = \beta_0 + \beta_1 X + \epsilon.
 $$ {#eq-xandy}
 
-Here, there are two coefficients, also referred to as parameters: the intercept, $\beta_0$, and the slope, $\beta_1$. In @eq-xandy we are saying that the expected value of $Y$ is $\beta_0$ when $X$ is 0, and that the expected value of $Y$ will change by $\beta_1$ units for every one unit change in $X$. We may then take this relationship to the data that we have to estimate these coefficients. The $\epsilon$ is noise and accounts for deviations away from this relationship. It is this noise that we generally assume to be normally distributed, and it is this that leads to $Y ~ N(\beta, \sigma^2)$.
+Here, there are two coefficients, also referred to as parameters: the intercept, $\beta_0$, and the slope, $\beta_1$. In @eq-xandy we are saying that the expected value of $Y$ is $\beta_0$ when $X$ is 0, and that the expected value of $Y$ will change by $\beta_1$ units for every one unit change in $X$. We may then take this relationship to the data that we have to estimate these coefficients. The $\epsilon$ is noise and accounts for deviations away from this relationship. It is this noise that we generally assume to be normally distributed, and it is this that leads to $Y \sim N(\beta, \sigma^2)$.
 
-To make this example concrete, we will simulate some data and then discuss it in that context. We could consider the time it takes someone to run five kilometers, compared with the time it takes them to run a marathon (@fig-fivekmvsmarathon-1). In the simulation we specify a relationship of 8.4, as that is roughly the ratio between the distance of a marathon and a five-kilometer run. Notice that it is the noise that is normally distributed, not the variables.
+To make this example concrete, we revisit an example from @sec-clean-and-prepare about the time it takes someone to run five kilometers, compared with the time it takes them to run a marathon (@fig-fivekmvsmarathon-1). We specify a relationship of 8.4, as that is roughly the ratio between a five-kilometer run and the 42.2 kilometer distance of a marathon. To help the reader, we include the simulation code again here. Notice that it is the noise that is normally distributed, not the variables.
 
 ```{r}
 #| eval: true
@@ -315,7 +316,7 @@ Underpinning our use of simple linear regression is a belief that there is some 
 
 That $\epsilon$ is a measure of our error---what does the model not know in the small, contained, world implied by this dataset? There is going to be plenty that the model does not know, but we hope the error does not depend on $X$, and that the error is normally distributed.
 
-We can conduct simple linear regression with `lm()` from base R. We specify the dependent variable first, then `~`, followed by the independent variable. The dependent variable is the variable of interest, while the dependent variable is the basis on which we consider that variable. Finally, we specify the dataset. Before we run a regression, we may want to include a quick check of the class of the variables, and the number of observations, just to ensure that it corresponds with what we were expecting. And after we run it, we may check that our estimate seems reasonable. For instance, (pretending that we had not ourselves imposed this in the simulation) based on our knowledge of the respective distances of a five-kilometer run and a marathon, we would expect $\beta_1$ to be somewhere between 6 and 10.
+We can conduct simple linear regression with `lm()` from base R. We specify the dependent variable first, then `~`, followed by the independent variable. The dependent variable is the variable of interest, while the dependent variable is the basis on which we consider that variable. Finally, we specify the dataset. Before we run a regression, we may want to include a quick check of the class of the variables, and the number of observations, just to ensure that it corresponds with what we were expecting, although we may have done that earlier in the workflow. And after we run it, we may check that our estimate seems reasonable. For instance, (pretending that we had not ourselves imposed this in the simulation) based on our knowledge of the respective distances of a five-kilometer run and a marathon, we would expect $\beta_1$ to be somewhere between 6 and 10.
 
 ```{r}
 # Check the class and number of observations are as expected
@@ -351,7 +352,6 @@ sim_run_data_centered_model <-
     data = sim_run_data
   )
 ```
-
 
 
 ```{r}
@@ -582,7 +582,6 @@ test_that("Check coefficients", {
 })
 ```
 
-
 We could then change the regression code to call these test files rather than write them all out.
 
 ```{r}
@@ -709,7 +708,6 @@ There are a variety of threats to the validity of linear regression estimates, a
 1. Linearity of explanatory variables. We are concerned with whether the independent variables enter in a linear way. We can usually be convinced there is enough linearity in our explanatory variables for our purposes by using graphs of the variables.
 2. Independence of errors. We are concerned that the errors are not correlated with each other. For instance, if we are interested in weather-related measurement such as average daily temperature, then we may find a pattern because the temperature on one day is likely similar to the temperature on another. We can be convinced that we have satisfied this condition by making graphs of estimated compared with actual outcomes, such as @fig-fivekmvsmarathonresids-4, or graphs of the residuals compared with observed values, such as @fig-fivekmvsmarathonresids-3.
 3. Homoscedasticity of errors. We are concerned that the errors are not becoming systematically larger or smaller throughout the sample. If that is happening, then we term it heteroscedasticity. Again, graphs of errors, such as @fig-fivekmvsmarathonresids-2, are used to convince us of this.
-<!-- 4. Normality of errors. We are concerned that our errors are normally distributed when we are interested in making individual-level predictions. -->
 4. Outliers and other high-impact observations. Finally, we might be worried that our results are being driven by a handful of observations. For instance, thinking back to @sec-static-communication and Anscombe's Quartet, we notice that linear regression estimates would be heavily influenced by the inclusion of one or two particular points. We can become comfortable with this by considering our analysis on various sub-sets.
 
 Those aspects are statistical concerns and relate to whether the model is working. The most important threat to validity and hence the aspect that must be addressed at some length, is whether or not this model is directly relevant to the research question of interest.
@@ -776,7 +774,7 @@ It is more difficult to do this separation appropriately than one might initiall
 :::{.callout-note}
 ## Shoulders of giants
 
-Dr Daniela Witten is the Dorothy Gilford Endowed Chair of Mathematical Statistics and Professor of Statistics & Biostatistics at the University of Washington. After taking a PhD in Statistics from Stanford University in 2010, she joined the University of Washington as an assistant professor. She was promoted to full professor in 2018. One active area of her research is double-dipping which is focused on the effect of sample splitting [@selectiveinference]. She is an author of the influential @islr. She was appointed a Fellow of the American Statistical Association in 2020 and awarded the COPSS Presidents' Award in 2022.
+Dr Daniela Witten is the Dorothy Gilford Endowed Chair of Mathematical Statistics and Professor of Statistics & Biostatistics at the University of Washington. After taking a PhD in Statistics from Stanford University in 2010, she joined the University of Washington as an assistant professor. She was promoted to full professor in 2018. One active area of her research is double-dipping which is focused on the effect of sample splitting [@selectiveinference]. She is an author of the influential @islr. Witten was appointed a Fellow of the American Statistical Association in 2020 and awarded the COPSS Presidents' Award in 2022.
 :::
 
 To use `tidymodels` we first specify that we are interested in linear regression with `linear_reg()`. We then specify the type of linear regression, in this case multiple linear regression, with `set_engine()`. Finally, we specify the model with `fit()`. While this is considerable more infrastructure than the base R approach detailed above, it advantage of this approach is that it can be used to fit many models. 

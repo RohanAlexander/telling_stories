@@ -1188,7 +1188,138 @@ earlier_toronto_shelters_2017_flipped |>
 ```
 
 
+## Example: Running times
 
+To provide a specific example, which we will return to in @sec-its-just-a-linear-model, consider the time it takes someone to run five kilometers (which is a little over three miles), compared with the time it takes them to run a marathon (@fig-fivekmvsmarathon-1). As a reminder, the workflow that we advocate in this book is:
+$$
+\mbox{Plan}\rightarrow\mbox{Simulate}\rightarrow\mbox{Acquire}\rightarrow\mbox{Explore}\rightarrow\mbox{Share}
+$$
+and here we will consider "simulate" and "acquire", focused on testing. In the simulation we specify a relationship of 8.4, as that is roughly the ratio between a five-kilometer run and the 42.2 kilometer distance of a marathon (a little over 26 miles).
+
+```{r}
+#| eval: true
+#| include: true
+#| label: fig-simulatemarathondata
+#| message: false
+#| warning: false
+
+set.seed(853)
+
+number_of_observations <- 200
+expected_relationship <- 8.4
+very_fast_5km_time <- 15
+good_enough_5km_time <- 30
+
+sim_run_data <-
+  tibble(
+    five_km_time =
+      runif(
+        n = number_of_observations,
+        min = very_fast_5km_time,
+        max = good_enough_5km_time
+      ),
+    noise = rnorm(n = number_of_observations, mean = 0, sd = 20),
+    marathon_time = five_km_time * expected_relationship + noise
+  ) |>
+  mutate(
+    five_km_time = round(x = five_km_time, digits = 1),
+    marathon_time = round(x = marathon_time, digits = 1)
+  ) |>
+  select(-noise)
+
+sim_run_data
+```
+
+We can use our simulation to put in place various tests that we would want the actual data to satisfy. For instance, we want the class of the five kilometer and marathon run times to be numeric. And we want 200 observations.
+
+```{r}
+stopifnot(
+  class(sim_run_data$marathon_time) == "numeric",
+  class(sim_run_data$five_km_time) == "numeric",
+  nrow(sim_run_data) == 200
+)
+```
+
+We know that any value that is less than 15 minutes or more than 30 minutes for the five kilometer run time is likely something that needs to be followed up on.
+
+```{r}
+stopifnot(
+  min(sim_run_data$five_km_time) >= 15,
+  max(sim_run_data$five_km_time) <= 30
+)
+```
+
+Based on this maximum and the simulated relationship of 8.4, we would be surprised if we found any marathon times that were substantially over $30\times8.4=252$ minutes, after we allow for a little bit of drift, say 300 minutes (to be clear, there is nothing wrong with taking longer than this to run a marathon, but it is just unlikely based on our parameters). And we would be surprised if the world record marathon time, 121 minutes as at the start of 2023, were improved by anything more than a minute or two, say, anything faster than 118 minutes (it will turn out that our simulated data do not satisfy this and result in a implausibly fast 88 minute marathon time, which suggests a need to improve the simulation).
+
+```{r}
+#| eval: false
+#| include: true
+
+stopifnot(
+  min(sim_run_data$marathon_time) >= 118,
+  max(sim_run_data$marathon_time) <= 300
+)
+```
+
+Actual survey data on the relationship between five kilometer and marathon run times are available from @Vickers2016. After downloading the data, which @Vickers2016 make available as an "Additional file", we can focus on the variables of interest and only individuals with both a five kilometer time and a marathon time.
+
+```{r}
+#| eval: false
+#| include: true
+
+library(readxl)
+
+vickers_data <- 
+  read_excel("13102_2016_52_MOESM2_ESM.xlsx") |> 
+  select(k5_ti, mf_ti) |> 
+  drop_na()
+
+vickers_data
+```
+
+```{r}
+#| eval: true
+#| include: false
+
+library(readxl)
+
+vickers_data <- 
+  read_excel("inputs/data/13102_2016_52_MOESM2_ESM.xlsx") |> 
+  select(k5_ti, mf_ti) |> 
+  drop_na()
+
+vickers_data
+```
+
+The first thing that we notice is that our data are in seconds, whereas we were expecting them to be in minutes. This is fine. Our simulation and tests can update or we can adjust our data. Our simulation and tests retain their value even when the data turn out to be slightly different, which it inevitably will.
+
+In this case, we will divide by sixty, and round, to shift our data into minutes.
+
+```{r}
+vickers_data <- 
+  vickers_data |> 
+  mutate(five_km_time = round(k5_ti / 60, 1),
+         marathon_time = round(mf_ti / 60, 1)
+         )
+
+vickers_data
+```
+
+```{r}
+#| eval: false
+#| include: true
+
+stopifnot(
+  class(vickers_data$marathon_time) == "numeric",
+  class(vickers_data$five_km_time) == "numeric",
+  min(vickers_data$five_km_time) >= 15,
+  max(vickers_data$five_km_time) <= 30,
+  min(vickers_data$marathon_time) >= 118,
+  max(vickers_data$marathon_time) <= 300
+)
+```
+
+In this case, our tests, which were written for the simulated data, would identify that we have five kilometer run times that are faster that 15 minutes and longer than 30 minutes. They also identify marathon times that are longer than 300 minutes. If we were doing this analysis for real, then we would plot the data, taking care to examine each of these points that our tests identified, and then either adjust the tests or the dataset.
 
 
 ## Names
