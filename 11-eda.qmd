@@ -7,7 +7,9 @@ engine: knitr
 **Required material**
 
 - Read *The Future of Data Analysis*, Part 1 "General Considerations", [@tukey1962future]
-- Read *R for Data Science*, Chapter 10 "Exploratory Data Analysis", [@r4ds]
+  - *John Tukey, the twentieth century statistician, made a variety of contributions to statistics, and this chapter is a masterclass, well ahead of its time, about learning from data.*
+- Read *R for Data Science*, Chapter 12 "Exploratory data analysis", [@r4ds]
+  - *Provides a self-contained EDA worked example.*
 
 **Key concepts and skills**
 
@@ -1483,136 +1485,7 @@ library(modelsummary)
 modelsummary(logistic_reg_superhost_response_review)
 ```
 
-We see that each of the levels is positively associated with the probability of being a superhost. However, having a host that responds withing an hour is associated with individuals that are superhosts in our dataset.
-
-<!-- We might like to look at what our model predicts, compared with whether the person was actually a super host. We can do that in a variety of ways, but one way is to use `augment` from the `broom` package [@broom]. This will add the prediction and associated uncertainty to the data. For every row we will then have the probability that our model is estimating that they are a superhost. But ultimately, we need a binary forecast. There are a bunch of different options, but one is to just say that if the model estimates a probability of more than 0.5 then we bin it into a superhost, and other not. -->
-
-<!-- ```{r} -->
-
-
-<!-- airbnb_data_filtered_logistic_fit_train <-  -->
-<!--   augment(logistic_reg_superhost_response_review,  -->
-<!--           data = airbnb_train |> select(host_is_superhost,  -->
-<!--                                          host_is_superhost_binary, -->
-<!--                                          host_response_time, -->
-<!--                                          review_scores_rating -->
-<!--                                          ), -->
-<!--           type.predict = "response") |> # We use the "response" option here so that the function does the work of worrying about the exponential and log odds for us. Our result will be a probability. -->
-<!--   select(-.hat, -.sigma, -.cooksd, -.std.resid) |>  -->
-<!--   mutate(predict_host_is_superhost = if_else(.fitted > 0.5, 1, 0), # How do things change if we change the 0.5 cutoff? -->
-<!--          host_is_superhost_binary = as.factor(host_is_superhost_binary), -->
-<!--          predict_host_is_superhost_binary = as.factor(predict_host_is_superhost) -->
-<!--          ) -->
-<!-- ``` -->
-
-<!-- We can look at how far off the model is. There are a bunch of ways of doing this, but one is to look at what probability the model has given each person. -->
-
-<!-- ```{r} -->
-
-
-<!-- airbnb_data_filtered_logistic_fit_train |>  -->
-<!--   ggplot(aes(x = .fitted, fill = host_is_superhost_binary)) + -->
-<!--   geom_histogram(binwidth = 0.05, position = "dodge") + -->
-<!--   theme_classic() + -->
-<!--   labs(x = "Estimated probability that host is super host", -->
-<!--        y = "Number", -->
-<!--        fill = "Host is super host") + -->
-<!--   scale_fill_brewer(palette = "Set1") -->
-<!-- ``` -->
-
-
-<!-- We can look at how the model probabilities change based on average review score, and their average time to respond. -->
-
-<!-- ```{r} -->
-
-
-<!-- ggplot(airbnb_data_filtered_logistic_fit_train,  -->
-<!--        aes(x = review_scores_rating,  -->
-<!--            y = .fitted,  -->
-<!--            color = host_response_time)) + -->
-<!--   geom_line() + -->
-<!--   geom_point() + -->
-<!--   labs(x = "Average review score", -->
-<!--        y = "Predicted probability of being a superhost", -->
-<!--        color = "Host response time") + -->
-<!--   theme_classic() + -->
-<!--   scale_color_brewer(palette = "Set1") -->
-<!-- ``` -->
-
-<!-- This nice thing about this graph is that it illustrates nicely the effect of a host having an average response time of, say, "within an hour" compared with "within a few hours".  -->
-
-<!-- We can focus on how the model does in terms of raw classification using `confusionMatrix` from the caret package (Kuhn, 2020). This also gives a bunch of diagnostics (the help file explains what they are). In general, they suggest this isn't the best model that's ever existed. -->
-
-<!-- ```{r} -->
-
-
-<!-- caret::confusionMatrix(data = airbnb_data_filtered_logistic_fit_train$predict_host_is_superhost_binary, -->
-<!--                        reference = airbnb_data_filtered_logistic_fit_train$host_is_superhost_binary) -->
-<!-- ``` -->
-
-<!-- In any case, to this point we've been looking at how the model has done on the training set. It is also relevant how it does on the test set. Again, there are a bunch of ways to do this, but one is to again use the augment function, but to include a newdata argument. -->
-
-<!-- ```{r} -->
-
-
-<!-- airbnb_data_filtered_logistic_fit_test <-  -->
-<!--   augment(logistic_reg_superhost_response_review,  -->
-<!--           data = airbnb_train |> select(host_is_superhost,  -->
-<!--                                          host_is_superhost_binary, -->
-<!--                                          host_response_time, -->
-<!--                                          review_scores_rating -->
-<!--                                          ), -->
-<!--           newdata = airbnb_test |> select(host_is_superhost,  -->
-<!--                                          host_is_superhost_binary, -->
-<!--                                          host_response_time, -->
-<!--                                          review_scores_rating -->
-<!--                                          ), # I'm selecting just because the -->
-<!--           # dataset is quite wide, and so this makes it easier to look at. -->
-<!--           type.predict = "response") |>  -->
-<!--   mutate(predict_host_is_superhost = if_else(.fitted > 0.5, 1, 0),  -->
-<!--          host_is_superhost_binary = as.factor(host_is_superhost_binary), -->
-<!--          predict_host_is_superhost_binary = as.factor(predict_host_is_superhost) -->
-<!--          ) -->
-<!-- ``` -->
-
-<!-- We would expect the performance to be slightly worse on the test set. But it is actually fairly similar. -->
-
-<!-- ```{r} -->
-
-
-<!-- caret::confusionMatrix(data = airbnb_data_filtered_logistic_fit_test$predict_host_is_superhost_binary, -->
-<!--                        reference = airbnb_data_filtered_logistic_fit_test$host_is_superhost_binary) -->
-<!-- ``` -->
-
-<!-- We could compare the test with the training sets in terms of forecasts. -->
-
-<!-- ```{r} -->
-
-
-<!-- training <- airbnb_data_filtered_logistic_fit_train |>  -->
-<!--   select(host_is_superhost_binary, .fitted) |>  -->
-<!--   mutate(type = "Training set") -->
-
-<!-- test <- airbnb_data_filtered_logistic_fit_test |>  -->
-<!--   select(host_is_superhost_binary, .fitted) |>  -->
-<!--   mutate(type = "Test set") -->
-
-<!-- both <- rbind(training, test) -->
-<!-- rm(training, test) -->
-
-<!-- both |>  -->
-<!--   ggplot(aes(x = .fitted,  -->
-<!--              fill = host_is_superhost_binary)) + -->
-<!--   geom_histogram(binwidth = 0.05, position = "dodge") + -->
-<!--   theme_minimal() + -->
-<!--   labs(x = "Estimated probability that host is super host", -->
-<!--        y = "Number", -->
-<!--        fill = "Host is super host") + -->
-<!--   scale_fill_brewer(palette = "Set1") + -->
-<!--   facet_wrap(vars(type), -->
-<!--              nrow = 2, -->
-<!--              scales = "free_y") -->
-<!-- ``` -->
+We see that each of the levels is positively associated with the probability of being a superhost. However, having a host that responds within an hour is associated with individuals that are superhosts in our dataset.
 
 
 
@@ -1622,18 +1495,18 @@ We see that each of the levels is positively associated with the probability of 
 
 
 
+## Exercises
 
-
-
-## Practice
-
-### Exercises {.unnumbered}
+### Scales {.unnumbered}
 
 1. *(Plan)* Consider the following scenario: *We have some data on age from a social media company that has about 80 per cent of the US population on the platform.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
-2. *(Simulate)* Please further consider the scenario described and simulate the situation.
+2. *(Simulate)* Please further consider the scenario described and simulate the situation. Please include ten tests based on the simulated data.
 3. *(Acquire)* Please describe three possible sources of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
 5. *(Communicate)* Please write one page about what you did, and be careful to discuss some of the threats to the estimate that you make based on the sample.
+
+### Questions {.unnumbered}
+
 1. In your own words what is exploratory data analysis (this will be difficult, but please write only one nuanced paragraph)?
 2. In Tukey's words, what is exploratory data analysis (please write one paragraph)?
 3. Who was Tukey (please write a paragraph or two)? 
