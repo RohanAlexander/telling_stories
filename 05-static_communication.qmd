@@ -91,7 +91,7 @@ When telling stories with data, we would like the data to do much of the work of
 
 The critical task is to show the actual observations that underpin our analysis, or as close to them as we can. For instance, if our dataset consists of 2,500 responses to a survey, then at some point in the paper we would expect a graph that contains, or represents, all 2,500 observations, for every variable of interest. To do this we build graphs using `ggplot2` [@citeggplot] which is part of the `tidyverse` [@tidyverse]. We will go through a variety of different options here including bar charts, scatterplots, line plots, and histograms.
 
-In contrast to the role of graphs, which is to show the actual observations, or as close to them as possible, the role of tables is typically to show an extract of the dataset, convey various summary statistics, or regression results. We will build tables using `knitr` [@citeknitr] and `kableExtra` [@citekableextra] initially, and then `modelsummary` [@citemodelsummary]. 
+In contrast to the role of graphs, which is to show the actual observations, or as close to them as possible, the role of tables is typically to show an extract of the dataset, convey various summary statistics, or regression results. We will build tables primarily using `knitr` [@citeknitr], which we will extend with `kableExtra` [@citekableextra]; later we will use `modelsummary` [@citemodelsummary] to build tables related to regression output.
 
 Finally, we cover maps as a variant of graphs that are used to show a particular type of data. We will build static maps using `ggmap` [@KahleWickham2013], having obtained the geocoded data that we need using `tidygeocoder` [@citetidygeocoder].
 
@@ -103,10 +103,9 @@ Finally, we cover maps as a variant of graphs that are used to show a particular
 
 Graphs are a critical aspect of compelling stories told with data. They allow us to see both broad patterns and detail [@elementsofgraphingdata, p. 5]. Graphs provide us with a familiarity with our data that no other method allows. Every variable of interest should be graphed. A graph 'is a representation of abstract relations' [@karsetn, p. 684].
 
-In a way, the graphing of data is an information coding process where we use purposeful marks to convey information to our audience. The audience must decode these marks. The success of our graph turns on how much information is lost in this process. It is the decoding that is the critical aspect [@elementsofgraphingdata, p. 221]. Which means that we must focus on creating effective graphs for the audience. If nothing else is possible, the most important objective is to convey as much of the actual data, and its context, as possible. 
-<!-- Data do not exist in a vacuum and it is important that we recognize the "social, cultural, and political contexts" in which they exist [@Klein2022What]. -->
+In a way, the graphing of data is an information coding process where we use purposeful marks to convey information to our audience. The audience must decode these marks. The success of our graph turns on how much information is lost in this process. It is the decoding that is the critical aspect [@elementsofgraphingdata, p. 221]. Which means that we must focus on creating effective graphs for the audience. The most important objective of a graph is to convey as much of the actual data, and its context, as possible. 
 
-To see why this is important we begin by using a dataset from `datasauRus` [@citedatasauRus]. After installing and loading the necessary packages, we can take a quick look at the dataset.
+To see why conveying the actual data is important, consider a dataset from `datasauRus` [@citedatasauRus]. After installing and loading the necessary packages, we can take a quick look at the dataset.
 
 ```{r}
 #| eval: false
@@ -139,23 +138,11 @@ datasaurus_dozen |>
   filter(dataset %in% c("dino", "star", "away", "bullseye")) |>
   group_by(dataset) |>
   summarise(
-    across(
-      c(x, y),
-      list(
-        mean = mean,
-        sd = sd
-      )
-    ),
-    x_y_cor = cor(x, y)
-  ) |>
+    across(c(x, y), list(mean = mean, sd = sd)),
+    x_y_cor = cor(x, y)) |>
   knitr::kable(
     col.names = c(
-      "Dataset",
-      "x mean",
-      "x sd",
-      "y mean",
-      "y sd",
-      "correlation"
+    "Dataset", "x mean", "x sd", "y mean", "y sd", "correlation"
     ),
     digits = 1,
     booktabs = TRUE,
@@ -188,11 +175,11 @@ head(anscombe)
 ```
 
 ::: {.content-visible when-format="pdf"}
-Anscombe's Quartet consists of six observations for four different datasets, again with x and y values for each observation. We need to manipulate this dataset with `pivot_longer()` to get it into the "tidy" format discussed in the ["R Essentials" Online Appendix](https://tellingstorieswithdata.com/20-r_essentials.html).
+Anscombe's Quartet consists of six observations for four different datasets, with x and y values for each observation. We need to manipulate this dataset with `pivot_longer()` to get it into the "tidy" format discussed in the ["R Essentials" Online Appendix](https://tellingstorieswithdata.com/20-r_essentials.html).
 :::
 
 ::: {.content-visible unless-format="pdf"}
-Anscombe's Quartet consists of six observations for four different datasets, again with x and y values for each observation. We need to manipulate this dataset with `pivot_longer()` to get it into the "tidy" format discussed in @sec-r-essentials. 
+Anscombe's Quartet consists of six observations for four different datasets, with x and y values for each observation. We need to manipulate this dataset with `pivot_longer()` to get it into the "tidy" format discussed in @sec-r-essentials. 
 :::
 
 
@@ -210,30 +197,22 @@ tidy_anscombe <-
   )
 ```
 
-We can again first create summary statistics (@tbl-anscombesummarystats) and then graph the data (@fig-anscombegraph). And we again see the importance of graphing the actual data, rather than relying on summary statistics.
+We can first create summary statistics (@tbl-anscombesummarystats) and then graph the data (@fig-anscombegraph). This shows the importance of graphing the actual data, rather than relying on summary statistics.
 
 ```{r}
 #| label: tbl-anscombesummarystats
 #| message: false
-#| tbl-cap: "Mean and standard deviation for Anscombe"
+#| tbl-cap: "Mean and standard deviation for Anscombe's quartet"
 
 tidy_anscombe |>
   group_by(set) |>
   summarise(
-    across(
-      c(x, y),
-      list(mean = mean, sd = sd)
-    ),
+    across(c(x, y), list(mean = mean, sd = sd)),
     x_y_cor = cor(x, y)
-  ) |>
+    ) |>
   knitr::kable(
     col.names = c(
-      "Dataset",
-      "x mean",
-      "x sd",
-      "y mean",
-      "y sd",
-      "correlation"
+    "Dataset", "x mean", "x sd", "y mean", "y sd", "correlation"
     ),
     digits = 1,
     booktabs = TRUE,
@@ -260,19 +239,17 @@ tidy_anscombe |>
 
 
 ::: {.content-visible when-format="pdf"}
-Graphs can be ugly, bad, and wrong [@wilke2019fundamentals]. It is initially enough to try to avoid that. But often one quickly wants to go beyond that. There are many different `ggplot2` options and a helpful reference sheet is provided by [Isabella Benabaue](https://isabella-b.com/blog/ggplot2-theme-elements-reference/). And [Yan Holtz](https://www.dataviz-inspiration.com) provides examples of beautiful and impactful data visualization. As mentioned in the ["R Essentials" Online Appendix](https://tellingstorieswithdata.com/20-r_essentials.html) `ggplot2` implements a grammar of graphics, which describes a plot as comprising data with aesthetic attributes such as layer, scales, coordinates, facets, and themes [@citeggplot].
+Graphs can be ugly, bad, and wrong [@wilke2019fundamentals]. Initially, it is enough to try to avoid such shortcomings, but in practice one quickly wants to move beyond that. There are many different `ggplot2` options and a helpful reference sheet is provided by [Isabella Benabaue](https://isabella-b.com/blog/ggplot2-theme-elements-reference/). And [Yan Holtz](https://www.dataviz-inspiration.com) provides examples of beautiful and impactful data visualization. As mentioned in the ["R Essentials" Online Appendix](https://tellingstorieswithdata.com/20-r_essentials.html) `ggplot2` implements a grammar of graphics, which describes a plot as comprising data with aesthetic attributes such as layer, scales, coordinates, facets, and themes [@citeggplot].
 :::
 
 ::: {.content-visible unless-format="pdf"}
-Graphs can be ugly, bad, and wrong [@wilke2019fundamentals]. It is initially enough to try to avoid that. But often one quickly wants to go beyond that. There are many different `ggplot2` options and a helpful reference sheet is provided by [Isabella Benabaue](https://isabella-b.com/blog/ggplot2-theme-elements-reference/). And [Yan Holtz](https://www.dataviz-inspiration.com) provides examples of beautiful and impactful data visualization. As mentioned in @sec-r-essentials `ggplot2` implements a grammar of graphics, which describes a plot as comprising data with aesthetic attributes such as layer, scales, coordinates, facets, and themes [@citeggplot].
+Graphs can be ugly, bad, and wrong [@wilke2019fundamentals]. Initially, it is enough to try to avoid such shortcomings, but in practice one quickly wants to move beyond that. There are many different `ggplot2` options and a helpful reference sheet is provided by [Isabella Benabaue](https://isabella-b.com/blog/ggplot2-theme-elements-reference/). And [Yan Holtz](https://www.dataviz-inspiration.com) provides examples of beautiful and impactful data visualization. As mentioned in @sec-r-essentials `ggplot2` implements a grammar of graphics, which describes a plot as comprising data with aesthetic attributes such as layer, scales, coordinates, facets, and themes [@citeggplot].
 :::
 
 
 ### Bar charts
 
-We typically use a bar chart when we have a categorical variable that we want to focus on. We saw an example of this in @sec-fire-hose where we constructed a graph of the number of occupied beds. The geom that we primarily use is `geom_bar()`, but there are many variants to cater for specific situations. 
-
-We will use a dataset from the 1997-2001 British Election Panel Study that was put together by @fox2006effect.
+We typically use a bar chart when we have a categorical variable that we want to focus on. We saw an example of this in @sec-fire-hose where we constructed a graph of the number of occupied beds. The geom that we primarily use is `geom_bar()`, but there are many variants to cater for specific situations. To illustrate the use of bar charts, we use a dataset from the 1997-2001 British Election Panel Study that was put together by @fox2006effect.
 
 ::: {.content-visible when-format="pdf"}
 ```{r}
@@ -370,9 +347,9 @@ beps |>
   geom_bar()
 ```
 
-By default, `geom_bar()` creates a count of the number of times each age-group appears in the dataset. It does this because the default "stat" for `geom_bar()` is "count". This saves us from having to create that statistic ourselves. But if we had already constructed a count (for instance, `beps |> count(age)`), then we could also specify a column of values for the y-axis and use `stat = "identity"`.
+By default, `geom_bar()` creates a count of the number of times each age-group appears in the dataset. It does this because the default "stat" for `geom_bar()` is "count", which saves us from having to create that statistic ourselves. But if we had already constructed a count (for instance, `beps |> count(age)`), then we could also specify a column of values for the y-axis and use `stat = "identity"`.
 
-We may also like to consider different groupings of the data, for instance, looking at which party the respondent supports, by age-group (@fig-bepsecond).
+We may also like to consider different groupings of the data to get a different insight. For instance, we can look at which party the respondent supports, by age-group [@fig-bepsecond].
 
 ```{r}
 #| echo: true
@@ -386,7 +363,7 @@ beps |>
   geom_bar()
 ```
 
-The default is that these different groups are stacked, but they can be placed side-by-side with `position = "dodge"` (@fig-bepthird).
+By default, these different groups are stacked, but they can be placed side-by-side with `position = "dodge"` [@fig-bepthird].
 
 ```{r}
 #| echo: true
@@ -400,7 +377,7 @@ beps |>
   geom_bar(position = "dodge")
 ```
 
-At this point, we may like to address the general look of the graph. There are various themes that are built into `ggplot2`. Some of these include `theme_bw()`, `theme_classic()`, `theme_dark()`, and `theme_minimal()`. A full list is available in the `ggplot2` [cheat sheet](https://github.com/rstudio/cheatsheets/blob/main/data-visualization.pdf). We can use these themes by adding them as a layer (@fig-bepthemes). Here we can use `patchwork` [@citepatchwork] to bring together multiple graphs. To do this we assign the graph to a name, and then use "+" to signal which should be next to each other, "/" to signal which would be on top, and brackets for precedence.
+At this point, we may like to address the general look of the graph. There are various themes that are built into `ggplot2`. Some of these include `theme_bw()`, `theme_classic()`, `theme_dark()`, and `theme_minimal()`. A full list is available in the `ggplot2` [cheat sheet](https://github.com/rstudio/cheatsheets/blob/main/data-visualization.pdf). We can use these themes by adding them as a layer (@fig-bepthemes). Here we can use `patchwork` [@citepatchwork] to bring together multiple graphs. To do this, we assign the graph to a name, then use "+" to signal which should be next to each other, "/" to signal which would be on top, and use brackets to indicate precedence
 
 ```{r}
 #| echo: true
@@ -463,7 +440,7 @@ beps |>
   )
 ```
 
-We use facets to show variation, based on one or more variables [@grammarofgraphics, p. 219]. They are especially useful when we have already used color to highlight variation in some other variable and add an additional dimension. For instance, we may be interested to explain vote, by age and gender (@fig-facets).
+We use facets to show variation, based on one or more variables [@grammarofgraphics, p. 219]. Facets are especially useful when we have already used color to highlight variation in some other variable and add an additional dimension. For instance, we may be interested to explain vote, by age and gender [@fig-facets] (there will be a problem with overlapping x axis labels here, which we intentionally leave so as to fix later).
 
 ```{r}
 #| echo: true
@@ -546,7 +523,13 @@ beps |>
 
 This means that we now have three ways to have multiple graphs: sub-figures, facets, and `patchwork`. They are useful in different circumstances. For instance, we would often want to use sub-figures (covered in @sec-reproducible-workflows) when we are considering different variables, facets when considering different values of a categorical variable, and `patchwork` when interested in bringing together entirely different graphs.
 
-There are a variety of different ways to change the colors, and many palettes are available from `RColorBrewer` [@RColorBrewer], which we specify with `scale_fill_brewer()`, and `viridis` [@viridis], which we specify with `scale_fill_viridis()` and is particularly focused on color-blind palettes (@fig-usecolor). By way of background, the "brewer" palette refers to Cindy Brewer, a professor at Penn State [@brewerisarealperson].
+We now turn to the colors used in the graph. There are a variety of different ways to change the colors. The many palettes available from `RColorBrewer` [@RColorBrewer], can be specified using `scale_fill_brewer()`, and in the case of `viridis` [@viridis], we can specify the palettes using `scale_fill_viridis()`. Additionally `viridis` is particularly focused on color-blind palettes [@fig-usecolor].
+
+::: callout-note
+## Shoulders of giants
+
+The name of the "brewer" palette refers to Cindy Brewer [@brewerisarealperson]. After earning a PhD in Geography from Michigan State University in 1991, she joined San Diego State University as an assistant professor, moving to Pennsylvania State University in 1994, where she was promoted to full professor in 2007. One of her best known books is @brewerbook. In 2019 she became only the ninth person to have been awarded the O. M. Miller Cartographic Medal since it was established in 1968.
+:::
 
 ```{r}
 #| echo: true
@@ -716,7 +699,7 @@ world_bank_data |>
   geom_point()
 ```
 
-As with bar charts, we change the theme, and update the labels (@fig-scatterplotnicer), although again, we would normally not need both a caption and a title and would just use one.
+As with bar charts, we change the theme, and update the labels (@fig-scatterplotnicer), although we would normally not need both a caption and a title and would just use one.
 
 ```{r}
 #| fig-cap: "Relationship between inflation and GDP growth for Australia, Ethiopia, India, and the US"
@@ -1037,7 +1020,7 @@ world_bank_data |>
 
 ### Histograms
 
-A histogram is useful to show the shape of the distribution of a continuous variable. They construct counts of the number of observations in different subsets of the support, called "bins". In @fig-hisogramone we examine the distribution of GDP in Ethiopia, and again we can add a theme and labels.
+A histogram is useful to show the shape of the distribution of a continuous variable. They construct counts of the number of observations in different subsets of the support, called "bins". In @fig-hisogramone we examine the distribution of GDP in Ethiopia, and we can add a theme and labels.
 
 ```{r}
 #| fig-cap: "Distribution of GDP growth in Ethiopia (1960-2020)"
@@ -1301,7 +1284,7 @@ It is worth pointing out that even for many of these applications, a graph may a
 
 ### Showing part of a dataset
 
-We illustrate showing part of a dataset using `kable()` from `knitr` and drawing on `kableExtra` for enhancement. We again use the World Bank dataset that we downloaded earlier.
+We illustrate showing part of a dataset using `kable()` from `knitr` and drawing on `kableExtra` for enhancement. We use the World Bank dataset that we downloaded earlier.
 
 ```{r}
 library(knitr)
@@ -1458,7 +1441,7 @@ world_bank_data |>
   gt()
 ```
 
-Again, we can add a caption and more informative column labels (@tbl-dsdfweasdf).
+We can add a caption and more informative column labels (@tbl-dsdfweasdf).
 
 ```{r}
 #| label: tbl-dsdfweasdf
@@ -2122,7 +2105,7 @@ Using Quarto, please create a graph using `ggplot2` and a map using `ggmap` and 
 
 Then, with regard the graph you created, please reflect on @vanderplas2020testing and add a few paragraphs about the different options that you considered that the graph more effective. (If you have not now got at least two pages about your graph you have likely written too little.)
 
-And finally, with regard to the map that you created, please reflect on the following quote from Heather Krause, founder of [We All Count](https://weallcount.com): "maps only show people who aren't invisible to the makers" as well as Chapter 3 from @datafeminism2020 and add a few paragraphs related to this. (Again, if you have not now got at least two pages about your map you have likely written too little.)
+And finally, with regard to the map that you created, please reflect on the following quote from Heather Krause, founder of [We All Count](https://weallcount.com): "maps only show people who aren't invisible to the makers" as well as Chapter 3 from @datafeminism2020 and add a few paragraphs related to this. (If you have not now got at least two pages about your map you have likely written too little.)
 
 
 ### Paper {.unnumbered}
