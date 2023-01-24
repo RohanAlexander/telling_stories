@@ -534,7 +534,7 @@ The name of the "brewer" palette refers to Cindy Brewer [@brewerisarealperson]. 
 ```{r}
 #| echo: true
 #| eval: true
-#| fig-cap: "Distribution of age-group and vote preference, in the 1997-2001 British Election Panel Study"
+#| fig-cap: "Distribution of age-group and vote preference, in the 1997-2001 British Election Panel Study, illustrating different colors"
 #| label: fig-usecolor
 #| message: false
 #| warning: false
@@ -542,7 +542,7 @@ The name of the "brewer" palette refers to Cindy Brewer [@brewerisarealperson]. 
 library(viridis)
 library(patchwork)
 
-RColorBrewerBrBG <-
+foundation <- 
   beps |>
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
@@ -552,42 +552,22 @@ RColorBrewerBrBG <-
     y = "Number",
     fill = "Voted for"
   ) +
+  theme(legend.position = "bottom")
+
+RColorBrewerBrBG <-
+  foundation +
   scale_fill_brewer(palette = "Blues")
 
 RColorBrewerSet2 <-
-  beps |>
-  ggplot(mapping = aes(x = age_group, fill = vote)) +
-  geom_bar() +
-  theme_minimal() +
-  labs(
-    x = "Age-group",
-    y = "Number",
-    fill = "Voted for"
-  ) +
+  foundation +
   scale_fill_brewer(palette = "Set1")
 
 viridis <-
-  beps |>
-  ggplot(mapping = aes(x = age_group, fill = vote)) +
-  geom_bar() +
-  theme_minimal() +
-  labs(
-    x = "Age-group",
-    y = "Number",
-    fill = "Voted for"
-  ) +
+  foundation +
   scale_fill_viridis(discrete = TRUE)
 
 viridismagma <-
-  beps |>
-  ggplot(mapping = aes(x = age_group, fill = vote)) +
-  geom_bar() +
-  theme_minimal() +
-  labs(
-    x = "Age-group",
-    y = "Number",
-    fill = "Voted for"
-  ) +
+  foundation +
   scale_fill_viridis(
     discrete = TRUE,
     option = "magma"
@@ -597,7 +577,9 @@ viridismagma <-
   (viridis + viridismagma)
 ```
 
-Many palettes are available through `RColorBrewer` and `viridis`. We can also build our own. That said, color is something to be considered with a great deal of care and it should only be used to increase the amount of information that is communicated [@elementsofgraphingdata]. Color should not be added to graphs unnecessarily---that is to say, it must play some role. Typically, that role is to distinguish different groups, which implies making the colors dissimilar. Color may also be appropriate if there is some relationship between the color and the variable, for instance if making a graph of the price of mangoes and raspberries, then it could help the reader if the colors were yellow and red, respectively [@franconeri2021science, p. 121].
+Finally, with increasing awareness of the issue, there are now many options for colorblind-friendly palettes. One that is well integrated with `ggplot2` is `scico` [@scico]. 
+
+In addition to pre-built palettes, we can also build our own palette. That said, color is something to be considered with a great deal of care and it should only be used to increase the amount of information that is communicated [@elementsofgraphingdata]. Color should not be added to graphs unnecessarily---that is to say, it must play some role. Typically, that role is to distinguish different groups, which implies making the colors dissimilar. Color may also be appropriate if there is some relationship between the color and the variable, for instance if making a graph of the price of mangoes and raspberries, then it could help the reader if the colors were yellow and red, respectively [@franconeri2021science, p. 121].
 
 
 ### Scatterplots
@@ -708,7 +690,7 @@ As with bar charts, we change the theme, and update the labels (@fig-scatterplot
 
 world_bank_data |>
   ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
-  geom_point() +
+  geom_point(pch=21) +
   theme_minimal() +
   labs(
     x = "GDP growth",
@@ -734,7 +716,7 @@ library(patchwork)
 basis <-
   world_bank_data |>
   ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
-  geom_point() +
+  geom_point(pch=21) +
   theme_minimal() +
   labs(
     x = "GDP growth",
@@ -759,8 +741,8 @@ viridismagma <-
   basis +
   scale_colour_viridis_d(option = "magma")
 
-over <- RColorBrewerBrBG + RColorBrewerSet2 /
-  viridis + viridismagma
+over <- (RColorBrewerBrBG + RColorBrewerSet2) /
+  (viridis + viridismagma)
 
 over + plot_annotation(
   caption = "Data source: World Bank."
@@ -770,7 +752,7 @@ over + plot_annotation(
 The points of a scatterplot sometimes overlap. We can address this situation in a variety of ways (@fig-alphajitter): 
 
 1) Adding a degree of transparency to our dots with "alpha" (@fig-alphajitter-1). The value for "alpha" can vary between 0, which is fully transparent, and 1, which is completely opaque. 
-2) Adding a small amount of noise, which slightly moves the points, using `geom_jitter()` (@fig-alphajitter-2). By default, the movement is uniform in both directions, but we can specify which direction movement occurs with "width" or "height". The decision between these two options turns on the degree to which exact accuracy matters, and the number of points: it is often useful to use `geom_jitter()` when you want to highlight the relative density of points and not necessarily the exact value of individual points.
+2) Adding a small amount of noise, which slightly moves the points, using `geom_jitter()` (@fig-alphajitter-2). By default, the movement is uniform in both directions, but we can specify which direction movement occurs with "width" or "height". The decision between these two options turns on the degree to which exact accuracy matters, and the number of points: it is often useful to use `geom_jitter()` when you want to highlight the relative density of points and not necessarily the exact value of individual points. When using `geom_jitter()` it is a good idea, for reproducibility, to set a seed.
 3) Using `geom_beeswarm()` from `ggbeeswarm` [@ggbeeswarm] to attempt to add more information about the density than is available from a jittered graph (@fig-alphajitter-3).
 
 ```{r}
@@ -778,17 +760,19 @@ The points of a scatterplot sometimes overlap. We can address this situation in 
 #| label: fig-alphajitter
 #| warning: false
 #| fig-subcap: ["Changing the alpha setting","Using jitter", "Using beeswarm"]
-#| layout-ncol: 3
+#| layout-ncol: 2
 
 library(ggbeeswarm)
 
-world_bank_data |>
+set.seed(853)
+
+foundation <- 
+  world_bank_data |>
   ggplot(mapping = aes(
     x = gdp_growth,
     y = inflation,
     color = country
   )) +
-  geom_point(alpha = 0.5) +
   theme_minimal() +
   labs(
     x = "GDP growth",
@@ -797,44 +781,24 @@ world_bank_data |>
     caption = "Data source: World Bank."
   )
 
-world_bank_data |>
-  ggplot(mapping = aes(
-    x = gdp_growth,
-    y = inflation,
-    color = country
-  )) +
-  geom_jitter() +
-  theme_minimal() +
-  labs(
-    x = "GDP growth",
-    y = "Inflation",
-    color = "Country",
-    caption = "Data source: World Bank."
-  )
+foundation +
+  geom_point(alpha = 0.5)
 
-world_bank_data |>
-  ggplot(mapping = aes(
-    x = gdp_growth,
-    y = inflation,
-    color = country
-  )) +
-  geom_beeswarm() +
-  theme_minimal() +
-  labs(
-    x = "GDP growth",
-    y = "Inflation",
-    color = "Country",
-    caption = "Data source: World Bank."
-  )
+foundation +
+  geom_jitter()
+
+foundation +
+  geom_beeswarm()
 ```
 
-A common use case for a scatterplot is to illustrate a relationship between two continuous variables. It can be useful to add a line of best fit using `geom_smooth()` (@fig-scattorplottwo). By default, `geom_smooth()` will use locally estimated scatterplot smoothing (LOESS) for datasets with less than 1,000 observations, but we can specify the relationship using "method", change the color with "color" and add or remove standard errors with "se". A commonly used "method" is `lm`, which computes and plots a simple linear regression line similar to using the `lm()` function [@citeR]. Using `geom_smooth()` adds a layer to the graph, and so it inherits aesthetics from `ggplot()`. For instance, that is why we initially have one line for each country in @fig-scattorplottwo. We could overwrite that by specifying a particular color, which we do in the third graph of @fig-scattorplottwo.
+A common use case for a scatterplot is to illustrate a relationship between two continuous variables. It can be useful to add a line of best fit using `geom_smooth()` (@fig-scattorplottwo). By default, `geom_smooth()` will use locally estimated scatterplot smoothing (LOESS) for datasets with less than 1,000 observations, but we can specify the relationship using "method", change the color with "color" and add or remove standard errors with "se". A commonly used "method" is `lm`, which computes and plots a simple linear regression line similar to using the `lm()` function [@citeR]. Using `geom_smooth()` adds a layer to the graph, and so it inherits aesthetics from `ggplot()`. For instance, that is why we initially have one line for each country in @fig-scattorplottwo. We could overwrite that by specifying a particular color, which we do in the third graph of @fig-scattorplottwo. There are situation where other types of fitted lines might be preferred, such as splines. `geom_smooth()` also has an associated confidence interval.
 
 ```{r}
 #| fig-cap: "Relationship between inflation and GDP growth for Australia, Ethiopia, India, and the US"
 #| label: fig-scattorplottwo
 #| message: false
 #| warning: false
+#| layout-ncol: 2
 
 defaults <-
   world_bank_data |>
@@ -928,7 +892,7 @@ world_bank_data |>
   )
 ```
 
-We can use a slight variant of `geom_line()`, `geom_step()`, to focus attention on the change from year to year (@fig-stepplot).
+We can use `geom_step()`, a slight variant of `geom_line()`, to focus attention on the change from year to year (@fig-stepplot).
 
 ```{r}
 #| fig-cap: "US GDP growth (1961-2020)"
@@ -947,7 +911,7 @@ world_bank_data |>
   )
 ```
 
-The Phillips curve is the name given to plot of the relationship between unemployment and inflation over time. An inverse relationship is sometimes found in the data, for instance in the UK between 1861 and 1957 [@phillips1958relation]. We have a variety of ways to investigate this including:
+The Phillips curve is the name given to plot of the relationship between unemployment and inflation over time. An inverse relationship is sometimes found in the data, for instance in the UK between 1861 and 1957 [@phillips1958relation]. We have a variety of ways to investigate this relationship in our data, including:
 
 1) Adding a second line to our graph. For instance, we could add inflation (@fig-notphillips). This may require us to use `pivot_longer()` to ensure that the data are in tidy format.
 2) Using `geom_path()` to links values in the order they appear in the dataset. In @fig-phillipsmyboy we show a Phillips curve for the US between 1960 and 2020. @fig-phillipsmyboy does not appear to show any clear relationship between unemployment and inflation.
@@ -1134,8 +1098,8 @@ Finally, while we can use "fill" to distinguish between different types of obser
 #| label: fig-different-obs
 #| message: false
 #| warning: false
-#| layout-ncol: 3
-#| fig-subcap: ["Tracing the outline","Using dots", "Adding transparency"]
+#| layout-ncol: 2
+#| fig-subcap: ["Tracing the outline", "Using dots", "Adding transparency"]
 
 world_bank_data |>
   ggplot(mapping = aes(x = gdp_growth, color = country)) +
@@ -1248,7 +1212,7 @@ beta_distributions |>
   theme_classic()
 ```
 
-One way forward, if a boxplot must be included, is to include the actual data as a layer on top of the boxplot. For instance, in @fig-bloxplotandoverlay we show the distribution of inflation across the four countries. The reason that this works well is that it shows the data in greater fidelity. In general, better alternatives would be those that we covered earlier in this chapter, including bar charts, scatterplots, line plots and histograms.
+One way forward, if a boxplot must be included, is to include the actual data as a layer on top of the boxplot. For instance, in @fig-bloxplotandoverlay we show the distribution of inflation across the four countries. The reason that this works well is that it shows the data in greater fidelity. In general, better alternatives would be those that we covered earlier in this chapter, including bar charts, scatterplots, line plots and histograms. Violin plots, although beyond the scope of this book, are good alternative as well, and are included in `ggplot2` with `geom_violin()`.
 
 ```{r}
 #| fig-cap: "Distribution of unemployment data for four countries (1960-2020)"
@@ -1536,22 +1500,16 @@ datasummary_balance(
 
 ### Display regression results
 
-Finally, one common reason for needing a table is to report regression results. We will do this using `modelsummary()` from `modelsummary` [@citemodelsummary].
-
-```{r}
-first_model <- lm(
-  formula = gdp_growth ~ inflation,
-  data = world_bank_data
-)
-
-modelsummary(first_model)
-```
-
-We can put a variety of different of different models together (@tbl-twomodels).
+Finally, one common reason for needing a table is to report regression results. We will do this using `modelsummary()` from `modelsummary` [@citemodelsummary]. For instance, we could display the estimates from a few different models [@tbl-twomodels].
 
 ```{r}
 #| label: tbl-twomodels
 #| tbl-cap: "Explaining GDP as a function of inflation"
+
+first_model <- lm(
+  formula = gdp_growth ~ inflation,
+  data = world_bank_data
+)
 
 second_model <- lm(
   formula = gdp_growth ~ inflation + country,
@@ -1565,7 +1523,6 @@ third_model <- lm(
 
 modelsummary(list(first_model, second_model, third_model))
 ```
-
 
 We can adjust the number of significant digits (@tbl-twomodelstwo). This is a critical aspect of establishing credibility. It is certainly not the case that we should just blindly add as many significant digits as possible [@howes2022representing]. Instead, we should think carefully about the data generating process that we have access to and adjust our significant digits appropriately.
 
@@ -1583,13 +1540,9 @@ modelsummary(
 
 
 
-
-
-
-
 ## Maps
 
-In many ways maps can be thought of as another type of graph, where the x-axis is latitude, the y-axis is longitude, and there is some outline or a background image. It is likely they are the oldest and best understand type of chart [@karsetn, p. 1].
+In many ways maps can be thought of as another type of graph, where the x-axis is latitude, the y-axis is longitude, and there is some outline or a background image. It is possible they are the oldest and best understood type of chart [@karsetn, p. 1].
 
 ```{r}
 #| eval: false
@@ -1633,9 +1586,11 @@ french_cities <-
 head(french_cities)
 ```
 
-With that information in hand, we can then create a map of France that shows the larger cities.  We use `geom_polygon()` from `ggplot2` to draw shapes by connecting points within groups. And `coord_map()` adjusts for the fact that we are making a 2D map to represent a world that is 3D.
+With that information in hand, we can then create a map of France that shows the larger cities [@fig-heyitsfrance]. We use `geom_polygon()` from `ggplot2` to draw shapes by connecting points within groups. And `coord_map()` adjusts for the fact that we are making a 2D map to represent a world that is 3D.
 
 ```{r}
+#| label: fig-heyitsfrance
+#| fig-cap: "Map of France showing the largest cities"
 #| message: false
 #| warning: false
 
@@ -1666,7 +1621,6 @@ ggplot() +
   )
 ```
 
-
 As is often the case with R, there are many ways to get started creating static maps. We have seen how they can be built using only `ggplot2`, but `ggmap` brings additional functionality [@KahleWickham2013].
 
 There are two essential components to a map: 
@@ -1679,9 +1633,9 @@ In `ggmap`, we use an open-source option for our tile, Stamen Maps. And we use p
 
 ### Australian polling places
 
-In Australia people go to specific locations, called booths, to vote. These booths have latitudes and longitudes and so we can plot these. One reason we may like to do this is to notice patterns over geographies.
+In Australia people go to specific locations, called booths, to vote. Because the booths have coordinates (latitude and longitude), we can plot them in a map. One reason we may like to plot the location of the booth is to notice voting patterns over geographies.
 
-To get started we need to get a tile. We are going to use `ggmap` to get a tile from Stamen Maps, which builds on [OpenStreetMap](openstreetmap.org). The main argument to this function is to specify a bounding box. This requires two latitudes - one for the top of the box and one for the bottom of the box - and two longitudes - one for the left of the box and one for the right of the box. It can be useful to use Google Maps, or an alternative, to find the values of these that you need. The bounding box provides the coordinates of the edges that you are interested in. In this case we have provided it with coordinates such that it will be centered around Canberra, Australia, which is a small city that was created for the purposes of being the capital.
+To get started we need to get a tile. We are going to use `ggmap` to get a tile from Stamen Maps, which builds on [OpenStreetMap](openstreetmap.org). The main argument to this function is to specify a bounding box. This requires two latitudes - one for the top of the box and one for the bottom of the box - and two longitudes - one for the left of the box and one for the right of the box. It can be useful to use Google Maps, or other mapping platform, to find the coordinate values that you need. The bounding box provides the coordinates of the edges that you are interested in. In this case we have provided it with coordinates such that it will be centered around Canberra, Australia, which is a small city that was created for the purposes of being the capital.
 
 ```{r}
 #| warning: false
@@ -1692,9 +1646,11 @@ library(ggmap)
 bbox <- c(left = 148.95, bottom = -35.5, right = 149.3, top = -35.1)
 ```
 
-Once you have defined the bounding box, then the function `get_stamenmap()` will get the tiles in that area. The number of tiles that it needs to get depends on the zoom, and the type of tiles that it gets depends on the type of map. We have used a black-and-white type of map but the helpfile specifies others. At this point we can pass the tiles to `ggmap()` and it will plot the tiles. `get_stamenmap()` will be actively downloading these tiles, and so it needs an internet connection.
+Once you have defined the bounding box, then the function `get_stamenmap()` will get the tiles in that area [@fig-heyitscanberra]. The number of tiles that it needs to get depends on the zoom, and the type of tiles that it gets depends on the type of map. We have used a black-and-white type of map but there are others including color and terrain. At this point we can pass the tiles to `ggmap()` and it will plot the tiles. You need an internet connection for this to work as `get_stamenmap()` will be actively downloading these tiles.
 
 ```{r}
+#| label: fig-heyitscanberra
+#| fig-cap: "Map of Canberra, Australia"
 #| warning: false
 #| message: false
 
@@ -1705,7 +1661,7 @@ canberra_stamen_map <- get_stamenmap(bbox,
 ggmap(canberra_stamen_map)
 ```
 
-Once we have a map then we can use `ggmap()` to plot it. Now we want to get some data that we plot on top of our tiles. We will just plot the location of the polling places, based on which "division" it is. This is available [from the Australian Electoral Commission (AEC)](https://results.aec.gov.au/20499/Website/Downloads/HouseTppByPollingPlaceDownload-20499.csv). The AEC is the official government agency that is responsible for elections in Australia.
+Once we have a map then we can use `ggmap()` to plot it. Now we want to get some data that we plot on top of our tiles. We will just plot the location of the polling place, based on which "division" it is. This is available [from the Australian Electoral Commission (AEC)](https://results.aec.gov.au/20499/Website/Downloads/HouseTppByPollingPlaceDownload-20499.csv), which is the government agency that is responsible for elections in Australia.
 
 ::: {.content-visible when-format="pdf"}
 ```{r}
@@ -1744,7 +1700,7 @@ head(booths)
 ```
 :::
 
-This dataset is for the whole of Australia, but as we are just going to plot the area around Canberra, we filter to that and only to booths that are geographic (the AEC has various options for people who are in hospital, or not able to get to a booth, etc, and these are still "booths" in this dataset).
+This dataset is for the whole of Australia, but as we are only plotting the area around Canberra, we will filter the data to only booths with a geography close to Canberra.
 
 ```{r}
 #| warning: false
@@ -1762,6 +1718,8 @@ booths_reduced <-
 Now we can use `ggmap` in the same way as before to plot our underlying tiles, and then build on that using `geom_point()` to add our points of interest.
 
 ```{r}
+#| label: fig-heyitscanberrapolling
+#| fig-cap: "Map of Canberra, Australia, with polling places"
 #| warning: false
 #| message: false
 
@@ -1803,7 +1761,7 @@ We may like to save the map so that we do not have to draw it every time, and we
 ggsave("map.pdf", width = 20, height = 10, units = "cm")
 ```
 
-Finally, the reason that we used Stamen Maps and OpenStreetMap is because it is open source, but we could have also used Google Maps. This requires you to first register a credit card with Google, and specify a key, but with low usage the service should be free. Using Google Maps, `get_googlemap()` brings some advantages over `get_stamenmap()`, for instance it will attempt to find a placename rather than needing to specify a bounding box.
+Finally, the reason that we used Stamen Maps and OpenStreetMap is because it is open source, but we could have also used Google Maps. This requires you to first register a credit card with Google, and specify a key, but with low usage the service should be free. Using Google Maps, by using `get_googlemap()` within `ggmap` brings some advantages over `get_stamenmap()`, for instance it will attempt to find a placename rather than needing to specify a bounding box.
 
 
 
@@ -1825,7 +1783,7 @@ bases <- get_basedata()
 head(bases)
 ```
 
-We will look at the locations of US military bases in: Germany, Japan, and Australia. The `troopdata` dataset already has latitude and longitude of the base. We will use that as our item of interest. The first step is to define a bounding box for each of country.
+We will look at the locations of US military bases in: Germany, Japan, and Australia. The `troopdata` dataset already has the latitude and longitude of each base, and we will use that as our item of interest. The first step is to define a bounding box for each of country.
 
 ```{r}
 #| message: false
@@ -1875,7 +1833,7 @@ australia_stamen_map <-
   get_stamenmap(bbox_australia, zoom = 5, maptype = "toner-lite")
 ```
 
-And finally, we can bring it all together with maps show US military bases in Germany (@fig-mapbasesingermany), Japan (@fig-mapbasesinjapan), and Australia (@fig-mapbasesinaustralia).
+And finally, we can bring it all together with maps showing US military bases in Germany (@fig-mapbasesingermany), Japan (@fig-mapbasesinjapan), and Australia (@fig-mapbasesinaustralia).
 
 ```{r}
 #| fig-cap: "Map of US military bases in Germany"
@@ -1947,7 +1905,7 @@ ggmap(australia_stamen_map) +
 
 ### Geocoding
 
-To this point we assumed that we already had geocoded data, which means that we have a latitude and longitude. If we only have place names, such as "Sydney, Australia", "Toronto, Canada", "Accra, Ghana", "Guayaquil, Ecuador" are just names, they do not actually inherently have a location. To plot them we need to get a latitude and longitude for them. The process of going from names to coordinates is called geocoding.
+So far, we have assumed that we already had geocoded data, which means that we have latitude and longitude coordinates for each place. But sometimes we only have place names, such as "Sydney, Australia", "Toronto, Canada", "Accra, Ghana", "Guayaquil, Ecuador". Before we can plot them we need to get latitude and longitude coordinates in each case. The process of going from names to coordinates is called geocoding.
 
 There are a range of options to geocode data in R, but `tidygeocoder` is especially useful [@citetidygeocoder]. We first need a dataframe of locations. 
 
@@ -2022,6 +1980,9 @@ ggplot() +
 ```
 
 
+## Concluding remarks
+
+In this chapter we have covered a lot of ground, focused on communicating data. We spent a lot of time on graphs, because of their ability to convey a large amount of information in an efficient way. We then turned to tables because of how they are able to specifically convey information. Finally, we discussed maps, which allow us to display geographic information. The most important task is to show the actual data to the full extent possible.
 
 ## Exercises
 

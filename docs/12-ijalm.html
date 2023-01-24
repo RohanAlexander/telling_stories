@@ -561,14 +561,14 @@ div.csl-indent {
 [19]  0.84239206  0.34248268</code></pre>
 </div>
 </div>
-<p>Here we specified 20 draws from a Normal distribution with mean of 0 and standard deviation of 1. When we deal with real data, we will not know these parameters and we want to use our data to estimate them. We can estimate the mean, <span class="math inline">\(\bar{x}\)</span>, and standard deviation, <span class="math inline">\(\hat{\sigma}_x\)</span>, with the following estimators:</p>
+<p>Here we specified 20 draws from a Normal distribution with a true mean, <span class="math inline">\(\mu\)</span>, of 0 and a true standard deviation, <span class="math inline">\(\sigma\)</span>, of 1. When we deal with real data, we will not know the true value of these, and we want to use our data to estimate them. We can create an estimate of the mean, <span class="math inline">\(\hat{\mu}\)</span>, and an estimate of the standard deviation, <span class="math inline">\(\hat{\sigma}\)</span>, with the following estimators:</p>
 <p><span class="math display">\[
 \begin{aligned}
-\bar{x} &amp;= \frac{1}{n} \times \sum_{i = 1}^{n}x_i\\
-\hat{\sigma}_{x} &amp;= \sqrt{\frac{1}{n} \times \sum_{i = 1}^{n}\left(x_i - \bar{x}\right)^2}
+\hat{\mu} &amp;= \frac{1}{n} \times \sum_{i = 1}^{n}x_i\\
+\hat{\sigma} &amp;= \sqrt{\frac{1}{n-1} \times \sum_{i = 1}^{n}\left(x_i - \hat{\mu}\right)^2}
 \end{aligned}
 \]</span></p>
-<p>If <span class="math inline">\(\hat{\sigma}_x\)</span> is the estimate of the standard deviation, then the standard error of <span class="math inline">\(\bar{x}\)</span> is: <span class="math display">\[\mbox{SE}(\bar{x}) = \frac{\hat{\sigma}_{x}}{\sqrt{n}}.\]</span> The standard error is a comment about the estimate of the mean compared with the actual mean, while the standard deviation is a comment about how widely distributed the data are. Given the small sample size in the example of 20, we strictly should use the finite-sample adjustment, but as this is not the focus of this book we will move forward with the general approach.</p>
+<p>If <span class="math inline">\(\hat{\sigma}\)</span> is the estimate of the standard deviation, then the standard error (SE) of the estimate of the mean, <span class="math inline">\(\hat{\mu}\)</span>, is: <span class="math display">\[\mbox{SE}(\hat{\mu}) = \frac{\hat{\sigma}}{\sqrt{n}}.\]</span> The standard error is a comment about the estimate of the mean compared with the actual mean, while the standard deviation is a comment about how widely distributed the data are. Given the small sample size in the example of 20, we strictly should use the finite-sample adjustment, but as this is not the focus of this book we will move forward with the general approach.</p>
 <p>We can implement these in code using our simulated data to see how close our estimates are.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>estimated_mean <span class="ot">&lt;-</span></span>
@@ -579,7 +579,7 @@ div.csl-indent {
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff_square =</span> (draws <span class="sc">-</span> estimated_mean)<span class="sc">^</span><span class="dv">2</span>)</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>estimated_standard_deviation <span class="ot">&lt;-</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sqrt</span>(<span class="fu">sum</span>(normal_example<span class="sc">$</span>diff_square) <span class="sc">/</span> <span class="fu">nrow</span>(normal_example))</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sqrt</span>(<span class="fu">sum</span>(normal_example<span class="sc">$</span>diff_square) <span class="sc">/</span> (<span class="fu">nrow</span>(normal_example) <span class="sc">-</span> <span class="dv">1</span>))</span>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
@@ -606,7 +606,7 @@ div.csl-indent {
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">-0.21</td>
-<td style="text-align: right;">0.88</td>
+<td style="text-align: right;">0.91</td>
 </tr>
 </tbody>
 </table>

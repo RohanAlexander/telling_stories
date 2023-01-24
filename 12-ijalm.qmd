@@ -113,17 +113,17 @@ normal_example <-
 normal_example |> pull(draws)
 ```
 
-Here we specified 20 draws from a Normal distribution with mean of 0 and standard deviation of 1. When we deal with real data, we will not know these parameters and we want to use our data to estimate them. We can estimate the mean, $\bar{x}$, and standard deviation, $\hat{\sigma}_x$, with the following estimators:
+Here we specified 20 draws from a Normal distribution with a true mean, $\mu$, of 0 and a true standard deviation, $\sigma$, of 1. When we deal with real data, we will not know the true value of these, and we want to use our data to estimate them. We can create an estimate of the mean, $\hat{\mu}$, and an estimate of the standard deviation, $\hat{\sigma}$, with the following estimators:
 
 $$
 \begin{aligned}
- \bar{x} &= \frac{1}{n} \times \sum_{i = 1}^{n}x_i\\
- \hat{\sigma}_{x} &= \sqrt{\frac{1}{n} \times \sum_{i = 1}^{n}\left(x_i - \bar{x}\right)^2}
+ \hat{\mu} &= \frac{1}{n} \times \sum_{i = 1}^{n}x_i\\
+ \hat{\sigma} &= \sqrt{\frac{1}{n-1} \times \sum_{i = 1}^{n}\left(x_i - \hat{\mu}\right)^2}
 \end{aligned}
 $$
 
-If $\hat{\sigma}_x$ is the estimate of the standard deviation, then the standard error of $\bar{x}$ is:
-$$\mbox{SE}(\bar{x}) = \frac{\hat{\sigma}_{x}}{\sqrt{n}}.$$
+If $\hat{\sigma}$ is the estimate of the standard deviation, then the standard error (SE) of the estimate of the mean, $\hat{\mu}$, is:
+$$\mbox{SE}(\hat{\mu}) = \frac{\hat{\sigma}}{\sqrt{n}}.$$
 The standard error is a comment about the estimate of the mean compared with the actual mean, while the standard deviation is a comment about how widely distributed the data are. Given the small sample size in the example of 20, we strictly should use the finite-sample adjustment, but as this is not the focus of this book we will move forward with the general approach.
 
 We can implement these in code using our simulated data to see how close our estimates are.
@@ -142,7 +142,7 @@ normal_example <-
   mutate(diff_square = (draws - estimated_mean)^2)
 
 estimated_standard_deviation <-
-  sqrt(sum(normal_example$diff_square) / nrow(normal_example))
+  sqrt(sum(normal_example$diff_square) / (nrow(normal_example) - 1))
 
 knitr::kable(
   tibble(
