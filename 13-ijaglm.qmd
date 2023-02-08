@@ -96,7 +96,7 @@ In this chapter we consider logistic, Poisson, and negative binomial regression.
 
 Linear regression is a useful way to better understand our data. But it assumes a continuous outcome variable that can take any number on the real line. We would like some way to use this same machinery when we cannot satisfy this condition. We turn to logistic and Poisson regression for binary and count outcome variables, respectively, noting they are still linear models, because the independent variables enter in a linear fashion.
 
-Logistic regression, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it.
+Logistic regression, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it. For instance, win or lose, available or not available, support or not.
 
 The foundation of this is the Bernoulli distribution where there is a certain probability, $p$, of outcome "1" and the remainder, $1-p$, for outcome "0". We can use `rbernoulli()` to simulate data from the Bernoulli distribution. 
 
@@ -114,12 +114,31 @@ bernoulli_example <-
 bernoulli_example |> pull(draws)
 ```
 
-One reason to use logistic regression is that we will be modelling a probability and so it will be bounded between 0 and 1. Whereas with linear regression we may end up with values outside this. The foundation of logistic regression is the logit function:
+One reason to use logistic regression is that we will be modelling a probability, hence it will be bounded between 0 and 1. Whereas with linear regression we may end up with values outside this. The foundation of logistic regression is the logit function:
 
 $$
 \mbox{logit}(x) = \log\left(\frac{x}{1-x}\right).
 $$
-This will transpose values between 0 and 1 onto the real line. For instance, `logit(0.1) = -2.2`, `logit(0.5) = 0`, and `logit(0.9) = 2.2`.
+This will transpose values between 0 and 1 onto the real line. For instance, `logit(0.1) = -2.2`, `logit(0.5) = 0`, and `logit(0.9) = 2.2` (@fig-heyitslogit).
+
+```{r}
+#| eval: true
+#| include: true
+#| fig-cap: "Example of the logit function for values between 0 and 1"
+#| label: fig-heyitslogit
+#| message: false
+#| warning: false
+
+tibble(values = seq(from = 0, to = 1, by = 0.001),
+       logit = boot::logit(values)) |>
+  ggplot(aes(x = values, y = logit)) +
+  geom_line() +
+  theme_classic() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(x = "Values of x",
+       y = "logit(x)")
+```
+
 
 To illustrate logistic regression, we will simulate data on whether it is a weekday or weekend, based on the number of cars on the road. We will assume that on weekdays the road is busier.
 
@@ -214,7 +233,7 @@ marginaleffects(week_or_weekday_model, newdata = "mean") |>
   )
 ```
 
-We could use `tidymodels` to run this if we wanted. To do that, we first need to change the class of our dependent variable into a factor because this is required for classification models.
+We can also use `tidymodels` for logistic regression problems. To accomplish this, we first need to change the class of our dependent variable into a factor because this is required for classification models.
 
 ```{r}
 #| message: false
@@ -328,14 +347,14 @@ modelsummary::modelsummary(
 )
 ```
 
-@tbl-modelsummarylogistic makes it clear that each of the approaches is similar in this case. They agree on the direction of the effect of seeing an extra car on the probability of it being a weekday. And even the magnitude of the effect is estimated to be similar.
+@tbl-modelsummarylogistic makes it clear that each of the approaches is similar in this case. They agree on the direction of the effect of seeing an extra car on the probability of it being a weekday. Even the magnitude of the effect is estimated to be similar.
 
 
 ### US political support
 
 One area where logistic regression is often used is political polling. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to "support" or "not support".
 
-As a reminder, the workflow we advocate in this book: $\mbox{Plan} \rightarrow \mbox{Simulate} \rightarrow \mbox{Acquire} \rightarrow \mbox{Explore} \rightarrow \mbox{Share}$. While the focus here is the exploration of data using linear models, we still need to do the other aspects. We begin by planning. In this case, we are interested in US political support. In particular we are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. That means we are interested in a dataset with variables for who an individual voted for, and some of their characteristics, for instance, gender and education. A quick sketch of such a dataset is @fig-uspoliticalsupportsketch. And we would like our model to average over these points. A quick sketch is @fig-uspoliticalsupportmodel.
+As a reminder, the workflow we advocate in this book: $\mbox{Plan} \rightarrow \mbox{Simulate} \rightarrow \mbox{Acquire} \rightarrow \mbox{Explore} \rightarrow \mbox{Share}$. While the focus here is the exploration of data using linear models, we still need to do the other aspects. We begin by planning. In this case, we are interested in US political support. In particular we are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. That means we are interested in a dataset with variables for who an individual voted for, and some of their characteristics, for instance, gender and education. A quick sketch of such a dataset is @fig-uspoliticalsupportsketch. We would like our model to average over these points. A quick sketch is @fig-uspoliticalsupportmodel.
 
 ::: {#fig-uspoliticalsuppor layout-ncol=2 layout-valign="bottom"}
 
@@ -531,7 +550,7 @@ ces_tidymodels |>
   conf_mat(truth = voted_for, estimate = .pred_class)
 ```
 
-When we introduced `tidymodels`, we discussed the importance of randomly constructing training and test sets. We use the training dataset to estimate parameters, and then evaluate the model on the test set. It is natural to ask why we should be subject to the whims of randomness and whether we are making the most of our data. For instance, what if a good model is poorly evaluated because of some random inclusion in the test set? And what if we do not have a large test set?
+When we introduced `tidymodels`, we discussed the importance of randomly constructing training and test sets. We use the training dataset to estimate parameters, and then evaluate the model on the test set. It is natural to ask why we should be subject to the whims of randomness and whether we are making the most of our data. For instance, what if a good model is poorly evaluated because of some random inclusion in the test set? Further, what if we do not have a large test set?
 
 One commonly used resampling method that goes some way to addressing this is $k$-fold cross-validation. In this approach we create $k$ different samples, or "folds", from the dataset without replacement. We then fit the model to the first $k-1$ folds, and then evaluate it on the last fold. We do this $k$ times, once for every fold, such that every observation will be used for training $k-1$ times and for testing once. The $k$-fold cross-validation estimate is then the average mean squared error [@islr, p. 181].
 
@@ -590,7 +609,7 @@ conf_mat_resampled(ces2020_cross_validation) |>
   )
 ```
 
-What does this mean? Accuracy is the proportion of observations that were correctly classified. The result of 0.61 suggests the model is doing better than a coin toss, but not much more. Sensitivity is the proportion of true observations that are identified as true [@islr, p. 145]. In this case would mean that the model predicted a respondent voted for Trump and they did. And specificity is the proportion of false observations that are identified as false [@islr, p. 145]. In this case it is the proportion of voters that voted for Biden, that were predicted to vote for Biden. This confirms our initial thought that model is having trouble identifying Trump supporters.
+What does this mean? Accuracy is the proportion of observations that were correctly classified. The result of 0.61 suggests the model is doing better than a coin toss, but not much more. Sensitivity is the proportion of true observations that are identified as true [@islr, p. 145]. In this case that would mean the model predicted a respondent voted for Trump and they did. Specificity is the proportion of false observations that are identified as false [@islr, p. 145]. In this case it is the proportion of voters that voted for Biden, that were predicted to vote for Biden. This confirms our initial thought that model is having trouble identifying Trump supporters.
 
 We can see this in more detail by looking at the confusion matrix (@tbl-metricsvoters-2). When used with resampling approaches, such as cross-validation, the confusion matrix is computed for each fold and then averaged. The model is predicting Biden much more than we might expect from our knowledge of how close the 2020 election was. It suggests that our model may need additional variables to do a better job.
 
@@ -858,7 +877,7 @@ The results are contained in the third column of @tbl-modelsummarypoisson.
 
 ```{r}
 #| label: tbl-modelsummarypoisson
-#| tbl-cap: "Forecasting and explanatory models of marathon times based on five-kilometer run times"
+#| tbl-cap: "Examining the number of A grades given in different departments"
 
 modelsummary::modelsummary(
   list(
@@ -870,7 +889,7 @@ modelsummary::modelsummary(
 )
 ```
 
-As with logistic regression, we can use `marginaleffects()` from [@marginaleffects] to help with interpreting these results. It may be useful to consider how we expect the number of A grades to change as we go from one department to another. @tbl-marginaleffectspoisson suggests that in our dataset classes in Department 2 tend to have around five additional A grades, compared with Department 1. And that classes in Department 3, tend to have around 17 more A grades, compared with Department 1.^[THE TABLE BELOW IS A BIT DIFFICULT TO READ, NOT ENOUGH SPACE BETWEEN THE COLUMNS.] 
+As with logistic regression, we can use `marginaleffects()` from [@marginaleffects] to help with interpreting these results. It may be useful to consider how we expect the number of A grades to change as we go from one department to another. @tbl-marginaleffectspoisson suggests that in our dataset, classes in Department 2 tend to have around five additional A grades, compared with Department 1, and that classes in Department 3, tend to have around 17 more A grades, compared with Department 1.^[THE TABLE BELOW IS A BIT DIFFICULT TO READ, NOT ENOUGH SPACE BETWEEN THE COLUMNS.] 
 
 ```{r}
 #| label: tbl-marginaleffectspoisson
@@ -892,7 +911,7 @@ marginaleffects(grades_rstanarm) |>
 
 In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë. We could then consider the first 10 lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/E's increases as more words are used. If not, it could suggest that the distribution of e/E's is not consistent, which could be of interest to linguists.
 
-Following the workflow advocated in this book, we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-letterssketch. And a quick sketch of our model is @fig-lettersmodel.
+Following the workflow advocated in this book, we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-letterssketch, and a quick sketch of our model is @fig-lettersmodel.
 
 ::: {#fig-letterss layout-ncol=2 layout-valign="bottom" layout="[[50,10,50]]"}
 
@@ -926,7 +945,7 @@ count_of_e_simulation |>
   geom_point() +
   labs(
     x = "Number of words in line",
-    y = "Number of e/E letters in the chapter"
+    y = "Number of e/E letters in the first ten lines"
   ) +
   theme_classic() +
   scale_fill_brewer(palette = "Set1")
@@ -1161,7 +1180,11 @@ One of the major restrictions with Poisson regression is the assumption that the
 
 <!-- Before getting to this, it might be worth taking a moment to think about why we are we going through all this trouble. Common practice is to change from counts into a binary and then use logistic regression. The issue with this is that we may lose information when we group responses together. -->
 
-Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance, @maher1982modelling considers both in the context of results from the English Football League and discusses situations in which one may be considered more appropriate than the other. Similarly, @thanksleo considers the 2000 US presidential election and especially the issue of overdispersion in a Poisson analysis. And @Osgood2000 compares them in the case of crime data.
+Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance: 
+
+- @maher1982modelling considers both in the context of results from the English Football League and discusses situations in which one may be considered more appropriate than the other. 
+- @thanksleo considers the 2000 US presidential election and especially the issue of overdispersion in a Poisson analysis. 
+- @Osgood2000 compares them in the case of crime data.
 
 <!-- The shape of the negative binomial distribution is determined by two parameters, the probability of success, $p$, and the number of successes, $r$ [@pitman, p. 482]:  -->
 
@@ -1203,7 +1226,7 @@ Poisson and negative binomial models go hand in hand. It is often the case that 
 
 Consider, somewhat morbidly, that every year each individual either dies or does not. From the perspective of a geographic area, we could gather data on the number of people who died each year, by their cause of death. The Canadian province of Alberta makes [available](https://open.alberta.ca/opendata/leading-causes-of-death) the number of deaths, by cause, since 2001, for the top 30 causes each year. 
 
-As always we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-albertadatasketch And a quick sketch of our model is @fig-albertamodelsketch
+As always we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-albertadatasketch, and a quick sketch of our model is @fig-albertamodelsketch
 
 ::: {#fig-letterss layout-ncol=2 layout-valign="bottom"}
 
@@ -1302,7 +1325,7 @@ alberta_cod |>
   )
 ```
 
-In this case, for simplicity, we will restrict ourselves to the five most common causes of death in 2021, that have been present every year.
+For simplicity we restrict ourselves to the five most common causes of death in 2021 of those that have been present every year.
 
 ```{r}
 alberta_cod_top_five <-
@@ -1437,7 +1460,7 @@ modelsummary::modelsummary(
 )
 ```
 
-We could use posterior predictive checks to more clearly show that the negative binomial approach is a better choice for this circumstance (@fig-ppcheckpoissonvsbinomial).
+We could use posterior predictive checks, introduced in @sec-inferencewithbayesianmethods, to more clearly show that the negative binomial approach is a better choice for this circumstance (@fig-ppcheckpoissonvsbinomial).
 
 ```{r}
 #| echo: true
