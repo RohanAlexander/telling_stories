@@ -57,17 +57,21 @@ engine: knitr
 
 ## Introduction
 
-Text is all around us. In many cases text is the earliest type of data that we are exposed to. Increases in computational power, the development of new methods, and the enormous availability of text, means that there has been a great deal of interest in using text as data. And they are an exciting option to have. For instance, text analysis of state-run newspapers in African countries can identify manipulation by governments [@Hassan2022]. The analysis of notes in Electronic Health Records (EHR) can improve the efficiency of disease prediction [@jessgronsbell]. And analysis of US congressional records indicates just how much women legislators are interrupted by men [@millersutherland2022].
+Text is all around us. In many cases, text is the earliest type of data that we are exposed to. Increases in computational power, the development of new methods, and the enormous availability of text means that there has been a great deal of interest in using text as data. Using text as data opens up a wide opportunity for unique analyses. For instance:
 
-Earlier approaches to the analysis of text tend to convert words into numbers, divorced of context. They could then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text, which can bring additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, you can do more by knowing that a crocodile could eat you while a tree probably would not.
+- text analysis of state-run newspapers in African countries can identify manipulation by governments [@Hassan2022]; 
+- the analysis of notes in Electronic Health Records (EHR) can improve the efficiency of disease prediction [@jessgronsbell]; and 
+- analysis of US congressional records indicates just how much women legislators are interrupted by men [@millersutherland2022].
+
+Earlier approaches to the analysis of text tend to convert words into numbers, divorced of context. They could then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text, which can bring additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, it is useful to know that that a crocodile could eat you while a tree probably would not.
 
 Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with wide data, insofar as often each variable is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with one variable of words and another of the counts. Considering text as data naturally requires some abstraction from its context. But it is important it is not entirely separated as this can perpetuate historical inequities. For instance, @koenecke2020 find that automated speech recognition systems perform much worse for Black compared with white speakers, and @davidson2019racial find that tweets that use Black American English, which is a specifically defined technical term, are classified at hate speech at higher rates than similar tweets in Standard American English, which again is a technical term.
 
-In this chapter we cover a variety of approaches that enable us to consider text as data. One exciting aspect of text data is that it is typically not generated for the purposes of our analysis. The trade-off is that we typically must do a bunch more work to get it into a form that we can work with. And there are a lot of decisions to be made in the data cleaning and preparation stages.
+In this chapter we cover a variety of approaches that enable us to consider text as data. One exciting aspect of text data is that it is typically not generated for the purposes of our analysis. The trade-off is that we typically must do a bunch more work to get it into a form that we can work with. There are a lot of decisions to be made in the data cleaning and preparation stages.
 
-The larger size of text datasets means that it is especially important to simulate, and start small, when it comes to their analysis. Using text as data is exciting because of the quantity and variety of text that is available to us. In general, dealing with text datasets is messy. There is a lot of cleaning and preparation that is typically required. Often text datasets are large. As such, having a workflow in place, in which you work in a reproducible way, simulating data first, and then clearly communicating your findings becomes critical, if only to keep everything organized in your own mind. Nonetheless, it is an exciting area.
+The larger size of text datasets means that it is especially important to simulate, and start small, when it comes to their analysis. Using text as data is exciting because of the quantity and variety of text that is available to us. In general, dealing with text datasets is messy. There is a lot of cleaning and preparation that is typically required. Often, text datasets are large. As such having a reproducible workflow in place and then clearly communicating your findings becomes critical. Nonetheless, it is an exciting area.
 
-In this chapter we first consider preparing text datasets. We then consider logistic and lasso regression. We finally consider topic models.
+In this chapter we first consider preparing text datasets. We then consider logistic and lasso regression, and finally topic models.
 
 ## Text cleaning and preparation
 
@@ -203,11 +207,11 @@ books_dfm |>
   dfm_remove(stopwords(source = "snowball"))
 ```
 
-When we remove stop words we artificially adjust our dataset. Sometimes there may be a good reason to do that. But it must not be done unthinkingly. For instance, in @sec-farm-data we discussed how sometimes datasets may need to be censored, truncated, or manipulated in other similar ways, to preserve the privacy of respondents. It is possible that the integration of the removal of stop words as a default step in natural language processing was due to computational power, which may have been more limited when these methods were developed. In any case, @jurafskymartin [p. 62] conclude that removing stop words does not improve performance for text classification. And @schofield2017 find that inference from topic models is not improved by the removal of anything other than the most frequent words. If stop words are to be removed, they recommend doing this after topics are constructed.
+When we remove stop words we artificially adjust our dataset. Sometimes there may be a good reason to do that. But it must not be done unthinkingly. For instance, in @sec-farm-data we discussed how sometimes datasets may need to be censored, truncated, or manipulated in other similar ways, to preserve the privacy of respondents. It is possible that the integration of the removal of stop words as a default step in natural language processing was due to computational power, which may have been more limited when these methods were developed. In any case, @jurafskymartin [p. 62] conclude that removing stop words does not improve performance for text classification. Relatedly, @schofield2017 find that inference from topic models is not improved by the removal of anything other than the most frequent words. If stop words are to be removed, they recommend doing this after topics are constructed.
 
 ### Case, numbers, and punctuation
 
-There are times when all we care about is the word, not the case nor punctuation. There are a variety of circumstances in which this may be appropriate. For instance, if the text corpus was particularly messy, or the existence of particular words was informative. We trade-off the loss of much information, for the benefit of making things more simple. We can convert to lower case with `str_to_lower()`, and use `str_replace_all()` to remove punctuation with "[:punct:]", and numbers with "[:digit:]".
+There are times when all we care about is the word, not the case or punctuation. For instance, if the text corpus was particularly messy or the existence of particular words was informative. We trade-off the loss of much information, for the benefit of making things more simple. We can convert to lower case with `str_to_lower()`, and use `str_replace_all()` to remove punctuation with "[:punct:]", and numbers with "[:digit:]".
 
 ```{r}
 bookshelf |>
@@ -275,7 +279,7 @@ books_corpus |>
 
 ### Tuples
 
-A tuple is an ordered list of elements, and in the context of text, it is a series of words. If it is two words then we term this a "bi-gram", three words is a "tri-gram", etc. These are an issue when it comes to text cleaning and preparation because we typically need to separate terms based on a space, and this would result in inappropriate separation. 
+A tuple is an ordered list of elements, and in the context of text, it is a series of words. If it is two words then we term this a "bi-gram", three words is a "tri-gram", etc. These are an issue when it comes to text cleaning and preparation because we typically need to separate terms based on a space. This would result in an inappropriate separation.
 
 This is a clear issue when it comes to place names. For instance, consider "British Columbia", "New Hampshire", "United Kingdom", and "Port Hedland". One way forward is to create a list of such places and then use `str_replace_all()` to add an underbar, for instance, "British_Columbia", "New_Hampshire", "United_Kingdom", and "Port_Hedland". Another option, is to use `tokens_compound()` from `quanteda`.
 
@@ -406,11 +410,11 @@ Again, while this is a common step in using text as data, @schofield2017understa
 
 ### Duplication
 
-Duplication is a major concern with text datasets because of their size. @bandy2021addressing showed that around 30 per cent of the data were inappropriately duplicated in a large text dataset commonly used in computer science. And @schofield2017quantifying show that this is a major concern and could substantially affect results. However, it can be a subtle and difficult to diagnose problem. For instance, in @sec-its-just-a-linear-model when we considered counts of page numbers for various authors in the context of Poisson regression, we could easily have accidentally included each Shakespeare entry twice because not only are there entries for each play, but also many anthologies that contained all of them. Careful consideration of our dataset identified the issue, but that would be difficult at scale.
+Duplication is a major concern with text datasets because of their size. For instance, @bandy2021addressing showed that around 30 per cent of the data were inappropriately duplicated in a large text dataset commonly used in computer science, and @schofield2017quantifying show that this is a major concern and could substantially affect results. However, it can be a subtle and difficult to diagnose problem. For instance, in @sec-its-just-a-linear-model when we considered counts of page numbers for various authors in the context of Poisson regression, we could easily have accidentally included each Shakespeare entry twice because not only are there entries for each play, but also many anthologies that contained all of them. Careful consideration of our dataset identified the issue, but that would be difficult at scale.
 
 
 
-## TF-IDF
+## Term Frequency-Inverse Document Frequency (TF-IDF)
 
 We now use `astrologer` [@astrologer], which is a dataset of horoscopes to explore a real dataset. This package is not on CRAN, so we need to install it using `devtools` [@citeDevtools].
 
@@ -724,9 +728,9 @@ horoscopes_counts_by_word_tf_idf |>
 
 ## Topic models
 
-Sometimes we have a statement, and we want to know what it is about. Sometimes this will be easy, but we do not always have titles for statements, and even when we do, sometimes we do not have titles that define topics in a well-defined and consistent way. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA) method of @Blei2003latent, as implemented by `stm` [@stm].
+Topic models are useful when we have many statements and we want to create groups based on which sentences that use similar words. We consider those groups of similar words to define topics. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA) method of @Blei2003latent, as implemented by `stm` [@stm]. For clarity, in the context of this chapter, LDA refers to latent Dirichlet allocation and not Linear Discriminant Analysis, although this is another common subject associated with the acronym LDA.
 
-The key assumption behind the LDA method is that each statement, "a document", is made by a person who decides the topics they would like to talk about in that document, and who then chooses words, "terms", that are appropriate to those topics. A topic could be thought of as a collection of terms, and a document as a collection of topics. The topics are not specified *ex ante*; they are an outcome of the method. Terms are not necessarily unique to a particular topic, and a document could be about more than one topic. This provides more flexibility than other approaches such as a strict word count method. The goal is to have the words found in documents group themselves to define topics.
+The key assumption behind the LDA method is that for each statement, a document, is made by a person who decides the topics they would like to talk about in that document, and who then chooses words, terms, that are appropriate to those topics. A topic could be thought of as a collection of terms, and a document as a collection of topics. The topics are not specified *ex ante*; they are an outcome of the method. Terms are not necessarily unique to a particular topic, and a document could be about more than one topic. This provides more flexibility than other approaches such as a strict word count method. The goal is to have the words found in documents group themselves to define topics.
 
 LDA considers each statement to be a result of a process where a person first chooses the topics they want to speak about. After choosing the topics, the person then chooses appropriate words to use for each of those topics. More generally, the LDA topic model works by considering each document as having been generated by some probability distribution over topics. For instance, if there were five topics and two documents, then the first document may be comprised mostly of the first few topics; the other document may be mostly about the final few topics (@fig-topicsoverdocuments).
 
@@ -842,7 +846,7 @@ By way of background, the Dirichlet distribution is a variation of the beta dist
 
 After the documents are created, they are all that we can analyze. The term usage in each document is observed, but the topics are hidden, or "latent". We do not know the topics of each document, nor how terms defined the topics. That is, we do not know the probability distributions of @fig-topicsoverdocuments or @fig-topicsoverterms. In a sense we are trying to reverse the document generation process---we have the terms, and we would like to discover the topics.
 
-If the earlier process around how the documents were generated is assumed and we observe the terms in each document, then we can obtain estimates of the topics [@SteyversGriffiths2006]. The outcomes of the LDA process are probability distributions and these define the topics. Each term will be given a probability of being a member of a particular topic, and each document will be given a probability of being about a particular topic. 
+If we observe the terms in each document, then we can obtain estimates of the topics [@SteyversGriffiths2006]. The outcomes of the LDA process are probability distributions. It is these distributions that define the topics. Each term will be given a probability of being a member of a particular topic, and each document will be given a probability of being about a particular topic. 
 
 <!-- That is, we are trying to calculate the posterior distribution of the topics given the terms observed in each document (@blei2012, p.7):  -->
 <!-- $$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N} | w_{1:D, 1:N}) = \frac{p\left(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}\right)}{p(w_{1:D, 1:N})}.$$ -->
