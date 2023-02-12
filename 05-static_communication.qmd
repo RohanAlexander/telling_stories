@@ -21,8 +21,10 @@ engine: knitr
 
 **Key concepts and skills**
 
-- Only through visualization can we get a true sense of our data. Thus, we need to be comfortable with a variety of graph types, including: bar charts, scatterplots, line plots, and histograms. We can even consider a map to be a type of graph, especially after geocoding our data.
-- We also must know when to summarize data, for instance using tables. Typical use cases for this include showing part of a dataset, summary statistics, and regression results. 
+- Visualization is one way to get a sense of our data and to communicate this  to the reader.
+- We need to be comfortable with a variety of graph types, including: bar charts, scatterplots, line plots, and histograms. We can even consider a map to be a type of graph, especially after geocoding our data.
+- It is critical to plot the observations of a dataset.
+- We must also know when to summarize data, for instance using tables. Typical use cases for this include showing part of a dataset, summary statistics, and regression results. 
 
 
 **Key packages and functions**
@@ -88,7 +90,7 @@ engine: knitr
 
 ## Introduction
 
-When telling stories with data, we would like to convince our our reader with data. The paper is the medium, and the data are the message. To that end, we want to show our reader the data that allowed us to come to our understanding of the story. We use graphs, tables, and maps to help achieve this. 
+When telling stories with data, we would like the data to do much of the work of convincing our reader. The paper is the medium, and the data are the message. To that end, we want to show our reader the data that allowed us to come to our understanding of the story. We use graphs, tables, and maps to help achieve this. 
 
 The critical task is to show the actual observations that underpin our analysis. For instance, if our dataset consists of 2,500 responses to a survey, then at some point in the paper we would expect a graph that contains, or represents, all 2,500 observations, for every variable of interest. To do this we build graphs using `ggplot2` [@citeggplot] which is part of the `tidyverse` [@tidyverse]. We will go through a variety of different options here including bar charts, scatterplots, line plots, and histograms.
 
@@ -107,7 +109,7 @@ Graphs are a critical aspect of compelling data stories. They allow us to see bo
 The most important objective of a graph is to convey as much of the actual data, and its context, as possible.
 In a way, graphing is an information encoding process where we use purposeful marks to convey information to our audience. The audience must decode these marks. The success of our graph depends on how much information is lost in this process. Here, decoding is the critical aspect [@elementsofgraphingdata, p. 221] which means that we must focus on creating effective graphs that is suitable for our specific audience.
 
-To see why graping the actual data is important, consider a dataset from `datasauRus` [@citedatasauRus]. After installing and loading the necessary packages, we can take a quick look at the dataset.
+To see why graphing the actual data is important, consider a dataset from `datasauRus` [@citedatasauRus]. After installing and loading the necessary packages, we can take a quick look at the dataset.
 
 ```{r}
 #| eval: false
@@ -134,8 +136,7 @@ The dataset consists of values for "x" and "y", which should be plotted on the x
 #| tbl-cap: "Mean and standard deviation for four 'datasaurus' datasets"
 #| message: false
 
-# From Julia Silge:
-# https://juliasilge.com/blog/datasaurus-multiclass/
+# Based on: https://juliasilge.com/blog/datasaurus-multiclass/
 datasaurus_dozen |>
   filter(dataset %in% c("dino", "star", "away", "bullseye")) |>
   group_by(dataset) |>
@@ -239,17 +240,6 @@ tidy_anscombe |>
   labs(colour = "Dataset")
 ```
 
-<!-- What's the point of the following paragraph? -->
-<!-- It's factually correct but it doesn't feel like it integrates well into the preceding parts of the intro. -->
-::: {.content-visible when-format="pdf"}
-Graphs can be ugly, bad, and wrong [@wilke2019fundamentals]. Initially, it is enough to try to avoid such shortcomings, but in practice one quickly wants to move beyond that. There are many different `ggplot2` options and a helpful reference sheet is provided by [Isabella Benabaue](https://isabella-b.com/blog/ggplot2-theme-elements-reference/). And [Yan Holtz](https://www.dataviz-inspiration.com) provides examples of beautiful and impactful data visualization. As mentioned in the ["R Essentials" Online Appendix](https://tellingstorieswithdata.com/20-r_essentials.html) `ggplot2` implements a grammar of graphics, which describes a plot as comprising data with aesthetic attributes such as layer, scales, coordinates, facets, and themes [@citeggplot].
-:::
-
-::: {.content-visible unless-format="pdf"}
-Graphs can be ugly, bad, and wrong [@wilke2019fundamentals]. Initially, it is enough to try to avoid such shortcomings, but in practice one quickly wants to move beyond that. There are many different `ggplot2` options and a helpful reference sheet is provided by [Isabella Benabaue](https://isabella-b.com/blog/ggplot2-theme-elements-reference/). And [Yan Holtz](https://www.dataviz-inspiration.com) provides examples of beautiful and impactful data visualization. As mentioned in @sec-r-essentials `ggplot2` implements a grammar of graphics, which describes a plot as comprising data with aesthetic attributes such as layer, scales, coordinates, facets, and themes [@citeggplot].
-:::
-
-
 ### Bar charts
 
 We typically use a bar chart when we have a categorical variable that we want to focus on. We saw an example of this in @sec-fire-hose where we constructed a graph of the number of occupied beds. The geom that we primarily use is `geom_bar()`, but there are many variants to cater for specific situations. To illustrate the use of bar charts, we use a dataset from the 1997-2001 British Election Panel Study that was put together by @fox2006effect.
@@ -316,12 +306,6 @@ head(beps)
 The dataset consists of which party the respondent supports, along with various demographic, economic, and political variables. In particular, we have the age of the respondents. We begin by creating age-groups from the ages, and making a bar chart showing the frequency of each age-group using `geom_bar()` (@fig-bepfitst).
 
 ```{r}
-#| label: fig-bepfitst
-#| eval: true
-#| fig-cap: "Distribution of ages in the 1997-2001 British Election Panel Study"
-#| warning: false
-#| echo: true
-
 beps <-
   beps |>
   mutate(
@@ -344,22 +328,31 @@ beps <-
       )
     )
   )
+```
+
+```{r}
+#| label: fig-bepfitst
+#| eval: true
+#| fig-cap: "Distribution of ages in the 1997-2001 British Election Panel Study"
+#| echo: true
 
 beps |>
   ggplot(mapping = aes(x = age_group)) +
   geom_bar() +
   theme_minimal(base_size = 16) +
-  labs(x = 'Age', y = 'Observations')
+  labs(x = "Age", y = "Observations")
 ```
 
-By default, `geom_bar()` creates a count of the number of times each age-group appears in the dataset. It does this because the default "stat" for `geom_bar()` is "count", which saves us from having to create that statistic ourselves. But if we had already constructed a count (for instance, `beps |> count(age)`), then we could also specify a column of values for the y-axis and use `stat = "identity"`.
-<!-- I would prefer using `geom_col()` in that case.  -->
-<!-- This will also help you to avoid talking about the relationship between "stat" and "geom".  -->
-<!-- If someone is interested in those details R4DS explains them. -->
-<!-- One rarely changes the default "stat" of a geom anyway. -->
-<!-- Also, an example of `geom_col()` would be good then. -->
-<!-- You only hint at a potential situation where that's useful with `beps |> count(age)` but it's just as easy to just show that example. -->
+By default, `geom_bar()` creates a count of the number of times each age-group appears in the dataset. It does this because the default "stat" for `geom_bar()` is "count", which saves us from having to create that statistic ourselves. But if we had already constructed a count (for instance, `beps |> count(age_group)`), then we could also specify a column of values for the y-axis and use `geom_col()` instead. @r4ds explains the details of this.
 
+```{r}
+beps |> 
+  count(age_group) |> 
+  ggplot(mapping = aes(x = age_group, y = n)) +
+  geom_col() +
+  theme_minimal(base_size = 16) +
+  labs(x = "Age group", y = "Number of observations")
+```
 
 We may also like to consider different groupings of the data to get a different insight. For instance, we can look at which party the respondent supports, by age-group (@fig-bepsecond).
 
@@ -368,11 +361,10 @@ We may also like to consider different groupings of the data to get a different 
 #| eval: true
 #| fig-cap: "Distribution of age-group, and vote preference, in the 1997-2001 British Election Panel Study"
 #| label: fig-bepsecond
-#| warning: false
 
 beps |>
   ggplot(mapping = aes(x = age_group, fill = vote)) +
-  geom_bar() 
+  geom_bar()
 ```
 
 By default, these different groups are stacked, but they can be placed side-by-side with `position = "dodge2"` (@fig-bepthird).
@@ -541,12 +533,10 @@ beps |>
         )
 ```
 
-This means that we now have three ways to combine multiple graphs: sub-figures, facets, and `patchwork`. They are useful in different circumstances. For instance, we often use 
+This means that we now have three ways to combine multiple graphs: sub-figures, facets, and `patchwork`. They are useful in different circumstances: 
 
-- sub-figures (covered in @sec-reproducible-workflows) when we are considering different variables, 
-
-- facets when considering different values of a categorical variable, and 
-
+- sub-figures (covered in @sec-reproducible-workflows) when we are considering different variables;
+- facets when considering different values of a categorical variable; and 
 - `patchwork` when interested in bringing together entirely different graphs.
 
 We now turn to the colors used in the graph. There are a variety of different ways to change the colors. The many palettes available from `RColorBrewer` [@RColorBrewer], can be specified using `scale_fill_brewer()`, and in the case of `viridis` [@viridis], we can specify the palettes using `scale_fill_viridis()`. Additionally, `viridis` is particularly focused on color-blind palettes (@fig-usecolor).
@@ -614,8 +604,6 @@ beps |>
   scale_fill_viridis(discrete = TRUE,
                      option = "magma")
 ```
-
-Finally, with increasing awareness of the issue, there are now many options for colorblind-friendly palettes. One that is well integrated with `ggplot2` is `scico` [@scico]. 
 
 In addition to pre-built palettes, we can also build our own palette. That said, color is something to be considered with a great deal of care and it should only be used to increase the amount of information that is communicated [@elementsofgraphingdata]. Color should not be added to graphs unnecessarily---that is to say, it must play some role. Typically, that role is to distinguish different groups, which implies making the colors dissimilar. Color may also be appropriate if there is some relationship between the color and the variable.
 For instance, if making a graph of the price of mangoes and raspberries, then it could help the reader if the colors were yellow and red, respectively [@franconeri2021science, p. 121].
@@ -738,11 +726,7 @@ world_bank_data |>
 
 As with bar charts, we can change the theme, and update the labels (@fig-scattorplot-2). Also, we would normally not need both a caption and a title.
 
-
-Here we use "color" instead of "fill" because we are using dots rather than bars. This also then slightly affects how we change the palette (@fig-scatterplotnicercolor). 
-
-<!-- When points are set to shape = 21 for example, they have both `fill` and `color` aesthetics. -->
-<!-- Saying, that points can't have fill is a tiny bit misleading and might be something that could be addressed in a footnote. -->
+Here we use "color" instead of "fill" because we are using dots rather than bars. This also then slightly affects how we change the palette (@fig-scatterplotnicercolor). That said, with particular types of dots, for instance `shape = 21`, it is possible to have both `fill` and `color` aesthetics.
 
 ```{r}
 #| echo: true
@@ -765,12 +749,12 @@ world_bank_data |>
     color = "Country"
   ) +
   theme(legend.position = "bottom") +
-  scale_color_brewer(palette = "Blues")
+  scale_color_brewer(palette = "Set1")
 
 # Panel (b)
 world_bank_data |>
-  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
-  geom_point() +
+  ggplot(mapping = aes(x = gdp_growth, y = inflation)) +
+  geom_point(shape = 21, aes(fill = country), color = "black") +
   theme_minimal() +
   labs(
     x = "GDP growth",
@@ -810,21 +794,14 @@ world_bank_data |>
 The points of a scatterplot sometimes overlap. We can address this situation in a variety of ways (@fig-alphajitter): 
 
 1) Adding a degree of transparency to our dots with "alpha" (@fig-alphajitter-1). The value for "alpha" can vary between 0, which is fully transparent, and 1, which is completely opaque. 
-2) Adding a small amount of noise, which slightly moves the points, using `geom_jitter()` (@fig-alphajitter-2). By default, the movement is uniform in both directions, but we can specify which direction movement occurs with "width" or "height". The decision between these two options turns on the degree to which exact accuracy matters, and the number of points: it is often useful to use `geom_jitter()` when you want to highlight the relative density of points and not necessarily the exact value of individual points. When using `geom_jitter()` it is a good idea to set a seed for reproducibility.
-<!-- Were seeds discussed in the previous chapters? -->
-3) Using `geom_beeswarm()` from `ggbeeswarm` [@ggbeeswarm] to attempt to add more information about the density than is available from a jittered graph (@fig-alphajitter-3).
-<!-- I can't really tell how beeswarms help here. I know them only for situations when the x- or y-aesthetic is used for categorical  variables.  -->
-<!-- See examples in  https://github.com/eclarke/ggbeeswarm -->
-
+2) Adding a small amount of noise, which slightly moves the points, using `geom_jitter()` (@fig-alphajitter-2). By default, the movement is uniform in both directions, but we can specify which direction movement occurs with "width" or "height". The decision between these two options turns on the degree to which exact accuracy matters, and the number of points: it is often useful to use `geom_jitter()` when you want to highlight the relative density of points and not necessarily the exact value of individual points. When using `geom_jitter()` it is a good idea to set a seed, as introduced in @sec-fire-hose, for reproducibility.
 
 ```{r}
 #| fig-cap: "Relationship between inflation and GDP growth for Australia, Ethiopia, India, and the US"
 #| label: fig-alphajitter
 #| warning: false
-#| fig-subcap: ["Changing the alpha setting", "Using jitter", "Using beeswarm"]
+#| fig-subcap: ["Changing the alpha setting", "Using jitter"]
 #| layout-ncol: 2
-
-library(ggbeeswarm)
 
 set.seed(853)
 
@@ -859,26 +836,9 @@ world_bank_data |>
     color = "Country",
     caption = "Data source: World Bank."
   )
-
-# Panel (c)
-world_bank_data |>
-  ggplot(mapping = aes(
-    x = gdp_growth,
-    y = inflation,
-    color = country
-  )) +
-  geom_beeswarm() +
-  theme_minimal() +
-  labs(
-    x = "GDP growth",
-    y = "Inflation",
-    color = "Country",
-    caption = "Data source: World Bank."
-  )
 ```
 
-A common use case for a scatterplot is to illustrate a relationship between two continuous variables. It can be useful to add a "summary" line using `geom_smooth()` (@fig-scattorplottwo). By default, this will use locally estimated scatterplot smoothing (LOESS) for datasets with less than 1,000 observations, but we can specify the relationship using "method", change the color with "color" and add or remove standard errors with "se". 
-<!-- Will the reader understand these technical terms at this point in the book? It feels odd to  mention LOESS for less than 1000 obs here. I imagine that a beginner would not know what to do with this information. The same can be set for standard errors. -->
+A common use case for a scatterplot is to illustrate a relationship between two continuous variables. It can be useful to add a "summary" line using `geom_smooth()` (@fig-scattorplottwo). We can specify the relationship using "method", change the color with "color" and add or remove standard errors with "se". 
 A commonly used "method" is `lm`, which computes and plots a simple linear regression line similar to using the `lm()` function [@citeR]. Using `geom_smooth()` adds a layer to the graph, and so it inherits aesthetics from `ggplot()`. For instance, that is why we have one line for each country in @fig-scattorplottwo-1 and @fig-scattorplottwo-2. We could overwrite that by specifying a particular color (@fig-scattorplottwo-3). There are situation where other types of fitted lines such as splines might be preferred.
 
 ```{r}
@@ -951,20 +911,6 @@ We can use a line plot when we have variables that should be joined together, fo
 world_bank_data |>
   filter(country == "United States") |>
   ggplot(mapping = aes(x = year, y = gdp_growth)) +
-  geom_line()
-```
-
-As before, we can adjust the theme, say with `theme_minimal()` and labels with `labs()` (@fig-lineplottwo).
-<!-- Is it really necessary to mention this over and over again? I think at this point it's okay to just use theme_minimal() and skip one default output. -->
-
-```{r}
-#| fig-cap: "US GDP growth (1961-2020)"
-#| label: fig-lineplottwo
-#| warning: false
-
-world_bank_data |>
-  filter(country == "United States") |>
-  ggplot(mapping = aes(x = year, y = gdp_growth)) +
   geom_line() +
   theme_minimal() +
   labs(
@@ -995,8 +941,7 @@ world_bank_data |>
 
 The Phillips curve is the name given to plot of the relationship between unemployment and inflation over time. An inverse relationship is sometimes found in the data, for instance in the UK between 1861 and 1957 [@phillips1958relation]. We have a variety of ways to investigate this relationship in our data, including:
 
-1) Adding a second line to our graph. For instance, we could add inflation (@fig-notphillips). This may require us to use `pivot_longer()` to ensure that the data are in tidy format.
-<!-- Will readers understand this at this point in the book? pivot_longer() is a hard function to understand for beginners. I suggest linking to https://github.com/gadenbuie/tidyexplain/blob/main/images/tidyr-pivoting.gif -->
+1) Adding a second line to our graph. For instance, we could add inflation (@fig-notphillips). This requires us to use `pivot_longer()`, which is discussed in @sec-r-essentials, to ensure that the data are in tidy format.
 2) Using `geom_path()` to link values in the order they appear in the dataset. In @fig-phillipsmyboy we show a Phillips curve for the US between 1960 and 2020. @fig-phillipsmyboy does not appear to show any clear relationship between unemployment and inflation.
 
 ```{r}
@@ -1048,11 +993,7 @@ world_bank_data |>
 
 ### Histograms
 
-A histogram is useful to show the shape of the distribution of a continuous variable. They construct counts of the number of observations in different subsets of the support, called "bins". 
-<!-- Subsets of the support. As a mathematician, I am okay with that description but I'm not sure whether everyone will understand that.
-Maybe write something more descriptive: The full range of the data values is split into equal intervals/bins and the histogram counts how many observations fall into which bin.
--->
-In @fig-hisogramone we examine the distribution of GDP in Ethiopia.
+A histogram is useful to show the shape of the distribution of a continuous variable. The full range of the data values is split into equal intervals called "bins" and the histogram counts how many observations fall into which bin. In @fig-hisogramone we examine the distribution of GDP in Ethiopia.
 
 ```{r}
 #| fig-cap: "Distribution of GDP growth in Ethiopia (1960-2020)"
@@ -1152,17 +1093,13 @@ world_bank_data |>
   )
 ```
 
-<!-- I'm not sure that the average reader identifies huge rectangle as "smooth". -->
-Histograms smooth data, and the number of bins affects how much smoothing occurs. When there are only two bins then the data are very smooth, but we lose a great deal of accuracy. More specifically, "the histogram estimator is a piecewise constant function where the height of the function is proportional to the number of observations in each bin" [@wasserman, p. 303]. Too few bins result in a biased estimator, while too many bins results in an estimator with high variance. Our decision as to the number of bins, or their width, is concerned with trying to balance bias and variance. This will depend on a variety of concerns including the subject matter and the goal [@elementsofgraphingdata, p. 135].
+Histograms can be thought of as locally averaging data, and the number of bins affects how much of this occurs. When there are only two bins then the data become very smooth, but we lose a great deal of accuracy. Too few bins results in bias, while too many bins results in high variance [@wasserman, p. 303]. Our decision as to the number of bins, or their width, is concerned with trying to balance bias and variance. This will depend on a variety of concerns including the subject matter and the goal [@elementsofgraphingdata, p. 135].
 
 Finally, while we can use "fill" to distinguish between different types of observations, it can get quite messy. It is usually better to: 
 
 1. showing the distribution with columns and instead trace the outline of the distribution using `geom_freqpoly()` (@fig-different-obs-1) 
-
 2. to build it up using dots with `geom_dotplot()` (@fig-different-obs-2); or
-
 3. add transparency, especially if the differences are more stark (@fig-different-obs-3).
-<!-- But you also need to set `position = "identity"`. Otherwise, the blocks will be transparent but still stacked on each other (just like in Panel c) -->
 
 ```{r}
 #| fig-cap: "Distribution of GDP growth in four countries (1960-2020)"
@@ -1202,7 +1139,7 @@ world_bank_data |>
 world_bank_data |>
   filter(country %in% c("India", "United States")) |>
   ggplot(mapping = aes(x = gdp_growth, fill = country)) +
-  geom_histogram(alpha = 0.5) +
+  geom_histogram(alpha = 0.5, position = "identity") +
   theme_minimal() +
   labs(
     x = "GDP",
@@ -1313,14 +1250,12 @@ It is worth pointing out that even for many of these applications, a graph may b
 
 ### Showing part of a dataset
 
-We illustrate showing part of a dataset using `kable()` from `knitr` and drawing on `kableExtra` for enhancement. We use the World Bank dataset that we downloaded earlier.
+We illustrate showing part of a dataset using `kable()` from `knitr` and drawing on `kableExtra` for enhancement. We use the World Bank dataset that we downloaded earlier (unemployment data are not available for every year for every country).
 
 ```{r}
 library(knitr)
 head(world_bank_data)
 ```
-
-<!-- Why do we look at a  table with all NAs in one column? -->
 
 To begin, we can display the first ten rows with the default `kable()` settings.
 
@@ -1459,39 +1394,40 @@ world_bank_data |>
 ```
 
 
-
-Another especially nice way to build tables is to use `gt` [@citegt].
-
-```{r}
-#| label: gtfirst
-
-library(gt)
-
-world_bank_data |>
-  slice(1:10) |>
-  gt()
-```
-
-We can add a caption and more informative column labels (@tbl-dsdfweasdf).
-
-```{r}
-#| label: tbl-dsdfweasdf
-#| tbl-cap: "First ten rows of a dataset of economic indicators for Australia, Ethiopia, India, and the US"
-
-world_bank_data |>
-  slice(1:10) |>
-  gt() |>
-  cols_label(
-    country = "Country",
-    year = "Year",
-    inflation = "Inflation",
-    gdp_growth = "GDP growth",
-    population = "Population",
-    unemployment_rate = "Unemployment rate"
-  )
-```
-
 <!-- This example is not very convincing that gt is a "especially nice way to build tables". -->
+
+<!-- Another especially nice way to build tables is to use `gt` [@citegt]. -->
+
+<!-- ```{r} -->
+<!-- #| label: gtfirst -->
+
+<!-- library(gt) -->
+
+<!-- world_bank_data |> -->
+<!--   slice(1:10) |> -->
+<!--   gt() -->
+<!-- ``` -->
+
+<!-- We can add a caption and more informative column labels (@tbl-dsdfweasdf). -->
+
+<!-- ```{r} -->
+<!-- #| label: tbl-dsdfweasdf -->
+<!-- #| tbl-cap: "First ten rows of a dataset of economic indicators for Australia, Ethiopia, India, and the US" -->
+
+<!-- world_bank_data |> -->
+<!--   slice(1:10) |> -->
+<!--   gt() |> -->
+<!--   cols_label( -->
+<!--     country = "Country", -->
+<!--     year = "Year", -->
+<!--     inflation = "Inflation", -->
+<!--     gdp_growth = "GDP growth", -->
+<!--     population = "Population", -->
+<!--     unemployment_rate = "Unemployment rate" -->
+<!--   ) -->
+<!-- ``` -->
+
+
 
 ### Communicating summary statistics
 
@@ -1611,7 +1547,7 @@ modelsummary(
 ## Maps
 
 In many ways maps can be thought of as another type of graph, where the x-axis is latitude, the y-axis is longitude, and there is some outline or a background image. It is possible that they are the oldest and best understood type of chart [@karsetn, p. 1].
-Some ggplot pseudocode to create a map could look something like this.
+Some `ggplot2` "pseudocode" to create a map could look something like this.
 
 ```{r}
 #| eval: false
@@ -1636,10 +1572,8 @@ ggplot() +
   )
 ```
 
-And while there are some small complications, it is mostly as straight-forward as that.
-<!-- Not sure that I agree with that.  -->
-<!-- It shouldn't be taken too lightly that different map projections lead to different maps. -->
-<!-- Maybe mention that in a footnote and link to some resource? -->
+We will be able to get maps working in a manner that is mostly as straight-forward as that. That said, it is not to be taken too lightly that different map projections lead to different maps. Things quickly get complicated!
+
 The first step is to get some data. There is some geographic data built into `ggplot2`, and there is additional information in the "world.cities" dataset from `maps`. 
 
 ```{r}
@@ -1706,10 +1640,9 @@ In `ggmap`, we use an open-source option for our tile, Stamen Maps. And we use p
 
 ### Australian polling places
 
-In Australia, people have to go to so-called booths in order to vote. Because the booths have coordinates (latitude and longitude), we can plot them in a map. One reason we may like to do that is to notice voting patterns w.r.t. geographies.
+In Australia, people have to go to "booths" in order to vote. Because the booths have coordinates (latitude and longitude), we can plot them in a map. One reason we may like to do that is to notice voting patterns with respect to geographies.
 
-To get started we need to get a tile. We are going to use `ggmap` to get a tile from Stamen Maps, which builds on [OpenStreetMap](openstreetmap.org). The main argument to this function is to specify a bounding box which provides the coordinates of the edges that you are interested in. 
-<!-- Maybe describe what a bounding box is? -->
+To get started we need to get a tile. We are going to use `ggmap` to get a tile from Stamen Maps, which builds on [OpenStreetMap](openstreetmap.org). The main argument to this function is to specify a bounding box. A bounding box is the coordinates of the edges that you are interested in. 
 This requires two latitudes and two longitudes - one for each corner of the bounding box.
 
 It can be useful to use Google Maps, or other mapping platform, to find the coordinate values that you need. In this case we have provided it with coordinates such that it will be centered around Australia's capital Canberra.
