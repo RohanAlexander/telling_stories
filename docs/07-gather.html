@@ -1075,14 +1075,14 @@ Oh, you think we have good data on that!
 <p>That all said, web scraping is an invaluable source of data. But they are typically datasets that can be created as a by-product of someone trying to achieve another aim. And web scraping imposes a cost on the website host, and so it is important to reduce this to the extent possible. For instance, a retailer may have a website with their products and their prices. That has not been created deliberately as a source of data, but we can scrape it to create a dataset. The following principles are useful to guide web scraping.</p>
 <ol type="1">
 <li>Avoid it. Try to use an API wherever possible.</li>
-<li>Abide by their desires. Some websites have a “robots.txt” file that contains information about what they are comfortable with scrapers doing, for instance <a href="https://www.google.com/robots.txt">Google’s</a>.</li>
+<li>Abide by their desires. Some websites have a “robots.txt” file that contains information about what they are comfortable with scrapers doing. In general, if it exists, a “robots.txt” file can be accessed by appending “robots.txt” to the base URL. For instance, the “robots.txt” file for https://www.google.com, can be accessed at https://www.google.com/robots.txt. Note particularly which folders are listed against “Disallow:”. These are the folders that the website would not like to be scraped. And also note any instances of “Crawl-delay:”, which is the number of seconds the website would like us to wait between visits.</li>
 <li>Reduce the impact.
 <ul>
 <li>Firstly, slow down the scraper, for instance, rather than having it visit the website every second, slow it down using <code>sys.sleep()</code>. If we only need a few hundred files, then why not just have it visit the website a few times a minute, running in the background overnight?</li>
 <li>Secondly, consider the timing of when we run our scraper. For instance, if we are scraping a retailer then maybe we should set our script to run from 10pm through to the morning, when fewer customers are likely using the site. Similarly, if it is a government website and they have a big monthly release, then it might be polite to avoid that day.</li>
 </ul></li>
 <li>Take only what is needed. For instance, we do not need to scrape the entire of Wikipedia if all we need is the names of the ten largest cities in Croatia. This reduces the impact on the website, and allows us to more easily justify our actions.</li>
-<li>Only scrape once. This means we should save everything as we go so that we do not have to re-collect data. Similarly, once we have the data, we should keep that separate and not modify it. If we need data over time then we will need to go back, but this is different to needlessly re-scraping a page.</li>
+<li>Only scrape once. This means we should save everything as we go so that we do not have to re-collect data when the scraper inevitably fails at some point. For instance, we will typically spend a lot of time getting a scraper working on one page, but typically the page structure will change at some point and the scraper will need to be updated. Similarly, once we have the data, we should save that raw data separately to the modified data. If we need data over time then we will need to go back, but this is different to needlessly re-scraping a page.</li>
 <li>Do not republish the pages that were scraped (this contrasts with datasets that we create from it).</li>
 <li>Take ownership and ask permission if possible. At a minimum level all scripts should have our contact details in them. Depending on the circumstances, it may be worthwhile asking for permission before you scrape.</li>
 </ol>
@@ -1092,17 +1092,13 @@ Oh, you think we have good data on that!
 <li>save the website and then open it with a text editor rather than a browser.</li>
 </ol>
 <p>HTML/CSS is a markup language comprised of matching tags. If we want text to be bold, then we would use something like:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode css code-with-copy"><code class="sourceCode css"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>&lt;b<span class="op">&gt;</span>My bold text&lt;/b<span class="op">&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
+<pre class="text"><code>&lt;b&gt;My bold text&lt;/b&gt;</code></pre>
 <p>Similarly, if we want a list, then we start and end the list as well as indicating each item.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode css code-with-copy"><code class="sourceCode css"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>&lt;ul<span class="op">&gt;</span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  &lt;li<span class="op">&gt;</span>Learn webscraping&lt;/li<span class="op">&gt;</span></span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  &lt;li<span class="op">&gt;</span>Do data science&lt;/li<span class="op">&gt;</span></span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  &lt;li<span class="op">&gt;</span>Profit&lt;/li<span class="op">&gt;</span></span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>&lt;/ul<span class="op">&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
+<pre class="text"><code>&lt;ul&gt;
+  &lt;li&gt;Learn webscraping&lt;/li&gt;
+  &lt;li&gt;Do data science&lt;/li&gt;
+  &lt;li&gt;Profit&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
 <p>When scraping we will search for these tags.</p>
 <p>To get started, we can pretend that we obtained some HTML from a website, and that we want to get the name from it. We can see that the name is in bold, so we want to focus on that feature and extract it.</p>
 <div class="cell">
@@ -1139,7 +1135,7 @@ Oh, you think we have good data on that!
 <pre><code>[1] "Rohan"</code></pre>
 </div>
 </div>
-<p>If you end up doing a lot of web scraping, then <code>polite</code> <span class="citation" data-cites="polite">(<a href="99-references.html#ref-polite" role="doc-biblioref">Perepolkin 2022</a>)</span> may be helpful to better optimize your workflow.</p>
+<p>Web scraping is an exciting source of data, and we will now go through some examples. But it is important to know that, in contrast to these examples, information is not usually all on one page. Web scraping quickly becomes a quite difficult art form that requires a lot of practice. For instance, it is important to distinguish between an index scrape and a contents scrape. The former is scraping to build the list of URLs that have the content you want, while the latter is actually getting the content from those URLs. An example is provided by <span class="citation" data-cites="luscombe2022jumpstarting">Luscombe, Duncan, and Walby (<a href="99-references.html#ref-luscombe2022jumpstarting" role="doc-biblioref">2022</a>)</span>. If you end up doing a lot of web scraping, then <code>polite</code> <span class="citation" data-cites="polite">(<a href="99-references.html#ref-polite" role="doc-biblioref">Perepolkin 2022</a>)</span> may be helpful to better optimize your workflow. And using GitHub Actions to allow for larger and slower scrapes over time.</p>
 <section id="book-information" class="level3" data-number="7.3.1">
 <h3 data-number="7.3.1" class="anchored" data-anchor-id="book-information"><span class="header-section-number">7.3.1</span> Book information</h3>
 <p>In this case study we will scrape a list of books available <a href="https://rohansbooks.com">here</a>. We will then clean the data and look at the distribution of the first letters of author surnames. It is slightly more complicated than the example above, but the underlying approach is the same: download the website, look for the nodes of interest, extract the information, clean it.</p>
@@ -1402,7 +1398,7 @@ Oh, you think we have good data on that!
 </div>
 </div>
 <p>As with the earlier case study, we are looking for patterns in the HTML that we can use to help us get closer to the data that we want. This is an iterative process and requires a lot of trial and error. Even simple examples will take time.</p>
-<p>One tool that may help is the <a href="https://rvest.tidyverse.org/articles/articles/selectorgadget.html">SelectorGadget</a>. This allows us to pick and choose the elements that we want, and then gives us the input for <code>html_element()</code> (<a href="#fig-selectorgadget">Figure&nbsp;<span>7.9</span></a>).</p>
+<p>One tool that may help is the <a href="https://rvest.tidyverse.org/articles/articles/selectorgadget.html">SelectorGadget</a>. This allows us to pick and choose the elements that we want, and then gives us the input for <code>html_element()</code> (<a href="#fig-selectorgadget">Figure&nbsp;<span>7.9</span></a>). By default, SelectorGadget uses CSS selectors. These are not the only way to specify the location of the information you want, and using an alternative, such as XPath, can be a useful option to consider.</p>
 <div id="fig-selectorgadget" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="figures/07-wikipedia_selectorgadget_screenshot.png" class="img-fluid figure-img" style="width:75.0%"></p>
@@ -2853,6 +2849,9 @@ Kirkegaard, Emil, and Julius Bjerrekær. 2016. <span>“The OKCupid Dataset: A V
 <div id="ref-luscombe2021algorithmic" class="csl-entry" role="doc-biblioentry">
 Luscombe, Alex, Kevin Dick, and Kevin Walby. 2021. <span>“Algorithmic Thinking in the Public Interest: Navigating Technical, Legal, and Ethical Hurdles to Web Scraping in the Social Sciences.”</span> <em>Quality &amp; Quantity</em> 56 (3): 1–22. <a href="https://doi.org/10.1007/s11135-021-01164-0">https://doi.org/10.1007/s11135-021-01164-0</a>.
 </div>
+<div id="ref-luscombe2022jumpstarting" class="csl-entry" role="doc-biblioentry">
+Luscombe, Alex, Jamie Duncan, and Kevin Walby. 2022. <span>“Jumpstarting the Justice Disciplines: A Computational-Qualitative Approach to Collecting and Analyzing Text and Image Data in Criminology and Criminal Justice Studies.”</span> <em>Journal of Criminal Justice Education</em> 33 (2): 151–71. <a href="https://doi.org/10.1080/10511253.2022.2027477">https://doi.org/10.1080/10511253.2022.2027477</a>.
+</div>
 <div id="ref-Nix2020" class="csl-entry" role="doc-biblioentry">
 Nix, Justin, and M. James Lozada. 2020. <span>“Police Killings of Unarmed Black Americans: A Reassessment of Community Mental Health Spillover Effects,”</span> January. <a href="https://doi.org/10.31235/osf.io/ajz2q">https://doi.org/10.31235/osf.io/ajz2q</a>.
 </div>
@@ -2893,7 +2892,7 @@ The Washington Post. 2023. <span>“Fatal Force Database.”</span> <a href="htt
 Thompson, Charlie, Daniel Antal, Josiah Parry, Donal Phipps, and Tom Wolff. 2022. <em><span class="nocase">spotifyr: R Wrapper for the <span>“Spotify”</span> Web API</span></em>. <a href="https://CRAN.R-project.org/package=spotifyr">https://CRAN.R-project.org/package=spotifyr</a>.
 </div>
 <div id="ref-bronnerpolicenordata" class="csl-entry" role="doc-biblioentry">
-Thomson-DeVeaux, Amelia, Laura Bronner, and Damini Sharma. 2021. <span>“Cities Spend Millions on Police Misconduct Every Year. Here’s Why It’s so Difficult to Hold Departments Accountable.”</span> <em>FiveThirtyEight</em>, February. <a href="https://fivethirtyeight.com/features/why-statistics-dont-capture-the-full-extent-of-the-systemic-bias-in-policing/">https://fivethirtyeight.com/features/why-statistics-dont-capture-the-full-extent-of-the-systemic-bias-in-policing/</a>.
+Thomson-DeVeaux, Amelia, Laura Bronner, and Damini Sharma. 2021. <span>“<span class="nocase">Cities Spend Millions On Police Misconduct Every Year. Here’s Why It’s So Difficult to Hold Departments Accountable</span>.”</span> <em>FiveThirtyEight</em>, February. <a href="https://fivethirtyeight.com/features/why-statistics-dont-capture-the-full-extent-of-the-systemic-bias-in-policing/">https://fivethirtyeight.com/features/why-statistics-dont-capture-the-full-extent-of-the-systemic-bias-in-policing/</a>.
 </div>
 <div id="ref-citehttr" class="csl-entry" role="doc-biblioentry">
 Wickham, Hadley. 2022a. <em><span class="nocase">httr: Tools for Working with URLs and HTTP</span></em>. <a href="https://CRAN.R-project.org/package=httr">https://CRAN.R-project.org/package=httr</a>.
