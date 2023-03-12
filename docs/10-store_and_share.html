@@ -868,32 +868,46 @@ Shoulders of giants
 </div>
 </div>
 <p>The professor could then announce this modified mean. This would make the students’ plan more difficult. One thing to notice about that approach is that it would not work with persistent questioning. For instance, eventually the students would be able to back out the distribution of the noise that the professor was adding. One implication is that the professor would need to limit the number of queries that we allow.</p>
-<p>We can implement a differentially private approach using <code>diffpriv</code> <span class="citation" data-cites="diffpriv">(<a href="99-references.html#ref-diffpriv" role="doc-biblioref">Rubinstein and Alda 2017</a>)</span>.</p>
+<p>We can implement a differentially private approach using <code>diffpriv</code> <span class="citation" data-cites="diffpriv">(<a href="99-references.html#ref-diffpriv" role="doc-biblioref">Rubinstein and Alda 2017</a>)</span>. This results in a mean that we could announce (<a href="#tbl-diffprivaexample">Table&nbsp;<span>10.1</span></a>).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(diffpriv)</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>target <span class="ot">&lt;-</span> <span class="cf">function</span>(X) <span class="fu">mean</span>(X)</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>mech <span class="ot">&lt;-</span> <span class="fu">DPMechLaplace</span>(<span class="at">target =</span> target)</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>distr <span class="ot">&lt;-</span> <span class="cf">function</span>(n) <span class="fu">rnorm</span>(n)</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>mech <span class="ot">&lt;-</span> <span class="fu">sensitivitySampler</span>(mech, <span class="at">oracle =</span> distr, <span class="at">n =</span> <span class="dv">5</span>, <span class="at">gamma =</span> <span class="fl">0.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Sampling sensitivity with m=285 gamma=0.1 k=285</code></pre>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Code based on the diffpriv example</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(diffpriv)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>target <span class="ot">&lt;-</span> <span class="cf">function</span>(X) <span class="fu">mean</span>(X)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>mech <span class="ot">&lt;-</span> <span class="fu">DPMechLaplace</span>(<span class="at">target =</span> target)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>distr <span class="ot">&lt;-</span> <span class="cf">function</span>(n) <span class="fu">rnorm</span>(n)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>mech <span class="ot">&lt;-</span> <span class="fu">sensitivitySampler</span>(mech, <span class="at">oracle =</span> distr, <span class="at">n =</span> <span class="dv">5</span>, <span class="at">gamma =</span> <span class="fl">0.1</span>)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>r <span class="ot">&lt;-</span> <span class="fu">releaseResponse</span>(mech, </span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>                     <span class="at">privacyParams =</span> <span class="fu">DPParamsEps</span>(<span class="at">epsilon =</span> <span class="dv">1</span>), </span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>                     <span class="at">X =</span> grades<span class="sc">$</span>problem_set_1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>r <span class="ot">&lt;-</span> <span class="fu">releaseResponse</span>(mech, </span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">privacyParams =</span> <span class="fu">DPParamsEps</span>(<span class="at">epsilon =</span> <span class="dv">1</span>), </span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">X =</span> grades<span class="sc">$</span>problem_set_1)</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Announceable problem set mean:   "</span>, r<span class="sc">$</span>response,</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="sc">\n</span><span class="st">Actual problem set mean:"</span>, <span class="fu">target</span>(grades<span class="sc">$</span>problem_set_1))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Announceable problem set mean:    52.46028 
-Actual problem set mean: 50.5</code></pre>
+<div class="cell">
+<div class="cell-output-display">
+<div id="tbl-diffprivaexample" class="anchored">
+<table class="table table-sm table-striped">
+<caption>Table&nbsp;10.1: Comparing the actual mean with a differentially private mean</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Actual mean</th>
+<th style="text-align: right;">Announceable mean</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">50.5</td>
+<td style="text-align: right;">52.46028</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
-<p>The implementation of differential privacy is a costs and benefits issue <span class="citation" data-cites="hotz2022balancing kennetal22">(<a href="99-references.html#ref-hotz2022balancing" role="doc-biblioref">Hotz et al. 2022</a>; <a href="99-references.html#ref-kennetal22" role="doc-biblioref">Kenny et al. 2022</a>)</span>. Stronger privacy protection fundamentally must mean less information <span class="citation" data-cites="clairemckaybowen">(<a href="99-references.html#ref-clairemckaybowen" role="doc-biblioref">Bowen 2022, 39</a>)</span>, and this affects differently various aspects of society. For instance, a variant of differential privacy has recently been implemented by the US census. This has been shown to not universally protect respondent privacy. It is expected to have a significant effect on redistricting <span class="citation" data-cites="kenny2021impact">(<a href="99-references.html#ref-kenny2021impact" role="doc-biblioref">Kenny et al. 2021</a>)</span> even though redistricting is considered a high priority use case <span class="citation" data-cites="Hawes2020Implementing">(<a href="99-references.html#ref-Hawes2020Implementing" role="doc-biblioref">Hawes 2020</a>)</span>. <span class="citation" data-cites="Suriyakumar2021">Suriyakumar et al. (<a href="99-references.html#ref-Suriyakumar2021" role="doc-biblioref">2021</a>)</span> found that such a model will be disproportionately affected by large demographic groups. The implementation of differential privacy is expected to result in some publicly available data that are unusable in the social sciences <span class="citation" data-cites="ruggles2019differential">(<a href="99-references.html#ref-ruggles2019differential" role="doc-biblioref">Ruggles et al. 2019</a>)</span>. And even the ACS, introduced in <a href="06-farm.html"><span>Chapter&nbsp;6</span></a>, may be replaced with synthetic content. The issue with this approach is that even if it is fine for what is of interest and known now, because it is model based, it cannot account for the questions that we do not even think to ask at the moment. Some future unknown questions might be totally fine, but others not. At issue with all privacy enhancing approaches but especially with implementations of differential privacy in public policy settings, is concerns around our ability to answer questions that we cannot even think to ask today.</p>
+</div>
+<p>The implementation of differential privacy is a costs and benefits issue <span class="citation" data-cites="hotz2022balancing kennetal22">(<a href="99-references.html#ref-hotz2022balancing" role="doc-biblioref">Hotz et al. 2022</a>; <a href="99-references.html#ref-kennetal22" role="doc-biblioref">Kenny et al. 2022</a>)</span>. Stronger privacy protection fundamentally must mean less information <span class="citation" data-cites="clairemckaybowen">(<a href="99-references.html#ref-clairemckaybowen" role="doc-biblioref">Bowen 2022, 39</a>)</span>, and this affects differently various aspects of society. For instance, <span class="citation" data-cites="Suriyakumar2021">Suriyakumar et al. (<a href="99-references.html#ref-Suriyakumar2021" role="doc-biblioref">2021</a>)</span> found that, in the context of health care, differentially private learning can result in models that are disproportionately affected by large demographic groups.</p>
+<p>A variant of differential privacy has recently been implemented by the US census. It is expected to have a significant effect on redistricting <span class="citation" data-cites="kenny2021impact">(<a href="99-references.html#ref-kenny2021impact" role="doc-biblioref">Kenny et al. 2021</a>)</span> even though redistricting is considered a high priority use case <span class="citation" data-cites="Hawes2020Implementing">(<a href="99-references.html#ref-Hawes2020Implementing" role="doc-biblioref">Hawes 2020</a>)</span>. The implementation of differential privacy is expected to result in some publicly available data that are unusable in the social sciences <span class="citation" data-cites="ruggles2019differential">(<a href="99-references.html#ref-ruggles2019differential" role="doc-biblioref">Ruggles et al. 2019</a>)</span>. And even the ACS, introduced in <a href="06-farm.html"><span>Chapter&nbsp;6</span></a>, may be replaced with synthetic content. The issue with this approach is that even if it is fine for what is of interest and known now, because it is model based, it cannot account for the questions that we do not even think to ask at the moment. Some future unknown questions might be totally fine, but others not. At issue with all privacy enhancing approaches but especially with implementations of differential privacy in public policy settings, is concerns around our ability to answer questions that we cannot even think to ask today.</p>
 </section>
 </section>
 <section id="data-efficiency" class="level2" data-number="10.6">
@@ -909,38 +923,38 @@ Actual problem set mean: 50.5</code></pre>
 
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dir_create</span>(<span class="at">path =</span> <span class="st">"user_data"</span>)</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>simulate_and_save_data <span class="ot">&lt;-</span> <span class="cf">function</span>(month) {</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  number_of_observations <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  file_name <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"user_data/"</span>, month, <span class="st">".csv"</span>)</span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  user_comments <span class="ot">&lt;-</span></span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">user =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span>number_of_observations),</span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">month =</span> <span class="fu">rep</span>(<span class="at">x =</span> month, <span class="at">times =</span> number_of_observations),</span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">comments =</span> <span class="fu">rexp</span>(<span class="at">n =</span> number_of_observations, <span class="at">rate =</span> <span class="fl">0.3</span>) <span class="sc">|&gt;</span> <span class="fu">round</span>()</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(</span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> user_comments,</span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> file_name</span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a><span class="fu">walk</span>(month.name <span class="sc">|&gt;</span> <span class="fu">tolower</span>(), simulate_and_save_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dir_create</span>(<span class="at">path =</span> <span class="st">"user_data"</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>simulate_and_save_data <span class="ot">&lt;-</span> <span class="cf">function</span>(month) {</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  number_of_observations <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  file_name <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"user_data/"</span>, month, <span class="st">".csv"</span>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  user_comments <span class="ot">&lt;-</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">user =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span>number_of_observations),</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">month =</span> <span class="fu">rep</span>(<span class="at">x =</span> month, <span class="at">times =</span> number_of_observations),</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">comments =</span> <span class="fu">rexp</span>(<span class="at">n =</span> number_of_observations, <span class="at">rate =</span> <span class="fl">0.3</span>) <span class="sc">|&gt;</span> <span class="fu">round</span>()</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> user_comments,</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> file_name</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="fu">walk</span>(month.name <span class="sc">|&gt;</span> <span class="fu">tolower</span>(), simulate_and_save_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Having created our dataset with each month saved to a different CSV, we can now read it in. There are a variety of ways to do this. The first step is that we need to get a list of all the CSV files in the directory. We use the “glob” argument here to specify that we are interested only in the “.csv” files, and that could change to whatever files it is that we are interested in.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>files_of_interest <span class="ot">&lt;-</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir_ls</span>(<span class="at">path =</span> <span class="st">"user_data/"</span>, <span class="at">glob =</span> <span class="st">"*.csv"</span>)</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>files_of_interest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>files_of_interest <span class="ot">&lt;-</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir_ls</span>(<span class="at">path =</span> <span class="st">"user_data/"</span>, <span class="at">glob =</span> <span class="st">"*.csv"</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>files_of_interest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -951,17 +965,17 @@ Actual problem set mean: 50.5</code></pre>
 </div>
 <p>We can pass this list to <code>read_csv()</code> and it will read them in and combine them.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>year_of_data <span class="ot">&lt;-</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    files_of_interest,</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">col_types =</span> <span class="fu">cols</span>(</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">user =</span> <span class="fu">col_double</span>(),</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">month =</span> <span class="fu">col_character</span>(),</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">comments =</span> <span class="fu">col_double</span>(),</span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>year_of_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>year_of_data <span class="ot">&lt;-</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    files_of_interest,</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">col_types =</span> <span class="fu">cols</span>(</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">user =</span> <span class="fu">col_double</span>(),</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">month =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">comments =</span> <span class="fu">col_double</span>(),</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>year_of_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -984,11 +998,11 @@ Actual problem set mean: 50.5</code></pre>
 <p>It prints out the first ten days of April, because alphabetically April is the first month of the year and so that was the first CSV that was read.</p>
 <p>This works well when we have CSV files, but we might not always have CSV files and so will need another way, and can use <code>map_dfr()</code> to do this. One nice aspect of this approach is that we can include the name of the file alongside the observation using “.id”. Here we specify that we would like that column to be called “file”, but it could be anything.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>year_of_data_using_purrr <span class="ot">&lt;-</span></span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  files_of_interest <span class="sc">|&gt;</span></span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dfr</span>(read_csv, <span class="at">.id =</span> <span class="st">"file"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>year_of_data_using_purrr <span class="ot">&lt;-</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  files_of_interest <span class="sc">|&gt;</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dfr</span>(read_csv, <span class="at">.id =</span> <span class="st">"file"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -1011,7 +1025,7 @@ Actual problem set mean: 50.5</code></pre>
 </section>
 <section id="apache-arrow" class="level3" data-number="10.6.2">
 <h3 data-number="10.6.2" class="anchored" data-anchor-id="apache-arrow"><span class="header-section-number">10.6.2</span> Apache Arrow</h3>
-<p>CSVs are commonly used without much thought in data science. And while CSVs are good because they have little overhead and can be manually inspected, this also means they are quite minimal. This can lead to issues, especially in terms of class, file size, and speed. There are various alternatives, including Apache Arrow, which is a columnar data framework. There is an R implementation of Apache Arrow, <code>arrow</code> <span class="citation" data-cites="arrow">(<a href="99-references.html#ref-arrow" role="doc-biblioref">Richardson et al. 2022</a>)</span>. This has the advantage of requiring very little change from us while delivering significant benefits. This makes two, distinct, file formats available to us: “.arrow”, and “.parquet”. We focus on parquet, which like CSV is an open standard, with many implementations.</p>
+<p>CSVs are commonly used without much thought in data science. And while CSVs are good because they have little overhead and can be manually inspected, this also means they are quite minimal. This can lead to issues, especially in terms of class, file size, and speed. There are various alternatives, including Apache Arrow, which is a columnar data framework. There is an R implementation of Apache Arrow, <code>arrow</code> <span class="citation" data-cites="arrow">(<a href="99-references.html#ref-arrow" role="doc-biblioref">Richardson et al. 2022</a>)</span>. This has the advantage of requiring very little change from us while delivering significant benefits. <!-- This makes two, distinct, file formats available to us: ".arrow", and ".parquet".  --> We focus on the “.parquet” format, which like CSV is an open standard, with many implementations.</p>
 <div class="callout-note callout callout-style-simple callout-captioned">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -1022,51 +1036,46 @@ Shoulders of giants
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Wes McKinney holds an undergraduate degree in theoretical math from MIT. Starting in 2008, while working at AQR Capital Management, he developed the Python package, pandas, which has become a cornerstone of data science. He later wrote <em>Python for Data Analysis</em> <span class="citation" data-cites="pythonfordataanalysis">(<a href="99-references.html#ref-pythonfordataanalysis" role="doc-biblioref">McKinney [2011] 2022</a>)</span>. In 2016, with Hadley Wickham, he designed Feather, which was released in 2016. He now works as CTO of Voltron Data, which focuses on the Apache Arrow project.</p>
+<p>Wes McKinney holds an undergraduate degree in theoretical mathematics from MIT. Starting in 2008, while working at AQR Capital Management, he developed the Python package, pandas, which has become a cornerstone of data science. He later wrote <em>Python for Data Analysis</em> <span class="citation" data-cites="pythonfordataanalysis">(<a href="99-references.html#ref-pythonfordataanalysis" role="doc-biblioref">McKinney [2011] 2022</a>)</span>. In 2016, with Hadley Wickham, he designed Feather, which was released in 2016. He now works as CTO of Voltron Data, which focuses on the Apache Arrow project.</p>
 </div>
 </div>
-<p>We use “.arrow” when we are actively using the data, for instance, as we clean, prepare, and model. And we use parquet for data storage, for instance, saving a copy of the original data, and making the final dataset available to others. This is because parquet is focused on size, while “.arrow” is focused on efficiency.</p>
-<p>At some point we might replace CSVs with parquet files. We can do this by replacing <code>write_csv()</code> with <code>write_parquet()</code>, and <code>read_csv()</code> with <code>read_parquet()</code>. While the decision to do this needs to consider both costs and benefits, having a schema attached in parquet makes dealing with, say, dates considerably easier in the short-term, and this is especially useful in the long-term.</p>
+<p>In particular, we focus on the benefit of using parquet for data storage. Examples of this may include: 1) saving a copy of the original data; and 2) saving a copy of the analysis datasets. Parquet brings two particular benefits here, compared with CSV: 1) the file sizes are typically smaller; and 2) class is preserved.</p>
+<p>Having loaded <code>arrow</code>, we can use parquet files in a similar way to CSV files. Anywhere in our code that we used <code>write_csv()</code> and <code>read_csv()</code> we could alternatively, or additionally, use <code>write_parquet()</code> and <code>read_parquet()</code>. While the decision to do this needs to consider both costs and benefits, having a schema attached in parquet makes dealing with, say, dates considerably easier.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>number_of_draws <span class="ot">&lt;-</span> <span class="dv">1000000</span></span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Homage to: https://www.rand.org/pubs/monograph_reports/MR1418.html</span></span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>a_million_random_digits <span class="ot">&lt;-</span></span>
-<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">numbers =</span> <span class="fu">runif</span>(<span class="at">n =</span> number_of_draws),</span>
-<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">letters =</span> <span class="fu">sample</span>(<span class="at">x =</span> letters, <span class="at">size =</span> number_of_draws, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">states =</span> <span class="fu">sample</span>(<span class="at">x =</span> state.name, <span class="at">size =</span> number_of_draws, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(</span>
-<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> a_million_random_digits,</span>
-<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"a_million_random_digits.csv"</span></span>
-<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a><span class="fu">write_parquet</span>(</span>
-<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> a_million_random_digits,</span>
-<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">sink =</span> <span class="st">"a_million_random_digits.parquet"</span></span>
-<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a><span class="fu">file_size</span>(<span class="st">"a_million_random_digits.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>number_of_draws <span class="ot">&lt;-</span> <span class="dv">1000000</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Homage to: https://www.rand.org/pubs/monograph_reports/MR1418.html</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>a_million_random_digits <span class="ot">&lt;-</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">numbers =</span> <span class="fu">runif</span>(<span class="at">n =</span> number_of_draws),</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">letters =</span> <span class="fu">sample</span>(<span class="at">x =</span> letters, <span class="at">size =</span> number_of_draws, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">states =</span> <span class="fu">sample</span>(<span class="at">x =</span> state.name, <span class="at">size =</span> number_of_draws, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(<span class="at">x =</span> a_million_random_digits,</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>          <span class="at">file =</span> <span class="st">"a_million_random_digits.csv"</span>)</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a><span class="fu">write_parquet</span>(<span class="at">x =</span> a_million_random_digits,</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>              <span class="at">sink =</span> <span class="st">"a_million_random_digits.parquet"</span>)</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>fs<span class="sc">::</span><span class="fu">file_size</span>(<span class="st">"a_million_random_digits.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>29.3M</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">file_size</span>(<span class="st">"a_million_random_digits.parquet"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>fs<span class="sc">::</span><span class="fu">file_size</span>(<span class="st">"a_million_random_digits.parquet"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>8.17M</code></pre>
 </div>
 </div>
-<p>We get significant file size improvements when we compare the size of the same datasets saved in each format, especially as they get larger (<a href="#tbl-filesize">Table&nbsp;<span>10.1</span></a>).</p>
+<p>We get significant reductions in file size when we compare the size of the same datasets saved in each format, especially as they get larger (<a href="#tbl-filesize">Table&nbsp;<span>10.2</span></a>).</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="tbl-filesize" class="anchored">
 <table class="table table-sm table-striped">
-<caption>Table&nbsp;10.1: Comparing the file sizes of ‘.csv’ and ‘.parquet’, as the file size increases, for CSV and Parquet</caption>
+<caption>Table&nbsp;10.2: Comparing the file sizes of ‘.csv’ and ‘.parquet’, as the file size increases, for CSV and Parquet</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Number of observations</th>
@@ -1105,131 +1114,182 @@ Shoulders of giants
 </div>
 </div>
 </div>
-<p>Having considered “.parquet”, and explained the benefits compared with CSVs for large data that we are storing, we now consider “.arrow” and the benefit of this file type for large data that we are actively using. Again, these benefits will be most notable for larger datasets, and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare &amp; Medicaid Services, which is 6.66 GB and available <a href="https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016">here</a>. It is available as a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using <code>read_csv()</code>, with the same task using <code>read_csv_arrow()</code>. We find a considerable speed-up when using <code>read_csv_arrow()</code> (<a href="#tbl-needforspeedpropublica">Table&nbsp;<span>10.2</span></a>).</p>
-<div class="cell">
 
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tictoc)</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="fu">tic.clearlog</span>()</span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"CSV - Everything"</span>)</span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"CSV - Reading"</span>)</span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>open_payments_data_csv <span class="ot">&lt;-</span></span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(</span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"OP_DTL_GNRL_PGYR2016_P01172018.csv"</span>,</span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">col_types =</span></span>
-<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">cols</span>(</span>
-<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Teaching_Hospital_ID"</span> <span class="ot">=</span> <span class="fu">col_double</span>(),</span>
-<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Physician_Profile_ID"</span> <span class="ot">=</span> <span class="fu">col_double</span>(),</span>
-<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Applicable_Manufacturer_or_Applicable_GPO_Making_Payment_ID"</span> <span class="ot">=</span> <span class="fu">col_double</span>(),</span>
-<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Total_Amount_of_Payment_USDollars"</span> <span class="ot">=</span> <span class="fu">col_double</span>(),</span>
-<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Date_of_Payment"</span> <span class="ot">=</span> <span class="fu">col_date</span>(<span class="at">format =</span> <span class="st">"%m/%d/%Y"</span>),</span>
-<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Number_of_Payments_Included_in_Total_Amount"</span> <span class="ot">=</span> <span class="fu">col_double</span>(),</span>
-<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Record_ID"</span> <span class="ot">=</span> <span class="fu">col_double</span>(),</span>
-<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Program_Year"</span> <span class="ot">=</span> <span class="fu">col_double</span>(),</span>
-<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Payment_Publication_Date"</span> <span class="ot">=</span> <span class="fu">col_date</span>(<span class="at">format =</span> <span class="st">"%m/%d/%Y"</span>),</span>
-<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">.default =</span> <span class="fu">col_character</span>()</span>
-<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-27"><a href="#cb34-27" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>(<span class="at">log =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-29"><a href="#cb34-29" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"CSV - Manipulate and summarise"</span>)</span>
-<span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a>summary_spend_by_state_csv <span class="ot">&lt;-</span></span>
-<span id="cb34-31"><a href="#cb34-31" aria-hidden="true" tabindex="-1"></a>  open_payments_data_csv <span class="sc">|&gt;</span></span>
-<span id="cb34-32"><a href="#cb34-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
-<span id="cb34-33"><a href="#cb34-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> Recipient_State,</span>
-<span id="cb34-34"><a href="#cb34-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_payment_USD =</span> Total_Amount_of_Payment_USDollars</span>
-<span id="cb34-35"><a href="#cb34-35" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb34-36"><a href="#cb34-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(state <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"CA"</span>, <span class="st">"OR"</span>, <span class="st">"WA"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb34-37"><a href="#cb34-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_payment_USD_thousands =</span> total_payment_USD <span class="sc">/</span> <span class="dv">1000</span>) <span class="sc">|&gt;</span></span>
-<span id="cb34-38"><a href="#cb34-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(state) <span class="sc">|&gt;</span></span>
-<span id="cb34-39"><a href="#cb34-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">average_payment =</span> <span class="fu">mean</span>(total_payment_USD, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
-<span id="cb34-40"><a href="#cb34-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-41"><a href="#cb34-41" aria-hidden="true" tabindex="-1"></a>summary_spend_by_state_csv</span>
-<span id="cb34-42"><a href="#cb34-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-43"><a href="#cb34-43" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>(<span class="at">log =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb34-44"><a href="#cb34-44" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>(<span class="at">log =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb34-45"><a href="#cb34-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-46"><a href="#cb34-46" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"arrow - Everything"</span>)</span>
-<span id="cb34-47"><a href="#cb34-47" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"arrow - Reading"</span>)</span>
-<span id="cb34-48"><a href="#cb34-48" aria-hidden="true" tabindex="-1"></a>open_payments_data_arrow <span class="ot">&lt;-</span></span>
-<span id="cb34-49"><a href="#cb34-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv_arrow</span>(</span>
-<span id="cb34-50"><a href="#cb34-50" aria-hidden="true" tabindex="-1"></a>    <span class="st">"OP_DTL_GNRL_PGYR2016_P01172018.csv"</span>,</span>
-<span id="cb34-51"><a href="#cb34-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">as_data_frame =</span> <span class="cn">FALSE</span></span>
-<span id="cb34-52"><a href="#cb34-52" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb34-53"><a href="#cb34-53" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>(<span class="at">log =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb34-54"><a href="#cb34-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-55"><a href="#cb34-55" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>(<span class="st">"arrow - Manipulate and summarise"</span>)</span>
-<span id="cb34-56"><a href="#cb34-56" aria-hidden="true" tabindex="-1"></a>summary_spend_by_state_arrow <span class="ot">&lt;-</span></span>
-<span id="cb34-57"><a href="#cb34-57" aria-hidden="true" tabindex="-1"></a>  open_payments_data_arrow <span class="sc">|&gt;</span></span>
-<span id="cb34-58"><a href="#cb34-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
-<span id="cb34-59"><a href="#cb34-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> Recipient_State,</span>
-<span id="cb34-60"><a href="#cb34-60" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_payment_USD =</span> Total_Amount_of_Payment_USDollars</span>
-<span id="cb34-61"><a href="#cb34-61" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb34-62"><a href="#cb34-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(state <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"CA"</span>, <span class="st">"OR"</span>, <span class="st">"WA"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb34-63"><a href="#cb34-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_payment_USD_thousands =</span> total_payment_USD <span class="sc">/</span> <span class="dv">1000</span>) <span class="sc">|&gt;</span></span>
-<span id="cb34-64"><a href="#cb34-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(state) <span class="sc">|&gt;</span></span>
-<span id="cb34-65"><a href="#cb34-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">average_payment =</span> <span class="fu">mean</span>(total_payment_USD, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb34-66"><a href="#cb34-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span>
-<span id="cb34-67"><a href="#cb34-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-68"><a href="#cb34-68" aria-hidden="true" tabindex="-1"></a>summary_spend_by_state_arrow</span>
-<span id="cb34-69"><a href="#cb34-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-70"><a href="#cb34-70" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>(<span class="at">log =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb34-71"><a href="#cb34-71" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>(<span class="at">log =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div class="cell">
-<div class="cell-output-display">
-<div id="tbl-needforspeedpropublica" class="anchored">
-<table class="table table-sm table-striped">
-<caption>Table&nbsp;10.2: Comparing the speed of reading and manipulating using ‘read_csv()’ and ‘read_csv_arrow()’</caption>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Which function</th>
-<th style="text-align: left;">Task</th>
-<th style="text-align: right;">Time (seconds)</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">CSV</td>
-<td style="text-align: left;">Reading</td>
-<td style="text-align: right;">265</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">CSV</td>
-<td style="text-align: left;">Manipulate and summarise</td>
-<td style="text-align: right;">3</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">CSV</td>
-<td style="text-align: left;">Everything</td>
-<td style="text-align: right;">269</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">arrow</td>
-<td style="text-align: left;">Reading</td>
-<td style="text-align: right;">43</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">arrow</td>
-<td style="text-align: left;">Manipulate and summarise</td>
-<td style="text-align: right;">8</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">arrow</td>
-<td style="text-align: left;">Everything</td>
-<td style="text-align: right;">51</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
+<!-- These benefits will be most notable for larger datasets, and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare & Medicaid Services, which is 6.66 GB and available [here](https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016). It is available as a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using `read_csv()`, with the same task using `read_csv_arrow()`. We find a considerable speed-up when using `read_csv_arrow()` (@tbl-needforspeedpropublica). -->
+<!-- ```{r} -->
+<!-- #| echo: false -->
+<!-- #| eval: false -->
+<!-- # INTERNAL -->
+<!-- library(arrow) -->
+<!-- library(tidyverse) -->
+<!-- library(tictoc) -->
+<!-- tic.clearlog() -->
+<!-- tic("CSV - Everything") -->
+<!-- tic("CSV - Reading") -->
+<!-- open_payments_data_csv <- -->
+<!--   read_csv( -->
+<!--     "~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv", -->
+<!--     col_types = -->
+<!--       cols( -->
+<!--         "Teaching_Hospital_ID" = col_double(), -->
+<!--         "Physician_Profile_ID" = col_double(), -->
+<!-- "Applicable_Manufacturer_or_Applicable_GPO_Making_Payment_ID" = col_double(), -->
+<!--         "Total_Amount_of_Payment_USDollars" = col_double(), -->
+<!--         "Date_of_Payment" = col_date(format = "%m/%d/%Y"), -->
+<!--         "Number_of_Payments_Included_in_Total_Amount" = col_double(), -->
+<!--         "Record_ID" = col_double(), -->
+<!--         "Program_Year" = col_double(), -->
+<!--         "Payment_Publication_Date" = col_date(format = "%m/%d/%Y"), -->
+<!--         .default = col_character() -->
+<!--       ) -->
+<!--   ) -->
+<!-- class(open_payments_data_csv) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- tic("CSV - Manipulate and summarise") -->
+<!-- summary_spend_by_state_csv <- -->
+<!--   open_payments_data_csv |> -->
+<!--   rename( -->
+<!--     state = Recipient_State, -->
+<!--     total_payment_USD = Total_Amount_of_Payment_USDollars -->
+<!--   ) |> -->
+<!--   filter(state %in% c("CA", "OR", "WA")) |> -->
+<!--   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |> -->
+<!--   group_by(state) |> -->
+<!--   summarise(average_payment = mean(total_payment_USD, na.rm = TRUE)) -->
+<!-- summary_spend_by_state_csv -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- rm(open_payments_data_csv) -->
+<!-- tic("arrow - Everything") -->
+<!-- tic("arrow - Reading") -->
+<!-- open_payments_data <- -->
+<!-- open_dataset( -->
+<!--     "~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv", -->
+<!--     format = "csv" -->
+<!--     ) -->
+<!-- open_payments_data_arrow <- -->
+<!--   read_csv_arrow( -->
+<!--     "~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv", -->
+<!--     as_data_frame = FALSE -->
+<!--   ) -->
+<!-- class(open_payments_data) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- tic("arrow - Manipulate and summarise") -->
+<!-- summary_spend_by_state_arrow <- -->
+<!--   open_payments_data |> -->
+<!--   rename( -->
+<!--     state = Recipient_State, -->
+<!--     total_payment_USD = Total_Amount_of_Payment_USDollars -->
+<!--   ) |> -->
+<!--   filter(state %in% c("CA", "OR", "WA")) |> -->
+<!--   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |> -->
+<!--   group_by(state) |> -->
+<!--   summarise(average_payment = mean(total_payment_USD, na.rm = TRUE)) |> -->
+<!--   collect() -->
+<!-- summary_spend_by_state_arrow -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- rm(open_payments_data_arrow) -->
+<!-- log_txt <- tic.log(format = TRUE) -->
+<!-- tic.clearlog() -->
+<!-- need_for_speed_propublica <- -->
+<!--   tibble( -->
+<!--     raw = unlist(log_txt) -->
+<!--   ) -->
+<!-- need_for_speed_propublica <- -->
+<!--   need_for_speed_propublica |> -->
+<!--   separate(raw, into = c("thing", "time"), sep = ": ") |> -->
+<!--   mutate( -->
+<!--     time = str_remove(time, " sec elapsed"), -->
+<!--     time = as.numeric(time) -->
+<!--   ) |> -->
+<!--   separate(thing, into = c("file_type", "task"), sep = " - ") -->
+<!-- write_csv(need_for_speed_propublica, file = "inputs/data/need_for_speed_propublica.csv") -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- #| echo: true -->
+<!-- #| eval: false -->
+<!-- library(arrow) -->
+<!-- library(tidyverse) -->
+<!-- library(tictoc) -->
+<!-- tic.clearlog() -->
+<!-- tic("CSV - Everything") -->
+<!-- tic("CSV - Reading") -->
+<!-- open_payments_data_csv <- -->
+<!--   read_csv( -->
+<!--     "OP_DTL_GNRL_PGYR2016_P01172018.csv", -->
+<!--     col_types = -->
+<!--       cols( -->
+<!--         "Teaching_Hospital_ID" = col_double(), -->
+<!--         "Physician_Profile_ID" = col_double(), -->
+<!--         "Applicable_Manufacturer_or_Applicable_GPO_Making_Payment_ID" = col_double(), -->
+<!--         "Total_Amount_of_Payment_USDollars" = col_double(), -->
+<!--         "Date_of_Payment" = col_date(format = "%m/%d/%Y"), -->
+<!--         "Number_of_Payments_Included_in_Total_Amount" = col_double(), -->
+<!--         "Record_ID" = col_double(), -->
+<!--         "Program_Year" = col_double(), -->
+<!--         "Payment_Publication_Date" = col_date(format = "%m/%d/%Y"), -->
+<!--         .default = col_character() -->
+<!--       ) -->
+<!--   ) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- tic("CSV - Manipulate and summarise") -->
+<!-- summary_spend_by_state_csv <- -->
+<!--   open_payments_data_csv |> -->
+<!--   rename( -->
+<!--     state = Recipient_State, -->
+<!--     total_payment_USD = Total_Amount_of_Payment_USDollars -->
+<!--   ) |> -->
+<!--   filter(state %in% c("CA", "OR", "WA")) |> -->
+<!--   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |> -->
+<!--   group_by(state) |> -->
+<!--   summarise(average_payment = mean(total_payment_USD, na.rm = TRUE)) -->
+<!-- summary_spend_by_state_csv -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- tic("arrow - Everything") -->
+<!-- tic("arrow - Reading") -->
+<!-- open_payments_data_arrow <- -->
+<!--   read_csv_arrow( -->
+<!--     "OP_DTL_GNRL_PGYR2016_P01172018.csv", -->
+<!--     as_data_frame = FALSE -->
+<!--   ) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- tic("arrow - Manipulate and summarise") -->
+<!-- summary_spend_by_state_arrow <- -->
+<!--   open_payments_data_arrow |> -->
+<!--   rename( -->
+<!--     state = Recipient_State, -->
+<!--     total_payment_USD = Total_Amount_of_Payment_USDollars -->
+<!--   ) |> -->
+<!--   filter(state %in% c("CA", "OR", "WA")) |> -->
+<!--   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |> -->
+<!--   group_by(state) |> -->
+<!--   summarise(average_payment = mean(total_payment_USD, na.rm = TRUE)) |> -->
+<!--   collect() -->
+<!-- summary_spend_by_state_arrow -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- #| label: tbl-needforspeedpropublica -->
+<!-- #| echo: false -->
+<!-- #| eval: true -->
+<!-- #| message: false -->
+<!-- #| tbl-cap: "Comparing the speed of reading and manipulating using 'read_csv()' and 'read_csv_arrow()'" -->
+<!-- read_csv( -->
+<!--   "inputs/data/need_for_speed_propublica.csv", -->
+<!--   show_col_types = FALSE -->
+<!-- ) |> -->
+<!--   knitr::kable( -->
+<!--     col.names = c( -->
+<!--       "Which function", -->
+<!--       "Task", -->
+<!--       "Time (seconds)" -->
+<!--     ), -->
+<!--     digits = 0 -->
+<!--   ) -->
+<!-- ``` -->
 <p><span class="citation" data-cites="arrowcookbook">Crane (<a href="99-references.html#ref-arrowcookbook" role="doc-biblioref">2022</a>)</span> provides further information about specific tasks, <span class="citation" data-cites="navarro2021getting">Navarro (<a href="99-references.html#ref-navarro2021getting" role="doc-biblioref">2022</a>)</span> provides helpful examples of implementation, and <span class="citation" data-cites="navarroworkshop">Navarro, Keane, and Hazlitt (<a href="99-references.html#ref-navarroworkshop" role="doc-biblioref">2022</a>)</span> provides an extensive set of materials.</p>
 </section>
 </section>

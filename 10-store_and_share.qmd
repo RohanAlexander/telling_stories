@@ -452,9 +452,12 @@ mean(grades$problem_set_1) + runif(n = 1, min = -10, max = 10)
 
 The professor could then announce this modified mean. This would make the students' plan more difficult. One thing to notice about that approach is that it would not work with persistent questioning. For instance, eventually the students would be able to back out the distribution of the noise that the professor was adding. One implication is that the professor would need to limit the number of queries that we allow.
 
-We can implement a differentially private approach using `diffpriv` [@diffpriv].
+We can implement a differentially private approach using `diffpriv` [@diffpriv]. This results in a mean that we could announce (@tbl-diffprivaexample).
 
 ```{r}
+#| message: false
+
+# Code based on the diffpriv example
 library(diffpriv)
 
 target <- function(X) mean(X)
@@ -468,14 +471,31 @@ mech <- sensitivitySampler(mech, oracle = distr, n = 5, gamma = 0.1)
 r <- releaseResponse(mech, 
                      privacyParams = DPParamsEps(epsilon = 1), 
                      X = grades$problem_set_1)
-
-cat("Announceable problem set mean:   ", r$response,
-  "\nActual problem set mean:", target(grades$problem_set_1))
 ```
 
-The implementation of differential privacy is a costs and benefits issue [@hotz2022balancing; @kennetal22]. Stronger privacy protection fundamentally must mean less information [@clairemckaybowen, p. 39], and this affects differently various aspects of society. For instance, a variant of differential privacy has recently been implemented by the US census. This has been shown to not universally protect respondent privacy. It is expected to have a significant effect on redistricting [@kenny2021impact] even though redistricting is considered a high priority use case [@Hawes2020Implementing]. @Suriyakumar2021 found that such a model will be disproportionately affected by large demographic groups. The implementation of differential privacy is expected to result in some publicly available data that are unusable in the social sciences [@ruggles2019differential]. And even the ACS, introduced in @sec-farm-data, may be replaced with synthetic content. The issue with this approach is that even if it is fine for what is of interest and known now, because it is model based, it cannot account for the questions that we do not even think to ask at the moment. Some future unknown questions might be totally fine, but others not. At issue with all privacy enhancing approaches but especially with implementations of differential privacy in public policy settings, is concerns around our ability to answer questions that we cannot even think to ask today.
 
+```{r}
+#| label: tbl-diffprivaexample
+#| echo: false
+#| eval: true
+#| message: false
+#| tbl-cap: "Comparing the actual mean with a differentially private mean"
 
+tibble(
+  actual = mean(grades$problem_set_1),
+  announce = r$response
+) |> 
+  knitr::kable(
+    col.names = c(
+      "Actual mean",
+      "Announceable mean"
+    )
+  )
+```
+
+The implementation of differential privacy is a costs and benefits issue [@hotz2022balancing; @kennetal22]. Stronger privacy protection fundamentally must mean less information [@clairemckaybowen, p. 39], and this affects differently various aspects of society. For instance, @Suriyakumar2021 found that, in the context of health care, differentially private learning can result in models that are disproportionately affected by large demographic groups. 
+
+A variant of differential privacy has recently been implemented by the US census. It is expected to have a significant effect on redistricting [@kenny2021impact] even though redistricting is considered a high priority use case [@Hawes2020Implementing]. The implementation of differential privacy is expected to result in some publicly available data that are unusable in the social sciences [@ruggles2019differential]. And even the ACS, introduced in @sec-farm-data, may be replaced with synthetic content. The issue with this approach is that even if it is fine for what is of interest and known now, because it is model based, it cannot account for the questions that we do not even think to ask at the moment. Some future unknown questions might be totally fine, but others not. At issue with all privacy enhancing approaches but especially with implementations of differential privacy in public policy settings, is concerns around our ability to answer questions that we cannot even think to ask today.
 
 
 
@@ -657,24 +677,25 @@ year_of_data_using_purrr
 
 ### Apache Arrow
 
-CSVs are commonly used without much thought in data science. And while CSVs are good because they have little overhead and can be manually inspected, this also means they are quite minimal. This can lead to issues, especially in terms of class, file size, and speed. There are various alternatives, including Apache Arrow, which is a columnar data framework.  There is an R implementation of Apache Arrow, `arrow` [@arrow]. This has the advantage of requiring very little change from us while delivering significant benefits. This makes two, distinct, file formats available to us: ".arrow", and ".parquet". We focus on parquet, which like CSV is an open standard, with many implementations.
+CSVs are commonly used without much thought in data science. And while CSVs are good because they have little overhead and can be manually inspected, this also means they are quite minimal. This can lead to issues, especially in terms of class, file size, and speed. There are various alternatives, including Apache Arrow, which is a columnar data framework.  There is an R implementation of Apache Arrow, `arrow` [@arrow]. This has the advantage of requiring very little change from us while delivering significant benefits. 
+<!-- This makes two, distinct, file formats available to us: ".arrow", and ".parquet".  -->
+We focus on the ".parquet" format, which like CSV is an open standard, with many implementations.
 
 :::{.callout-note}
 ## Shoulders of giants
 
-Wes McKinney holds an undergraduate degree in theoretical math from MIT. Starting in 2008, while working at AQR Capital Management, he developed the Python package, pandas, which has become a cornerstone of data science. He later wrote *Python for Data Analysis* [@pythonfordataanalysis]. In 2016, with Hadley Wickham, he designed Feather, which was released in 2016. He now works as CTO of Voltron Data, which focuses on the Apache Arrow project.
+Wes McKinney holds an undergraduate degree in theoretical mathematics from MIT. Starting in 2008, while working at AQR Capital Management, he developed the Python package, pandas, which has become a cornerstone of data science. He later wrote *Python for Data Analysis* [@pythonfordataanalysis]. In 2016, with Hadley Wickham, he designed Feather, which was released in 2016. He now works as CTO of Voltron Data, which focuses on the Apache Arrow project.
 :::
 
-We use ".arrow" when we are actively using the data, for instance, as we clean, prepare, and model. And we use parquet for data storage, for instance, saving a copy of the original data, and making the final dataset available to others. This is because parquet is focused on size, while ".arrow" is focused on efficiency.
+In particular, we focus on the benefit of using parquet for data storage. Examples of this may include: 1) saving a copy of the original data; and 2) saving a copy of the analysis datasets. Parquet brings two particular benefits here, compared with CSV: 1) the file sizes are typically smaller; and 2) class is preserved.
 
-At some point we might replace CSVs with parquet files. We can do this by replacing `write_csv()` with `write_parquet()`, and `read_csv()` with `read_parquet()`. While the decision to do this needs to consider both costs and benefits, having a schema attached in parquet makes dealing with, say, dates considerably easier in the short-term, and this is especially useful in the long-term.
+Having loaded `arrow`, we can use parquet files in a similar way to CSV files. Anywhere in our code that we used `write_csv()` and `read_csv()` we could alternatively, or additionally, use `write_parquet()` and `read_parquet()`. While the decision to do this needs to consider both costs and benefits, having a schema attached in parquet makes dealing with, say, dates considerably easier.
 
 ```{r}
 #| message: false
 #| warning: false
 
 library(arrow)
-library(fs)
 library(tidyverse)
 
 number_of_draws <- 1000000
@@ -687,18 +708,14 @@ a_million_random_digits <-
     states = sample(x = state.name, size = number_of_draws, replace = TRUE),
   )
 
-write_csv(
-  x = a_million_random_digits,
-  file = "a_million_random_digits.csv"
-)
+write_csv(x = a_million_random_digits,
+          file = "a_million_random_digits.csv")
 
-write_parquet(
-  x = a_million_random_digits,
-  sink = "a_million_random_digits.parquet"
-)
+write_parquet(x = a_million_random_digits,
+              sink = "a_million_random_digits.parquet")
 
-file_size("a_million_random_digits.csv")
-file_size("a_million_random_digits.parquet")
+fs::file_size("a_million_random_digits.csv")
+fs::file_size("a_million_random_digits.parquet")
 ```
 
 ```{r}
@@ -709,7 +726,7 @@ file.remove("a_million_random_digits.csv")
 file.remove("a_million_random_digits.parquet")
 ```
 
-We get significant file size improvements when we compare the size of the same datasets saved in each format, especially as they get larger (@tbl-filesize).
+We get significant reductions in file size when we compare the size of the same datasets saved in each format, especially as they get larger (@tbl-filesize).
 
 ```{r}
 #| eval: false
@@ -720,6 +737,7 @@ We get significant file size improvements when we compare the size of the same d
 # INTERNAL
 
 library(arrow)
+library(fs)
 library(tidyverse)
 
 file_size_comparison <-
@@ -805,8 +823,8 @@ read_csv(
 ) |>
   mutate(
     draws = format(draws, scientific = FALSE, big.mark = ","),
-    csv_size = as_fs_bytes(csv_size),
-    parquet_size = as_fs_bytes(parquet_size)
+    csv_size = fs::as_fs_bytes(csv_size),
+    parquet_size = fs::as_fs_bytes(parquet_size)
   ) |>
   knitr::kable(
     col.names = c(
@@ -818,203 +836,214 @@ read_csv(
   )
 ```
 
-Having considered ".parquet", and explained the benefits compared with CSVs for large data that we are storing, we now consider ".arrow" and the benefit of this file type for large data that we are actively using. Again, these benefits will be most notable for larger datasets, and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare & Medicaid Services, which is 6.66 GB and available [here](https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016). It is available as a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using `read_csv()`, with the same task using `read_csv_arrow()`. We find a considerable speed-up when using `read_csv_arrow()` (@tbl-needforspeedpropublica).
 
-```{r}
-#| echo: false
-#| eval: false
+<!-- These benefits will be most notable for larger datasets, and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare & Medicaid Services, which is 6.66 GB and available [here](https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016). It is available as a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using `read_csv()`, with the same task using `read_csv_arrow()`. We find a considerable speed-up when using `read_csv_arrow()` (@tbl-needforspeedpropublica). -->
 
-# INTERNAL
+<!-- ```{r} -->
+<!-- #| echo: false -->
+<!-- #| eval: false -->
 
-library(arrow)
-library(tidyverse)
-library(tictoc)
+<!-- # INTERNAL -->
 
-tic.clearlog()
+<!-- library(arrow) -->
+<!-- library(tidyverse) -->
+<!-- library(tictoc) -->
 
-tic("CSV - Everything")
-tic("CSV - Reading")
-open_payments_data_csv <-
-  read_csv(
-    "~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv",
-    col_types =
-      cols(
-        "Teaching_Hospital_ID" = col_double(),
-        "Physician_Profile_ID" = col_double(),
-"Applicable_Manufacturer_or_Applicable_GPO_Making_Payment_ID" = col_double(),
-        "Total_Amount_of_Payment_USDollars" = col_double(),
-        "Date_of_Payment" = col_date(format = "%m/%d/%Y"),
-        "Number_of_Payments_Included_in_Total_Amount" = col_double(),
-        "Record_ID" = col_double(),
-        "Program_Year" = col_double(),
-        "Payment_Publication_Date" = col_date(format = "%m/%d/%Y"),
-        .default = col_character()
-      )
-  )
-class(open_payments_data_csv)
-toc(log = TRUE, quiet = TRUE)
-tic("CSV - Manipulate and summarise")
-summary_spend_by_state_csv <-
-  open_payments_data_csv |>
-  rename(
-    state = Recipient_State,
-    total_payment_USD = Total_Amount_of_Payment_USDollars
-  ) |>
-  filter(state %in% c("CA", "OR", "WA")) |>
-  mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
-  group_by(state) |>
-  summarise(average_payment = mean(total_payment_USD, na.rm = TRUE))
-summary_spend_by_state_csv
-toc(log = TRUE, quiet = TRUE)
-toc(log = TRUE, quiet = TRUE)
-rm(open_payments_data_csv)
+<!-- tic.clearlog() -->
 
-tic("arrow - Everything")
-tic("arrow - Reading")
-open_payments_data_arrow <-
-  read_csv_arrow(
-    "~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv",
-    as_data_frame = FALSE
-  )
-class(open_payments_data_arrow)
-toc(log = TRUE, quiet = TRUE)
-tic("arrow - Manipulate and summarise")
-summary_spend_by_state_arrow <-
-  open_payments_data_arrow |>
-  rename(
-    state = Recipient_State,
-    total_payment_USD = Total_Amount_of_Payment_USDollars
-  ) |>
-  filter(state %in% c("CA", "OR", "WA")) |>
-  mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
-  group_by(state) |>
-  summarise(average_payment = mean(total_payment_USD, na.rm = TRUE)) |>
-  collect()
-summary_spend_by_state_arrow
-toc(log = TRUE, quiet = TRUE)
-toc(log = TRUE, quiet = TRUE)
+<!-- tic("CSV - Everything") -->
+<!-- tic("CSV - Reading") -->
+<!-- open_payments_data_csv <- -->
+<!--   read_csv( -->
+<!--     "~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv", -->
+<!--     col_types = -->
+<!--       cols( -->
+<!--         "Teaching_Hospital_ID" = col_double(), -->
+<!--         "Physician_Profile_ID" = col_double(), -->
+<!-- "Applicable_Manufacturer_or_Applicable_GPO_Making_Payment_ID" = col_double(), -->
+<!--         "Total_Amount_of_Payment_USDollars" = col_double(), -->
+<!--         "Date_of_Payment" = col_date(format = "%m/%d/%Y"), -->
+<!--         "Number_of_Payments_Included_in_Total_Amount" = col_double(), -->
+<!--         "Record_ID" = col_double(), -->
+<!--         "Program_Year" = col_double(), -->
+<!--         "Payment_Publication_Date" = col_date(format = "%m/%d/%Y"), -->
+<!--         .default = col_character() -->
+<!--       ) -->
+<!--   ) -->
+<!-- class(open_payments_data_csv) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- tic("CSV - Manipulate and summarise") -->
+<!-- summary_spend_by_state_csv <- -->
+<!--   open_payments_data_csv |> -->
+<!--   rename( -->
+<!--     state = Recipient_State, -->
+<!--     total_payment_USD = Total_Amount_of_Payment_USDollars -->
+<!--   ) |> -->
+<!--   filter(state %in% c("CA", "OR", "WA")) |> -->
+<!--   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |> -->
+<!--   group_by(state) |> -->
+<!--   summarise(average_payment = mean(total_payment_USD, na.rm = TRUE)) -->
+<!-- summary_spend_by_state_csv -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- rm(open_payments_data_csv) -->
 
-rm(open_payments_data_arrow)
+<!-- tic("arrow - Everything") -->
+<!-- tic("arrow - Reading") -->
 
-log_txt <- tic.log(format = TRUE)
-tic.clearlog()
-
-need_for_speed_propublica <-
-  tibble(
-    raw = unlist(log_txt)
-  )
-
-need_for_speed_propublica <-
-  need_for_speed_propublica |>
-  separate(raw, into = c("thing", "time"), sep = ": ") |>
-  mutate(
-    time = str_remove(time, " sec elapsed"),
-    time = as.numeric(time)
-  ) |>
-  separate(thing, into = c("file_type", "task"), sep = " - ")
-
-write_csv(need_for_speed_propublica, file = "inputs/data/need_for_speed_propublica.csv")
-```
-
-```{r}
-#| echo: true
-#| eval: false
+<!-- open_payments_data <- -->
+<!-- open_dataset( -->
+<!--     "~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv", -->
+<!--     format = "csv" -->
+<!--     ) -->
 
 
-library(arrow)
-library(tidyverse)
-library(tictoc)
+<!-- open_payments_data_arrow <- -->
+<!--   read_csv_arrow( -->
+<!--     "~/Downloads/OP_DTL_GNRL_PGYR2016_P01172018.csv", -->
+<!--     as_data_frame = FALSE -->
+<!--   ) -->
+<!-- class(open_payments_data) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- tic("arrow - Manipulate and summarise") -->
+<!-- summary_spend_by_state_arrow <- -->
+<!--   open_payments_data |> -->
+<!--   rename( -->
+<!--     state = Recipient_State, -->
+<!--     total_payment_USD = Total_Amount_of_Payment_USDollars -->
+<!--   ) |> -->
+<!--   filter(state %in% c("CA", "OR", "WA")) |> -->
+<!--   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |> -->
+<!--   group_by(state) |> -->
+<!--   summarise(average_payment = mean(total_payment_USD, na.rm = TRUE)) |> -->
+<!--   collect() -->
+<!-- summary_spend_by_state_arrow -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
 
-tic.clearlog()
+<!-- rm(open_payments_data_arrow) -->
 
-tic("CSV - Everything")
-tic("CSV - Reading")
-open_payments_data_csv <-
-  read_csv(
-    "OP_DTL_GNRL_PGYR2016_P01172018.csv",
-    col_types =
-      cols(
-        "Teaching_Hospital_ID" = col_double(),
-        "Physician_Profile_ID" = col_double(),
-        "Applicable_Manufacturer_or_Applicable_GPO_Making_Payment_ID" = col_double(),
-        "Total_Amount_of_Payment_USDollars" = col_double(),
-        "Date_of_Payment" = col_date(format = "%m/%d/%Y"),
-        "Number_of_Payments_Included_in_Total_Amount" = col_double(),
-        "Record_ID" = col_double(),
-        "Program_Year" = col_double(),
-        "Payment_Publication_Date" = col_date(format = "%m/%d/%Y"),
-        .default = col_character()
-      )
-  )
+<!-- log_txt <- tic.log(format = TRUE) -->
+<!-- tic.clearlog() -->
 
-toc(log = TRUE, quiet = TRUE)
+<!-- need_for_speed_propublica <- -->
+<!--   tibble( -->
+<!--     raw = unlist(log_txt) -->
+<!--   ) -->
 
-tic("CSV - Manipulate and summarise")
-summary_spend_by_state_csv <-
-  open_payments_data_csv |>
-  rename(
-    state = Recipient_State,
-    total_payment_USD = Total_Amount_of_Payment_USDollars
-  ) |>
-  filter(state %in% c("CA", "OR", "WA")) |>
-  mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
-  group_by(state) |>
-  summarise(average_payment = mean(total_payment_USD, na.rm = TRUE))
+<!-- need_for_speed_propublica <- -->
+<!--   need_for_speed_propublica |> -->
+<!--   separate(raw, into = c("thing", "time"), sep = ": ") |> -->
+<!--   mutate( -->
+<!--     time = str_remove(time, " sec elapsed"), -->
+<!--     time = as.numeric(time) -->
+<!--   ) |> -->
+<!--   separate(thing, into = c("file_type", "task"), sep = " - ") -->
 
-summary_spend_by_state_csv
+<!-- write_csv(need_for_speed_propublica, file = "inputs/data/need_for_speed_propublica.csv") -->
+<!-- ``` -->
 
-toc(log = TRUE, quiet = TRUE)
-toc(log = TRUE, quiet = TRUE)
-
-tic("arrow - Everything")
-tic("arrow - Reading")
-open_payments_data_arrow <-
-  read_csv_arrow(
-    "OP_DTL_GNRL_PGYR2016_P01172018.csv",
-    as_data_frame = FALSE
-  )
-toc(log = TRUE, quiet = TRUE)
-
-tic("arrow - Manipulate and summarise")
-summary_spend_by_state_arrow <-
-  open_payments_data_arrow |>
-  rename(
-    state = Recipient_State,
-    total_payment_USD = Total_Amount_of_Payment_USDollars
-  ) |>
-  filter(state %in% c("CA", "OR", "WA")) |>
-  mutate(total_payment_USD_thousands = total_payment_USD / 1000) |>
-  group_by(state) |>
-  summarise(average_payment = mean(total_payment_USD, na.rm = TRUE)) |>
-  collect()
-
-summary_spend_by_state_arrow
-
-toc(log = TRUE, quiet = TRUE)
-toc(log = TRUE, quiet = TRUE)
-```
+<!-- ```{r} -->
+<!-- #| echo: true -->
+<!-- #| eval: false -->
 
 
-```{r}
-#| label: tbl-needforspeedpropublica
-#| echo: false
-#| eval: true
-#| message: false
-#| tbl-cap: "Comparing the speed of reading and manipulating using 'read_csv()' and 'read_csv_arrow()'"
+<!-- library(arrow) -->
+<!-- library(tidyverse) -->
+<!-- library(tictoc) -->
 
-read_csv(
-  "inputs/data/need_for_speed_propublica.csv",
-  show_col_types = FALSE
-) |>
-  knitr::kable(
-    col.names = c(
-      "Which function",
-      "Task",
-      "Time (seconds)"
-    ),
-    digits = 0
-  )
-```
+<!-- tic.clearlog() -->
+
+<!-- tic("CSV - Everything") -->
+<!-- tic("CSV - Reading") -->
+<!-- open_payments_data_csv <- -->
+<!--   read_csv( -->
+<!--     "OP_DTL_GNRL_PGYR2016_P01172018.csv", -->
+<!--     col_types = -->
+<!--       cols( -->
+<!--         "Teaching_Hospital_ID" = col_double(), -->
+<!--         "Physician_Profile_ID" = col_double(), -->
+<!--         "Applicable_Manufacturer_or_Applicable_GPO_Making_Payment_ID" = col_double(), -->
+<!--         "Total_Amount_of_Payment_USDollars" = col_double(), -->
+<!--         "Date_of_Payment" = col_date(format = "%m/%d/%Y"), -->
+<!--         "Number_of_Payments_Included_in_Total_Amount" = col_double(), -->
+<!--         "Record_ID" = col_double(), -->
+<!--         "Program_Year" = col_double(), -->
+<!--         "Payment_Publication_Date" = col_date(format = "%m/%d/%Y"), -->
+<!--         .default = col_character() -->
+<!--       ) -->
+<!--   ) -->
+
+<!-- toc(log = TRUE, quiet = TRUE) -->
+
+<!-- tic("CSV - Manipulate and summarise") -->
+<!-- summary_spend_by_state_csv <- -->
+<!--   open_payments_data_csv |> -->
+<!--   rename( -->
+<!--     state = Recipient_State, -->
+<!--     total_payment_USD = Total_Amount_of_Payment_USDollars -->
+<!--   ) |> -->
+<!--   filter(state %in% c("CA", "OR", "WA")) |> -->
+<!--   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |> -->
+<!--   group_by(state) |> -->
+<!--   summarise(average_payment = mean(total_payment_USD, na.rm = TRUE)) -->
+
+<!-- summary_spend_by_state_csv -->
+
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+
+<!-- tic("arrow - Everything") -->
+<!-- tic("arrow - Reading") -->
+<!-- open_payments_data_arrow <- -->
+<!--   read_csv_arrow( -->
+<!--     "OP_DTL_GNRL_PGYR2016_P01172018.csv", -->
+<!--     as_data_frame = FALSE -->
+<!--   ) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+
+<!-- tic("arrow - Manipulate and summarise") -->
+<!-- summary_spend_by_state_arrow <- -->
+<!--   open_payments_data_arrow |> -->
+<!--   rename( -->
+<!--     state = Recipient_State, -->
+<!--     total_payment_USD = Total_Amount_of_Payment_USDollars -->
+<!--   ) |> -->
+<!--   filter(state %in% c("CA", "OR", "WA")) |> -->
+<!--   mutate(total_payment_USD_thousands = total_payment_USD / 1000) |> -->
+<!--   group_by(state) |> -->
+<!--   summarise(average_payment = mean(total_payment_USD, na.rm = TRUE)) |> -->
+<!--   collect() -->
+
+<!-- summary_spend_by_state_arrow -->
+
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- toc(log = TRUE, quiet = TRUE) -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- #| label: tbl-needforspeedpropublica -->
+<!-- #| echo: false -->
+<!-- #| eval: true -->
+<!-- #| message: false -->
+<!-- #| tbl-cap: "Comparing the speed of reading and manipulating using 'read_csv()' and 'read_csv_arrow()'" -->
+
+<!-- read_csv( -->
+<!--   "inputs/data/need_for_speed_propublica.csv", -->
+<!--   show_col_types = FALSE -->
+<!-- ) |> -->
+<!--   knitr::kable( -->
+<!--     col.names = c( -->
+<!--       "Which function", -->
+<!--       "Task", -->
+<!--       "Time (seconds)" -->
+<!--     ), -->
+<!--     digits = 0 -->
+<!--   ) -->
+<!-- ``` -->
+
+
 
 @arrowcookbook provides further information about specific tasks, @navarro2021getting provides helpful examples of implementation, and @navarroworkshop provides an extensive set of materials.
 
