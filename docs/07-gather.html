@@ -1563,30 +1563,33 @@ Oh, you think we have good data on that!
 </div>
 <p>Finally, we need to clean up the columns.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>cleaned_data <span class="ot">&lt;-</span></span>
-<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>  initial_clean <span class="sc">|&gt;</span></span>
-<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># PMs who have died have their birth and death years </span></span>
-<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># separated by a hyphen, but we need to be careful with </span></span>
-<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the hyphen as it seems to be a slightly odd type of </span></span>
-<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># hyphen and we need to copy/paste it.</span></span>
-<span id="cb68-7"><a href="#cb68-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(date, <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"birth"</span>, <span class="st">"died"</span>), </span>
-<span id="cb68-8"><a href="#cb68-8" aria-hidden="true" tabindex="-1"></a>           <span class="at">sep =</span> <span class="st">"–"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb68-9"><a href="#cb68-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb68-10"><a href="#cb68-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">born =</span> <span class="fu">str_remove_all</span>(born, <span class="st">"born[[:space:]]"</span>),</span>
-<span id="cb68-11"><a href="#cb68-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">birth =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(born), born, birth)</span>
-<span id="cb68-12"><a href="#cb68-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> <span class="co"># Alive PMs have slightly different format</span></span>
-<span id="cb68-13"><a href="#cb68-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>born) <span class="sc">|&gt;</span></span>
-<span id="cb68-14"><a href="#cb68-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">born =</span> birth) <span class="sc">|&gt;</span> </span>
-<span id="cb68-15"><a href="#cb68-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Remove some HTML tags that remain</span></span>
-<span id="cb68-16"><a href="#cb68-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mutate(Name = str_remove(Name, "\n")) |&gt; </span></span>
-<span id="cb68-17"><a href="#cb68-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Change birth and death to integers</span></span>
-<span id="cb68-18"><a href="#cb68-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(born, died), as.integer)) <span class="sc">|&gt;</span> </span>
-<span id="cb68-19"><a href="#cb68-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add column of the number of years they lived</span></span>
-<span id="cb68-20"><a href="#cb68-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Age_at_Death =</span> died <span class="sc">-</span> born) <span class="sc">|&gt;</span> </span>
-<span id="cb68-21"><a href="#cb68-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Some of the PMs had two goes at it.</span></span>
-<span id="cb68-22"><a href="#cb68-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() </span>
-<span id="cb68-23"><a href="#cb68-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb68-24"><a href="#cb68-24" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(cleaned_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="annotated-cell-35"><pre class="sourceCode r code-annotation-code code-with-copy code-annotated"><code class="sourceCode r"><span id="annotated-cell-35-1"><a href="#annotated-cell-35-1" aria-hidden="true" tabindex="-1"></a>cleaned_data <span class="ot">&lt;-</span></span>
+<span id="annotated-cell-35-2"><a href="#annotated-cell-35-2" aria-hidden="true" tabindex="-1"></a>  initial_clean <span class="sc">|&gt;</span></span>
+<span id="annotated-cell-35-3"><a href="#annotated-cell-35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(date, <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"birth"</span>, <span class="st">"died"</span>), </span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-35" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-35-4" class="code-annotation-target"><a href="#annotated-cell-35-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">sep =</span> <span class="st">"–"</span>) <span class="sc">|&gt;</span></span>
+<span id="annotated-cell-35-5"><a href="#annotated-cell-35-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="annotated-cell-35-6"><a href="#annotated-cell-35-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">born =</span> <span class="fu">str_remove_all</span>(born, <span class="st">"born[[:space:]]"</span>),</span>
+<span id="annotated-cell-35-7"><a href="#annotated-cell-35-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">birth =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(born), born, birth)</span>
+<span id="annotated-cell-35-8"><a href="#annotated-cell-35-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> <span class="co"># Alive PMs have slightly different format</span></span>
+<span id="annotated-cell-35-9"><a href="#annotated-cell-35-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>born) <span class="sc">|&gt;</span></span>
+<span id="annotated-cell-35-10"><a href="#annotated-cell-35-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">born =</span> birth) <span class="sc">|&gt;</span> </span>
+<span id="annotated-cell-35-11"><a href="#annotated-cell-35-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(born, died), as.integer)) <span class="sc">|&gt;</span> </span>
+<span id="annotated-cell-35-12"><a href="#annotated-cell-35-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Age_at_Death =</span> died <span class="sc">-</span> born) <span class="sc">|&gt;</span> </span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-35" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-35-13" class="code-annotation-target"><a href="#annotated-cell-35-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>()</span>
+<span id="annotated-cell-35-14"><a href="#annotated-cell-35-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="annotated-cell-35-15"><a href="#annotated-cell-35-15" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(cleaned_data)</span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-annotation">
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-35" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-lines="4" data-code-cell="annotated-cell-35" data-code-annotation="1">PMs who have died have their birth and death years separated by a hyphen, but we need to be careful with the hyphen as it seems to be a slightly odd type of hyphen and we need to copy/paste it.</span>
+</dd>
+<dt data-target-cell="annotated-cell-35" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-lines="13" data-code-cell="annotated-cell-35" data-code-annotation="2">Some of the PMs had two goes at it.</span>
+</dd>
+</dl>
+</div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 4
   name                  born  died Age_at_Death
@@ -1601,14 +1604,14 @@ Oh, you think we have good data on that!
 </div>
 <p>Our dataset looks similar to the one that we said we wanted at the start (<a href="#tbl-canadianpmscleanddata">Table&nbsp;<span>7.2</span></a>).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>cleaned_data <span class="sc">|&gt;</span></span>
-<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
-<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
-<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Prime Minister"</span>, </span>
-<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Birth year"</span>, </span>
-<span id="cb70-6"><a href="#cb70-6" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Death year"</span>, </span>
-<span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Age at death"</span>)</span>
-<span id="cb70-8"><a href="#cb70-8" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>cleaned_data <span class="sc">|&gt;</span></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Prime Minister"</span>, </span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Birth year"</span>, </span>
+<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Death year"</span>, </span>
+<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Age at death"</span>)</span>
+<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div id="tbl-canadianpmscleanddata" class="anchored">
 <table class="table table-sm table-striped">
@@ -1665,29 +1668,29 @@ Oh, you think we have good data on that!
 </div>
 <p>At this point we would like to make a graph that illustrates how long each prime minister lived (<a href="#fig-pmslives">Figure&nbsp;<span>7.12</span></a>). If they are still alive then we would like them to run to the end, but we would like to color them differently.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>cleaned_data <span class="sc">|&gt;</span></span>
-<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">still_alive =</span> <span class="fu">if_else</span>(<span class="fu">is.na</span>(died), <span class="st">"Yes"</span>, <span class="st">"No"</span>),</span>
-<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">died =</span> <span class="fu">if_else</span>(<span class="fu">is.na</span>(died), <span class="fu">as.integer</span>(<span class="dv">2023</span>), died)</span>
-<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">name =</span> <span class="fu">as_factor</span>(name)) <span class="sc">|&gt;</span></span>
-<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(</span>
-<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> born,</span>
-<span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">xend =</span> died,</span>
-<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> name,</span>
-<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">yend =</span> name,</span>
-<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> still_alive</span>
-<span id="cb71-13"><a href="#cb71-13" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
-<span id="cb71-14"><a href="#cb71-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>() <span class="sc">+</span></span>
-<span id="cb71-15"><a href="#cb71-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb71-16"><a href="#cb71-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Year of birth"</span>,</span>
-<span id="cb71-17"><a href="#cb71-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Prime minister"</span>,</span>
-<span id="cb71-18"><a href="#cb71-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"PM is currently alive"</span>,</span>
-<span id="cb71-19"><a href="#cb71-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"How long each UK Prime Minister lived, by year of birth"</span></span>
-<span id="cb71-20"><a href="#cb71-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb71-21"><a href="#cb71-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
-<span id="cb71-22"><a href="#cb71-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_brewer</span>(<span class="at">palette =</span> <span class="st">"Set1"</span>) <span class="sc">+</span></span>
-<span id="cb71-23"><a href="#cb71-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>cleaned_data <span class="sc">|&gt;</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">still_alive =</span> <span class="fu">if_else</span>(<span class="fu">is.na</span>(died), <span class="st">"Yes"</span>, <span class="st">"No"</span>),</span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">died =</span> <span class="fu">if_else</span>(<span class="fu">is.na</span>(died), <span class="fu">as.integer</span>(<span class="dv">2023</span>), died)</span>
+<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb70-6"><a href="#cb70-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">name =</span> <span class="fu">as_factor</span>(name)) <span class="sc">|&gt;</span></span>
+<span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(</span>
+<span id="cb70-8"><a href="#cb70-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> born,</span>
+<span id="cb70-9"><a href="#cb70-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">xend =</span> died,</span>
+<span id="cb70-10"><a href="#cb70-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> name,</span>
+<span id="cb70-11"><a href="#cb70-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">yend =</span> name,</span>
+<span id="cb70-12"><a href="#cb70-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> still_alive</span>
+<span id="cb70-13"><a href="#cb70-13" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb70-14"><a href="#cb70-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>() <span class="sc">+</span></span>
+<span id="cb70-15"><a href="#cb70-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb70-16"><a href="#cb70-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Year of birth"</span>,</span>
+<span id="cb70-17"><a href="#cb70-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Prime minister"</span>,</span>
+<span id="cb70-18"><a href="#cb70-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"PM is currently alive"</span>,</span>
+<span id="cb70-19"><a href="#cb70-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"How long each UK Prime Minister lived, by year of birth"</span></span>
+<span id="cb70-20"><a href="#cb70-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb70-21"><a href="#cb70-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb70-22"><a href="#cb70-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_brewer</span>(<span class="at">palette =</span> <span class="st">"Set1"</span>) <span class="sc">+</span></span>
+<span id="cb70-23"><a href="#cb70-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div id="fig-pmslives" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
@@ -1704,28 +1707,28 @@ Oh, you think we have good data on that!
 <p>The Reserve Bank of Australia (RBA) is Australia’s central bank and sets monetary policy. It has responsibility for setting the cash rate, which is the interest rate used for loans between banks. This interest rate is an especially important one and has a large impact on the other interest rates in the economy. Four times a year – February, May, August, and November – the RBA publishes a statement on monetary policy, and these are available as PDFs. In this example we will download the four statements published in 2021.</p>
 <p>First we set-up a tibble that has the information that we need.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>common_url_bit <span class="ot">&lt;-</span> <span class="st">"https://www.rba.gov.au/publications/smp/2021/"</span></span>
-<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a>statements_of_interest <span class="ot">&lt;-</span></span>
-<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb72-7"><a href="#cb72-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">address =</span></span>
-<span id="cb72-8"><a href="#cb72-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">c</span>(</span>
-<span id="cb72-9"><a href="#cb72-9" aria-hidden="true" tabindex="-1"></a>        <span class="fu">paste0</span>(common_url_bit, <span class="st">"nov/pdf/00-overview.pdf"</span>),</span>
-<span id="cb72-10"><a href="#cb72-10" aria-hidden="true" tabindex="-1"></a>        <span class="fu">paste0</span>(common_url_bit, <span class="st">"aug/pdf/00-overview.pdf"</span>),</span>
-<span id="cb72-11"><a href="#cb72-11" aria-hidden="true" tabindex="-1"></a>        <span class="fu">paste0</span>(common_url_bit, <span class="st">"may/pdf/00-overview.pdf"</span>),</span>
-<span id="cb72-12"><a href="#cb72-12" aria-hidden="true" tabindex="-1"></a>        <span class="fu">paste0</span>(common_url_bit, <span class="st">"feb/pdf/00-overview.pdf"</span>)</span>
-<span id="cb72-13"><a href="#cb72-13" aria-hidden="true" tabindex="-1"></a>      ),</span>
-<span id="cb72-14"><a href="#cb72-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">local_save_name =</span> <span class="fu">c</span>(</span>
-<span id="cb72-15"><a href="#cb72-15" aria-hidden="true" tabindex="-1"></a>      <span class="st">"2021-11.pdf"</span>,</span>
-<span id="cb72-16"><a href="#cb72-16" aria-hidden="true" tabindex="-1"></a>      <span class="st">"2021-08.pdf"</span>,</span>
-<span id="cb72-17"><a href="#cb72-17" aria-hidden="true" tabindex="-1"></a>      <span class="st">"2021-05.pdf"</span>,</span>
-<span id="cb72-18"><a href="#cb72-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">"2021-02.pdf"</span></span>
-<span id="cb72-19"><a href="#cb72-19" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb72-20"><a href="#cb72-20" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb72-21"><a href="#cb72-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb72-22"><a href="#cb72-22" aria-hidden="true" tabindex="-1"></a>statements_of_interest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>common_url_bit <span class="ot">&lt;-</span> <span class="st">"https://www.rba.gov.au/publications/smp/2021/"</span></span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>statements_of_interest <span class="ot">&lt;-</span></span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">address =</span></span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">c</span>(</span>
+<span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a>        <span class="fu">paste0</span>(common_url_bit, <span class="st">"nov/pdf/00-overview.pdf"</span>),</span>
+<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a>        <span class="fu">paste0</span>(common_url_bit, <span class="st">"aug/pdf/00-overview.pdf"</span>),</span>
+<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a>        <span class="fu">paste0</span>(common_url_bit, <span class="st">"may/pdf/00-overview.pdf"</span>),</span>
+<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a>        <span class="fu">paste0</span>(common_url_bit, <span class="st">"feb/pdf/00-overview.pdf"</span>)</span>
+<span id="cb71-13"><a href="#cb71-13" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb71-14"><a href="#cb71-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">local_save_name =</span> <span class="fu">c</span>(</span>
+<span id="cb71-15"><a href="#cb71-15" aria-hidden="true" tabindex="-1"></a>      <span class="st">"2021-11.pdf"</span>,</span>
+<span id="cb71-16"><a href="#cb71-16" aria-hidden="true" tabindex="-1"></a>      <span class="st">"2021-08.pdf"</span>,</span>
+<span id="cb71-17"><a href="#cb71-17" aria-hidden="true" tabindex="-1"></a>      <span class="st">"2021-05.pdf"</span>,</span>
+<span id="cb71-18"><a href="#cb71-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">"2021-02.pdf"</span></span>
+<span id="cb71-19"><a href="#cb71-19" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb71-20"><a href="#cb71-20" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb71-21"><a href="#cb71-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-22"><a href="#cb71-22" aria-hidden="true" tabindex="-1"></a>statements_of_interest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 2
   address                                                              local_s…¹
@@ -1739,25 +1742,25 @@ Oh, you think we have good data on that!
 </div>
 <p>We want to apply the function <code>download.files()</code> to these four. To do this we write a function that will download the file, let us know that it was downloaded, wait a polite amount of time, and then go get the next file.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>visit_download_and_wait <span class="ot">&lt;-</span></span>
-<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(the_address_to_visit, where_to_save_it_locally) {</span>
-<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">download.file</span>(</span>
-<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">url =</span> the_address_to_visit,</span>
-<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">destfile =</span> where_to_save_it_locally</span>
-<span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb74-7"><a href="#cb74-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-8"><a href="#cb74-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Done with"</span>, the_address_to_visit, <span class="st">"at"</span>, <span class="fu">Sys.time</span>()))</span>
-<span id="cb74-9"><a href="#cb74-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-10"><a href="#cb74-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Sys.sleep</span>(<span class="fu">sample</span>(<span class="dv">5</span><span class="sc">:</span><span class="dv">10</span>, <span class="dv">1</span>))</span>
-<span id="cb74-11"><a href="#cb74-11" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>visit_download_and_wait <span class="ot">&lt;-</span></span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(the_address_to_visit, where_to_save_it_locally) {</span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">download.file</span>(</span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">url =</span> the_address_to_visit,</span>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">destfile =</span> where_to_save_it_locally</span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Done with"</span>, the_address_to_visit, <span class="st">"at"</span>, <span class="fu">Sys.time</span>()))</span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Sys.sleep</span>(<span class="fu">sample</span>(<span class="dv">5</span><span class="sc">:</span><span class="dv">10</span>, <span class="dv">1</span>))</span>
+<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We now apply that function to our tibble of URLs and save names using the function <code>walk2()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">walk2</span>(</span>
-<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>  statements_of_interest<span class="sc">$</span>address,</span>
-<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>  statements_of_interest<span class="sc">$</span>local_save_name,</span>
-<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span> <span class="fu">visit_download_and_wait</span>(.x, .y)</span>
-<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="fu">walk2</span>(</span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>  statements_of_interest<span class="sc">$</span>address,</span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>  statements_of_interest<span class="sc">$</span>local_save_name,</span>
+<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span> <span class="fu">visit_download_and_wait</span>(.x, .y)</span>
+<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The result is that we have downloaded these four PDFs and saved them to our computer. An alternative to writing these functions ourselves would be to use <code>heapsofpapers</code> <span class="citation" data-cites="heapsofpapers">(<a href="99-references.html#ref-heapsofpapers" role="doc-biblioref">Alexander and Mahfouz 2021</a>)</span>, which includes various helpful options for downloading lists of files, especially PDF, CSV, and txt files. For instance, <span class="citation" data-cites="collinsalexander">Collins and Alexander (<a href="99-references.html#ref-collinsalexander" role="doc-biblioref">2022</a>)</span> use this to obtain thousands of PDFs and estimate the extent to which COVID-19 research was reproducible. In the next section we will build on this to discuss getting information from these PDFs.</p>
 </section>
@@ -1788,14 +1791,14 @@ Oh, you think we have good data on that!
 </figure>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pdftools)</span>
-<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>first_example <span class="ot">&lt;-</span> <span class="fu">pdf_text</span>(<span class="st">"first_example.pdf"</span>)</span>
-<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>first_example</span>
-<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb76-8"><a href="#cb76-8" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(first_example)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pdftools)</span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>first_example <span class="ot">&lt;-</span> <span class="fu">pdf_text</span>(<span class="st">"first_example.pdf"</span>)</span>
+<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>first_example</span>
+<span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-8"><a href="#cb75-8" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(first_example)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stderr">
@@ -1815,9 +1818,9 @@ Oh, you think we have good data on that!
 </div>
 <p>We use the same function as before.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>second_example <span class="ot">&lt;-</span> pdftools<span class="sc">::</span><span class="fu">pdf_text</span>(<span class="st">"second_example.pdf"</span>)</span>
-<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(second_example)</span>
-<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>second_example</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>second_example <span class="ot">&lt;-</span> pdftools<span class="sc">::</span><span class="fu">pdf_text</span>(<span class="st">"second_example.pdf"</span>)</span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(second_example)</span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>second_example</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -1829,9 +1832,9 @@ Oh, you think we have good data on that!
 </div>
 <p>Again, we have a character vector. The end of each line is signaled by “\n”, but other than that it looks pretty good. Finally, we consider the first two pages.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>third_example <span class="ot">&lt;-</span> pdftools<span class="sc">::</span><span class="fu">pdf_text</span>(<span class="st">"third_example.pdf"</span>)</span>
-<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(third_example)</span>
-<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a>third_example</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>third_example <span class="ot">&lt;-</span> pdftools<span class="sc">::</span><span class="fu">pdf_text</span>(<span class="st">"third_example.pdf"</span>)</span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(third_example)</span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>third_example</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -1845,16 +1848,16 @@ Oh, you think we have good data on that!
 <p>Notice that the first page is the first element of the character vector, and the second page is the second element. As we are most familiar with rectangular data, we will try to get it into that format as quickly as possible. And then we can use our regular <code>tidyverse</code> functions to deal with it.</p>
 <p>First we want to convert the character vector into a tibble. At this point we may like to add page numbers as well.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>jane_eyre <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">raw_text =</span> third_example,</span>
-<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">page_number =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)</span>
-<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>jane_eyre <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">raw_text =</span> third_example,</span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">page_number =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)</span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We then want to separate the lines so that each line is an observation. We can do that by looking for “\n” remembering that we need to escape the backslash as it is a special character.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>jane_eyre <span class="ot">&lt;-</span></span>
-<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_rows</span>(jane_eyre, raw_text, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">n"</span>, <span class="at">convert =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a>jane_eyre</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>jane_eyre <span class="ot">&lt;-</span></span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_rows</span>(jane_eyre, raw_text, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">n"</span>, <span class="at">convert =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>jane_eyre</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 93 × 2
    raw_text                                                              page_…¹
@@ -2068,21 +2071,21 @@ Oh, you think we have good data on that!
 <p>The first step is to get some code that works for one of them. We step through the code in a lot more detail than normal because we are going to use these pieces a lot.</p>
 <p>We will choose the year 2000. We first download and save the PDF using <code>download.file()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="fu">download.file</span>(</span>
-<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">url =</span> summary_tfr_dataset<span class="sc">$</span>url[<span class="dv">1</span>],</span>
-<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">destfile =</span> <span class="st">"year_2000.pdf"</span></span>
-<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="fu">download.file</span>(</span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">url =</span> summary_tfr_dataset<span class="sc">$</span>url[<span class="dv">1</span>],</span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">destfile =</span> <span class="st">"year_2000.pdf"</span></span>
+<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We then read the PDF in as a character vector using <code>pdf_text()</code> from <code>pdftools</code>. And then convert it to a tibble, so that we can use familiar verbs on it.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pdftools)</span>
-<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a>dhs_2000 <span class="ot">&lt;-</span> <span class="fu">pdf_text</span>(<span class="st">"year_2000.pdf"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pdftools)</span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>dhs_2000 <span class="ot">&lt;-</span> <span class="fu">pdf_text</span>(<span class="st">"year_2000.pdf"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb90"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_tibble <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">raw_data =</span> dhs_2000)</span>
-<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dhs_2000_tibble)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_tibble <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">raw_data =</span> dhs_2000)</span>
+<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dhs_2000_tibble)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 1
   raw_data                                                                      
@@ -2097,11 +2100,11 @@ Oh, you think we have good data on that!
 </div>
 <p>Grab the page that is of interest (remembering that each page is an element of the character vector, hence a row in the tibble).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb92"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_relevant_page <span class="ot">&lt;-</span></span>
-<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a>  dhs_2000_tibble <span class="sc">|&gt;</span></span>
-<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(summary_tfr_dataset<span class="sc">$</span>page[<span class="dv">1</span>])</span>
-<span id="cb92-4"><a href="#cb92-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb92-5"><a href="#cb92-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dhs_2000_relevant_page)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb91"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_relevant_page <span class="ot">&lt;-</span></span>
+<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a>  dhs_2000_tibble <span class="sc">|&gt;</span></span>
+<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(summary_tfr_dataset<span class="sc">$</span>page[<span class="dv">1</span>])</span>
+<span id="cb91-4"><a href="#cb91-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb91-5"><a href="#cb91-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dhs_2000_relevant_page)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 1
   raw_data                                                                      
@@ -2111,11 +2114,11 @@ Oh, you think we have good data on that!
 </div>
 <p>Now we want to separate the rows.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb94"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_rows <span class="ot">&lt;-</span></span>
-<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>  dhs_2000_relevant_page <span class="sc">|&gt;</span></span>
-<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_rows</span>(raw_data, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">n"</span>, <span class="at">convert =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb94-4"><a href="#cb94-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb94-5"><a href="#cb94-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dhs_2000_separate_rows)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb93"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_rows <span class="ot">&lt;-</span></span>
+<span id="cb93-2"><a href="#cb93-2" aria-hidden="true" tabindex="-1"></a>  dhs_2000_relevant_page <span class="sc">|&gt;</span></span>
+<span id="cb93-3"><a href="#cb93-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_rows</span>(raw_data, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">n"</span>, <span class="at">convert =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb93-4"><a href="#cb93-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb93-5"><a href="#cb93-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dhs_2000_separate_rows)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 1
   raw_data                                                                      
@@ -2130,8 +2133,8 @@ Oh, you think we have good data on that!
 </div>
 <p>Now we are searching for patterns that we can use. Let us look at the first ten lines of content (ignoring aspects such as headings and page numbers at the top of the page).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb96"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_rows[<span class="dv">13</span><span class="sc">:</span><span class="dv">22</span>, ] <span class="sc">|&gt;</span></span>
-<span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">raw_data =</span> <span class="fu">str_remove</span>(raw_data, <span class="st">"</span><span class="sc">\\</span><span class="st">.{40}"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb95"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_rows[<span class="dv">13</span><span class="sc">:</span><span class="dv">22</span>, ] <span class="sc">|&gt;</span></span>
+<span id="cb95-2"><a href="#cb95-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">raw_data =</span> <span class="fu">str_remove</span>(raw_data, <span class="st">"</span><span class="sc">\\</span><span class="st">.{40}"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 1
    raw_data                                                                     
@@ -2150,8 +2153,8 @@ Oh, you think we have good data on that!
 </div>
 <p>And now at just one line.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb98"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_rows[<span class="dv">20</span>, ] <span class="sc">|&gt;</span></span>
-<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">raw_data =</span> <span class="fu">str_remove</span>(raw_data, <span class="st">"</span><span class="sc">\\</span><span class="st">.{40}"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb97"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_rows[<span class="dv">20</span>, ] <span class="sc">|&gt;</span></span>
+<span id="cb97-2"><a href="#cb97-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">raw_data =</span> <span class="fu">str_remove</span>(raw_data, <span class="st">"</span><span class="sc">\\</span><span class="st">.{40}"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 1
   raw_data                                                                      
@@ -2166,18 +2169,18 @@ Oh, you think we have good data on that!
 </ol>
 <p>We can now separate this into separate columns. First, we want to match on when there is at least two dots (remembering that the dot is a special character and so needs to be escaped).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb100"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_columns <span class="ot">&lt;-</span></span>
-<span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>  dhs_2000_separate_rows <span class="sc">|&gt;</span></span>
-<span id="cb100-3"><a href="#cb100-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(</span>
-<span id="cb100-4"><a href="#cb100-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> raw_data,</span>
-<span id="cb100-5"><a href="#cb100-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"state"</span>, <span class="st">"data"</span>),</span>
-<span id="cb100-6"><a href="#cb100-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.{2,}"</span>,</span>
-<span id="cb100-7"><a href="#cb100-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">remove =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb100-8"><a href="#cb100-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"right"</span></span>
-<span id="cb100-9"><a href="#cb100-9" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb100-10"><a href="#cb100-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb100-11"><a href="#cb100-11" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_columns[<span class="dv">18</span><span class="sc">:</span><span class="dv">28</span>, ] <span class="sc">|&gt;</span></span>
-<span id="cb100-12"><a href="#cb100-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(state, data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb99"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_columns <span class="ot">&lt;-</span></span>
+<span id="cb99-2"><a href="#cb99-2" aria-hidden="true" tabindex="-1"></a>  dhs_2000_separate_rows <span class="sc">|&gt;</span></span>
+<span id="cb99-3"><a href="#cb99-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(</span>
+<span id="cb99-4"><a href="#cb99-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> raw_data,</span>
+<span id="cb99-5"><a href="#cb99-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"state"</span>, <span class="st">"data"</span>),</span>
+<span id="cb99-6"><a href="#cb99-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.{2,}"</span>,</span>
+<span id="cb99-7"><a href="#cb99-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">remove =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb99-8"><a href="#cb99-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"right"</span></span>
+<span id="cb99-9"><a href="#cb99-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb99-10"><a href="#cb99-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb99-11"><a href="#cb99-11" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_columns[<span class="dv">18</span><span class="sc">:</span><span class="dv">28</span>, ] <span class="sc">|&gt;</span></span>
+<span id="cb99-12"><a href="#cb99-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(state, data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 11 × 2
    state                   data                                                 
@@ -2198,26 +2201,26 @@ Oh, you think we have good data on that!
 <!-- We get the expected warnings about the top and the bottom as they do not have multiple dots. (Another option here is to use `pdf_data()` which would allow us to use location rather than delimiters.) -->
 <p>We can now separate the data based on spaces. There is an inconsistent number of spaces, so we first squish any example of more than one space into just one.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb102"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_data <span class="ot">&lt;-</span></span>
-<span id="cb102-2"><a href="#cb102-2" aria-hidden="true" tabindex="-1"></a>  dhs_2000_separate_columns <span class="sc">|&gt;</span></span>
-<span id="cb102-3"><a href="#cb102-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">data =</span> <span class="fu">str_squish</span>(data)) <span class="sc">|&gt;</span></span>
-<span id="cb102-4"><a href="#cb102-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(</span>
-<span id="cb102-5"><a href="#cb102-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> data,</span>
-<span id="cb102-6"><a href="#cb102-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">into =</span> <span class="fu">c</span>(</span>
-<span id="cb102-7"><a href="#cb102-7" aria-hidden="true" tabindex="-1"></a>      <span class="st">"number_of_births"</span>,</span>
-<span id="cb102-8"><a href="#cb102-8" aria-hidden="true" tabindex="-1"></a>      <span class="st">"birth_rate"</span>,</span>
-<span id="cb102-9"><a href="#cb102-9" aria-hidden="true" tabindex="-1"></a>      <span class="st">"fertility_rate"</span>,</span>
-<span id="cb102-10"><a href="#cb102-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">"TFR"</span>,</span>
-<span id="cb102-11"><a href="#cb102-11" aria-hidden="true" tabindex="-1"></a>      <span class="st">"teen_births_all"</span>,</span>
-<span id="cb102-12"><a href="#cb102-12" aria-hidden="true" tabindex="-1"></a>      <span class="st">"teen_births_15_17"</span>,</span>
-<span id="cb102-13"><a href="#cb102-13" aria-hidden="true" tabindex="-1"></a>      <span class="st">"teen_births_18_19"</span></span>
-<span id="cb102-14"><a href="#cb102-14" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb102-15"><a href="#cb102-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">s"</span>,</span>
-<span id="cb102-16"><a href="#cb102-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">remove =</span> <span class="cn">FALSE</span></span>
-<span id="cb102-17"><a href="#cb102-17" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb102-18"><a href="#cb102-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb102-19"><a href="#cb102-19" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_data[<span class="dv">18</span><span class="sc">:</span><span class="dv">28</span>, ] <span class="sc">|&gt;</span></span>
-<span id="cb102-20"><a href="#cb102-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>raw_data, <span class="sc">-</span>data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb101"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_data <span class="ot">&lt;-</span></span>
+<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a>  dhs_2000_separate_columns <span class="sc">|&gt;</span></span>
+<span id="cb101-3"><a href="#cb101-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">data =</span> <span class="fu">str_squish</span>(data)) <span class="sc">|&gt;</span></span>
+<span id="cb101-4"><a href="#cb101-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(</span>
+<span id="cb101-5"><a href="#cb101-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> data,</span>
+<span id="cb101-6"><a href="#cb101-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">into =</span> <span class="fu">c</span>(</span>
+<span id="cb101-7"><a href="#cb101-7" aria-hidden="true" tabindex="-1"></a>      <span class="st">"number_of_births"</span>,</span>
+<span id="cb101-8"><a href="#cb101-8" aria-hidden="true" tabindex="-1"></a>      <span class="st">"birth_rate"</span>,</span>
+<span id="cb101-9"><a href="#cb101-9" aria-hidden="true" tabindex="-1"></a>      <span class="st">"fertility_rate"</span>,</span>
+<span id="cb101-10"><a href="#cb101-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">"TFR"</span>,</span>
+<span id="cb101-11"><a href="#cb101-11" aria-hidden="true" tabindex="-1"></a>      <span class="st">"teen_births_all"</span>,</span>
+<span id="cb101-12"><a href="#cb101-12" aria-hidden="true" tabindex="-1"></a>      <span class="st">"teen_births_15_17"</span>,</span>
+<span id="cb101-13"><a href="#cb101-13" aria-hidden="true" tabindex="-1"></a>      <span class="st">"teen_births_18_19"</span></span>
+<span id="cb101-14"><a href="#cb101-14" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb101-15"><a href="#cb101-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">s"</span>,</span>
+<span id="cb101-16"><a href="#cb101-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">remove =</span> <span class="cn">FALSE</span></span>
+<span id="cb101-17"><a href="#cb101-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb101-18"><a href="#cb101-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb101-19"><a href="#cb101-19" aria-hidden="true" tabindex="-1"></a>dhs_2000_separate_data[<span class="dv">18</span><span class="sc">:</span><span class="dv">28</span>, ] <span class="sc">|&gt;</span></span>
+<span id="cb101-20"><a href="#cb101-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>raw_data, <span class="sc">-</span>data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 11 × 8
    state                   numbe…¹ birth…² ferti…³ TFR   teen_…⁴ teen_…⁵ teen_…⁶
@@ -2239,13 +2242,13 @@ Oh, you think we have good data on that!
 </div>
 <p>This is all looking fairly great. The only thing left is to clean up.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb104"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_cleaned <span class="ot">&lt;-</span></span>
-<span id="cb104-2"><a href="#cb104-2" aria-hidden="true" tabindex="-1"></a>  dhs_2000_separate_data <span class="sc">|&gt;</span></span>
-<span id="cb104-3"><a href="#cb104-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(state, TFR) <span class="sc">|&gt;</span></span>
-<span id="cb104-4"><a href="#cb104-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">18</span><span class="sc">:</span><span class="dv">71</span>) <span class="sc">|&gt;</span></span>
-<span id="cb104-5"><a href="#cb104-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="dv">2000</span>)</span>
-<span id="cb104-6"><a href="#cb104-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb104-7"><a href="#cb104-7" aria-hidden="true" tabindex="-1"></a>dhs_2000_cleaned</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb103"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a>dhs_2000_cleaned <span class="ot">&lt;-</span></span>
+<span id="cb103-2"><a href="#cb103-2" aria-hidden="true" tabindex="-1"></a>  dhs_2000_separate_data <span class="sc">|&gt;</span></span>
+<span id="cb103-3"><a href="#cb103-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(state, TFR) <span class="sc">|&gt;</span></span>
+<span id="cb103-4"><a href="#cb103-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">18</span><span class="sc">:</span><span class="dv">71</span>) <span class="sc">|&gt;</span></span>
+<span id="cb103-5"><a href="#cb103-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="dv">2000</span>)</span>
+<span id="cb103-6"><a href="#cb103-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb103-7"><a href="#cb103-7" aria-hidden="true" tabindex="-1"></a>dhs_2000_cleaned</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 54 × 3
    state              TFR      year
@@ -2265,9 +2268,9 @@ Oh, you think we have good data on that!
 </div>
 <p>And we are done for that year. Now we want to take these pieces, put them into a function and then run that function over all 19 years. The first part is downloading each of the 19 PDFs that we need. We are going to build on the code that we used before, which was:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb106"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a><span class="fu">download.file</span>(<span class="at">url =</span> summary_tfr_dataset<span class="sc">$</span>url[<span class="dv">1</span>], </span>
-<span id="cb106-2"><a href="#cb106-2" aria-hidden="true" tabindex="-1"></a>              <span class="at">destfile =</span> <span class="st">"year_2000.pdf"</span></span>
-<span id="cb106-3"><a href="#cb106-3" aria-hidden="true" tabindex="-1"></a>              )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb105"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb105-1"><a href="#cb105-1" aria-hidden="true" tabindex="-1"></a><span class="fu">download.file</span>(<span class="at">url =</span> summary_tfr_dataset<span class="sc">$</span>url[<span class="dv">1</span>], </span>
+<span id="cb105-2"><a href="#cb105-2" aria-hidden="true" tabindex="-1"></a>              <span class="at">destfile =</span> <span class="st">"year_2000.pdf"</span></span>
+<span id="cb105-3"><a href="#cb105-3" aria-hidden="true" tabindex="-1"></a>              )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>To modify this we need:</p>
 <ol type="1">
@@ -2277,57 +2280,57 @@ Oh, you think we have good data on that!
 </ol>
 <p>We will <code>walk2()</code> from <code>purrr</code> for this iteration <span class="citation" data-cites="citepurrr">(<a href="99-references.html#ref-citepurrr" role="doc-biblioref">Wickham and Henry 2022</a>)</span>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb107"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb107-1"><a href="#cb107-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
-<span id="cb107-2"><a href="#cb107-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb107-3"><a href="#cb107-3" aria-hidden="true" tabindex="-1"></a>summary_tfr_dataset <span class="ot">&lt;-</span></span>
-<span id="cb107-4"><a href="#cb107-4" aria-hidden="true" tabindex="-1"></a>  summary_tfr_dataset <span class="sc">|&gt;</span></span>
-<span id="cb107-5"><a href="#cb107-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pdf_name =</span> <span class="fu">paste0</span>(<span class="st">"dhs/year_"</span>, year, <span class="st">".pdf"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb106"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb106-2"><a href="#cb106-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb106-3"><a href="#cb106-3" aria-hidden="true" tabindex="-1"></a>summary_tfr_dataset <span class="ot">&lt;-</span></span>
+<span id="cb106-4"><a href="#cb106-4" aria-hidden="true" tabindex="-1"></a>  summary_tfr_dataset <span class="sc">|&gt;</span></span>
+<span id="cb106-5"><a href="#cb106-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pdf_name =</span> <span class="fu">paste0</span>(<span class="st">"dhs/year_"</span>, year, <span class="st">".pdf"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb108"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
-<span id="cb108-2"><a href="#cb108-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb108-3"><a href="#cb108-3" aria-hidden="true" tabindex="-1"></a><span class="fu">walk2</span>(</span>
-<span id="cb108-4"><a href="#cb108-4" aria-hidden="true" tabindex="-1"></a>  summary_tfr_dataset<span class="sc">$</span>url,</span>
-<span id="cb108-5"><a href="#cb108-5" aria-hidden="true" tabindex="-1"></a>  summary_tfr_dataset<span class="sc">$</span>pdf_name,</span>
-<span id="cb108-6"><a href="#cb108-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">safely</span>(<span class="sc">~</span> <span class="fu">download.file</span>(.x, .y))</span>
-<span id="cb108-7"><a href="#cb108-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb107"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb107-1"><a href="#cb107-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb107-2"><a href="#cb107-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb107-3"><a href="#cb107-3" aria-hidden="true" tabindex="-1"></a><span class="fu">walk2</span>(</span>
+<span id="cb107-4"><a href="#cb107-4" aria-hidden="true" tabindex="-1"></a>  summary_tfr_dataset<span class="sc">$</span>url,</span>
+<span id="cb107-5"><a href="#cb107-5" aria-hidden="true" tabindex="-1"></a>  summary_tfr_dataset<span class="sc">$</span>pdf_name,</span>
+<span id="cb107-6"><a href="#cb107-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">safely</span>(<span class="sc">~</span> <span class="fu">download.file</span>(.x, .y))</span>
+<span id="cb107-7"><a href="#cb107-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here we take <code>download.file()</code> and pass it two arguments: <code>.x</code> and <code>.y</code>. Then <code>walk2()</code> applies that function to the inputs that we give it, in this case the URLs columns is the <code>.x</code> and the pdf_names column is the <code>.y</code>. Finally, <code>safely()</code> means that if there are any failures then it just moves onto the next file instead of throwing an error.</p>
 <p>We now have each of the PDFs saved and we can move onto getting the data from them.</p>
 <p>Now we need to get the data from the PDFs. As before, we are going to build on the code that we used before. That code (overly condensed) was:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb109"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb109-1"><a href="#cb109-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pdftools)</span>
-<span id="cb109-2"><a href="#cb109-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb109-3"><a href="#cb109-3" aria-hidden="true" tabindex="-1"></a>dhs_2000 <span class="ot">&lt;-</span> <span class="fu">pdf_text</span>(<span class="st">"year_2000.pdf"</span>)</span>
-<span id="cb109-4"><a href="#cb109-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb109-5"><a href="#cb109-5" aria-hidden="true" tabindex="-1"></a>dhs_2000 <span class="ot">&lt;-</span></span>
-<span id="cb109-6"><a href="#cb109-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">raw_data =</span> dhs_2000) <span class="sc">|&gt;</span></span>
-<span id="cb109-7"><a href="#cb109-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(summary_tfr_dataset<span class="sc">$</span>page[<span class="dv">1</span>]) <span class="sc">|&gt;</span></span>
-<span id="cb109-8"><a href="#cb109-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_rows</span>(raw_data, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">n"</span>, <span class="at">convert =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb109-9"><a href="#cb109-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(</span>
-<span id="cb109-10"><a href="#cb109-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> raw_data,</span>
-<span id="cb109-11"><a href="#cb109-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"state"</span>, <span class="st">"data"</span>),</span>
-<span id="cb109-12"><a href="#cb109-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.{2,}"</span>,</span>
-<span id="cb109-13"><a href="#cb109-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">remove =</span> <span class="cn">FALSE</span></span>
-<span id="cb109-14"><a href="#cb109-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb109-15"><a href="#cb109-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">data =</span> <span class="fu">str_squish</span>(data)) <span class="sc">|&gt;</span></span>
-<span id="cb109-16"><a href="#cb109-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(</span>
-<span id="cb109-17"><a href="#cb109-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> data,</span>
-<span id="cb109-18"><a href="#cb109-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">into =</span> <span class="fu">c</span>(</span>
-<span id="cb109-19"><a href="#cb109-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">"number_of_births"</span>,</span>
-<span id="cb109-20"><a href="#cb109-20" aria-hidden="true" tabindex="-1"></a>      <span class="st">"birth_rate"</span>,</span>
-<span id="cb109-21"><a href="#cb109-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">"fertility_rate"</span>,</span>
-<span id="cb109-22"><a href="#cb109-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">"TFR"</span>,</span>
-<span id="cb109-23"><a href="#cb109-23" aria-hidden="true" tabindex="-1"></a>      <span class="st">"teen_births_all"</span>,</span>
-<span id="cb109-24"><a href="#cb109-24" aria-hidden="true" tabindex="-1"></a>      <span class="st">"teen_births_15_17"</span>,</span>
-<span id="cb109-25"><a href="#cb109-25" aria-hidden="true" tabindex="-1"></a>      <span class="st">"teen_births_18_19"</span></span>
-<span id="cb109-26"><a href="#cb109-26" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb109-27"><a href="#cb109-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">s"</span>,</span>
-<span id="cb109-28"><a href="#cb109-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">remove =</span> <span class="cn">FALSE</span></span>
-<span id="cb109-29"><a href="#cb109-29" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb109-30"><a href="#cb109-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(state, TFR) <span class="sc">|&gt;</span></span>
-<span id="cb109-31"><a href="#cb109-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">18</span><span class="sc">:</span><span class="dv">71</span>) <span class="sc">|&gt;</span></span>
-<span id="cb109-32"><a href="#cb109-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="dv">2000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb108"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pdftools)</span>
+<span id="cb108-2"><a href="#cb108-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb108-3"><a href="#cb108-3" aria-hidden="true" tabindex="-1"></a>dhs_2000 <span class="ot">&lt;-</span> <span class="fu">pdf_text</span>(<span class="st">"year_2000.pdf"</span>)</span>
+<span id="cb108-4"><a href="#cb108-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb108-5"><a href="#cb108-5" aria-hidden="true" tabindex="-1"></a>dhs_2000 <span class="ot">&lt;-</span></span>
+<span id="cb108-6"><a href="#cb108-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">raw_data =</span> dhs_2000) <span class="sc">|&gt;</span></span>
+<span id="cb108-7"><a href="#cb108-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(summary_tfr_dataset<span class="sc">$</span>page[<span class="dv">1</span>]) <span class="sc">|&gt;</span></span>
+<span id="cb108-8"><a href="#cb108-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_rows</span>(raw_data, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">n"</span>, <span class="at">convert =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb108-9"><a href="#cb108-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(</span>
+<span id="cb108-10"><a href="#cb108-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> raw_data,</span>
+<span id="cb108-11"><a href="#cb108-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"state"</span>, <span class="st">"data"</span>),</span>
+<span id="cb108-12"><a href="#cb108-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.{2,}"</span>,</span>
+<span id="cb108-13"><a href="#cb108-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">remove =</span> <span class="cn">FALSE</span></span>
+<span id="cb108-14"><a href="#cb108-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb108-15"><a href="#cb108-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">data =</span> <span class="fu">str_squish</span>(data)) <span class="sc">|&gt;</span></span>
+<span id="cb108-16"><a href="#cb108-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(</span>
+<span id="cb108-17"><a href="#cb108-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> data,</span>
+<span id="cb108-18"><a href="#cb108-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">into =</span> <span class="fu">c</span>(</span>
+<span id="cb108-19"><a href="#cb108-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">"number_of_births"</span>,</span>
+<span id="cb108-20"><a href="#cb108-20" aria-hidden="true" tabindex="-1"></a>      <span class="st">"birth_rate"</span>,</span>
+<span id="cb108-21"><a href="#cb108-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">"fertility_rate"</span>,</span>
+<span id="cb108-22"><a href="#cb108-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">"TFR"</span>,</span>
+<span id="cb108-23"><a href="#cb108-23" aria-hidden="true" tabindex="-1"></a>      <span class="st">"teen_births_all"</span>,</span>
+<span id="cb108-24"><a href="#cb108-24" aria-hidden="true" tabindex="-1"></a>      <span class="st">"teen_births_15_17"</span>,</span>
+<span id="cb108-25"><a href="#cb108-25" aria-hidden="true" tabindex="-1"></a>      <span class="st">"teen_births_18_19"</span></span>
+<span id="cb108-26"><a href="#cb108-26" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb108-27"><a href="#cb108-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">s"</span>,</span>
+<span id="cb108-28"><a href="#cb108-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">remove =</span> <span class="cn">FALSE</span></span>
+<span id="cb108-29"><a href="#cb108-29" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb108-30"><a href="#cb108-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(state, TFR) <span class="sc">|&gt;</span></span>
+<span id="cb108-31"><a href="#cb108-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">18</span><span class="sc">:</span><span class="dv">71</span>) <span class="sc">|&gt;</span></span>
+<span id="cb108-32"><a href="#cb108-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="dv">2000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The first thing that we want to iterate is the argument to <code>pdf_text()</code>, then the number in <code>slice()</code> will also need to change (that is doing the work to get only the page that we are interested in).</p>
 <p>Two aspects are hardcoded, and these may need to be updated. In particular:</p>
@@ -2338,37 +2341,37 @@ Oh, you think we have good data on that!
 <p>Finally, in the code written for the one-year, we add the year only at the end, whereas to do it for multiple years we would need to bring that up earlier in the process.</p>
 <p>We will start by writing a function that will go through all the files, grab the data, get the page of interest, and then expand the rows. We will then use <code>pmap_dfr()</code> from <code>purrr</code> to apply that function to all of the PDFs and to output a tibble.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb110"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb110-1"><a href="#cb110-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb110-2"><a href="#cb110-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pdftools)</span>
-<span id="cb110-3"><a href="#cb110-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
-<span id="cb110-4"><a href="#cb110-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb110-5"><a href="#cb110-5" aria-hidden="true" tabindex="-1"></a>get_pdf_convert_to_tibble <span class="ot">&lt;-</span> <span class="cf">function</span>(pdf_name, page, year) {</span>
-<span id="cb110-6"><a href="#cb110-6" aria-hidden="true" tabindex="-1"></a>  dhs_table_of_interest <span class="ot">&lt;-</span></span>
-<span id="cb110-7"><a href="#cb110-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(<span class="at">raw_data =</span> <span class="fu">pdf_text</span>(pdf_name)) <span class="sc">|&gt;</span></span>
-<span id="cb110-8"><a href="#cb110-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice</span>(page) <span class="sc">|&gt;</span></span>
-<span id="cb110-9"><a href="#cb110-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">separate_rows</span>(raw_data, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">n"</span>, <span class="at">convert =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb110-10"><a href="#cb110-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">separate</span>(</span>
-<span id="cb110-11"><a href="#cb110-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">col =</span> raw_data,</span>
-<span id="cb110-12"><a href="#cb110-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"state"</span>, <span class="st">"data"</span>),</span>
-<span id="cb110-13"><a href="#cb110-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">sep =</span> <span class="st">"[�|</span><span class="sc">\\</span><span class="st">.]</span><span class="sc">\\</span><span class="st">s+(?=[[:digit:]])"</span>,</span>
-<span id="cb110-14"><a href="#cb110-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">remove =</span> <span class="cn">FALSE</span></span>
-<span id="cb110-15"><a href="#cb110-15" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb110-16"><a href="#cb110-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb110-17"><a href="#cb110-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> <span class="fu">str_squish</span>(data),</span>
-<span id="cb110-18"><a href="#cb110-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">year_of_data =</span> year</span>
-<span id="cb110-19"><a href="#cb110-19" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb110-20"><a href="#cb110-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb110-21"><a href="#cb110-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Done with"</span>, year))</span>
-<span id="cb110-22"><a href="#cb110-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb110-23"><a href="#cb110-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(dhs_table_of_interest)</span>
-<span id="cb110-24"><a href="#cb110-24" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb110-25"><a href="#cb110-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb110-26"><a href="#cb110-26" aria-hidden="true" tabindex="-1"></a>raw_dhs_data <span class="ot">&lt;-</span></span>
-<span id="cb110-27"><a href="#cb110-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pmap_dfr</span>(</span>
-<span id="cb110-28"><a href="#cb110-28" aria-hidden="true" tabindex="-1"></a>    summary_tfr_dataset <span class="sc">|&gt;</span></span>
-<span id="cb110-29"><a href="#cb110-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(pdf_name, page, year),</span>
-<span id="cb110-30"><a href="#cb110-30" aria-hidden="true" tabindex="-1"></a>    get_pdf_convert_to_tibble</span>
-<span id="cb110-31"><a href="#cb110-31" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb109"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb109-1"><a href="#cb109-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb109-2"><a href="#cb109-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pdftools)</span>
+<span id="cb109-3"><a href="#cb109-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb109-4"><a href="#cb109-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb109-5"><a href="#cb109-5" aria-hidden="true" tabindex="-1"></a>get_pdf_convert_to_tibble <span class="ot">&lt;-</span> <span class="cf">function</span>(pdf_name, page, year) {</span>
+<span id="cb109-6"><a href="#cb109-6" aria-hidden="true" tabindex="-1"></a>  dhs_table_of_interest <span class="ot">&lt;-</span></span>
+<span id="cb109-7"><a href="#cb109-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(<span class="at">raw_data =</span> <span class="fu">pdf_text</span>(pdf_name)) <span class="sc">|&gt;</span></span>
+<span id="cb109-8"><a href="#cb109-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice</span>(page) <span class="sc">|&gt;</span></span>
+<span id="cb109-9"><a href="#cb109-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">separate_rows</span>(raw_data, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">n"</span>, <span class="at">convert =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb109-10"><a href="#cb109-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">separate</span>(</span>
+<span id="cb109-11"><a href="#cb109-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">col =</span> raw_data,</span>
+<span id="cb109-12"><a href="#cb109-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"state"</span>, <span class="st">"data"</span>),</span>
+<span id="cb109-13"><a href="#cb109-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">sep =</span> <span class="st">"[�|</span><span class="sc">\\</span><span class="st">.]</span><span class="sc">\\</span><span class="st">s+(?=[[:digit:]])"</span>,</span>
+<span id="cb109-14"><a href="#cb109-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">remove =</span> <span class="cn">FALSE</span></span>
+<span id="cb109-15"><a href="#cb109-15" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb109-16"><a href="#cb109-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb109-17"><a href="#cb109-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> <span class="fu">str_squish</span>(data),</span>
+<span id="cb109-18"><a href="#cb109-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">year_of_data =</span> year</span>
+<span id="cb109-19"><a href="#cb109-19" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb109-20"><a href="#cb109-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb109-21"><a href="#cb109-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Done with"</span>, year))</span>
+<span id="cb109-22"><a href="#cb109-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb109-23"><a href="#cb109-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(dhs_table_of_interest)</span>
+<span id="cb109-24"><a href="#cb109-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb109-25"><a href="#cb109-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb109-26"><a href="#cb109-26" aria-hidden="true" tabindex="-1"></a>raw_dhs_data <span class="ot">&lt;-</span></span>
+<span id="cb109-27"><a href="#cb109-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pmap_dfr</span>(</span>
+<span id="cb109-28"><a href="#cb109-28" aria-hidden="true" tabindex="-1"></a>    summary_tfr_dataset <span class="sc">|&gt;</span></span>
+<span id="cb109-29"><a href="#cb109-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(pdf_name, page, year),</span>
+<span id="cb109-30"><a href="#cb109-30" aria-hidden="true" tabindex="-1"></a>    get_pdf_convert_to_tibble</span>
+<span id="cb109-31"><a href="#cb109-31" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Done with 2000"
 [1] "Done with 2001"
@@ -2392,7 +2395,7 @@ Oh, you think we have good data on that!
 [1] "Done with 2017"
 [1] "Done with 2018"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb112"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb112-1"><a href="#cb112-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(raw_dhs_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb111"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb111-1"><a href="#cb111-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(raw_dhs_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 4
   raw_data                                                   state data  year_…¹
@@ -2408,24 +2411,24 @@ Oh, you think we have good data on that!
 </div>
 <p>Now we need to clean up the state names and then filter on them.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb114"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb114-1"><a href="#cb114-1" aria-hidden="true" tabindex="-1"></a>states <span class="ot">&lt;-</span> <span class="fu">c</span>(state.name, <span class="st">"District of Columbia"</span>)</span>
-<span id="cb114-2"><a href="#cb114-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-3"><a href="#cb114-3" aria-hidden="true" tabindex="-1"></a>raw_dhs_data <span class="ot">&lt;-</span></span>
-<span id="cb114-4"><a href="#cb114-4" aria-hidden="true" tabindex="-1"></a>  raw_dhs_data <span class="sc">|&gt;</span></span>
-<span id="cb114-5"><a href="#cb114-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb114-6"><a href="#cb114-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_remove_all</span>(state, <span class="st">"</span><span class="sc">\\</span><span class="st">."</span>),</span>
-<span id="cb114-7"><a href="#cb114-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_remove_all</span>(state, <span class="st">"�"</span>),</span>
-<span id="cb114-8"><a href="#cb114-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_remove_all</span>(state, <span class="st">"\u0008"</span>),</span>
-<span id="cb114-9"><a href="#cb114-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_replace_all</span>(state, <span class="st">"United States 1"</span>, <span class="st">"United States"</span>),</span>
-<span id="cb114-10"><a href="#cb114-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_replace_all</span>(state, <span class="st">"United States1"</span>, <span class="st">"United States"</span>),</span>
-<span id="cb114-11"><a href="#cb114-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_replace_all</span>(state, <span class="st">"United States 2"</span>, <span class="st">"United States"</span>),</span>
-<span id="cb114-12"><a href="#cb114-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_replace_all</span>(state, <span class="st">"United States2"</span>, <span class="st">"United States"</span>),</span>
-<span id="cb114-13"><a href="#cb114-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_replace_all</span>(state, <span class="st">"United States²"</span>, <span class="st">"United States"</span>),</span>
-<span id="cb114-14"><a href="#cb114-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb114-15"><a href="#cb114-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">state =</span> <span class="fu">str_squish</span>(state)) <span class="sc">|&gt;</span></span>
-<span id="cb114-16"><a href="#cb114-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(state <span class="sc">%in%</span> states)</span>
-<span id="cb114-17"><a href="#cb114-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-18"><a href="#cb114-18" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(raw_dhs_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb113"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb113-1"><a href="#cb113-1" aria-hidden="true" tabindex="-1"></a>states <span class="ot">&lt;-</span> <span class="fu">c</span>(state.name, <span class="st">"District of Columbia"</span>)</span>
+<span id="cb113-2"><a href="#cb113-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb113-3"><a href="#cb113-3" aria-hidden="true" tabindex="-1"></a>raw_dhs_data <span class="ot">&lt;-</span></span>
+<span id="cb113-4"><a href="#cb113-4" aria-hidden="true" tabindex="-1"></a>  raw_dhs_data <span class="sc">|&gt;</span></span>
+<span id="cb113-5"><a href="#cb113-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb113-6"><a href="#cb113-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_remove_all</span>(state, <span class="st">"</span><span class="sc">\\</span><span class="st">."</span>),</span>
+<span id="cb113-7"><a href="#cb113-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_remove_all</span>(state, <span class="st">"�"</span>),</span>
+<span id="cb113-8"><a href="#cb113-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_remove_all</span>(state, <span class="st">"\u0008"</span>),</span>
+<span id="cb113-9"><a href="#cb113-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_replace_all</span>(state, <span class="st">"United States 1"</span>, <span class="st">"United States"</span>),</span>
+<span id="cb113-10"><a href="#cb113-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_replace_all</span>(state, <span class="st">"United States1"</span>, <span class="st">"United States"</span>),</span>
+<span id="cb113-11"><a href="#cb113-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_replace_all</span>(state, <span class="st">"United States 2"</span>, <span class="st">"United States"</span>),</span>
+<span id="cb113-12"><a href="#cb113-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_replace_all</span>(state, <span class="st">"United States2"</span>, <span class="st">"United States"</span>),</span>
+<span id="cb113-13"><a href="#cb113-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">str_replace_all</span>(state, <span class="st">"United States²"</span>, <span class="st">"United States"</span>),</span>
+<span id="cb113-14"><a href="#cb113-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb113-15"><a href="#cb113-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">state =</span> <span class="fu">str_squish</span>(state)) <span class="sc">|&gt;</span></span>
+<span id="cb113-16"><a href="#cb113-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(state <span class="sc">%in%</span> states)</span>
+<span id="cb113-17"><a href="#cb113-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb113-18"><a href="#cb113-18" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(raw_dhs_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 4
   raw_data                                                   state data  year_…¹
@@ -2441,27 +2444,27 @@ Oh, you think we have good data on that!
 </div>
 <p>The next step is to separate the data and get the correct column from it. We are going to separate based on spaces once it is cleaned up.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb116"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb116-1"><a href="#cb116-1" aria-hidden="true" tabindex="-1"></a>raw_dhs_data <span class="ot">&lt;-</span></span>
-<span id="cb116-2"><a href="#cb116-2" aria-hidden="true" tabindex="-1"></a>  raw_dhs_data <span class="sc">|&gt;</span></span>
-<span id="cb116-3"><a href="#cb116-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">data =</span> <span class="fu">str_remove_all</span>(data, <span class="st">"</span><span class="sc">\\</span><span class="st">*"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb116-4"><a href="#cb116-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(</span>
-<span id="cb116-5"><a href="#cb116-5" aria-hidden="true" tabindex="-1"></a>    data,</span>
-<span id="cb116-6"><a href="#cb116-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">into =</span> <span class="fu">c</span>(</span>
-<span id="cb116-7"><a href="#cb116-7" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_1"</span>,</span>
-<span id="cb116-8"><a href="#cb116-8" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_2"</span>,</span>
-<span id="cb116-9"><a href="#cb116-9" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_3"</span>,</span>
-<span id="cb116-10"><a href="#cb116-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_4"</span>,</span>
-<span id="cb116-11"><a href="#cb116-11" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_5"</span>,</span>
-<span id="cb116-12"><a href="#cb116-12" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_6"</span>,</span>
-<span id="cb116-13"><a href="#cb116-13" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_7"</span>,</span>
-<span id="cb116-14"><a href="#cb116-14" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_8"</span>,</span>
-<span id="cb116-15"><a href="#cb116-15" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_9"</span>,</span>
-<span id="cb116-16"><a href="#cb116-16" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_10"</span></span>
-<span id="cb116-17"><a href="#cb116-17" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb116-18"><a href="#cb116-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">" "</span>,</span>
-<span id="cb116-19"><a href="#cb116-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">remove =</span> <span class="cn">FALSE</span></span>
-<span id="cb116-20"><a href="#cb116-20" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb116-21"><a href="#cb116-21" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(raw_dhs_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb115"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb115-1"><a href="#cb115-1" aria-hidden="true" tabindex="-1"></a>raw_dhs_data <span class="ot">&lt;-</span></span>
+<span id="cb115-2"><a href="#cb115-2" aria-hidden="true" tabindex="-1"></a>  raw_dhs_data <span class="sc">|&gt;</span></span>
+<span id="cb115-3"><a href="#cb115-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">data =</span> <span class="fu">str_remove_all</span>(data, <span class="st">"</span><span class="sc">\\</span><span class="st">*"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb115-4"><a href="#cb115-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(</span>
+<span id="cb115-5"><a href="#cb115-5" aria-hidden="true" tabindex="-1"></a>    data,</span>
+<span id="cb115-6"><a href="#cb115-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">into =</span> <span class="fu">c</span>(</span>
+<span id="cb115-7"><a href="#cb115-7" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_1"</span>,</span>
+<span id="cb115-8"><a href="#cb115-8" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_2"</span>,</span>
+<span id="cb115-9"><a href="#cb115-9" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_3"</span>,</span>
+<span id="cb115-10"><a href="#cb115-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_4"</span>,</span>
+<span id="cb115-11"><a href="#cb115-11" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_5"</span>,</span>
+<span id="cb115-12"><a href="#cb115-12" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_6"</span>,</span>
+<span id="cb115-13"><a href="#cb115-13" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_7"</span>,</span>
+<span id="cb115-14"><a href="#cb115-14" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_8"</span>,</span>
+<span id="cb115-15"><a href="#cb115-15" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_9"</span>,</span>
+<span id="cb115-16"><a href="#cb115-16" aria-hidden="true" tabindex="-1"></a>      <span class="st">"col_10"</span></span>
+<span id="cb115-17"><a href="#cb115-17" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb115-18"><a href="#cb115-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">" "</span>,</span>
+<span id="cb115-19"><a href="#cb115-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">remove =</span> <span class="cn">FALSE</span></span>
+<span id="cb115-20"><a href="#cb115-20" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb115-21"><a href="#cb115-21" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(raw_dhs_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 14
   raw_data     state data  col_1 col_2 col_3 col_4 col_5 col_6 col_7 col_8 col_9
@@ -2477,13 +2480,13 @@ Oh, you think we have good data on that!
 </div>
 <p>We can now grab the correct column.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb118"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a>tfr_data <span class="ot">&lt;-</span></span>
-<span id="cb118-2"><a href="#cb118-2" aria-hidden="true" tabindex="-1"></a>  raw_dhs_data <span class="sc">|&gt;</span></span>
-<span id="cb118-3"><a href="#cb118-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">TFR =</span> <span class="fu">if_else</span>(year_of_data <span class="sc">&lt;</span> <span class="dv">2008</span>, col_4, col_3)) <span class="sc">|&gt;</span></span>
-<span id="cb118-4"><a href="#cb118-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(state, year_of_data, TFR) <span class="sc">|&gt;</span></span>
-<span id="cb118-5"><a href="#cb118-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">year =</span> year_of_data)</span>
-<span id="cb118-6"><a href="#cb118-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb118-7"><a href="#cb118-7" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tfr_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb117"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a>tfr_data <span class="ot">&lt;-</span></span>
+<span id="cb117-2"><a href="#cb117-2" aria-hidden="true" tabindex="-1"></a>  raw_dhs_data <span class="sc">|&gt;</span></span>
+<span id="cb117-3"><a href="#cb117-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">TFR =</span> <span class="fu">if_else</span>(year_of_data <span class="sc">&lt;</span> <span class="dv">2008</span>, col_4, col_3)) <span class="sc">|&gt;</span></span>
+<span id="cb117-4"><a href="#cb117-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(state, year_of_data, TFR) <span class="sc">|&gt;</span></span>
+<span id="cb117-5"><a href="#cb117-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">year =</span> year_of_data)</span>
+<span id="cb117-6"><a href="#cb117-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb117-7"><a href="#cb117-7" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tfr_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 3
   state       year TFR    
@@ -2498,7 +2501,7 @@ Oh, you think we have good data on that!
 </div>
 <p>Finally, we need to convert the case.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb120"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tfr_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb119"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tfr_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 3
   state       year TFR    
@@ -2510,14 +2513,14 @@ Oh, you think we have good data on that!
 5 California  2000 2,186.0
 6 Colorado    2000 2,356.5</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb122"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb122-1"><a href="#cb122-1" aria-hidden="true" tabindex="-1"></a>tfr_data <span class="ot">&lt;-</span></span>
-<span id="cb122-2"><a href="#cb122-2" aria-hidden="true" tabindex="-1"></a>  tfr_data <span class="sc">|&gt;</span></span>
-<span id="cb122-3"><a href="#cb122-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb122-4"><a href="#cb122-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">TFR =</span> <span class="fu">str_remove_all</span>(TFR, <span class="st">","</span>),</span>
-<span id="cb122-5"><a href="#cb122-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">TFR =</span> <span class="fu">as.numeric</span>(TFR)</span>
-<span id="cb122-6"><a href="#cb122-6" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb122-7"><a href="#cb122-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb122-8"><a href="#cb122-8" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tfr_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb121"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a>tfr_data <span class="ot">&lt;-</span></span>
+<span id="cb121-2"><a href="#cb121-2" aria-hidden="true" tabindex="-1"></a>  tfr_data <span class="sc">|&gt;</span></span>
+<span id="cb121-3"><a href="#cb121-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb121-4"><a href="#cb121-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">TFR =</span> <span class="fu">str_remove_all</span>(TFR, <span class="st">","</span>),</span>
+<span id="cb121-5"><a href="#cb121-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">TFR =</span> <span class="fu">as.numeric</span>(TFR)</span>
+<span id="cb121-6"><a href="#cb121-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb121-7"><a href="#cb121-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb121-8"><a href="#cb121-8" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tfr_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 3
   state       year   TFR
@@ -2532,15 +2535,15 @@ Oh, you think we have good data on that!
 </div>
 <p>And run some checks.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb124"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a>tfr_data<span class="sc">$</span>state <span class="sc">|&gt;</span></span>
-<span id="cb124-2"><a href="#cb124-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>() <span class="sc">|&gt;</span></span>
-<span id="cb124-3"><a href="#cb124-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">length</span>() <span class="sc">==</span> <span class="dv">51</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb123"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a>tfr_data<span class="sc">$</span>state <span class="sc">|&gt;</span></span>
+<span id="cb123-2"><a href="#cb123-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>() <span class="sc">|&gt;</span></span>
+<span id="cb123-3"><a href="#cb123-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">length</span>() <span class="sc">==</span> <span class="dv">51</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb126"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a>tfr_data<span class="sc">$</span>year <span class="sc">|&gt;</span></span>
-<span id="cb126-2"><a href="#cb126-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>() <span class="sc">|&gt;</span></span>
-<span id="cb126-3"><a href="#cb126-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">length</span>() <span class="sc">==</span> <span class="dv">19</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb125"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a>tfr_data<span class="sc">$</span>year <span class="sc">|&gt;</span></span>
+<span id="cb125-2"><a href="#cb125-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>() <span class="sc">|&gt;</span></span>
+<span id="cb125-3"><a href="#cb125-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">length</span>() <span class="sc">==</span> <span class="dv">19</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
@@ -2548,14 +2551,14 @@ Oh, you think we have good data on that!
 <p>In particular we want for there to be 51 states and for there to be 19 years.</p>
 <p>And we are done (<a href="#tbl-tfrforthewin">Table&nbsp;<span>7.4</span></a>)!</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb128"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb128-1"><a href="#cb128-1" aria-hidden="true" tabindex="-1"></a>tfr_data <span class="sc">|&gt;</span></span>
-<span id="cb128-2"><a href="#cb128-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">|&gt;</span></span>
-<span id="cb128-3"><a href="#cb128-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as_factor</span>(year)) <span class="sc">|&gt;</span> <span class="co"># For formatting reasons</span></span>
-<span id="cb128-4"><a href="#cb128-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
-<span id="cb128-5"><a href="#cb128-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"State"</span>, <span class="st">"Year"</span>, <span class="st">"TFR"</span>),</span>
-<span id="cb128-6"><a href="#cb128-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">digits =</span> <span class="dv">0</span>,</span>
-<span id="cb128-7"><a href="#cb128-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">","</span>)</span>
-<span id="cb128-8"><a href="#cb128-8" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb127"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a>tfr_data <span class="sc">|&gt;</span></span>
+<span id="cb127-2"><a href="#cb127-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">|&gt;</span></span>
+<span id="cb127-3"><a href="#cb127-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as_factor</span>(year)) <span class="sc">|&gt;</span> <span class="co"># For formatting reasons</span></span>
+<span id="cb127-4"><a href="#cb127-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb127-5"><a href="#cb127-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"State"</span>, <span class="st">"Year"</span>, <span class="st">"TFR"</span>),</span>
+<span id="cb127-6"><a href="#cb127-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">digits =</span> <span class="dv">0</span>,</span>
+<span id="cb127-7"><a href="#cb127-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">","</span>)</span>
+<span id="cb127-8"><a href="#cb127-8" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div id="tbl-tfrforthewin" class="anchored">
 <table class="table table-sm table-striped">
@@ -2637,13 +2640,13 @@ Oh, you think we have good data on that!
 </figure>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb129"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb129-1"><a href="#cb129-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tesseract)</span>
-<span id="cb129-2"><a href="#cb129-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb129-3"><a href="#cb129-3" aria-hidden="true" tabindex="-1"></a>text <span class="ot">&lt;-</span> tesseract<span class="sc">::</span><span class="fu">ocr</span>(</span>
-<span id="cb129-4"><a href="#cb129-4" aria-hidden="true" tabindex="-1"></a>  here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"jane_scan.png"</span>),</span>
-<span id="cb129-5"><a href="#cb129-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">engine =</span> <span class="fu">tesseract</span>(<span class="st">"eng"</span>)</span>
-<span id="cb129-6"><a href="#cb129-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb129-7"><a href="#cb129-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(text)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb128"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb128-1"><a href="#cb128-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tesseract)</span>
+<span id="cb128-2"><a href="#cb128-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb128-3"><a href="#cb128-3" aria-hidden="true" tabindex="-1"></a>text <span class="ot">&lt;-</span> tesseract<span class="sc">::</span><span class="fu">ocr</span>(</span>
+<span id="cb128-4"><a href="#cb128-4" aria-hidden="true" tabindex="-1"></a>  here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"jane_scan.png"</span>),</span>
+<span id="cb128-5"><a href="#cb128-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">engine =</span> <span class="fu">tesseract</span>(<span class="st">"eng"</span>)</span>
+<span id="cb128-6"><a href="#cb128-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb128-7"><a href="#cb128-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(text)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -2728,15 +2731,15 @@ SEEN ed — =
 </ol></li>
 </ol>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb131"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Based on Tyler Bradley and Monica Alexander</span></span>
-<span id="cb131-2"><a href="#cb131-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb131-3"><a href="#cb131-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gh)</span>
-<span id="cb131-4"><a href="#cb131-4" aria-hidden="true" tabindex="-1"></a>repos <span class="ot">&lt;-</span> <span class="fu">gh</span>(<span class="st">"/users/RohanAlexander/repos"</span>, <span class="at">per_page =</span> <span class="dv">100</span>)</span>
-<span id="cb131-5"><a href="#cb131-5" aria-hidden="true" tabindex="-1"></a>repo_info <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb131-6"><a href="#cb131-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">name =</span> <span class="fu">map_chr</span>(repos, <span class="st">"name"</span>),</span>
-<span id="cb131-7"><a href="#cb131-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">created =</span> <span class="fu">map_chr</span>(repos, <span class="st">"created_at"</span>),</span>
-<span id="cb131-8"><a href="#cb131-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">full_name =</span> <span class="fu">map_chr</span>(repos, <span class="st">"full_name"</span>),</span>
-<span id="cb131-9"><a href="#cb131-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb130"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb130-1"><a href="#cb130-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Based on Tyler Bradley and Monica Alexander</span></span>
+<span id="cb130-2"><a href="#cb130-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb130-3"><a href="#cb130-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gh)</span>
+<span id="cb130-4"><a href="#cb130-4" aria-hidden="true" tabindex="-1"></a>repos <span class="ot">&lt;-</span> <span class="fu">gh</span>(<span class="st">"/users/RohanAlexander/repos"</span>, <span class="at">per_page =</span> <span class="dv">100</span>)</span>
+<span id="cb130-5"><a href="#cb130-5" aria-hidden="true" tabindex="-1"></a>repo_info <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb130-6"><a href="#cb130-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">name =</span> <span class="fu">map_chr</span>(repos, <span class="st">"name"</span>),</span>
+<span id="cb130-7"><a href="#cb130-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">created =</span> <span class="fu">map_chr</span>(repos, <span class="st">"created_at"</span>),</span>
+<span id="cb130-8"><a href="#cb130-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">full_name =</span> <span class="fu">map_chr</span>(repos, <span class="st">"full_name"</span>),</span>
+<span id="cb130-9"><a href="#cb130-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ol start="5" type="1">
 <li>Please consider the UN’s <a href="https://population.un.org/dataportal/about/dataapi">Data API</a> and the introductory note on how to use it by <span class="citation" data-cites="schmertmannunapi">Schmertmann (<a href="99-references.html#ref-schmertmannunapi" role="doc-biblioref">2022</a>)</span>. Modify the following code to determine what Argentina’s single-year fertility rate was for 20-year-olds in 1995? (Hint: Argentina’s location code is 32.)
@@ -2748,33 +2751,33 @@ SEEN ed — =
 </ol></li>
 </ol>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb132"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Based on Carl Schmertmann</span></span>
-<span id="cb132-2"><a href="#cb132-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb132-3"><a href="#cb132-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb132-4"><a href="#cb132-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb132-5"><a href="#cb132-5" aria-hidden="true" tabindex="-1"></a>my_indicator <span class="ot">&lt;-</span> <span class="dv">68</span></span>
-<span id="cb132-6"><a href="#cb132-6" aria-hidden="true" tabindex="-1"></a>my_location <span class="ot">&lt;-</span> <span class="dv">50</span></span>
-<span id="cb132-7"><a href="#cb132-7" aria-hidden="true" tabindex="-1"></a>my_startyr <span class="ot">&lt;-</span> <span class="dv">1996</span></span>
-<span id="cb132-8"><a href="#cb132-8" aria-hidden="true" tabindex="-1"></a>my_endyr <span class="ot">&lt;-</span> <span class="dv">1999</span></span>
-<span id="cb132-9"><a href="#cb132-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb132-10"><a href="#cb132-10" aria-hidden="true" tabindex="-1"></a>url <span class="ot">&lt;-</span> <span class="fu">paste0</span>(</span>
-<span id="cb132-11"><a href="#cb132-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"https://population.un.org/dataportalapi/api/v1"</span>,</span>
-<span id="cb132-12"><a href="#cb132-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"/data/indicators/"</span>,</span>
-<span id="cb132-13"><a href="#cb132-13" aria-hidden="true" tabindex="-1"></a>  my_indicator,</span>
-<span id="cb132-14"><a href="#cb132-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"/locations/"</span>,</span>
-<span id="cb132-15"><a href="#cb132-15" aria-hidden="true" tabindex="-1"></a>  my_location,</span>
-<span id="cb132-16"><a href="#cb132-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"/start/"</span>,</span>
-<span id="cb132-17"><a href="#cb132-17" aria-hidden="true" tabindex="-1"></a>  my_startyr,</span>
-<span id="cb132-18"><a href="#cb132-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"/end/"</span>,</span>
-<span id="cb132-19"><a href="#cb132-19" aria-hidden="true" tabindex="-1"></a>  my_endyr,</span>
-<span id="cb132-20"><a href="#cb132-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"/?format=csv"</span></span>
-<span id="cb132-21"><a href="#cb132-21" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb132-22"><a href="#cb132-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb132-23"><a href="#cb132-23" aria-hidden="true" tabindex="-1"></a>un_data <span class="ot">&lt;-</span> <span class="fu">read_delim</span>(<span class="at">file =</span> url, <span class="at">delim =</span> <span class="st">"|"</span>, <span class="at">skip =</span> <span class="dv">1</span>)</span>
-<span id="cb132-24"><a href="#cb132-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb132-25"><a href="#cb132-25" aria-hidden="true" tabindex="-1"></a>un_data <span class="sc">|&gt;</span></span>
-<span id="cb132-26"><a href="#cb132-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AgeLabel <span class="sc">==</span> <span class="dv">25</span> <span class="sc">&amp;</span> TimeLabel <span class="sc">==</span> <span class="dv">1996</span>) <span class="sc">|&gt;</span></span>
-<span id="cb132-27"><a href="#cb132-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Value)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb131"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Based on Carl Schmertmann</span></span>
+<span id="cb131-2"><a href="#cb131-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb131-3"><a href="#cb131-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb131-4"><a href="#cb131-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb131-5"><a href="#cb131-5" aria-hidden="true" tabindex="-1"></a>my_indicator <span class="ot">&lt;-</span> <span class="dv">68</span></span>
+<span id="cb131-6"><a href="#cb131-6" aria-hidden="true" tabindex="-1"></a>my_location <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb131-7"><a href="#cb131-7" aria-hidden="true" tabindex="-1"></a>my_startyr <span class="ot">&lt;-</span> <span class="dv">1996</span></span>
+<span id="cb131-8"><a href="#cb131-8" aria-hidden="true" tabindex="-1"></a>my_endyr <span class="ot">&lt;-</span> <span class="dv">1999</span></span>
+<span id="cb131-9"><a href="#cb131-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb131-10"><a href="#cb131-10" aria-hidden="true" tabindex="-1"></a>url <span class="ot">&lt;-</span> <span class="fu">paste0</span>(</span>
+<span id="cb131-11"><a href="#cb131-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"https://population.un.org/dataportalapi/api/v1"</span>,</span>
+<span id="cb131-12"><a href="#cb131-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"/data/indicators/"</span>,</span>
+<span id="cb131-13"><a href="#cb131-13" aria-hidden="true" tabindex="-1"></a>  my_indicator,</span>
+<span id="cb131-14"><a href="#cb131-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"/locations/"</span>,</span>
+<span id="cb131-15"><a href="#cb131-15" aria-hidden="true" tabindex="-1"></a>  my_location,</span>
+<span id="cb131-16"><a href="#cb131-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"/start/"</span>,</span>
+<span id="cb131-17"><a href="#cb131-17" aria-hidden="true" tabindex="-1"></a>  my_startyr,</span>
+<span id="cb131-18"><a href="#cb131-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"/end/"</span>,</span>
+<span id="cb131-19"><a href="#cb131-19" aria-hidden="true" tabindex="-1"></a>  my_endyr,</span>
+<span id="cb131-20"><a href="#cb131-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"/?format=csv"</span></span>
+<span id="cb131-21"><a href="#cb131-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb131-22"><a href="#cb131-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb131-23"><a href="#cb131-23" aria-hidden="true" tabindex="-1"></a>un_data <span class="ot">&lt;-</span> <span class="fu">read_delim</span>(<span class="at">file =</span> url, <span class="at">delim =</span> <span class="st">"|"</span>, <span class="at">skip =</span> <span class="dv">1</span>)</span>
+<span id="cb131-24"><a href="#cb131-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb131-25"><a href="#cb131-25" aria-hidden="true" tabindex="-1"></a>un_data <span class="sc">|&gt;</span></span>
+<span id="cb131-26"><a href="#cb131-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AgeLabel <span class="sc">==</span> <span class="dv">25</span> <span class="sc">&amp;</span> TimeLabel <span class="sc">==</span> <span class="dv">1996</span>) <span class="sc">|&gt;</span></span>
+<span id="cb131-27"><a href="#cb131-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Value)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ol start="6" type="1">
 <li>Please submit the code that you wrote to answer the above question.</li>
