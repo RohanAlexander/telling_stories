@@ -470,6 +470,8 @@ sample(x = 1:5, size = 5, replace = T)
 #| label: tbl-classmarks
 #| tbl-cap: "Simulated students and their mark (out of 100) in a particular class paper"
 
+library(babynames)
+
 set.seed(853)
 
 class_marks <-
@@ -501,32 +503,60 @@ example_project/
 │   ├── data-cleaning.R
 │   ├── test(new)data.R
 ```
-- Consider Anscombe's Quartet, introduced in @sec-static-communication. We will randomly remove certain observations. Please pretend you are given the dataset with missing data and decide what to do. Compare the results with the actual observations.
+- Consider Anscombe's Quartet, introduced in @sec-static-communication. We will randomly remove certain observations. Please pretend you are given the dataset with missing data.  Pick one of the approaches to dealing with missing data from @sec-farm-data and @sec-exploratory-data-analysis, then write code to implement your choice. Compare: 
+    - the results with the actual observations; 
+    - the summary statistics with the actual summary statistics; and
+    - build a graph that shows the missing and actual data on the one graph.
 
 ```{r}
+set.seed(853)
+
 tidy_anscombe <-
   anscombe |>
   pivot_longer(everything(),
                names_to = c(".value", "set"),
-               names_pattern = "(.)(.)") |>
-  mutate(row_number = row_number())
+               names_pattern = "(.)(.)")
 
-tidy_anscombe_with_missing <-
+tidy_anscombe_MCAR <-
   tidy_anscombe |>
+  mutate(row_number = row_number()) |>
   mutate(
-    x = case_when(row_number %in% sample(
+    x = if_else(row_number %in% sample(
       x = 1:nrow(tidy_anscombe), size = 10
-    ) ~ NA_integer_,
-    TRUE ~ x),
-    y = case_when(row_number %in% sample(
+    ), NA_real_, x),
+    y = if_else(row_number %in% sample(
       x = 1:nrow(tidy_anscombe), size = 10
-    ) ~ NA_integer_,
-    TRUE ~ y)
-  ) |> 
+    ), NA_real_, y)
+  ) |>
   select(-row_number)
 
-tidy_anscombe_with_missing
+tidy_anscombe_MCAR
+
+# ADD CODE HERE
 ```
+- Redo the exercise, but with the following dataset. What is the main difference in this case?
+```{r}
+tidy_anscombe_MNAR <-
+  tidy_anscombe |>
+  arrange(desc(x)) |>
+  mutate(
+    ordered_x_rows = 1:nrow(tidy_anscombe),
+    x = if_else(ordered_x_rows %in% 1:10, NA_real_, x)
+  ) |>
+  select(-ordered_x_rows) |>
+  arrange(desc(y)) |>
+  mutate(
+    ordered_y_rows = 1:nrow(tidy_anscombe),
+    y = if_else(ordered_y_rows %in% 1:10, NA_real_, y)
+  ) |>
+  arrange(set) |>
+  select(-ordered_y_rows)
+
+tidy_anscombe_MNAR
+
+# ADD CODE HERE
+```
+
 - Play the role of a data scientist partnering with a subject expert by pairing up with another student. Your partner gets to pick a topic, and a question, and it should be something they know well but you do not (perhaps something about their country, if they are an international student). You need to work with them to develop an analysis plan, simulate some data, and create a graph that they can use.
 
 ## Linear models
@@ -574,10 +604,12 @@ tibble(
 ## Concluding remarks
 
 - Clean up your GitHub: delete unnecessary repos, pin your best ones, update your bio, add a [profile README](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-profile/customizing-your-profile/managing-your-profile-readme).
-- Review @Riley2022, then pick one of the twelve issues to be the hill you will die on, when it comes to statistics, and discuss why. You can only pick one.
 - In small groups, using the STAR approach, please take turns asking and answering the following:
     - "Tell me about a time that a data science project you were part of did not go well. What did you do?"
     - "Tell me about a time that you worked in a team. How did it go?"
+    - "What issues have your managers had with you in the past?"
     - "What are your weaknesses?"
     - "What are your strengths?"
+    - "Where do you see yourself in five years?"
+- Review @Riley2022, then pick one of the twelve issues to be the hill you will die on, when it comes to statistics, and discuss why. You can only pick one.
     
