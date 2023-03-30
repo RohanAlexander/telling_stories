@@ -677,9 +677,7 @@ year_of_data_using_purrr
 
 ### Apache Arrow
 
-CSVs are commonly used without much thought in data science. And while CSVs are good because they have little overhead and can be manually inspected, this also means they are quite minimal. This can lead to issues, especially in terms of class, file size, and speed. There are various alternatives, including Apache Arrow, which is a columnar data framework.  There is an R implementation of Apache Arrow, `arrow` [@arrow]. This has the advantage of requiring very little change from us while delivering significant benefits. 
-<!-- This makes two, distinct, file formats available to us: ".arrow", and ".parquet".  -->
-We focus on the ".parquet" format, which like CSV is an open standard, with many implementations.
+CSVs are commonly used without much thought in data science. And while CSVs are good because they have little overhead and can be manually inspected, this also means they are quite minimal. This can lead to issues, for instance class is not preserved, and file sizes can become large leading to storage and performance issues. There are various alternatives, including Apache Arrow, which stores data in columns rather than rows like CSV. We focus on the ".parquet" format from Apache Arrow. Like a CSV, parquet is an open standard. The R package, `arrow` [@arrow], enables us to use this format. The use of parquet has the advantage of requiring little change from us while delivering significant benefits. 
 
 :::{.callout-note}
 ## Shoulders of giants
@@ -687,9 +685,12 @@ We focus on the ".parquet" format, which like CSV is an open standard, with many
 Wes McKinney holds an undergraduate degree in theoretical mathematics from MIT. Starting in 2008, while working at AQR Capital Management, he developed the Python package, pandas, which has become a cornerstone of data science. He later wrote *Python for Data Analysis* [@pythonfordataanalysis]. In 2016, with Hadley Wickham, he designed Feather, which was released in 2016. He now works as CTO of Voltron Data, which focuses on the Apache Arrow project.
 :::
 
-In particular, we focus on the benefit of using parquet for data storage. Examples of this may include: 1) saving a copy of the original data; and 2) saving a copy of the analysis datasets. Parquet brings two particular benefits here, compared with CSV: 1) the file sizes are typically smaller; and 2) class is preserved.
+In particular, we focus on the benefit of using parquet for data storage, such as when we want to save a copy of an analysis dataset that we cleaned and prepared. Among other aspects, parquet brings two specific benefits, compared with CSV: 
 
-Having loaded `arrow`, we can use parquet files in a similar way to CSV files. Anywhere in our code that we used `write_csv()` and `read_csv()` we could alternatively, or additionally, use `write_parquet()` and `read_parquet()`. While the decision to do this needs to consider both costs and benefits, having a schema attached in parquet makes dealing with, say, dates considerably easier.
+- the file sizes are typically smaller; and 
+- class is preserved because parquet attaches a schema, which makes dealing with, say, dates considerably easier.
+
+Having loaded `arrow`, we can use parquet files in a similar way to CSV files. Anywhere in our code that we used `write_csv()` and `read_csv()` we could alternatively, or additionally, use `write_parquet()` and `read_parquet()`, respectively. The decision to use parquet needs to consider both costs and benefits, and it is an active area of development.
 
 ```{r}
 #| message: false
@@ -726,7 +727,7 @@ file.remove("a_million_random_digits.csv")
 file.remove("a_million_random_digits.parquet")
 ```
 
-We get significant reductions in file size when we compare the size of the same datasets saved in each format, especially as they get larger (@tbl-filesize).
+We get significant reductions in file size when we compare the size of the same datasets saved in each format, especially as they get larger (@tbl-filesize). The speed benefits of using parquet are most notable for larger datasets. It turns them from being impractical to being usable.
 
 ```{r}
 #| eval: false
@@ -738,76 +739,90 @@ We get significant reductions in file size when we compare the size of the same 
 
 library(arrow)
 library(fs)
+library(tictoc)
 library(tidyverse)
 
+set.seed(853)
+
+draws <- c(100,
+           1000,
+           10000,
+           100000,
+           1000000,
+           10000000,
+           100000000)
+
 file_size_comparison <-
-  tibble(
-    draws = c(),
-    csv_size = c(),
-    parquet_size = c()
-  )
+  map(draws, function(number_of_draws) {
 
-for (number_of_draws in c(
-  10000,
-  100000,
-  1000000,
-  10000000,
-  100000000
-)) {
-  a_million_random_digits <-
-    tibble(
-      numbers = runif(n = number_of_draws),
-      letters = sample(
-        x = letters,
-        size = number_of_draws,
-        replace = TRUE
-      ),
-      states = sample(
-        x = state.name,
-        size = number_of_draws,
-        replace = TRUE
-      ),
-    )
-
-  write_csv(
-    x = a_million_random_digits,
-    file = "a_million_random_digits.csv"
-  )
-
-  write_parquet(
-    x = a_million_random_digits,
-    sink = "a_million_random_digits.parquet"
-  )
-
-  rm(a_million_random_digits)
-
-  file_size_comparison <-
-    rbind(
-      file_size_comparison,
+    a_million_random_digits <-
       tibble(
-        draws = number_of_draws,
-        csv_size = file_size("a_million_random_digits.csv"),
-        parquet_size = file_size("a_million_random_digits.parquet")
+        numbers = runif(n = number_of_draws),
+        letters = sample(
+          x = letters,
+          size = number_of_draws,
+          replace = TRUE
+        ),
+        states = sample(
+          x = state.name,
+          size = number_of_draws,
+          replace = TRUE
+        ),
       )
+    
+    tic.clearlog()
+    
+    tic("csv - write")
+    write_csv(x = a_million_random_digits,
+              file = "a_million_random_digits.csv")
+    toc(log = TRUE, quiet = TRUE)
+    
+    tic("parquet - write")
+    write_parquet(x = a_million_random_digits,
+                  sink = "a_million_random_digits.parquet")
+    toc(log = TRUE, quiet = TRUE)
+    
+    file_size_comparison <- tibble(
+      draws = number_of_draws,
+      csv_size = file_size("a_million_random_digits.csv"),
+      parquet_size = file_size("a_million_random_digits.parquet")
     )
-
-  file.remove("a_million_random_digits.csv")
-  file.remove("a_million_random_digits.parquet")
-}
-
-file_size_comparison_long <-
-  file_size_comparison |>
-  pivot_longer(
-    cols = c(csv_size, parquet_size),
-    names_to = "file_type",
-    values_to = "file_size"
-  ) |>
-  mutate(
-    file_type = str_remove(file_type, "_size")
-  )
+    
+    rm(a_million_random_digits)
+    
+    tic("csv - read")
+    a_million_random_digits <-
+      read_csv(file = "a_million_random_digits.csv")
+    toc(log = TRUE, quiet = TRUE)
+    rm(a_million_random_digits)
+    
+    tic("parquet - read")
+    a_million_random_digits <-
+      read_parquet(file = "a_million_random_digits.parquet")
+    toc(log = TRUE, quiet = TRUE)
+    rm(a_million_random_digits)
+    
+    file.remove("a_million_random_digits.csv")
+    file.remove("a_million_random_digits.parquet")
+    
+    need_for_speed <-
+      tibble(raw = unlist(tic.log(format = TRUE))) |>
+      separate(raw, into = c("thing", "time"), sep = ": ") |>
+      mutate(time = str_remove(time, " sec elapsed"),
+             time = as.numeric(time)) |>
+      separate(thing, into = c("file_type", "task"), sep = " - ") |>
+      mutate(names = paste(file_type, task, sep = "-")) |>
+      select(names, time) |>
+      pivot_wider(names_from = names,
+                  values_from = time)
+    
+    file_size_comparison <- cbind(file_size_comparison, need_for_speed)
+    
+    file_size_comparison
+  }) |>
+  list_rbind()
 
 write_csv(file_size_comparison, file = "inputs/data/file_size_comparison.csv")
-write_csv(file_size_comparison_long, file = "inputs/data/file_size_comparison_long.csv")
 ```
 
 ```{r}
@@ -815,7 +830,7 @@ write_csv(file_size_comparison_long, file = "inputs/data/file_size_comparison_lo
 #| echo: false
 #| eval: true
 #| message: false
-#| tbl-cap: "Comparing the file sizes of '.csv' and '.parquet', as the file size increases, for CSV and Parquet"
+#| tbl-cap: "Comparing the file sizes, and read and write times, of CSV and parquet as the file size increases"
 
 read_csv(
   "inputs/data/file_size_comparison.csv",
@@ -826,18 +841,30 @@ read_csv(
     csv_size = fs::as_fs_bytes(csv_size),
     parquet_size = fs::as_fs_bytes(parquet_size)
   ) |>
-  knitr::kable(
+  janitor::clean_names() |> 
+  select(draws, 
+         csv_size, csv_write, csv_read,
+         parquet_size, parquet_write, parquet_read
+         ) |> 
+ knitr::kable(
     col.names = c(
       "Number of observations",
-      "CSV file size",
-      "Parquet file size"
-    ),
-    digits = 0
-  )
+      "File size",
+      "Write time (sec)",
+      "Read time (sec)",
+      "File size",
+      "Write time (sec)",
+      "Read time (sec)"
+    )
+  ) |>
+  kableExtra::add_header_above(c(" " = 1, "CSV" = 3, "Parquet" = 3))
 ```
 
 
-<!-- These benefits will be most notable for larger datasets, and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare & Medicaid Services, which is 6.66 GB and available [here](https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016). It is available as a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using `read_csv()`, with the same task using `read_csv_arrow()`. We find a considerable speed-up when using `read_csv_arrow()` (@tbl-needforspeedpropublica). -->
+
+
+
+<!-- , and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare & Medicaid Services, which is 6.66 GB and available [here](https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016). It is available as a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using `read_csv()`, with the same task using `read_csv_arrow()`. We find a considerable speed-up when using `read_csv_arrow()` (@tbl-needforspeedpropublica). -->
 
 <!-- ```{r} -->
 <!-- #| echo: false -->
@@ -1042,8 +1069,6 @@ read_csv(
 <!--     digits = 0 -->
 <!--   ) -->
 <!-- ``` -->
-
-
 
 @arrowcookbook provides further information about specific tasks, @navarro2021getting provides helpful examples of implementation, and @navarroworkshop provides an extensive set of materials.
 

@@ -113,6 +113,9 @@ div.csl-indent {
   }
 }</script>
 
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
 
 </head>
 
@@ -398,14 +401,8 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./30-memes.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">K</span>&nbsp; <span class="chapter-title">Memes</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
   <a href="./98-cocktails.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">L</span>&nbsp; <span class="chapter-title">Cocktails</span></span></a>
+ <span class="menu-text"><span class="chapter-number">K</span>&nbsp; <span class="chapter-title">Cocktails</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -996,7 +993,7 @@ Shoulders of giants
  8     8 april        1
  9     9 april        4
 10    10 april        3
-# … with 11,990 more rows</code></pre>
+# ℹ 11,990 more rows</code></pre>
 </div>
 </div>
 <p>It prints out the first ten days of April, because alphabetically April is the first month of the year and so that was the first CSV that was read.</p>
@@ -1023,13 +1020,13 @@ Shoulders of giants
  8 april.csv     8 april        1
  9 april.csv     9 april        4
 10 april.csv    10 april        3
-# … with 11,990 more rows</code></pre>
+# ℹ 11,990 more rows</code></pre>
 </div>
 </div>
 </section>
 <section id="apache-arrow" class="level3" data-number="10.6.2">
 <h3 data-number="10.6.2" class="anchored" data-anchor-id="apache-arrow"><span class="header-section-number">10.6.2</span> Apache Arrow</h3>
-<p>CSVs are commonly used without much thought in data science. And while CSVs are good because they have little overhead and can be manually inspected, this also means they are quite minimal. This can lead to issues, especially in terms of class, file size, and speed. There are various alternatives, including Apache Arrow, which is a columnar data framework. There is an R implementation of Apache Arrow, <code>arrow</code> <span class="citation" data-cites="arrow">(<a href="99-references.html#ref-arrow" role="doc-biblioref">Richardson et al. 2022</a>)</span>. This has the advantage of requiring very little change from us while delivering significant benefits. <!-- This makes two, distinct, file formats available to us: ".arrow", and ".parquet".  --> We focus on the “.parquet” format, which like CSV is an open standard, with many implementations.</p>
+<p>CSVs are commonly used without much thought in data science. And while CSVs are good because they have little overhead and can be manually inspected, this also means they are quite minimal. This can lead to issues, for instance class is not preserved, and file sizes can become large leading to storage and performance issues. There are various alternatives, including Apache Arrow, which stores data in columns rather than rows like CSV. We focus on the “.parquet” format from Apache Arrow. Like a CSV, parquet is an open standard. The R package, <code>arrow</code> <span class="citation" data-cites="arrow">(<a href="99-references.html#ref-arrow" role="doc-biblioref">Richardson et al. 2022</a>)</span>, enables us to use this format. The use of parquet has the advantage of requiring little change from us while delivering significant benefits.</p>
 <div class="callout callout-style-simple callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -1043,8 +1040,12 @@ Shoulders of giants
 <p>Wes McKinney holds an undergraduate degree in theoretical mathematics from MIT. Starting in 2008, while working at AQR Capital Management, he developed the Python package, pandas, which has become a cornerstone of data science. He later wrote <em>Python for Data Analysis</em> <span class="citation" data-cites="pythonfordataanalysis">(<a href="99-references.html#ref-pythonfordataanalysis" role="doc-biblioref">McKinney [2011] 2022</a>)</span>. In 2016, with Hadley Wickham, he designed Feather, which was released in 2016. He now works as CTO of Voltron Data, which focuses on the Apache Arrow project.</p>
 </div>
 </div>
-<p>In particular, we focus on the benefit of using parquet for data storage. Examples of this may include: 1) saving a copy of the original data; and 2) saving a copy of the analysis datasets. Parquet brings two particular benefits here, compared with CSV: 1) the file sizes are typically smaller; and 2) class is preserved.</p>
-<p>Having loaded <code>arrow</code>, we can use parquet files in a similar way to CSV files. Anywhere in our code that we used <code>write_csv()</code> and <code>read_csv()</code> we could alternatively, or additionally, use <code>write_parquet()</code> and <code>read_parquet()</code>. While the decision to do this needs to consider both costs and benefits, having a schema attached in parquet makes dealing with, say, dates considerably easier.</p>
+<p>In particular, we focus on the benefit of using parquet for data storage, such as when we want to save a copy of an analysis dataset that we cleaned and prepared. Among other aspects, parquet brings two specific benefits, compared with CSV:</p>
+<ul>
+<li>the file sizes are typically smaller; and</li>
+<li>class is preserved because parquet attaches a schema, which makes dealing with, say, dates considerably easier.</li>
+</ul>
+<p>Having loaded <code>arrow</code>, we can use parquet files in a similar way to CSV files. Anywhere in our code that we used <code>write_csv()</code> and <code>read_csv()</code> we could alternatively, or additionally, use <code>write_parquet()</code> and <code>read_parquet()</code>, respectively. The decision to use parquet needs to consider both costs and benefits, and it is an active area of development.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
@@ -1074,52 +1075,113 @@ Shoulders of giants
 <pre><code>8.17M</code></pre>
 </div>
 </div>
-<p>We get significant reductions in file size when we compare the size of the same datasets saved in each format, especially as they get larger (<a href="#tbl-filesize">Table&nbsp;<span>10.2</span></a>).</p>
+<p>We get significant reductions in file size when we compare the size of the same datasets saved in each format, especially as they get larger (<a href="#tbl-filesize">Table&nbsp;<span>10.2</span></a>). The speed benefits of using parquet are most notable for larger datasets. It turns them from being impractical to being usable.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="tbl-filesize" class="anchored">
-<table class="table table-sm table-striped">
-<caption>Table&nbsp;10.2: Comparing the file sizes of ‘.csv’ and ‘.parquet’, as the file size increases, for CSV and Parquet</caption>
+<table data-quarto-postprocess="true" class="table table-sm table-striped">
+<caption>Table&nbsp;10.2: Comparing the file sizes, and read and write times, of CSV and parquet as the file size increases</caption>
+<colgroup>
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+</colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">Number of observations</th>
-<th style="text-align: right;">CSV file size</th>
-<th style="text-align: right;">Parquet file size</th>
+<th data-quarto-table-cell-role="th" style="text-align: left; empty-cells: hide; border-bottom: hidden;"></th>
+<th colspan="3" data-quarto-table-cell-role="th" style="text-align: center; border-bottom: hidden; padding-bottom: 0; padding-left: 3px; padding-right: 3px;"><div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+CSV
+</div></th>
+<th colspan="3" data-quarto-table-cell-role="th" style="text-align: center; border-bottom: hidden; padding-bottom: 0; padding-left: 3px; padding-right: 3px;"><div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Parquet
+</div></th>
+</tr>
+<tr class="odd">
+<th style="text-align: left;" data-quarto-table-cell-role="th">Number of observations</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">File size</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Write time (sec)</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Read time (sec)</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">File size</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Write time (sec)</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Read time (sec)</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: left;">100</td>
+<td style="text-align: right;">3.03K</td>
+<td style="text-align: right;">0.005</td>
+<td style="text-align: right;">0.262</td>
+<td style="text-align: right;">2.65K</td>
+<td style="text-align: right;">0.007</td>
+<td style="text-align: right;">0.004</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1,000</td>
+<td style="text-align: right;">30K</td>
+<td style="text-align: right;">0.019</td>
+<td style="text-align: right;">0.272</td>
+<td style="text-align: right;">11.1K</td>
+<td style="text-align: right;">0.011</td>
+<td style="text-align: right;">0.004</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">10,000</td>
-<td style="text-align: right;">300.11K</td>
-<td style="text-align: right;">99.57K</td>
+<td style="text-align: right;">300.21K</td>
+<td style="text-align: right;">0.023</td>
+<td style="text-align: right;">0.305</td>
+<td style="text-align: right;">99.58K</td>
+<td style="text-align: right;">0.010</td>
+<td style="text-align: right;">0.005</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">100,000</td>
 <td style="text-align: right;">2.93M</td>
-<td style="text-align: right;">1016.46K</td>
+<td style="text-align: right;">0.029</td>
+<td style="text-align: right;">0.281</td>
+<td style="text-align: right;">1016.49K</td>
+<td style="text-align: right;">0.043</td>
+<td style="text-align: right;">0.008</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">1,000,000</td>
 <td style="text-align: right;">29.29M</td>
-<td style="text-align: right;">8.15M</td>
+<td style="text-align: right;">0.151</td>
+<td style="text-align: right;">0.580</td>
+<td style="text-align: right;">8.17M</td>
+<td style="text-align: right;">0.224</td>
+<td style="text-align: right;">0.046</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">10,000,000</td>
-<td style="text-align: right;">292.88M</td>
+<td style="text-align: right;">292.89M</td>
+<td style="text-align: right;">0.998</td>
+<td style="text-align: right;">2.953</td>
 <td style="text-align: right;">79.11M</td>
+<td style="text-align: right;">1.763</td>
+<td style="text-align: right;">0.416</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">100,000,000</td>
 <td style="text-align: right;">2.86G</td>
+<td style="text-align: right;">7.648</td>
+<td style="text-align: right;">32.892</td>
 <td style="text-align: right;">788.82M</td>
+<td style="text-align: right;">16.124</td>
+<td style="text-align: right;">4.847</td>
 </tr>
 </tbody>
 </table>
 </div>
-</div>
-</div>
 
-<!-- These benefits will be most notable for larger datasets, and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare & Medicaid Services, which is 6.66 GB and available [here](https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016). It is available as a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using `read_csv()`, with the same task using `read_csv_arrow()`. We find a considerable speed-up when using `read_csv_arrow()` (@tbl-needforspeedpropublica). -->
+
+</div>
+</div>
+<!-- , and so we will consider the ProPublica US Open Payments Data, from the Centers for Medicare & Medicaid Services, which is 6.66 GB and available [here](https://www.propublica.org/datastore/dataset/cms-open-payments-data-2016). It is available as a CSV file, and so we will compare reading in the data and creating a summary of the average total amount of payment on the basis of state using `read_csv()`, with the same task using `read_csv_arrow()`. We find a considerable speed-up when using `read_csv_arrow()` (@tbl-needforspeedpropublica). -->
 <!-- ```{r} -->
 <!-- #| echo: false -->
 <!-- #| eval: false -->
