@@ -580,7 +580,18 @@ data <-
 ## Linear models
 
 - Use the [starter folder](https://github.com/RohanAlexander/starter_folder) and create a new repo. Add a link to the GitHub repo in the class's shared Google Doc.
-- Please use the data underpinning @cohn2016, available [here](https://github.com/TheUpshot/2016-upshot-siena-polls/), to build two different models and compare the results.
+    - We are interested in understanding the relationship between bill length and depth for Adelie penguins using `palmerpenguins`. Begin by sketching and simulating. 
+    - Then add three graphs to the data section: one of each variable separately and a third of the relationship between the two. 
+    - Then in the model section, write out the model. Use `rstanarm` to estimate a linear model between the two variables in an R script. 
+    - Read that model into the results section and use `modelsummary` to create a summary table.
+
+```{r}
+palmerpenguins::penguins |> 
+  filter(species == "Adelie") |> 
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm)) +
+  geom_point()
+```
+
 - (This question is based on @gelmanonteaching [p. 32].) Please follow the instructions [here](https://youtu.be/_Dof_Ks-f9U) to make a paper plane. Measure: 1) the width of the wings; 2) the length of the wings; 3) the height of the winglets; 4) in a safe space, fly your plane and measure for how long it stays in the air. Combine your data with those of the rest of the class in a table that looks like @tbl-planes. Then use linear regression to explore the relationship between the dependent and independent variables. Based on the results, how would you change your plane design if you were to do this exercise again?
 
 ```{r}
@@ -605,6 +616,59 @@ tibble(
 
 ## Generalized linear models
 
+- Use the [starter folder](https://github.com/RohanAlexander/starter_folder) and create a new repo. Add a link to the GitHub repo in the class's shared Google Doc.
+    - We are interested in explaining support for either Trump or Clinton, based on education, age-group, and gender, and state. Please sketch and simulate the situation.
+    - Please obtain the data underpinning @cohn2016, available [here](https://github.com/TheUpshot/2016-upshot-siena-polls/). Save the raw data, and construct an analysis dataset (there is some code below to get you started). Add graphs of each of the variables, individually, into the data section, as well as graphs of how they relate.
+    - Please build one model explaining "vt_pres_2", as a function of "gender", "educ", and "age"; and another which additionally considers "state". Write up the two models in a model section, and add the results into the results section (again, there is some code below to get you started).
+```{r}
+#| echo: true
+#| eval: false
+
+vote_data <-
+  read_csv(
+    "https://raw.githubusercontent.com/TheUpshot/2016-upshot-siena-polls/master/upshot-siena-polls.csv"
+  )
+
+cleaned_vote_data <-
+  vote_data |>
+  select(vt_pres_2, gender, educ, age, state) |>
+  rename(vote = vt_pres_2) |>
+  mutate(
+    gender = factor(gender),
+    educ = factor(educ),
+    state = factor(state),
+    age = as.integer(age)
+  ) |>
+  mutate(
+    vote =
+      case_when(
+        vote == "Donald Trump, the Republican" ~ "0",
+        vote == "Hillary Clinton, the Democrat" ~ "1",
+        TRUE ~ vote
+      )
+  ) |>
+  filter(vote %in% c("0", "1")) |>
+  mutate(vote = as.integer(vote))
+```
+
+```{r}
+#| echo: true
+#| eval: false
+
+library(rstanarm)
+
+vote_model <-
+  stan_glm(
+    formula = vote ~ age + educ,
+    data = cleaned_vote_data,
+    family = gaussian(),
+    prior = normal(location = 0, scale = 2.5),
+    prior_intercept = normal(location = 0, scale = 2.5),
+    prior_aux = exponential(rate = 1),
+    seed = 853
+  )
+```
+
 ## Causality from observational data
 
 - "Look Daddy, I'm shaving". A three-year-old stands next to his father. The father shaves, and then has no beard. The three-year-old "shaves", and then also has no beard. Use a DAG to illustrate the situation and what might be missing.
@@ -613,6 +677,8 @@ tibble(
 
 ## Multilevel regression with post-stratification
 
+- Use the [starter folder](https://github.com/RohanAlexander/starter_folder) and create a new repo. Add a link to the GitHub repo in the class's shared Google Doc.
+- Like in "Linear Models", we are again interested in understanding the relationship between bill length and depth using `palmerpenguins`, but this time for all three species. Begin by estimating separate models for each. Then estimate one model for all three species. Finally, estimate a model with partial pooling.
 - *Paper review:* Please read @wang2015forecasting and write a review of at least two pages.
 
 ## Text as data
@@ -625,6 +691,9 @@ tibble(
 - In small groups, using the STAR approach, please take turns asking and answering the following:
     - "Tell me about a time that a data science project you were part of did not go well. What did you do?"
     - "Tell me about a time that you worked in a team. How did it go?"
+    - "Tell me about a project that you disliked working on."
+    - "How do you incorporate feedback into your work?"
+    - "Tell me about a time you needed help on a project and how did you get it?"
     - "What issues have your managers had with you in the past?"
     - "What are your weaknesses?"
     - "What are your strengths?"
