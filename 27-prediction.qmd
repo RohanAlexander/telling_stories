@@ -36,12 +36,38 @@ engine: knitr
 <!--     - `fit_resamples()` -->
 <!--   - `yarkdstick` [@yardstick]     -->
 <!--     - `conf_mat()` -->
+<!-- - `poissonreg` [@poissonreg] -->
+<!--   - `poisson_reg()` -->
+<!-- - `tidymodels` [@citeTidymodels] -->
+<!--   - `parsnip` [@parsnip] -->
+<!--     - `fit()` -->
+<!--     - `linear_reg()` -->
+<!--     - `logistic_reg()` -->
+<!--     - `poisson_reg()` -->
+<!--     - `set_engine()` -->
+<!--   - `recipes` [@recipes] -->
+<!--     - `recipe()` -->
+<!--   - `rsample` [@rsample] -->
+<!--     - `initial_split()` -->
+<!--     - `testing()` -->
+<!--     - `training()` -->
+<!--     - `vfold_cv()` -->
+<!--   - `tune` [@tune]     -->
+<!--     - `collect_metrics()` -->
+<!--     - `collect_predictions()` -->
+<!--     - `conf_mat_resampled()` -->
+<!--     - `fit_resamples()` -->
+<!--   - `yarkdstick` [@yardstick]     -->
+<!--     - `conf_mat()` -->
+
 
 <!-- ## Introduction -->
 
 <!-- As discussed in @sec-its-just-a-linear-model, models tend to be  -->
 
 <!-- ## Prediction with `tidymodels` -->
+
+<!-- Linear models -->
 
 <!-- When we are focused on prediction, we will often want to fit many models. One way to do this is to copy and paste code many times. This is okay, and it is the way that most people get started but it is prone to making errors that are hard to find. A better approach will:  -->
 
@@ -113,6 +139,194 @@ engine: knitr
 <!-- ``` -->
 
 <!-- The estimated coefficients are summarized in the first column of @tbl-modelsummarybayesbetter. For instance, we find that on average in our dataset, five-kilometer run times that are one minute longer are associated with marathon times that are about 8 minutes longer. -->
+
+<!-- Logistic regression -->
+
+<!-- We can also use `tidymodels` for logistic regression problems. To accomplish this, we first need to change the class of our dependent variable into a factor because this is required for classification models. -->
+
+<!-- ```{r} -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+
+<!-- set.seed(853) -->
+
+<!-- library(tidymodels) -->
+
+<!-- week_or_weekday <- -->
+<!--   week_or_weekday |> -->
+<!--   mutate(is_weekday = as_factor(is_weekday)) -->
+
+<!-- week_or_weekday_split <- initial_split(week_or_weekday, prop = 0.80) -->
+<!-- week_or_weekday_train <- training(week_or_weekday_split) -->
+<!-- week_or_weekday_test <- testing(week_or_weekday_split) -->
+
+<!-- week_or_weekday_tidymodels <- -->
+<!--   logistic_reg(mode = "classification") |> -->
+<!--   set_engine("glm") |> -->
+<!--   fit( -->
+<!--     is_weekday ~ number_of_cars, -->
+<!--     data = week_or_weekday_train -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- As before, we can make a graph of the actual results compared with our estimates. But one nice aspect of this is that we could use our test dataset to evaluate our model's forecasting ability more thoroughly, for instance through a confusion matrix, which specifies the count of each prediction by what the truth was. We find that the model does well on the held-out dataset. There were 90 observations where the model predicted it was a weekday, and it was actually a weekday, and 95 where the model predicted it was a weekend, and it was a weekend. It was wrong for 15 observations, and these were split across seven where it forecast a weekday, but it was a weekend, and eight where it was the opposite case.^[STUDENTS PROBABLY WON'T UNDERSTAND THAT IMPICIT IN THE PREDICTED LABEL IS AN OPERATING THRESHOLD, I WOULD HAVE AT LEAST ONE SENTENCE EXPLAINING THAT THIS IS A BUILT IN ASSUMPION IN THE PREDICT() METHOD THAT CAN BE ADJUSTED AND ADJUSTING THIS WILL IMPACT SENSITIVITY VS PRECISION WHICH CAN BE DISCUSSED LATER] -->
+
+<!-- ```{r} -->
+<!-- week_or_weekday_tidymodels |> -->
+<!--   predict(new_data = week_or_weekday_test) |> -->
+<!--   cbind(week_or_weekday_test) |> -->
+<!--   conf_mat(truth = is_weekday, estimate = .pred_class) -->
+<!-- ``` -->
+
+
+
+<!-- One approach is to use `tidymodels` to build a prediction-focused logistic regression model in the same way as before i.e. a validation set approach [@islr, p. 176]. In this case, the probability will be that of voting for Biden. -->
+
+<!-- ```{r} -->
+<!-- set.seed(853) -->
+
+<!-- ces2020_split <- initial_split(ces2020, prop = 0.80) -->
+<!-- ces2020_train <- training(ces2020_split) -->
+<!-- ces2020_test <- testing(ces2020_split) -->
+
+<!-- ces_tidymodels <- -->
+<!--   logistic_reg(mode = "classification") |> -->
+<!--   set_engine("glm") |> -->
+<!--   fit( -->
+<!--     voted_for ~ gender + education, -->
+<!--     data = ces2020_train -->
+<!--   ) -->
+
+<!-- ces_tidymodels -->
+<!-- ``` -->
+
+<!-- And then evaluate it on the test set. It appears as though the model is having difficulty identifying Trump supporters. -->
+
+<!-- ```{r} -->
+<!-- ces_tidymodels |> -->
+<!--   predict(new_data = ces2020_test) |> -->
+<!--   cbind(ces2020_test) |> -->
+<!--   conf_mat(truth = voted_for, estimate = .pred_class) -->
+<!-- ``` -->
+
+<!-- When we introduced `tidymodels`, we discussed the importance of randomly constructing training and test sets. We use the training dataset to estimate parameters, and then evaluate the model on the test set. It is natural to ask why we should be subject to the whims of randomness and whether we are making the most of our data. For instance, what if a good model is poorly evaluated because of some random inclusion in the test set? Further, what if we do not have a large test set? -->
+
+<!-- One commonly used resampling method that goes some way to addressing this is $k$-fold cross-validation. In this approach we create $k$ different samples, or "folds", from the dataset without replacement. We then fit the model to the first $k-1$ folds, and evaluate it on the last fold. We do this $k$ times, once for every fold, such that every observation will be used for training $k-1$ times and for testing once. The $k$-fold cross-validation estimate is then the average mean squared error [@islr, p. 181]. For instance, `vfold_cv()` from `tidymodels` can be used to create, say, 10 folds. -->
+
+<!-- ```{r} -->
+<!-- set.seed(853) -->
+
+<!-- ces2020_10_folds <- vfold_cv(ces2020, v = 10) -->
+<!-- ``` -->
+
+<!-- The model can then be fit across the different combinations of folds with `fit_resamples()`. In this case, the model will be fit 10 times. -->
+
+<!-- ```{r} -->
+<!-- ces2020_cross_validation <- -->
+<!--   fit_resamples( -->
+<!--     object = logistic_reg(mode = "classification") |> set_engine("glm"), -->
+<!--     preprocessor = recipe( -->
+<!--       voted_for ~ gender + education, -->
+<!--       data = ces2020 -->
+<!--     ), -->
+<!--     resamples = ces2020_10_folds, -->
+<!--     metrics = metric_set(accuracy, sens, spec), -->
+<!--     control = control_resamples(save_pred = TRUE) -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- We might be interested to understand the performance of our model and we can use `collect_metrics()` to aggregate them across the folds (@tbl-metricsvoters-1). These types of details would typically be mentioned in passing in the main content of the paper, but included in great detail in an appendix. The average accuracy of our model across the folds is 0.61, while the average sensitivity is 0.19 and the average specificity is 0.90. -->
+
+<!-- ```{r} -->
+<!-- #| label: tbl-metricsvoters -->
+<!-- #| tbl-cap: "Average metrics across the 10 folds of a logistic regression to forecast voter preference" -->
+<!-- #| layout-ncol: 2 -->
+<!-- #| tbl-subcap: ["Key performance metrics", "Confusion matrix"] -->
+
+<!-- collect_metrics(ces2020_cross_validation) |> -->
+<!--   select(.metric, mean) |> -->
+<!--   knitr::kable( -->
+<!--     col.names = c( -->
+<!--       "Metric", -->
+<!--       "Mean" -->
+<!--     ), -->
+<!--     digits = 2, -->
+<!--     format.args = list(big.mark = ",") -->
+<!--   ) -->
+
+<!-- conf_mat_resampled(ces2020_cross_validation) |> -->
+<!--   mutate(Proportion = Freq / sum(Freq)) |> -->
+<!--   knitr::kable( -->
+<!--     digits = 2, -->
+<!--     format.args = list(big.mark = ",") -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- What does this mean? Accuracy is the proportion of observations that were correctly classified. The result of 0.61 suggests the model is doing better than a coin toss, but not much more. Sensitivity is the proportion of true observations that are identified as true [@islr, p. 145]. In this case that would mean the model predicted a respondent voted for Trump and they did. Specificity is the proportion of false observations that are identified as false [@islr, p. 145]. In this case it is the proportion of voters that voted for Biden, that were predicted to vote for Biden. This confirms our initial thought that model is having trouble identifying Trump supporters. -->
+
+<!-- We can see this in more detail by looking at the confusion matrix (@tbl-metricsvoters-2). When used with resampling approaches, such as cross-validation, the confusion matrix is computed for each fold and then averaged. The model is predicting Biden much more than we might expect from our knowledge of how close the 2020 election was. It suggests that our model may need additional variables to do a better job. -->
+
+<!-- Finally, it may be the case that we are interested in individual-level results, and we can add these to our dataset with `collect_predictions()`. -->
+
+<!-- ```{r} -->
+<!-- ces2020_with_predictions <- -->
+<!--   cbind( -->
+<!--     ces2020, -->
+<!--     collect_predictions(ces2020_cross_validation) |> -->
+<!--       arrange(.row) |> -->
+<!--       select(.pred_class) -->
+<!--   ) |> -->
+<!--   as_tibble() -->
+<!-- ``` -->
+
+<!-- For instance, we can see that model is essentially predicting support for Biden for all individuals apart from males with no high school, high school graduates, or 2 years of college (@tbl-omgthismodelishorriblelol). -->
+
+<!-- ```{r} -->
+<!-- #| label: tbl-omgthismodelishorriblelol -->
+<!-- #| tbl-cap: "The model is forecasting support for Biden for all females, and for many males, regardless of education" -->
+
+<!-- ces2020_with_predictions |> -->
+<!--   group_by(gender, education, voted_for) |> -->
+<!--   count(.pred_class) |> -->
+<!--   knitr::kable( -->
+<!--     col.names = c( -->
+<!--       "Gender", -->
+<!--       "Education", -->
+<!--       "Voted for", -->
+<!--       "Predicted vote", -->
+<!--       "Number" -->
+<!--     ), -->
+<!--     digits = 0, -->
+<!--     format.args = list(big.mark = ",") -->
+<!--   ) -->
+<!-- ``` -->
+
+
+<!-- If we were interested in prediction, then we could use `tidymodels` to estimate Poisson models with `poissonreg` [@poissonreg] (@tbl-modelsummarypoisson). -->
+
+<!-- ```{r} -->
+<!-- library(poissonreg) -->
+
+<!-- set.seed(853) -->
+
+<!-- count_of_A_split <- -->
+<!--   initial_split(count_of_A, prop = 0.80) -->
+<!-- count_of_A_train <- training(count_of_A_split) -->
+<!-- count_of_A_test <- testing(count_of_A_split) -->
+
+<!-- grades_tidymodels <- -->
+<!--   poisson_reg(mode = "regression") |> -->
+<!--   set_engine("glm") |> -->
+<!--   fit( -->
+<!--     number_of_A ~ department, -->
+<!--     data = count_of_A_train -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- The results of this estimation are in the second column of @tbl-modelsummarypoisson. They are similar to the estimates from `glm()`, but the number of observations is less because of the split. -->
+
+<!-- Finally, w -->
+
 
 <!-- ## Scikit learn -->
 
