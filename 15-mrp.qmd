@@ -21,7 +21,7 @@ engine: knitr
 
 - Multilevel regression with post-stratification (MRP) takes a sample, usually a large poll, and uses that to train a model. Then that trained model is applied to a post-stratification dataset, typically a census or other larger sample.
 - We use models because we are interested in answering questions that our data alone cannot answer. For instance, we may want to know what is going on in every political district, but it would be too expensive to appropriately poll every district. If we had perfect data, we would not need a model.
-- Models allow us to answer some questions, but the trade-off is that we answer them with uncertainty. In the MRP set-up our model borrows information from areas where we know a lot and uses that in areas where we know little. The degree to which this is appropriate is one aspect we would always like to know more about. One of the main difficulties with MRP is obtaining access to the required datasets. 
+- Models allow us to answer some questions, but the trade-off is that we answer them with uncertainty. In the MRP set-up, our model borrows information from areas where we know a lot and uses that in areas where we know little. The degree to which this is appropriate is one aspect we would always like to know more about. One of the main difficulties with MRP is obtaining access to the required datasets. 
 - The fundamental assumption of MRP is that the relationship between predictors, like gender, age-group, district, etc, and the outcome, for instance, "who are you going to vote for?", are steady between the sample and the post-stratification dataset. One key question when considering MRP estimates is: "To what extent does that assumption hold?"
 - As always, transparency is critical and there should be little reason that data preparation and modelling code cannot be made public alongside the model results even if the survey data cannot. This enables scrutiny from independent experts and enhances the credibility of MRP estimates.
 
@@ -60,9 +60,9 @@ MRP is a handy approach when dealing with survey data. @hanretty2020 describes h
 1) It can allow us to "re-weight" in a way that brings uncertainty front-of-mind and is not as hamstrung by small samples. The alternative way to deal with having a small sample is to either gather more data or throw it away.
 2) It can allow us to use broad surveys to speak to subsets in a way that remains representative. For instance, say we gathered a sample that was representative of age, gender, and education across the country. If we were interested in state/provincial-specific estimates there is no guarantee that representativeness would hold at that disaggregated level.
 
-From a practical perspective, it tends to be less expensive to collect non-probability samples and so there are benefits of being able to use these types of data. That said, MRP is not a magic-bullet and the laws of statistics still apply. We will have larger uncertainty around our estimates than when using probability samples and they will still be subject to all the usual biases. It is an exciting area of research in both academia and industry. 
+From a practical perspective, it tends to be less expensive to collect non-probability samples and so there are benefits of being able to use these types of data. That said, MRP is not a magic bullet and the laws of statistics still apply. We will have larger uncertainty around our estimates than when using probability samples and they will still be subject to all the usual biases. It is an exciting area of research in both academia and industry. 
 
-The workflow that we need for MRP is straight-forward, but the details and tiny decisions that have to be made at each step can become overwhelming. The point to keep in mind is that we are trying to create a relationship between two datasets using a statistical model, and so we need to establish similarity between the two datasets in terms of their variables and levels. The steps are:
+The workflow that we need for MRP is straight forward, but the details and tiny decisions that have to be made at each step can become overwhelming. The point to keep in mind is that we are trying to create a relationship between two datasets using a statistical model, and so we need to establish similarity between the two datasets in terms of their variables and levels. The steps are:
 
 1) gather and prepare the survey dataset, thinking about what is needed for coherence with the post-stratification dataset;
 2) gather and prepare the post-stratification dataset thinking about what is needed for coherence with the survey dataset;
@@ -98,14 +98,14 @@ They make state-specific estimates by post-stratifying to the features of each s
 
 In general, MRP is a good way to accomplish specific aims, but it is not without trade-offs. If we have a good quality survey, then it may be a way to speak to disaggregated aspects of it. Or if we are concerned about uncertainty then it is a good way to think about that. If we have a biased survey, then it is a great place to start, but it is not a panacea. There is plenty of scope for exciting work from a variety of approaches. For instance, from a more statistical perspective, there is a lot of work to do in terms of thinking through how survey design and modelling approaches interact and the extent to which we are underestimating uncertainty. It is also very interesting to think through the implications of small samples and uncertainty in the post-stratification dataset. There is an awful lot to do in terms of thinking through what the appropriate model is to use, and how do we even evaluate what "appropriate" means here, for instance, based on @si2020use. More generally, we just have little idea of the conditions under which we will have the stable preferences and relationships that are required for MRP to be accurate. A great deal of work is needed to understand how this relates to uncertainty in survey design, for instance, based on @lauderdale2020model or @ghitza2020voter.
 
-In this chapter, we begin with simulating a situation in which we pretend that we know the features of the population. We then consider the famous Xbox poll MRP example in greater depth. We will finally move to examples from the Australian political context, and then the US 2020 Presidential Election.
+In this chapter, we begin with simulating a situation in which we pretend that we know the features of the population. We then consider the famous Xbox poll MRP example in greater depth. We will finally move to examples from the Australian political context, and then the US 2020 presidential election.
 
 
 ## Multilevel modelling
 
-Before we can turn to MRP, we need to become comfortable with multilevel modelling This approach goes by a variety of names including "hierarchical", and "random effects". While there are sometimes small differences in meaning between disciplines, in general they refer to the same or at least very similar ideas.
+Before we can turn to MRP, we need to become comfortable with multilevel modelling. This approach goes by a variety of names including "hierarchical", and "random effects". While there are sometimes small differences in meaning between disciplines, in general they refer to the same or at least very similar ideas.
 
-The fundamental insight of multilevel modelling, is that a lot of the time, our observations are not completely independent of each other, and can instead be grouped. Accounting for that grouping when we model, can provide us with some useful information. For instance, there is a difference in the earnings of professional athletes depending on whether they compete in men's or women's events. If we were interested in trying to forecast the earnings of a particular athlete, based on their competition results, then knowing which type of competition it was would enable the model to make a better forecast.
+The fundamental insight of multilevel modelling is that a lot of the time, our observations are not completely independent of each other, and can instead be grouped. Accounting for that grouping when we model, can provide us with some useful information. For instance, there is a difference in the earnings of professional athletes depending on whether they compete in men's or women's events. If we were interested in trying to forecast the earnings of a particular athlete, based on their competition results, then knowing which type of competition it was would enable the model to make a better forecast.
 
 We distinguish between three settings: 1) Complete pooling, where we treat every observation as being from the same group, which is what we have been doing to this point. 2) No pooling, where we treat every group separately, which might happen if we were to run a separate regression for each group. 3) Partial pooling, where we allow group membership to have some influence. As an example, consider we are interested in the relationship between GDP and inflation for each of the countries in the world. Complete pooling would have us put all the countries into the one group; no pooling would have us run separate regressions for each continent. We will now illustrate the partial pooling approach.
 
@@ -199,7 +199,7 @@ When we move to multilevel modelling, it is possible that some `rstanarm` models
 
 ### Austen, Brontë, Dickens, and Shakespeare
 
-As an example of multilevel modelling regression, we consider data from Project Gutenberg on the length of books by two different authors: Jane Austen, Charlotte Brontë, Charles Dickens, and William Shakespeare. We would expect that Austen, as she wrote books, will have longer books, than Shakespeare, as he wrote plays.
+As an example of multilevel modelling regression, we consider data from Project Gutenberg on the length of books by two different authors: Jane Austen, Charlotte Brontë, Charles Dickens, and William Shakespeare. We would expect that Austen, as she wrote books, will have longer books than Shakespeare, as he wrote plays.
 
 ```{r}
 #| eval: false
@@ -448,7 +448,7 @@ In this case it is not overwhelmingly obvious that the multilevel model is the b
 
 ### Construct a population
 
-To get started we will simulate some data about children's behavior from a population that has various properties, take a biased sample, and then conduct MRP to demonstrate how we can get those properties back. We are going to have two "explanatory variables"---age-group and toilet-trained---and one dependent variable - bedtime. Bedtime will increase as age-group increases, and will be later for children that are toilet-trained, compared with those that are not. To be clear, in this example we will "know" the "true" features of the population, but this is not something that occurs when we use real data---it is just to help to explain what is happening in MRP.
+To get started we will simulate some data about children's behavior from a population that has various properties, take a biased sample, and then conduct MRP to demonstrate how we can get those properties back. We are going to have two "explanatory variables"---age and toilet trained---and one dependent variable---bedtime. Bedtime will increase as age increases, and will be later for children that are toilet trained, compared with those that are not. To be clear, in this example we will "know" the "true" features of the population, but this is not something that occurs when we use real data---it is just to help to explain what is happening in MRP.
 
 ```{r}
 #| message: false
@@ -462,7 +462,7 @@ size_of_population <- 1000000
 
 population_for_mrp_example <-
   tibble(
-    age_group = sample(
+    age = sample(
       x = c(1:3),
       size = size_of_population,
       replace = TRUE
@@ -474,11 +474,11 @@ population_for_mrp_example <-
     ),
     noise = rnorm(size_of_population, mean = 0, sd = 1),
     # No special reason for this intercept to be five; it could be anything.
-    bed_time = 5 + 0.5 * age_group + 1 * toilet_trained + noise,
+    bed_time = 5 + 0.5 * age + 1 * toilet_trained + noise,
   ) |>
   select(-noise) |>
   mutate(
-    age_group = as_factor(age_group),
+    age = as_factor(age),
     toilet_trained = as_factor(toilet_trained)
   )
 
@@ -494,7 +494,7 @@ That is, as always, when we have a dataset, we first try to graph it to better u
 
 population_for_mrp_example |>
   slice(1:1000) |>
-  ggplot(aes(x = age_group, y = bed_time)) +
+  ggplot(aes(x = age, y = bed_time)) +
   geom_jitter(
     aes(color = toilet_trained),
     alpha = 0.4,
@@ -502,7 +502,7 @@ population_for_mrp_example |>
     height = 0
   ) +
   labs(
-    x = "Age-group",
+    x = "Age",
     y = "Bedtime",
     color = "Toilet trained"
   ) +
@@ -514,25 +514,27 @@ And we can also work out what the "truth" is for the information that we are int
 
 ```{r}
 #| label: tbl-toilettrained
-#| tbl-cap: "Average metrics bedtime, based on whether a toddler is toilet trained"
+#| tbl-cap: "Average metrics for bedtime, based on whether a toddler is toilet trained"
 #| message: false
 #| warning: false
 
 population_for_mrp_example_summarised <-
   population_for_mrp_example |>
-  group_by(age_group, toilet_trained) |>
+  group_by(age, toilet_trained) |>
   summarise(median_bed_time = mean(bed_time))
 
 population_for_mrp_example_summarised |>
   knitr::kable(
     digits = 2,
-    col.names = c("Age-group", "Is toilet trained", "Average bedtime")
+    col.names = c("Age", "Toilet trained?", "Average bedtime"),
+    booktabs = TRUE,
+    linesep = ""
   )
 ```
 
 ### Get a biased sample from it
 
-Now we want to pretend that we have some survey that has a biased sample. We will allow that it over-samples children that are younger and those that are not toilet-trained. For instance, perhaps we gathered our sample based on the records of a pediatrician, so it is more likely that they will see this biased sample of children. We are interested in assessing what proportion of children are toilet-trained at various age-groups compared with the whole population, and how this may affect raw estimates of bedtimes for different sub-groups.
+Now we want to pretend that we have some survey that has a biased sample. We will allow that it over-samples children that are younger and those that are not toilet trained. For instance, perhaps we gathered our sample based on the records of a pediatrician, so it is more likely that they will see this biased sample of children. We are interested in assessing what proportion of children are toilet trained at various ages compared with the whole population, and how this may affect raw estimates of bedtimes for different sub-groups.
 
 ```{r}
 # This code based on that of Monica Alexander
@@ -544,9 +546,9 @@ population_for_mrp_example <-
   mutate(
     weight =
       case_when(
-        toilet_trained == 0 & age_group == 1 ~ 0.7,
+        toilet_trained == 0 & age == 1 ~ 0.7,
         toilet_trained == 0 ~ 0.1,
-        age_group %in% c(1, 2, 3) ~ 0.2
+        age %in% c(1, 2, 3) ~ 0.2
       ),
     id = 1:n()
   )
@@ -572,50 +574,60 @@ poststratification_dataset <-
 And we can plot those also.
 
 ```{r}
+#| fig-cap: "Bedtime by whether toilet trained and age"
+#| label: fig-mrptoilettsim
 #| message: false
 #| warning: false
 
 sample_for_mrp_example |>
   mutate(toilet_trained = as_factor(toilet_trained)) |>
-  ggplot(aes(x = age_group, y = bed_time)) +
-  geom_jitter(aes(color = toilet_trained), alpha = 0.4, width = 0.1, height = 0) +
-  labs(
-    x = "Age-group",
-    y = "Bed time",
-    color = "Toilet trained"
+  ggplot(aes(x = age, y = bed_time)) +
+  geom_jitter(
+    aes(color = toilet_trained),
+    alpha = 0.4,
+    width = 0.1,
+    height = 0
   ) +
+  labs(x = "Age",
+       y = "Bedtime",
+       color = "Toilet trained") +
   theme_classic() +
   scale_color_brewer(palette = "Set1")
 ```
 
-It is clear that our sample has a different average bedtime than the overall population, but let us just do the same exercise as before to look at the mean, by age and toilet-trained status.
+It is clear that our sample has a different average bedtime than the overall population (@fig-mrptoilettsim). We can also do the same exercise as before and look at the mean by age and toilet trained status (@tbl-mrptoilettsim).
 
 ```{r}
+#| tbl-cap: "Summary statistics, differenced by age and whether toilet trained"
+#| label: tbl-mrptoilettsim
 #| message: false
 #| warning: false
 
-sample_for_mrp_example_summarized <-
+sample_for_mrp_example_summarized <- 
   sample_for_mrp_example |>
-  group_by(age_group, toilet_trained) |>
+  group_by(age, toilet_trained) |>
   summarise(median_bed_time = mean(bed_time))
 
 sample_for_mrp_example_summarized |>
   knitr::kable(
     digits = 2,
-    col.names = c("Age-group", "Is toilet trained", "Average bedtime")
+    col.names = c("Age", "Toilet trained?", "Average bedtime"),
+    booktabs = TRUE,
+    linesep = ""
   )
 ```
 
 
 ### Model the sample
 
-We will quickly train a model based on the (biased) survey. We will use `modelsummary` [@citemodelsummary] to format our estimates.
+We will quickly train a model based on the (biased) survey. We will use `modelsummary` [@citemodelsummary] to format our estimates (@tbl-mrptoilettsimmodel).
 
 ```{r}
-library(modelsummary)
+#| tbl-cap: "Model summary output"
+#| label: tbl-mrptoilettsimmodel
 
 mrp_example_model <-
-  lm(bed_time ~ age_group + toilet_trained, data = sample_for_mrp_example)
+  lm(bed_time ~ age + toilet_trained, data = sample_for_mrp_example)
 
 mrp_example_model |>
   modelsummary::modelsummary(fmt = 2)
@@ -627,7 +639,7 @@ mrp_example_model |>
 
 ### Get a post-stratification dataset
 
-Now we will use a post-stratification dataset to get some estimates of the number in each cell. We typically use a larger dataset that may more closely reflection the population. In the US a popular choice is the American Community Survey (ACS), while in other countries we typically have to use the census.
+Now we will use a post-stratification dataset to get some estimates of the number in each cell. We typically use a larger dataset that may more closely reflect the population. In the US a popular choice is the American Community Survey (ACS), while in other countries we typically have to use the census.
 
 In this simulation example, we will just take a 10 per cent sample from the population and use that as our post-stratification dataset.
 
@@ -648,7 +660,7 @@ In an ideal world we have individual-level data in our post-stratification datas
 ```{r}
 poststrat_dataset_grouped <-
   poststratification_dataset |>
-  group_by(age_group, toilet_trained) |>
+  group_by(age, toilet_trained) |>
   count()
 
 poststrat_dataset_grouped |>
@@ -668,39 +680,35 @@ poststrat_dataset_grouped <-
   cbind(poststrat_dataset_grouped)
 ```
 
-At this point we can have a look at our MRP estimates (circles) along with their confidence intervals, and compare them the raw estimates from the biased sample data (squares). In this case, because we know the truth, we can also compare them to the known truth (triangles), but that is not something we can do normally.
+@fig-mrptoilettsimmodelcompare illustrates the MRP estimates (circles) along with their confidence intervals, and compare them the raw estimates from the biased sample data (squares). In this case, because we know the truth, we can also compare them to the known truth (triangles), but that is not something we can do normally.
 
 ```{r}
+#| fig-cap: "MRP estimates compared with true estimates"
+#| label: fig-mrptoilettsimmodelcompare
+
 poststrat_dataset_grouped |>
-  ggplot(aes(x = age_group, y = fit)) +
+  ggplot(aes(x = age, y = fit)) +
   geom_point(
     data = population_for_mrp_example_summarised,
-    aes(x = age_group, y = median_bed_time, color = toilet_trained),
+    aes(x = age, y = median_bed_time, color = toilet_trained),
     shape = 17
   ) +
   geom_point(
     data = sample_for_mrp_example_summarized,
-    aes(x = age_group, y = median_bed_time, color = toilet_trained),
+    aes(x = age, y = median_bed_time, color = toilet_trained),
     shape = 15
   ) +
   geom_pointrange(aes(ymin = lwr, ymax = upr, color = toilet_trained)) +
   labs(
-    x = "Age-group",
-    y = "Bed time",
+    x = "Age",
+    y = "Bedtime",
     color = "Toilet trained"
   ) +
   theme_classic() +
   scale_color_brewer(palette = "Set1")
 ```
 
-In most cases the MRP estimates are much closer to the truth than the raw data estimates.
-
-
-
-
-
-
-
+In most cases the MRP estimates are closer to the truth than the raw data estimates.
 
 
 
@@ -724,7 +732,7 @@ In this section we are going to simulate another dataset and then fit a few diff
 To move us slightly closer to reality, we are going to simulate a survey (rather than sample from a population as we did earlier) and then post-stratify it using real data. The dependent variable is "supports_ALP", which is a binary variable - either 0 or 1. We will just start with three independent variables here: 
 
 - "gender", which is either "female" or "male" (as that is what is available from the Australian Bureau of Statistics); 
-- "age_group", which is one of four groups: "ages 18 to 29", "ages 30 to 44", "ages 45 to 59", "ages 60 plus";
+- "age_group", which is one of four groups: "ages 18 to 29", "ages 30 to 44", "ages 45 to 59", and "ages 60 plus";
 - "state", which is one of eight integers: 1 - 8 (inclusive).
 
 ```{r}
@@ -836,7 +844,8 @@ $$
 This model says that the probability that some person, $i$, will vote for the Australian Labor Party depends on their gender, age-group, and state of residence. Based on our simulated data, we would like younger age-groups to be more likely to vote for the Australian Labor Party and for males to be less likely to vote for the Australian Labor Party.
 
 ```{r}
-#| label: initial_model_analyse_example_polling
+#| label: tbl-initial_model_analyse_example_polling
+#| tbl-cap: "Model estimates"
 
 alp_support <-
   glm(
@@ -849,7 +858,7 @@ alp_support |>
   modelsummary::modelsummary(fmt = 2, exponentiate = TRUE)
 ```
 
-Our dependent variable is a binary, thus we used logistic regression so the results are a little more difficult to interpret. Essentially we have got our inputs back. 
+Our dependent variable is a binary, thus we used logistic regression so the results are a little more difficult to interpret  (@tbl-initial_model_analyse_example_polling). Essentially we have got our inputs back. 
 
 ### Post-stratify
 
@@ -921,7 +930,7 @@ We now have post-stratified estimates for each state. Our model has a fair few w
 
 We would like to address some of the major issues with our approach, specifically being able to deal with small cell counts, and also taking better account of uncertainty. As we are dealing with survey data, prediction intervals or something similar are critical, and it is not appropriate to only report central estimates. To do this we will use the same broad approach as before, but just improve the model. We are going to change to a Bayesian model and use `rstanarm` [@citerstanarm].
 
-Now, using the same basic model as before, but in a Bayesian setting.
+Now, we use the same basic model as before, but in a Bayesian setting.
 
 ```{r}
 library(rstanarm)
@@ -968,11 +977,14 @@ post_stratified_estimates
 
 We now have post-stratified estimates for each division. Our new Bayesian approach will enable us to think more deeply about uncertainty. We could complicate this in a variety of ways including adding more coefficients (but remember that we would need to get new cell counts), or adding some layers.
 
-One interesting aspect is that our multilevel approach will allow us to deal with small cell counts by borrowing information from other cells. Even if we were to remove most of the, say, 18-to-29-year-old, male respondents from Tasmania our model would still provide estimates. It does this by pooling, in which the effect of these young, male, Tasmanians is partially determined by other cells that do have respondents. 
+One interesting aspect is that our multilevel approach will allow us to deal with small cell counts by borrowing information from other cells. Even if we were to remove most of the, say, 18-to-29-year-old, male respondents from Tasmania our model would still provide estimates. It does this by pooling, in which the effect of these young, male Tasmanians is partially determined by other cells that do have respondents. 
 
-There are many interesting aspects that we may like to communicate to others. For instance, we may like to show how the model is affecting our estimates of the results. We can make a graph that compares the raw estimates and the raw estimates from the biased survey sample with the model estimates. Note the skew in favor of the ALP in the biased sample estimates, and how the model is able to correct for this in most cases.
+There are many interesting aspects that we may like to communicate to others. For instance, we may like to show how the model is affecting our estimates of the results. We can make a graph that compares the raw estimates and the raw estimates from the biased survey sample with the model estimates (@tbl-resultsforaustraliaa). Note the skew in favor of the ALP in the biased sample estimates, and how the model is able to correct for this in most cases.
 
 ```{r}
+#| label: tbl-resultsforaustraliaa
+#| tbl-cap: "Comparing MRP estimates with raw estimates"
+
 # Raw survey estimates
 raw_estimates <- sample_for_australian_polling_all |>
   mutate(support_alp_num = abs(as.numeric(support_alp) - 2)) |>
@@ -991,7 +1003,7 @@ post_stratified_estimates |>
   geom_errorbar(aes(ymin = lower, ymax = upper, color = "MRP estimate"), 
                 width = 0) +
   geom_point(data = raw_estimates_sample, 
-             aes(color = "Raw estimate (biased sample)"), 
+             aes(color = "Biased sample"), 
              shape = 15, size = 2.5) +
   geom_point(data = raw_estimates, aes(color = "Raw estimate"), 
              shape = 18, size = 3) +
@@ -1013,8 +1025,11 @@ Similarly, we may like to plot the distribution of the coefficients. We can work
 ```{r}
 #| warning: false
 #| message: false
+#| label: fig-resultsforaustralia
+#| fig-cap: "Posterior predictive check and comparing the posterior with the prior"
 
 library(rstanarm)
+
 pp_check(improved_alp_support) +
   theme_classic() +
   theme(legend.position = "bottom")
@@ -1024,6 +1039,12 @@ posterior_vs_prior(improved_alp_support) +
   scale_color_brewer(palette = "Set1") +
   theme(legend.position = "bottom") +
   coord_flip()
+```
+
+
+```{r}
+#| label: fig-resultsforaustraliaf
+#| fig-cap: "Comparing MRP estimates with raw estimates"
 
 marginaleffects::plot_cap(improved_alp_support, condition = "state") +
   labs(
@@ -1309,7 +1330,7 @@ poststrat_data_cells
 
 ### Model
 
-We are going to use logistic regression to estimate a model where the binary of support for Biden versus Trump is explained by gender, age-group, education-level, and state. Following @kennedygabry2020 we will use `rstanarm` [@citerstanarm].
+We are going to use logistic regression to estimate a model where the binary of support for Biden versus Trump is explained by gender, age-group, education, and state. Following @kennedygabry2020 we will use `rstanarm` [@citerstanarm].
 
 ```{r}
 #| echo: true
@@ -1398,9 +1419,11 @@ head(biden_support_by_state)
 ```
 
 
-And we can have a look at our estimates graphically, if we like.
+And we can have a look at our estimates graphically (@fig-estimatyusamrp).
 
 ```{r}
+#| label: fig-estimatyusamrp
+#| tbl-cap: "Comparing the MRP estimates with the Nationscape raw data"
 #| message: false
 
 biden_support_by_state |>
@@ -1433,7 +1456,7 @@ biden_support_by_state |>
 
 ### Scales {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: *Support for a political party is a binary (yes/no), and is related to age-group, gender, income-group, and highest education.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+1. *(Plan)* Consider the following scenario: *Support for a political party is a binary (yes/no), and is related to age-group, gender, income group, and highest education.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation. Please include at least ten tests based on the simulated data.
 3. *(Acquire)* Please describe one possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
@@ -1441,8 +1464,8 @@ biden_support_by_state |>
 
 ### Questions {.unnumbered}
 
-1. Please explain what MRP is to someone who has university-education, but who has not necessarily taken any statistics, so you will need to explain any technical terms that you use, and be clear about strengths and weaknesses (write at least three paragraphs).
-2. With respect to @wang2015forecasting: Why is this paper interesting? What do you like about this paper? What do you wish it did better? To what extent can you reproduce this paper? (Write at least four paragraphs).
+1. Please explain what MRP is, and the strengths and weaknesses, being sure to explain any technical terms that you use (write at least three paragraphs).
+2. What are three aspects that you like about @wang2015forecasting? What are three aspects that do you not? To what extent is it possible to reproduce the paper?
 3. With respect to @wang2015forecasting, what is not a feature they mention election forecasts need (pick one)? 
     a. Explainable.
     b. Accurate.
@@ -1479,10 +1502,10 @@ biden_support_by_state |>
 
 ### Tutorial {.unnumbered}
 
-In a similar manner to @ghitza2020voter pretend you have got access to a US voter file record from a private company. You train a model on the 2020 US CCES, and post-stratify it, on an individual-basis, based on that voter file. 
+In a similar manner to @ghitza2020voter pretend you have got access to a US voter file record from a private company. You train a model on the 2020 US Cooperative Election Study, and post-stratify it, on an individual basis, based on that voter file. 
 
-a. Could you please put-together a datasheet for the voter file dataset following @gebru2021datasheets? As a reminder, datasheets accompany datasets and document "motivation, composition, collection process, recommended uses," among other aspects.
-b. Could you also please put together a model card for your model, following @Mitchell_2019? As a reminder, model cards are deliberately straight-forward one- or two-page documents that report aspects such as: model details; intended use; metrics; training data; ethical considerations; as well as caveats and recommendations [@Mitchell_2019].
+a. Could you please put together a datasheet for the voter file dataset following @gebru2021datasheets? As a reminder, datasheets accompany datasets and document "motivation, composition, collection process, recommended uses," among other aspects.
+b. Could you also please put together a model card for your model, following @Mitchell_2019? As a reminder, model cards are deliberately straight forward one- or two-page documents that report aspects such as: model details; intended use; metrics; training data; ethical considerations; as well as caveats and recommendations [@Mitchell_2019].
 c. Could you please discuss three ethical aspects around the features that you are using in your model? [Please write a paragraph or two for each point.]
 d. Could you please detail the protections that you would put in place in terms of the dataset, the model, and the predictions?
 

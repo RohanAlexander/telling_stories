@@ -135,10 +135,20 @@ week_or_weekday <-
 week_or_weekday
 ```
 
-We can use `glm()` from base R to do a quick estimation. In this case we will try to work out whether it is a weekday or weekend, based on the number of cars we can see. We are interested in estimating @eq-logisticexample:^[THERE'S NO EXPLAINATION OF HOW WE GOT HERE, MAYBE SHOULD SHOULD THAT $E[Y] = LOGIT(XBETA)$, AND THAT $Y ~ BERN(SIGMOID(XBETA))$]
+```{r}
+#| eval: false
+#| include: false
+
+arrow::write_parquet(x = week_or_weekday,
+                     sink = "outputs/data/week_or_weekday.parquet")
+```
+
+We can use `glm()` from base R to do a quick estimation. In this case we will try to work out whether it is a weekday or weekend, based on the number of cars we can see. We are interested in estimating @eq-logisticexample:
+
 $$
 \mbox{Pr}(y_i=1) = \mbox{logit}^{-1}\left(\beta_0+\beta_1 x_i\right)
 $$ {#eq-logisticexample}
+
 where $y_i$ is whether it is a weekday and $x_i$ is the number of cars on the road.
 
 
@@ -155,7 +165,7 @@ summary(week_or_weekday_model)
 
 The results of the estimation are in the first column of @tbl-modelsummarylogistic. The estimated coefficient on the number of cars is 0.19.
 
-The interpretation of the logistic regression's coefficients is more complicated than linear regression as they relate to changes in the log-odds of the binary outcome. For instance, the estimate of 0.19 is the average change in the log odds of it being a weekday with observing one extra car on the road. The coefficient is positive which means an increase, but as it is non-linear, if we want to specify a particular change, then this will be different for different baseline levels of the observation (e.g. an increase of 0.19 log odds has a larger impact when the baseline log odds are 0, compared to 2).
+The interpretation of the logistic regression's coefficients is more complicated than linear regression as they relate to changes in the log-odds of the binary outcome. For instance, the estimate of 0.19 is the average change in the log-odds of it being a weekday with observing one extra car on the road. The coefficient is positive which means an increase, but as it is non-linear, if we want to specify a particular change, then this will be different for different baseline levels of the observation (e.g. an increase of 0.19 log-odds has a larger impact when the baseline log-odds are 0, compared to 2).
 
 We can translate our estimate into the probability of it being a weekday, for a given number of cars. `predictions()` from `marginaleffects` [@marginaleffects] can be used to add the implied probability that it is a weekday for each observation.
 
@@ -197,7 +207,7 @@ week_or_weekday_predictions |>
   theme(legend.position = "bottom")
 ```
 
-The marginal effect at each observation is of interest because it provides a sense of how this probability is changing. It enables us to say that at the mean (which in this case is if we were to see 50 cars) the probability of it being a weekday, increases by almost five per cent if we were to see another car (@tbl-marginaleffectcar).
+The marginal effect at each observation is of interest because it provides a sense of how this probability is changing. It enables us to say that at the mean (which in this case is if we were to see 50 cars) the probability of it being a weekday increases by almost five per cent if we were to see another car (@tbl-marginaleffectcar).
 
 ```{r}
 #| label: tbl-marginaleffectcar
@@ -293,7 +303,7 @@ modelsummary::modelsummary(
 
 One area where logistic regression is often used is political polling. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to "support" or "not support".
 
-As a reminder, the workflow we advocate in this book: 
+As a reminder, the workflow we advocate in this book is: 
 
 $$\mbox{Plan} \rightarrow \mbox{Simulate} \rightarrow \mbox{Acquire} \rightarrow \mbox{Explore} \rightarrow \mbox{Share}.$$
 
@@ -303,7 +313,7 @@ While the focus here is the exploration of data using linear models, we still ne
 
 ![Quick sketch of a dataset that could be used to examine US political support](figures/IMG_2054.png){#fig-uspoliticalsupportsketch}
 
-![Quick sketch of what we expect from the analysis before finalizing either the data of the analysis](figures/IMG_2055.png){#fig-uspoliticalsupportmodel}
+![Quick sketch of what we expect from the analysis before finalizing either the data or the analysis](figures/IMG_2055.png){#fig-uspoliticalsupportmodel}
 
 Sketches of the expected dataset and analysis focus and clarify our thinking even if they will be updated later
 :::
@@ -332,7 +342,7 @@ us_political_preferences <-
 us_political_preferences
 ```
 
-We can use the 2020 Cooperative Election Study (CES) [@cooperativeelectionstudyus], which is a long-standing annual survey of US political opinion. In 2020, there were 61,000 respondents who completed the post-election survey. While the sampling methodology, detailed in @guidetothe2020ces [p. 13], is not a perfect random sample and relies on matching, it is widely used and accepted approach that balances sampling concerns and cost.
+We can use the 2020 Cooperative Election Study (CES) [@cooperativeelectionstudyus], which is a long-standing annual survey of US political opinion. In 2020, there were 61,000 respondents who completed the post-election survey. While the sampling methodology, detailed in @guidetothe2020ces [p. 13], is not a perfect random sample and relies on matching, it is a widely used and accepted approach that balances sampling concerns and cost.
 
 We can access the CES using `get_dataframe_by_name()` from `dataverse` [@dataverse], which was an approach that was introduced in @sec-gather-data and @sec-store-and-share. We save the data that are of interest to us, and then refer to that saved dataset.
 
@@ -403,7 +413,7 @@ ces2020 <-
 ces2020
 ```
 
-When we look at the actual data, there are concerns that we did not anticipate in our sketches. We only want respondents who are registered to vote, and we are only interested in those that voted for either Biden or Trump. We can filter to only those respondents and then add more informative labels. Gender of "female" and "male" is what is available from the CES.
+When we look at the actual data, there are concerns that we did not anticipate in our sketches. We only want respondents who are registered to vote, and we are only interested in those that voted for either Biden or Trump. We can filter to only those respondents and then add more informative labels. Genders of "female" and "male" is what is available from the CES.
 
 ```{r}
 ces2020 <-
@@ -437,6 +447,14 @@ ces2020 <-
     )
   ) |>
   select(voted_for, gender, education)
+```
+
+```{r}
+#| eval: false
+#| include: false
+
+arrow::write_parquet(x = ces2020,
+                     sink = "outputs/data/ces2020.parquet")
 ```
 
 In the end we are left with 43,554 respondents (@fig-cesissogooditslikecheating). 
@@ -566,6 +584,14 @@ count_of_A
 ```
 
 ```{r}
+#| eval: false
+#| include: false
+
+arrow::write_parquet(x = count_of_A,
+                     sink = "outputs/data/count_of_A.parquet")
+```
+
+```{r}
 #| echo: true
 #| eval: true
 #| message: false
@@ -683,7 +709,7 @@ modelsummary::modelsummary(
 )
 ```
 
-As with logistic regression, we can use `marginaleffects()` from [@marginaleffects] to help with interpreting these results. It may be useful to consider how we expect the number of A grades to change as we go from one department to another. @tbl-marginaleffectspoisson suggests that in our dataset, classes in Department 2 tend to have around five additional A grades, compared with Department 1, and that classes in Department 3, tend to have around 17 more A grades, compared with Department 1.
+As with logistic regression, we can use `marginaleffects()` from [@marginaleffects] to help with interpreting these results. It may be useful to consider how we expect the number of A grades to change as we go from one department to another. @tbl-marginaleffectspoisson suggests that in our dataset, classes in Department 2 tend to have around five additional A grades, compared with Department 1, and that classes in Department 3 tend to have around 17 more A grades, compared with Department 1.
 
 ```{r}
 #| label: tbl-marginaleffectspoisson
@@ -701,7 +727,7 @@ marginaleffects(grades_rstanarm) |>
 
 ### Letters used in *Jane Eyre* 
 
-In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë. We could then consider the first 10 lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/E's increases as more words are used. If not, it could suggest that the distribution of e/E's is not consistent, which could be of interest to linguists.
+In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë. We could then consider the first ten lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/Es increases as more words are used. If not, it could suggest that the distribution of e/Es is not consistent, which could be of interest to linguists.
 
 Following the workflow advocated in this book, we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-letterssketch, and a quick sketch of our model is @fig-lettersmodel.
 
@@ -709,19 +735,19 @@ Following the workflow advocated in this book, we first sketch our dataset and m
 
 ![Planned counts, by line and chapter, in *Jane Eyre*](figures/IMG_2056.png){#fig-letterssketch}
 
-![Planned expected relationship between count of e/E and number of words in the line](figures/IMG_2075.png){#fig-lettersmodel}
+![Expected relationship between count of e/Es and number of words in the line](figures/IMG_2075.png){#fig-lettersmodel}
 
 Sketches of the expected dataset and analysis force us to consider what we are interested in
 :::
 
-We simulate a dataset of how the number of e/E letters are distributed following the Poisson distribution (@fig-simenum).
+We simulate a dataset of how the number of e/Es are distributed following the Poisson distribution (@fig-simenum).
 
 ```{r}
 #| echo: true
 #| eval: true
 #| message: false
 #| warning: false
-#| fig-cap: "Simulated counts of e/E letters"
+#| fig-cap: "Simulated counts of e/Es"
 #| label: fig-simenum
 
 count_of_e_simulation <-
@@ -737,7 +763,7 @@ count_of_e_simulation |>
   geom_point() +
   labs(
     x = "Number of words in line",
-    y = "Number of e/E letters in the first ten lines"
+    y = "Number of e/Es in the first ten lines"
   ) +
   theme_classic() +
   scale_fill_brewer(palette = "Set1")
@@ -807,7 +833,7 @@ jane_eyre <- read_csv(
 jane_eyre
 ```
 
-We are interested in only those lines that have content, so we remove those empty lines that are just there for spacing. Then we can create counts of the number of times "e" or "E" occurs in that line, for the first 10 lines of each chapter. For instance, we can look at the first few lines and see that there are 5 e/E's in the first line and 8 in the second.
+We are interested in only those lines that have content, so we remove those empty lines that are just there for spacing. Then we can create counts of the number of times "e" or "E" occurs in that line, for the first ten lines of each chapter. For instance, we can look at the first few lines and see that there are five e/Es in the first line and eight in the second.
 
 ```{r}
 jane_eyre_reduced <-
@@ -846,17 +872,17 @@ jane_eyre_reduced |>
   head()
 ```
 
-We can verify that the mean and variance of the number of E/e's is roughly similar by plotting all of the data (@fig-janeecounts). The mean, in pink, is 6.7, and the variance, in blue, is 6.2. While they are not entirely the same, they are similar. We include the diagonal in @fig-janeecounts-2 to help with thinking about the data. If the data were on the $y=x$ line, then on average the is one E/e per word. As it is below that point, means that on average there is less than one per word.
+We can verify that the mean and variance of the number of e/Es is roughly similar by plotting all of the data (@fig-janeecounts). The mean, in pink, is 6.7, and the variance, in blue, is 6.2. While they are not entirely the same, they are similar. We include the diagonal in @fig-janeecounts-2 to help with thinking about the data. If the data were on the $y=x$ line, then on average there is one e/E per word. As it is below that point, it means that on average there is less than one per word.
 
 ```{r}
 #| echo: true
 #| eval: true
-#| fig-cap: "Number of 'E' or 'e' in the first ten lines of each chapter in Jane Eyre"
+#| fig-cap: "Number of e/Es letters in the first ten lines of each chapter in Jane Eyre"
 #| label: fig-janeecounts
 #| message: false
 #| warning: false
 #| layout-ncol: 2
-#| fig-subcap: ["Distribution of the number of e/E's", "Comparison of the number of e/E's in the line and the number of words in the line"]
+#| fig-subcap: ["Distribution of the number of e/Es", "Comparison of the number of e/Es in the line and the number of words in the line"]
 
 mean_e <- mean(jane_eyre_reduced$count_e)
 variance_e <- var(jane_eyre_reduced$count_e)
@@ -879,7 +905,7 @@ jane_eyre_reduced |>
   theme_minimal() +
   labs(
     x = "Number of words in the line",
-    y = "Number of e/E's in the line"
+    y = "Number of e/Es in the line"
   )
 ```
 
@@ -893,7 +919,7 @@ y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
 \beta_1 & \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
 $$
-where $y_i$ is the number of e/E's in the line and $x_i$ is the number of words in the line. We could estimate the parameters using `stan_glm()`. 
+where $y_i$ is the number of e/Es in the line and $x_i$ is the number of words in the line. We could estimate the parameters using `stan_glm()`. 
 
 ```{r}
 #| eval: false
@@ -953,16 +979,16 @@ jane_e_counts <-
 <!-- ) -->
 <!-- ``` -->
 
-While we would normally be interested in the table of estimates, as we have seen that a few times now, rather than again creating a table of the estimates, we introduce `plot_cap()` from `marginaleffects` [@marginaleffects]. We can use this to show the number of e/E's predicted by the model, for each line, based on the number of words in that line. @fig-predictionsjaneecounts makes it clear that we expect a positive relationship.
+While we would normally be interested in the table of estimates, as we have seen that a few times now, rather than again creating a table of the estimates, we introduce `plot_cap()` from `marginaleffects` [@marginaleffects]. We can use this to show the number of e/Es predicted by the model, for each line, based on the number of words in that line. @fig-predictionsjaneecounts makes it clear that we expect a positive relationship.
 
 ```{r}
 #| label: fig-predictionsjaneecounts
-#| fig-cap: "The predicted number of e/E's in each line based on the number of words"
+#| fig-cap: "The predicted number of e/Es in each line based on the number of words"
 
 plot_cap(jane_e_counts, condition = "word_count") +
   labs(
     x = "Number of words",
-    y = "Average number of e/E in the first 10 lines"
+    y = "Average number of e/Es in the first 10 lines"
   )
 ```
 
@@ -1016,7 +1042,7 @@ Poisson and negative binomial models go hand in hand. It is often the case that 
 
 ### Mortality in Alberta
 
-Consider, somewhat morbidly, that every year each individual either dies or does not. From the perspective of a geographic area, we could gather data on the number of people who died each year, by their cause of death. The Canadian province of Alberta makes [available](https://open.alberta.ca/opendata/leading-causes-of-death) the number of deaths, by cause, since 2001, for the top 30 causes each year. 
+Consider, somewhat morbidly, that every year each individual either dies or does not. From the perspective of a geographic area, we could gather data on the number of people who died each year, by their cause of death. The Canadian province of Alberta has made [available](https://open.alberta.ca/opendata/leading-causes-of-death) the number of deaths, by cause, since 2001, for the top 30 causes each year. 
 
 As always we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-albertadatasketch, and a quick sketch of our model is @fig-albertamodelsketch
 
@@ -1089,11 +1115,11 @@ alberta_cod <-
   mutate(cause = str_trunc(cause, 30))
 ```
 
-If we were to look at the top ten causes in 2021, we would notice a variety of interesting aspects (@tbl-albertahuh). For instance, we would expect that the most common causes would be in all 21 years of our data. But we notice that that most common cause, "Other ill-defined and unknown causes of mortality", is only in three years. Naturally, "COVID-19, virus identified", is only in two other years, as there were no COVID deaths in Canada before 2020.
+If we were to look at the top-ten causes in 2021, we would notice a variety of interesting aspects (@tbl-albertahuh). For instance, we would expect that the most common causes would be in all 21 years of our data. But we notice that that most common cause, "Other ill-defined and unknown causes of mortality", is only in three years. Naturally, "COVID-19, virus identified", is only in two other years, as there were no COVID deaths in Canada before 2020.
 
 ```{r}
 #| label: tbl-albertahuh
-#| tbl-cap: "Top ten causes of death in Alberta in 2021"
+#| tbl-cap: "Top-ten causes of death in Alberta in 2021"
 #| warning: false
 
 alberta_cod |>
@@ -1134,7 +1160,7 @@ alberta_cod <-
 
 
 ```{r}
-#| fig-cap: "Annual number of deaths for the top 5 causes in 2021, since 2001, for Alberta, Canada"
+#| fig-cap: "Annual number of deaths for the top-five causes in 2021, since 2001, for Alberta, Canada"
 #| label: fig-albertacod
 #| message: false
 #| warning: false
@@ -1269,7 +1295,7 @@ pp_check(cause_of_death_alberta_neg_binomial) +
   theme(legend.position = "bottom")
 ```
 
-Finally, we can compare between the models using the resampling method leave-one-out (LOO) cross-validation. This is a variant of cross-validation, introduced earlier, where the size of each fold is one. That is to say, if there was a dataset with 100 observations this LOO is equivalent to 100-fold cross validation. We can implement this in `rstanarm` with `loo()` for each model, and then compare between them with `loo_compare()`. Strictly speaking LOO-CV is not actually done by `loo()`, because it would be too computationally intensive. Instead an approximation is done provides the expected log point wise predictive density (ELPD), where the higher the better.
+Finally, we can compare between the models using the resampling method leave-one-out (LOO) cross-validation. This is a variant of cross-validation, introduced earlier, where the size of each fold is one. That is to say, if there was a dataset with 100 observations, this LOO is equivalent to 100-fold cross validation. We can implement this in `rstanarm` with `loo()` for each model, and then compare between them with `loo_compare()`. Strictly speaking LOO-CV is not actually done by `loo()`, because it would be too computationally intensive. Instead an approximation is done which provides the expected log point wise predictive density (ELPD), where the higher the better.
 
 ```{r}
 #| message: false
@@ -1310,8 +1336,8 @@ We have covered a variety of diagnostic aspects for Bayesian models. While it is
 
 ### Scales {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: *A person is interested in the number of deaths, attributed to cancer, in Sydney They collect data from the five largest hospitals.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
-2. *(Simulate)* Please further consider the scenario described and simulate the situation, along with three independent variables that are associated the number of deaths, by cause. Please include at least ten tests based on the simulated data.
+1. *(Plan)* Consider the following scenario: *A person is interested in the number of deaths, attributed to cancer, in Sydney. They collect data from the five largest hospitals.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+2. *(Simulate)* Please further consider the scenario described and simulate the situation, along with three independent variables that are associated with the number of deaths, by cause. Please include at least ten tests based on the simulated data.
 3. *(Acquire)* Please describe one possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
 5. *(Communicate)* Please write two paragraphs about what you did.

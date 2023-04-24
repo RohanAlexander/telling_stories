@@ -65,11 +65,11 @@ Text is all around us. In many cases, text is the earliest type of data that we 
 
 Earlier approaches to the analysis of text tend to convert words into numbers, divorced of context. They could then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text, which can bring additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, it is useful to know that that a crocodile could eat you while a tree probably would not.
 
-Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with wide data, insofar as often each variable is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with one variable of words and another of the counts. Considering text as data naturally requires some abstraction from its context. But it is important it is not entirely separated as this can perpetuate historical inequities. For instance, @koenecke2020 find that automated speech recognition systems perform much worse for Black compared with white speakers, and @davidson2019racial find that tweets that use Black American English, which is a specifically defined technical term, are classified at hate speech at higher rates than similar tweets in Standard American English, which again is a technical term.
+Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with wide data, insofar as often each variable is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with one variable of words and another of the counts. Considering text as data naturally requires some abstraction from its context. But it is important it is not entirely separated as this can perpetuate historical inequities. For instance, @koenecke2020 find that automated speech recognition systems perform much worse for Black compared with White speakers, and @davidson2019racial find that tweets that use Black American English, which is a specifically defined technical term, are classified at hate speech at higher rates than similar tweets in Standard American English, which again is a technical term.
 
 In this chapter we cover a variety of approaches that enable us to consider text as data. One exciting aspect of text data is that it is typically not generated for the purposes of our analysis. The trade-off is that we typically must do a bunch more work to get it into a form that we can work with. There are a lot of decisions to be made in the data cleaning and preparation stages.
 
-The larger size of text datasets means that it is especially important to simulate, and start small, when it comes to their analysis. Using text as data is exciting because of the quantity and variety of text that is available to us. In general, dealing with text datasets is messy. There is a lot of cleaning and preparation that is typically required. Often, text datasets are large. As such having a reproducible workflow in place and then clearly communicating your findings becomes critical. Nonetheless, it is an exciting area.
+The larger size of text datasets means that it is especially important to simulate, and start small, when it comes to their analysis. Using text as data is exciting because of the quantity and variety of text that is available to us. In general, dealing with text datasets is messy. There is a lot of cleaning and preparation that is typically required. Often, text datasets are large. As such having a reproducible workflow in place and then clearly communicating your findings, becomes critical. Nonetheless, it is an exciting area.
 
 In this chapter we first consider preparing text datasets. We then consider logistic and lasso regression, and finally topic models.
 
@@ -125,7 +125,7 @@ books_corpus <-
 books_corpus
 ```
 
-We use the tokens in the corpus to construct a document-feature matrix using `dfm()` from `quanteda` [@quanteda].
+We use the tokens in the corpus to construct a document-feature matrix (DFM) using `dfm()` from `quanteda` [@quanteda].
 
 ```{r}
 books_dfm <-
@@ -211,7 +211,7 @@ When we remove stop words we artificially adjust our dataset. Sometimes there ma
 
 ### Case, numbers, and punctuation
 
-There are times when all we care about is the word, not the case or punctuation. For instance, if the text corpus was particularly messy or the existence of particular words was informative. We trade-off the loss of much information, for the benefit of making things more simple. We can convert to lower case with `str_to_lower()`, and use `str_replace_all()` to remove punctuation with "[:punct:]", and numbers with "[:digit:]".
+There are times when all we care about is the word, not the case or punctuation. For instance, if the text corpus was particularly messy or the existence of particular words was informative. We trade-off the loss of much information for the benefit of making things more simple. We can convert to lower case with `str_to_lower()`, and use `str_replace_all()` to remove punctuation with "[:punct:]", and numbers with "[:digit:]".
 
 ```{r}
 bookshelf |>
@@ -268,7 +268,7 @@ books_corpus |>
 
 Then we need to decide what to do about typos and other minor issues. Firstly, every real-world text has typos. Sometimes these should clearly be fixed. But if they are made in a systematic way, for instance, a certain writer always makes the same mistakes, then they would have value if we were interested in grouping by the writer. The use of OCR will introduce common issues as well, as was seen in @sec-gather-data. For instance, "the" is commonly incorrectly changed to "thc".
 
-We could fix typos in the same way that we fixed stop words, i.e. with lists of corrections. When it comes to uncommon words, we can build this into our document-feature matrix creation with `dfm_trim()`. For instance, we could use "min_termfreq = 2" to remove any word that does not occur at least twice, or "min_docfreq = 0.05" to remove any word that is not in at least 5 per cent of documents or "max_docfreq = 0.90" to remove any word that is in at least 90 per cent of documents.
+We could fix typos in the same way that we fixed stop words, i.e. with lists of corrections. When it comes to uncommon words, we can build this into our document-feature matrix creation with `dfm_trim()`. For instance, we could use "min_termfreq = 2" to remove any word that does not occur at least twice, or "min_docfreq = 0.05" to remove any word that is not in at least five per cent of documents or "max_docfreq = 0.90" to remove any word that is in at least 90 per cent of documents.
 
 ```{r}
 books_corpus |>
@@ -281,7 +281,7 @@ books_corpus |>
 
 A tuple is an ordered list of elements, and in the context of text, it is a series of words. If it is two words then we term this a "bi-gram", three words is a "tri-gram", etc. These are an issue when it comes to text cleaning and preparation because we typically need to separate terms based on a space. This would result in an inappropriate separation.
 
-This is a clear issue when it comes to place names. For instance, consider "British Columbia", "New Hampshire", "United Kingdom", and "Port Hedland". One way forward is to create a list of such places and then use `str_replace_all()` to add an underbar, for instance, "British_Columbia", "New_Hampshire", "United_Kingdom", and "Port_Hedland". Another option, is to use `tokens_compound()` from `quanteda`.
+This is a clear issue when it comes to place names. For instance, consider "British Columbia", "New Hampshire", "United Kingdom", and "Port Hedland". One way forward is to create a list of such places and then use `str_replace_all()` to add an underbar, for instance, "British_Columbia", "New_Hampshire", "United_Kingdom", and "Port_Hedland". Another option is to use `tokens_compound()` from `quanteda`.
 
 ```{r}
 some_places <- c("British Columbia", 
@@ -386,11 +386,11 @@ ngram_counts <-
 head(ngram_counts)
 ```
 
-Having identifying some common bi-grams, we could add them to the list to be changed. This example includes names like Don Quixote and Sancho Panza which would need to remain together for analysis.
+Having identified some common bi-grams, we could add them to the list to be changed. This example includes names like Don Quixote and Sancho Panza which would need to remain together for analysis.
 
 ### Stemming and lemmatizing
 
-Stemming and lemmatizing words is another common approach for reducing the dimensionality of a text dataset. Stemming means to remove the last part of the word, in the expectation that this will result in more general words. For instance, "Canadians", "Canadian", and "Canada" all stem to "Canad". Lemmatizing is similar, but is more involved. It means that changing words, not just on their spelling, but on their canonical form [@textasdata, p. 54]. For instance, "Canadians", "Canadian", "Canucks", and "Canuck", may all be changed to "Canada".
+Stemming and lemmatizing words is another common approach for reducing the dimensionality of a text dataset. Stemming means to remove the last part of the word, in the expectation that this will result in more general words. For instance, "Canadians", "Canadian", and "Canada" all stem to "Canad". Lemmatizing is similar, but is more involved. It means changing words, not just on their spelling, but on their canonical form [@textasdata, p. 54]. For instance, "Canadians", "Canadian", "Canucks", and "Canuck" may all be changed to "Canada".
 
 We can do this with `dfm_wordstem()`.
 
@@ -487,7 +487,7 @@ In @tbl-zodiac we look at the words that distinguish the horoscopes of each zodi
 
 ```{r}
 #| label: tbl-zodiac
-#| tbl-cap: "Most common words in horoscopes that are unique to a particular Zodiac sign"
+#| tbl-cap: "Most common words in horoscopes that are unique to a particular zodiac sign"
 
 horoscopes_counts_by_word_tf_idf |>
   group_by(zodiacsign) |>
@@ -856,8 +856,7 @@ After the dataset is ready, `stm` [@stm] can be used to implement LDA and approx
 <!-- It does this using Gibbs sampling or the variational expectation-maximization algorithm. Following @SteyversGriffiths2006 and @Darling2011, the Gibbs sampling  -->
 The process attempts to find a topic for a particular term in a particular document, given the topics of all other terms for all other documents. Broadly, it does this by first assigning every term in every document to a random topic, specified by Dirichlet priors.
 <!-- with $\alpha = \frac{50}{K}$ and $\eta = 0.1$  (@SteyversGriffiths2006 recommends $\eta = 0.01$), where $\alpha$ refers to the distribution over topics and $\eta$ refers to the distribution over terms (@Grun2011, p.7).  -->
-It then selects a particular term in a particular document and assigns it to a new topic based on the conditional distribution where the topics for all other terms in all documents are taken as given.
-[@Grun2011, p.6]:
+It then selects a particular term in a particular document and assigns it to a new topic based on the conditional distribution where the topics for all other terms in all documents are taken as given [@Grun2011, p.6].
 <!-- $$p(z_{d, n}=k | w_{1:D, 1:N}, z'_{d, n}) \propto \frac{\lambda'_{n\rightarrow k}+\eta}{\lambda'_{.\rightarrow k}+V\eta} \frac{\lambda'^{(d)}_{n\rightarrow k}+\alpha}{\lambda'^{(d)}_{-i}+K\alpha} $$ -->
 <!-- where $z'_{d, n}$ refers to all other topic assignments; $\lambda'_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$; $\lambda'_{.\rightarrow k}$ is a count of how many other times that any term has been assigned to topic $k$; $\lambda'^{(d)}_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$ in that particular document; and $\lambda'^{(d)}_{-i}$ is a count of how many other times that term has been assigned in that document.  -->
 Once this has been estimated, then estimates for the distribution of words into topics and topics into documents can be backed out.
@@ -970,7 +969,7 @@ hansard_canada_2018 <-
 hansard_canada_2018
 ```
 
-The use of `filter()` at the end is needed because sometime aspects such as "directions" and similar non-speech aspects, are included in the Hansard. For instance, if we do not include that `filter()` then the first line is "The House resumed from November 9, 2017, consideration of the motion." We can then construct a corpus.
+The use of `filter()` at the end is needed because sometimes aspects such as "directions" and similar non-speech aspects are included in the Hansard. For instance, if we do not include that `filter()` then the first line is "The House resumed from November 9, 2017, consideration of the motion." We can then construct a corpus.
 
 ```{r}
 #| warning: false
@@ -998,7 +997,7 @@ hansard_dfm <-
 hansard_dfm
 ```
 
-At this point we can use `stm()` from `stm` [@stm] to implement an LDA model. We need to specify a document-feature matrix and the number of topics. Topic models are essentially just summaries. Instead of a document becoming a collection of words, they become a collection of topics with some probability associated with each topic. But because it is just providing a collection of words that tend to be used at similar times, rather than actual underlying meaning, we need to specify the number of topics that we are interested in. This decision will have a big impact, and it is important to consider a few different numbers.
+At this point we can use `stm()` from `stm` [@stm] to implement a LDA model. We need to specify a document-feature matrix and the number of topics. Topic models are essentially just summaries. Instead of a document becoming a collection of words, they become a collection of topics with some probability associated with each topic. But because it is just providing a collection of words that tend to be used at similar times, rather than actual underlying meaning, we need to specify the number of topics that we are interested in. This decision will have a big impact, and it is important to consider a few different numbers.
 
 ```{r}
 #| echo: true
@@ -1035,7 +1034,7 @@ write_rds(
 )
 ```
 
-This will take some time, likely 15-30 min, so it is useful to save the model when it is done using `write_rds()`, and use `beep` to get a notification when it is done. We could then read the results back in with `read_rds()`.
+This will take some time, likely 15-30 minutes, so it is useful to save the model when it is done using `write_rds()`, and use `beep` to get a notification when it is done. We could then read the results back in with `read_rds()`.
 
 ```{r}
 #| echo: true
@@ -1186,7 +1185,7 @@ labelTopics(hansard_topics)
 
 ### Scales {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: *You run a news website and are trying to understand whether to allow anonymous comments. You decide to do an A/B test, where we keep everything the same, but only allow anonymous comments on one version of the site. All you will have to decide is the text data that you obtain from the test.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+1. *(Plan)* Consider the following scenario: *You run a news website and are trying to understand whether to allow anonymous comments. You decide to do a A/B test, where we keep everything the same, but only allow anonymous comments on one version of the site. All you will have to decide is the text data that you obtain from the test.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation. Please include at least ten tests based on the simulated data.
 3. *(Acquire)* Please describe one possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.

@@ -62,7 +62,7 @@ We use models to understand the world. We poke, push, and test them. We build th
 
 A lot of statistical methods still commonly used today were developed for situations such as astronomy and agriculture. People such as @fisherarrangement were able to randomize the order of fields and planting because they worked at agricultural stations. But many of the subsequent applications in the twentieth and twenty-first centuries do not have those properties. But statistical validity relies on the assumptions, and so while what is taught is correct, we rarely meet the starting criteria. Statistics is often taught as though it proceeds through some idealized process where a hypothesis appears, is tested against some data that similarly appears, and is either confirmed or not. But that is not what happens, in practice. We react to incentives. We dabble, guess, and test, and then follow our intuition, backfilling as we need. All of this is fine. But it is not a world in which a traditional null hypothesis, which we will get to later, holds completely. This means concepts such as p-values and power lose some of their meaning. While we need to understand these foundations, we also need to be sophisticated enough to know when we need to move away from them.
 
-Manual statistical checks are widely used in modelling. And an extensive suite of them is available. But automated testing is also important. For instance, @wakefieldestimates built a model of excess deaths in a variety of countries, to estimate the overall death toll from the pandemic. After initially releasing the model, which had been extensively manually checked for statistical issues and reasonableness, some of the results were re-examined and it was found that the estimates for Germany and Sweden were over-sensitive. The authors acknowledged this, and addressed the issues, but the integration of automated testing of expected values for the coefficients, in addition to the usual manual statistical checks, would go some way to enabling us to have more faith in the models of others.
+Manual statistical checks are widely used in modelling. And an extensive suite of them is available. But automated testing is also important. For instance, @wakefieldestimates built a model of excess deaths in a variety of countries, to estimate the overall death toll from the pandemic. After initially releasing the model, which had been extensively manually checked for statistical issues and reasonableness, some of the results were reexamined and it was found that the estimates for Germany and Sweden were over sensitive. The authors acknowledged this, and addressed the issues, but the integration of automated testing of expected values for the coefficients, in addition to the usual manual statistical checks, would go some way to enabling us to have more faith in the models of others.
 
 ::: {.content-visible when-format="pdf"}
 In this chapter we begin with simple linear regression, and then move to multiple linear regression, the difference being the number of explanatory variables that we allow. We go through two approaches for each of these: base R, in particular the `lm()` and `glm()` functions, which are useful when we want to quickly use the models in EDA; and `rstanarm` [@citerstanarm] for when we are interested in inference. In general, a model is either optimized for inference or prediction. A focus on prediction is one of the hallmarks of machine learning. For historical reasons that has tended to be dominated by Python, although `tidymodels` [@citeTidymodels] has been developed in R, and we devote ["Prediction" Online Appendix](https://tellingstorieswithdata.com/27-prediction.html) to various approaches focused on prediction. Regardless of the approach we use, the important thing to remember that we are just doing something akin to fancy averaging, and our results always reflect the biases and idiosyncrasies of the dataset.
@@ -102,7 +102,7 @@ normal_example <-
 normal_example |> pull(draws)
 ```
 
-Here we specified 20 draws from a Normal distribution with a true mean, $\mu$, of 0 and a true standard deviation, $\sigma$, of 1. When we deal with real data, we will not know the true value of these, and we want to use our data to estimate them. We can create an estimate of the mean, $\hat{\mu}$, and an estimate of the standard deviation, $\hat{\sigma}$, with the following estimators:
+Here we specified 20 draws from a Normal distribution with a true mean, $\mu$, of zero and a true standard deviation, $\sigma$, of one. When we deal with real data, we will not know the true value of these, and we want to use our data to estimate them. We can create an estimate of the mean, $\hat{\mu}$, and an estimate of the standard deviation, $\hat{\sigma}$, with the following estimators:
 
 $$
 \begin{aligned}
@@ -112,7 +112,9 @@ $$
 $$
 
 If $\hat{\sigma}$ is the estimate of the standard deviation, then the standard error (SE) of the estimate of the mean, $\hat{\mu}$, is:
+
 $$\mbox{SE}(\hat{\mu}) = \frac{\hat{\sigma}}{\sqrt{n}}.$$
+
 The standard error is a comment about the estimate of the mean compared with the actual mean, while the standard deviation is a comment about how widely distributed the data are. Given the small sample size in the example of 20, we strictly should use the finite-sample adjustment, but as this is not the focus of this book we will move forward with the general approach.
 
 We can implement these in code using our simulated data to see how close our estimates are.
@@ -253,7 +255,7 @@ sim_run_data
 #| warning: false
 #| label: fig-fivekmvsmarathon
 #| fig-cap: "Simulated data of the relationship between the time to run five kilometers and a marathon"
-#| fig-subcap: ["Distribution of simulated data", "With one 'linear best-fit' line illustrating the implied relationship", "Including standard errors"]
+#| fig-subcap: ["Distribution of simulated data", "With one linear best-fit line illustrating the implied relationship", "Including standard errors"]
 #| layout-ncol: 2
 
 # Panel (a)
@@ -301,24 +303,26 @@ sim_run_data |>
   theme_classic()
 ```
 
-In this simulated example, we know the true values of $\beta_0$ and $\beta_1$, which are 0 and 8.4, respectively. But our challenge is to see if we can use only the data, and simple linear regression, to recover them. That is, can we use $x$, which is the five-kilometer time, to produce estimates of $y$, which is the marathon time, and that we denote by $\hat{y}$ (by convention, hats are used to indicate that these are, or will be, estimated values) [@islr, p. 61]:
+In this simulated example, we know the true values of $\beta_0$ and $\beta_1$, which are zero and 8.4, respectively. But our challenge is to see if we can use only the data, and simple linear regression, to recover them. That is, can we use $x$, which is the five-kilometer time, to produce estimates of $y$, which is the marathon time, and that we denote by $\hat{y}$ (by convention, hats are used to indicate that these are, or will be, estimated values) [@islr, p. 61]:
 
 $$\hat{y} = \hat{\beta}_0 + \hat{\beta}_1 x.$$
 
 This involves estimating values for $\beta_0$ and $\beta_1$. But how should we estimate these coefficients? Even if we impose a linear relationship there are many options because many straight lines could be drawn. But some of those lines would fit the data better than others.
 
 A way one could define a line as being "better" than another, is if it is as close as possible to each of the known $x$ and $y$ combinations. There are a lot of candidates for how we define as "close as possible", but one is to minimize the residual sum of squares. To do this we produce estimates for $\hat{y}$ based on some guesses of $\hat{\beta}_0$ and $\hat{\beta}_1$, given the $x$. We then work out how wrong, for every observation $i$, we were [@islr, p. 62]:
+
 $$e_i = y_i - \hat{y}_i.$$
 
 To compute the residual sum of squares (RSS), we sum the errors across all the points (taking the square to account for negative differences) [@islr, p. 62]:
+
 $$\mbox{RSS} = e^2_1+ e^2_2 +\dots + e^2_n.$$
 This results in one linear best-fit line (@fig-fivekmvsmarathon-2), but it is worth reflecting on all the assumptions and decisions that it took to get us to this point.
 
 Underpinning our use of simple linear regression is a belief that there is some "true" relationship between $X$ and $Y$. And that this is a linear function of $X$. We do not, and cannot, know the "true" relationship between $X$ and $Y$. All we can do is use our sample to estimate it. But because our understanding depends on that sample, for every possible sample, we would get a slightly different relationship, as measured by the coefficients. 
 
-That $\epsilon$ is a measure of our error---what does the model not know in the small, contained, world implied by this dataset? There is going to be plenty that the model does not know, but we hope the error does not depend on $X$, and that the error is normally distributed.
+That $\epsilon$ is a measure of our error---what does the model not know in the small, contained world implied by this dataset? There is going to be plenty that the model does not know, but we hope the error does not depend on $X$, and that the error is normally distributed.
 
-We can conduct simple linear regression with `lm()` from base R. We specify the dependent variable first, then `~`, followed by the independent variable/s. The dependent variable is the variable of interest, while the independent variable/s is/are the basis on which we consider that variable. Finally, we specify the dataset. Before we run a regression, we may want to include a quick check of the class of the variables, and the number of observations, just to ensure that it corresponds with what we were expecting, although we may have done that earlier in the workflow. And after we run it, we may check that our estimate seems reasonable. For instance, (pretending that we had not ourselves imposed this in the simulation) based on our knowledge of the respective distances of a five-kilometer run and a marathon, we would expect $\beta_1$ to be somewhere between 6 and 10.
+We can conduct simple linear regression with `lm()` from base R. We specify the dependent variable first, then `~`, followed by the independent variable/s. The dependent variable is the variable of interest, while the independent variable/s is/are the basis on which we consider that variable. Finally, we specify the dataset. Before we run a regression, we may want to include a quick check of the class of the variables, and the number of observations, just to ensure that it corresponds with what we were expecting, although we may have done that earlier in the workflow. And after we run it, we may check that our estimate seems reasonable. For instance, (pretending that we had not ourselves imposed this in the simulation) based on our knowledge of the respective distances of a five-kilometer run and a marathon, we would expect $\beta_1$ to be somewhere between six and ten.
 
 ```{r}
 # Check the class and number of observations are as expected
@@ -375,11 +379,11 @@ modelsummary::modelsummary(
 )
 ```
 
-The top half of @tbl-modelsummaryfivekmonly provides our estimated coefficients and standard errors in brackets. And the second half provides some useful diagnostics, which we will not dwell too much on here. The intercept in the "Five km only" column is the marathon time associated with a hypothetical five-kilometer time of 0 minutes. Hopefully this example illustrates the need to always interpret the intercept coefficient carefully. And to disregard it at times. For instance, in this circumstance, we know that the intercept should be zero, and it is just being set to around four because that is the best-fit given all the observations were for five-kilometer times between 15 and 30. 
+The top half of @tbl-modelsummaryfivekmonly provides our estimated coefficients and standard errors in brackets. And the second half provides some useful diagnostics, which we will not dwell too much on here. The intercept in the "Five km only" column is the marathon time associated with a hypothetical five-kilometer time of zero minutes. Hopefully this example illustrates the need to always interpret the intercept coefficient carefully. And to disregard it at times. For instance, in this circumstance, we know that the intercept should be zero, and it is just being set to around four because that is the best fit given all the observations were for five-kilometer times between 15 and 30. 
 
-The intercept becomes more interpretable when we run the regression using centered five-kilometer time, which we do in the "Five km only, centered" column of @tbl-modelsummaryfivekmonly. That is, for each of the five-kilometer times we minus the mean five-kilometer time. In this case, the intercept is interpreted as the expected marathon time for someone who runs five kilometers in the average time. Notice that the slope estimate is unchanged it is only the intercept that has changed.
+The intercept becomes more interpretable when we run the regression using centered five-kilometer time, which we do in the "Five km only, centered" column of @tbl-modelsummaryfivekmonly. That is, for each of the five-kilometer times we subtract the mean five-kilometer time. In this case, the intercept is interpreted as the expected marathon time for someone who runs five kilometers in the average time. Notice that the slope estimate is unchanged it is only the intercept that has changed.
 
-Following @gelmanhillvehtari2020 [p. 84] we recommend considering the coefficients as comparisons, rather than effects. And to use language that makes it clear these are comparisons, on average, based on one dataset. For instance, we may consider that the coefficient on the five-kilometer run time shows how different individuals compare. When comparing the marathon times of individuals in our dataset whose five-kilometer run time differed by one minute, on average we find their marathon times differs by about eight minutes. This makes sense seeing as a marathon is roughly that many times longer than a five-kilometer run.
+Following @gelmanhillvehtari2020 [p. 84] we recommend considering the coefficients as comparisons, rather than effects. And to use language that makes it clear these are comparisons, on average, based on one dataset. For instance, we may consider that the coefficient on the five-kilometer run time shows how different individuals compare. When comparing the marathon times of individuals in our dataset whose five-kilometer run time differed by one minute, on average we find their marathon times differ by about eight minutes. This makes sense seeing as a marathon is roughly that many times longer than a five-kilometer run.
 
 We use `augment()` from `broom` [@broom] to add the fitted values and residuals to our original dataset. This allows us to plot the residuals (@fig-fivekmvsmarathonresids).
 
@@ -467,23 +471,25 @@ We want to try to speak to the "true" relationship, so we need to try to capture
 
 The most common way to summarize the range of uncertainty for a coefficient is to transform its standard error into a confidence interval. These intervals are often misunderstood to represent a statement of probability about a given realization of the coefficients (i.e. $\hat\beta$). In reality, confidence intervals are a statistic whose properties can only be understood "in expectation" (which is equivalent to repeating an experiment infinitely many times). A 95 per cent confidence interval is a range, such that there is "approximately a 95 per cent chance that the" range contains the population parameter, which is typically unknown [@islr, p. 66]. This does not mean that when you generate a 95 per cent confidence interval, there is a 95 per cent chance the "true" coefficient lies within this range. Unlike Bayesian statistics, the frequentist paradigm is not able to make probabilistic claims about coefficients during inference.
 
-When the coefficient follows a Normal distribution, the lower and upper end of a 95 per cent confidence interval range will be about: $\hat{\beta_1} \pm 2 \times \mbox{SE}\left(\hat{\beta_1}\right)$. For instance, in the case of the marathon time example, the lower end is $8.2 - 2 \times 0.3 = 7.6$ and the upper end is $8.2 + 2 \times 0.3 = 8.8$, and the true value (which we only know in this case because we simulated it) is 8.4.
+When the coefficient follows a Normal distribution, the lower and upper end of a 95 per cent confidence interval range will be about $\hat{\beta_1} \pm 2 \times \mbox{SE}\left(\hat{\beta_1}\right)$. For instance, in the case of the marathon time example, the lower end is $8.2 - 2 \times 0.3 = 7.6$ and the upper end is $8.2 + 2 \times 0.3 = 8.8$, and the true value (which we only know in this case because we simulated it) is 8.4.
 
-We can use this machinery to test claims. For instance, we could claim that there is no relationship between $X$ and $Y$, i.e. $\beta_1 = 0$, as an alternative to a claim that there is some relationship between $X$ and $Y$, i.e. $\beta_1 \neq 0$. This is the null hypothesis testing approach mentioned above. In @sec-hunt-data we needed to decide how much evidence it would take to convince us that our tea taster could distinguish whether milk or tea had been added first. In the same way, here we need to decide if the estimate of $\beta_1$, which we denote $\hat{\beta}_1$, is far enough away from zero for us to be comfortable claiming that $\beta_1 \neq 0$. If we were very confident in our estimate of $\beta_1$ then it would not have to be far, but if we were not, then it would have to be substantial. For instance, if the confidence interval contains zero, then we lack evidence to suggest $\beta_1 \neq 0$. The standard error of $\hat{\beta}_1$ does an awful lot of work here in accounting for a variety of factors, only some of which it can actually account for, as does our choice as to what it would take to convince us. 
+We can use this machinery to test claims. For instance, we could claim that there is no relationship between $X$ and $Y$, i.e. $\beta_1 = 0$, as an alternative to a claim that there is some relationship between $X$ and $Y$, i.e. $\beta_1 \neq 0$. This is the null hypothesis testing approach mentioned above. In @sec-hunt-data we needed to decide how much evidence it would take to convince us that our tea taster could distinguish whether milk or tea had been added first. In the same way, here we need to decide if the estimate of $\beta_1$, which we denote as $\hat{\beta}_1$, is far enough away from zero for us to be comfortable claiming that $\beta_1 \neq 0$. If we were very confident in our estimate of $\beta_1$ then it would not have to be far, but if we were not, then it would have to be substantial. For instance, if the confidence interval contains zero, then we lack evidence to suggest $\beta_1 \neq 0$. The standard error of $\hat{\beta}_1$ does an awful lot of work here in accounting for a variety of factors, only some of which it can actually account for, as does our choice as to what it would take to convince us. 
 
 We compare this standard error with $\hat{\beta}_1$ to get the "test statistic" or t-statistic:
+
 $$t = \frac{\hat{\beta}_1}{\mbox{SE}(\hat{\beta}_1)}.$$ 
+
 And we then compare our t-statistic to the t-distribution to compute the probability of getting this absolute t-statistic or a larger one, if it was the case that $\beta_1 = 0$. This probability is the p-value. A smaller p-value means there is a smaller "probability of observing something at least as extreme as the observed test statistic" [@gelmanhillvehtari2020, p. 57]. Here we use the t-distribution of @student1908probable rather than the Normal distribution, because the t-distribution has slightly larger tails than a standard Normal distribution.
 
 > Words! Mere words! How terrible they were! How clear, and vivid, and cruel! One could not escape from them. And yet what a subtle magic there was in them! They seemed to be able to give a plastic form to formless things, and to have a music of their own as sweet as that of viol or of lute. Mere words! Was there anything so real as words?
 >
 > *The Picture of Dorian Gray* [@wilde].
 
-We will not make much use of p-values in this book because they are a specific and subtle concept. They are difficult to understand and easy to abuse. Even though they are "little help" for "scientific inference" many disciplines are incorrectly fixated on them [@nelderdoesntmiss, p. 257]. One issue is that they embody every assumption of the workflow, including everything that went into gathering and cleaning the data. While p-values have implications if all the assumptions were correct; when we consider the full data science workflow there are usually an awful lot of assumptions. And we do not get guidance from p-values about whether the assumptions are reasonable [@greenland2016statistical p. 339]. 
+We will not make much use of p-values in this book because they are a specific and subtle concept. They are difficult to understand and easy to abuse. Even though they are "little help" for "scientific inference" many disciplines are incorrectly fixated on them [@nelderdoesntmiss, p. 257]. One issue is that they embody every assumption of the workflow, including everything that went into gathering and cleaning the data. While p-values have implications if all the assumptions were correct, when we consider the full data science workflow there are usually an awful lot of assumptions. And we do not get guidance from p-values about whether the assumptions are reasonable [@greenland2016statistical p. 339]. 
 
-A p-value may reject a null hypothesis because the null hypothesis is false, but it may also be that some data were incorrectly gathered or prepared. We can only be sure that the p-value speaks to the hypothesis we are interested in testing, if all the other assumptions are correct. There is nothing inherently wrong about using p-values, but it is important to use them in sophisticated and thoughtful ways. @coxtalks discusses what this requires.
+A p-value may reject a null hypothesis because the null hypothesis is false, but it may also be that some data were incorrectly gathered or prepared. We can only be sure that the p-value speaks to the hypothesis we are interested in testing if all the other assumptions are correct. There is nothing inherently wrong about using p-values, but it is important to use them in sophisticated and thoughtful ways. @coxtalks discusses what this requires.
 
-One application where it is easy to see an inappropriate focus on p-values is in power analysis. Power, in a statistical sense, refers to probability of rejecting a null hypothesis that is false. As power relates to hypothesis testing, it also relates to sample size. There is often a worry that a study is "under-powered", meaning there was not a large enough sample, but rarely a worry that, say, the data were inappropriately cleaned or imputed, even though we cannot distinguish between these based only on a p-value. As @meng2018statistical and @Bradley2021 demonstrate, a focus on power can blind us from our responsibility to ensure our data are high-quality.
+One application where it is easy to see an inappropriate focus on p-values is in power analysis. Power, in a statistical sense, refers to probability of rejecting a null hypothesis that is false. As power relates to hypothesis testing, it also relates to sample size. There is often a worry that a study is "under-powered", meaning there was not a large enough sample, but rarely a worry that, say, the data were inappropriately cleaned or imputed, even though we cannot distinguish between these based only on a p-value. As @meng2018statistical and @Bradley2021 demonstrate, a focus on power can blind us from our responsibility to ensure our data are high quality.
 
 :::{.callout-note}
 ## Shoulders of giants
@@ -495,7 +501,7 @@ Dr Nancy Reid is University Professor in the Department of Statistical Sciences 
 
 To this point we have just considered one explanatory variable. But we will usually have more than one. One approach would be to run separate regressions for each explanatory variable. But compared with separate linear regressions for each, adding more explanatory variables allows for associations between the dependent variable and the independent variable of interest to be assessed while adjusting for other explanatory variables. Often the results will be quite different, especially when the explanatory variables are correlated with each other.
 
-We may also like to consider explanatory variables that are not continuous. For instance: pregnant or not; day or night. When there are only two options then we can use a binary variable, which is considered either 0 or 1. If we have a column of character values that only has two values, such as: `c("Myles", "Ruth", "Ruth", "Myles", "Myles", "Ruth")`, then using this as an explanatory variable in the usual regression set up would mean that it is treated as a binary variable. If there are more than two levels, then we can use a combination of binary variables, where some baseline outcome gets integrated into the intercept.
+We may also like to consider explanatory variables that are not continuous. For instance: pregnant or not; day or night. When there are only two options then we can use a binary variable, which is considered either 0 or 1. If we have a column of character values that only has two values, such as: `c("Myles", "Ruth", "Ruth", "Myles", "Myles", "Ruth")`, then using this as an explanatory variable in the usual regression set-up would mean that it is treated as a binary variable. If there are more than two levels, then we can use a combination of binary variables, where some baseline outcome gets integrated into the intercept.
 
 As an example, we add whether it was raining to our simulated relationship between marathon and five-kilometer run times. We then specify that if it was raining, the individual is ten minutes slower than they otherwise would have been.
 
@@ -550,7 +556,7 @@ summary(sim_run_data_rain_model)
 
 The result, in the second column of @tbl-modelsummaryruntimes, shows that when we compare individuals in our dataset who ran in the rain with those who did not, the ones in the rain tended to have a slower time. And this corresponds with what we expect if we look at a plot of the data (@fig-fivekmvsmarathonbinary-1).
 
-We have included two types of tests here. The ones run before `lm()` check inputs, and the ones run after `lm()` check outputs. We may notice that some of the input checks are the same as earlier. One way to avoid having to re-write tests many times, would be to use `testthat` [@testthat] to create a suite of tests of class in say an R file called "class_tests.R", which are then called using `test_file()`.
+We have included two types of tests here. The ones run before `lm()` check inputs, and the ones run after `lm()` check outputs. We may notice that some of the input checks are the same as earlier. One way to avoid having to rewrite tests many times would be to use `testthat` [@testthat] to create a suite of tests of class in say an R file called "class_tests.R", which are then called using `test_file()`.
 
 For instance, we could save the following as "test_class.R" in a dedicated tests folder.
 
@@ -642,6 +648,15 @@ sim_run_data <-
 sim_run_data
 ```
 
+```{r}
+#| eval: false
+#| include: false
+
+arrow::write_parquet(x = sim_run_data,
+                     sink = "outputs/data/running_data.parquet")
+```
+
+
 
 ```{r}
 #| eval: true
@@ -714,7 +729,7 @@ There are a variety of threats to the validity of linear regression estimates, a
 1. Linearity of explanatory variables. We are concerned with whether the independent variables enter in a linear way. We can usually be convinced there is enough linearity in our explanatory variables for our purposes by using graphs of the variables.
 2. Independence of errors. We are concerned that the errors are not correlated with each other. For instance, if we are interested in weather-related measurement such as average daily temperature, then we may find a pattern because the temperature on one day is likely similar to the temperature on another. We can be convinced that we have satisfied this condition by making graphs of estimated compared with actual outcomes, such as @fig-fivekmvsmarathonresids-4, or graphs of the residuals compared with observed values, such as @fig-fivekmvsmarathonresids-3.
 3. Homoscedasticity of errors. We are concerned that the errors are not becoming systematically larger or smaller throughout the sample. If that is happening, then we term it heteroscedasticity. Again, graphs of errors, such as @fig-fivekmvsmarathonresids-2, are used to convince us of this.
-4. Outliers and other high-impact observations. Finally, we might be worried that our results are being driven by a handful of observations. For instance, thinking back to @sec-static-communication and Anscombe's Quartet, we notice that linear regression estimates would be heavily influenced by the inclusion of one or two particular points. We can become comfortable with this by considering our analysis on various sub-sets.
+4. Outliers and other high-impact observations. Finally, we might be worried that our results are being driven by a handful of observations. For instance, thinking back to @sec-static-communication and Anscombe's Quartet, we notice that linear regression estimates would be heavily influenced by the inclusion of one or two particular points. We can become comfortable with this by considering our analysis on various subsets.
 
 Those aspects are statistical concerns and relate to whether the model is working. The most important threat to validity and hence the aspect that must be addressed at some length, is whether this model is directly relevant to the research question of interest.
 
@@ -1010,18 +1025,21 @@ posterior_vs_prior(sim_run_data_second_model_rstanarm) +
   coord_flip()
 ```
 
-With a simple model like this, the differences between the predict and inference approaches are minimal. But as model or data complexity increases these differences can become important.
+With a simple model like this, the differences between the prediction and inference approaches are minimal. But as model or data complexity increases these differences can become important.
 
-We have already discussed confidence intervals and the Bayesian equivalent to a confidence interval is called a "credibility interval", and reflects two points such there is a certain probability mass between them, in this case 95 per cent. @tbl-modelsummarybayesbetter shows confidence intervals for `tidymodels` and credible intervals for `rstanarm`, beneath the estimates. Bayesian estimation provides a distribution for each coefficient. This means there is an infinite number of points that we could use to generate this interval. We will include credible interval points in tables, because this is commonly needed, but it is important that the entire distribution is shown graphically. This might be using a cross-referenced appendix.
+We have already discussed confidence intervals and the Bayesian equivalent to a confidence interval is called a "credibility interval", and reflects two points where there is a certain probability mass between them, in this case 95 per cent. @tbl-modelsummarybayesbetter shows confidence intervals for `tidymodels` and credible intervals for `rstanarm`, beneath the estimates. Bayesian estimation provides a distribution for each coefficient. This means there is an infinite number of points that we could use to generate this interval. We will include credible interval points in tables, because this is commonly needed, but it is important that the entire distribution is shown graphically (@fig-credibleintervals). This might be using a cross-referenced appendix.
 
 ```{r}
+#| label: fig-credibleintervals
+#| fig-cap: "Credible intervals"
+
 plot(
   sim_run_data_second_model_rstanarm,
   "areas"
 )
 ```
 
-The final aspect that we would like to check is a practical matter. `rstanarm` uses a sampling algorithm called "Markov chain Monte Carlo" (MCMC) to obtain samples from the posterior distributions of interest. We need to quickly check for signs that the algorithm ran into issues. We consider a trace plot, such as @fig-stanareyouokay-1, and an Rhat plot, such as @fig-stanareyouokay-2. These would typically go in a cross-referenced appendix.
+The final aspect that we would like to check is a practical matter. `rstanarm` uses a sampling algorithm called Markov chain Monte Carlo (MCMC) to obtain samples from the posterior distributions of interest. We need to quickly check for signs that the algorithm ran into issues. We consider a trace plot, such as @fig-stanareyouokay-1, and a Rhat plot, such as @fig-stanareyouokay-2. These would typically go in a cross-referenced appendix.
 
 ```{r}
 #| echo: true
@@ -1062,7 +1080,7 @@ In the trace plot, we are looking for lines that appear to bounce around, but ar
     a.  All the assumptions about how the data were generated (the entire model), not just the targeted hypothesis it is supposed to test (such as a null hypothesis).
     b. Whether the hypothesis targeted for testing is true or not.
     c. A dichotomy whereby results can be declared "statistically significant".
-7. According to @greenland2016statistical, a p-value may be small because (select all):
+7. According to @greenland2016statistical, a p-value may be small because (select all that apply):
     a. The targeted hypothesis is false.
     b. The study protocols were violated.
     c. It was selected for presentation based on its small size. 
@@ -1072,8 +1090,6 @@ In the trace plot, we are looking for lines that appear to bounce around, but ar
     b. The algorithm was trained on Reddit data.
 9. Please explain what a p-value is, using only the term itself (i.e. "p-value") and words that are amongst the 1,000 most common in the English language according to the [XKCD Simple Writer](https://xkcd.com/simplewriter/). (Please write one or two paragraphs.)
 10. What is power (in a statistical context)?
-
-
 
 
 ### Tutorial {.unnumbered}

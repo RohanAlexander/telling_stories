@@ -17,9 +17,9 @@ engine: knitr
 
 **Key concepts and skills**
 
-- Running an experiment is not always possible, but we can use various approaches to nonetheless be able to speak to causality to some extent. The first step is to be clear about the relationships that we expect by building a DAG.
+- Running an experiment is not always possible, but we can use various approaches to nonetheless be able to speak to causality to some extent. The first step is to be clear about the relationships that we expect by building a directed acyclic graph (DAG).
 - We need to be careful of common paradoxes including Simpson's paradox and Berkson's paradox, and be aware of pitfalls from matching.
-- We can use difference in differences when we have data on both treated and untreated units at both time periods. Regression discontinuity is useful when a group is either treated or not, but the two groups are very similar apart from the treatment. And instrumental variables is an approach used to estimate causality indirectly through another variable.
+- We can use difference-in-differences when we have data on both treated and untreated units at both time periods. Regression discontinuity is useful when a group is either treated or not, but the two groups are very similar apart from the treatment. And instrumental variables is an approach used to estimate causality indirectly through another variable.
 - In general, these approaches need to be used with humility and concern for weaknesses and assumptions, both those that we can test and those that we cannot.
 
 **Key packages and functions**
@@ -52,16 +52,16 @@ engine: knitr
 
 ## Introduction
 
-Life is grand when we can conduct experiments to be able to speak to causality. But there are circumstances in which we cannot run an experiment, yet nonetheless want to be able to make causal claims. And data from outside experiments have value that experiments do not have. In this chapter we discuss the circumstances and methods that allow us to speak to causality using observational data. We use relatively simple methods, in sophisticated ways, drawing from statistics, but also a variety of social sciences, including economics, and political science, as well as epidemiology.
+Life is grand when we can conduct experiments to be able to speak to causality. But there are circumstances in which we cannot run an experiment, yet nonetheless want to be able to make causal claims. And data from outside experiments have value that experiments do not have. In this chapter we discuss the circumstances and methods that allow us to speak to causality using observational data. We use relatively simple methods, in sophisticated ways, drawing from statistics, but also a variety of social sciences, including economics and political science, as well as epidemiology.
 
-For instance, @dagan2021bnt162b2 use observational data to confirm the effectiveness of the Pfizer-BioNTech vaccine. They discuss how one concern with using observational data in this way is confounding, which is where we are concerned that there is some variable that affects both the explanatory and dependent variables and can lead to spurious relationships. @dagan2021bnt162b2 adjust for this by first making a list of potential confounders, such as age, sex, geographic location, healthcare usage and then adjusting for each of them, by matching, one-to-one between people that were vaccinated and those that were not. The experimental data guided the use of observational data, and the larger size of the latter enabled a focus on specific age-groups and extent of disease.
+For instance, @dagan2021bnt162b2 use observational data to confirm the effectiveness of the Pfizer-BioNTech vaccine. They discuss how one concern with using observational data in this way is confounding, which is where we are concerned that there is some variable that affects both the explanatory and dependent variables and can lead to spurious relationships. @dagan2021bnt162b2 adjust for this by first making a list of potential confounders, such as age, sex, geographic location, and healthcare usage and then adjusting for each of them, by matching one-to-one between people that were vaccinated and those that were not. The experimental data guided the use of observational data, and the larger size of the latter enabled a focus on specific age-groups and extent of disease.
 
-This chapter is about using observational data in sophisticated ways. How we can nonetheless be comfortable making causal statements, even when we cannot run A/B tests or RCTs. Indeed, in what circumstances may we prefer to not run those or to run observational-based approaches in addition to them. We cover three of the major methods: difference in differences; regression discontinuity; and instrumental variables.
+This chapter is about using observational data in sophisticated ways. How we can nonetheless be comfortable making causal statements, even when we cannot run A/B tests or RCTs. Indeed, in what circumstances may we prefer to not run those or to run observational-based approaches in addition to them. We cover three of the major methods: difference-in-differences, regression discontinuity, and instrumental variables.
 
 
 ## Directed acyclic graphs
 
-When we are discussing causality, it can help to be specific about what we mean. It is easy to get caught up in observational data and trick ourselves. It is important to think hard, and to use all the tools available to us. For instance, in that earlier example, @dagan2021bnt162b2 were able to use experimental data as a guide. Most of the time, we will not be so lucky as to have both experimental data and observational data available to us. One framework that can help with thinking hard about our data is the use of directed acyclic graphs (DAG). DAGs are a fancy name for a flow diagram and involves drawing arrows and lines between the variables to indicate the relationship between them. 
+When we are discussing causality, it can help to be specific about what we mean. It is easy to get caught up in observational data and trick ourselves. It is important to think hard, and to use all the tools available to us. For instance, in that earlier example, @dagan2021bnt162b2 were able to use experimental data as a guide. Most of the time, we will not be so lucky as to have both experimental data and observational data available to us. One framework that can help with thinking hard about our data is the use of directed acyclic graphs (DAG). DAGs are a fancy name for a flow diagram and involve drawing arrows and lines between the variables to indicate the relationship between them. 
 
 To construct them we use Graphviz, which is an open-source package for graph visualization and is built into Quarto. The code needs to be wrapped in a "dot" chunk rather than "R", and the chunk options are set with "//|" instead of "#|". Alternatives that do not require this include the use of `DiagrammeR` [@citeDiagrammeR] and `ggdag` [@citeggdag]. We provide the whole chunk for the first DAG, but then, only provide the code for the others.
 
@@ -360,7 +360,7 @@ penguins |>
 
 ### Berkson's paradox
 
-Berkson's paradox occurs when we estimate some relationship based on the dataset that we have, but because the dataset is so selected the relationship is different in a more general dataset [@citeberkson]. For instance, if we have a dataset of professional cyclists then we might find there is no relationship between their VO2 max and their chance of winning a bike race [@vomaxpaper; @anothernicevomaxpaper]. But if we had a dataset of the general population then we might find a relationship between these two variables. The professional dataset has just been so selected that the relationship disappears; one cannot become a professional cyclist unless one has a good-enough VO2 max, but among professional cyclists everyone has a good-enough VO2 max. Again, we can simulate some data to show this more clearly (@fig-berksonsparadox).
+Berkson's paradox occurs when we estimate some relationship based on the dataset that we have, but because the dataset is so selected, the relationship is different in a more general dataset [@citeberkson]. For instance, if we have a dataset of professional cyclists then we might find there is no relationship between their VO2 max and their chance of winning a bike race [@vomaxpaper; @anothernicevomaxpaper]. But if we had a dataset of the general population then we might find a relationship between these two variables. The professional dataset has just been so selected that the relationship disappears; one cannot become a professional cyclist unless one has a good enough VO2 max, but among professional cyclists everyone has a good enough VO2 max. Again, we can simulate some data to show this more clearly (@fig-berksonsparadox).
 
 ```{r}
 #| eval: true
@@ -423,21 +423,21 @@ professionals_and_public |>
 
 
 
-## Difference in differences
+## Difference-in-differences
 
 The ideal situation of being able to conduct an experiment is rarely possible. Can we reasonably expect that Netflix would allow us to change prices? And even if they did once, would they let us do it again, and again, and again? Further, rarely can we explicitly create treatment and control groups. Finally, experiments can be expensive or unethical. Instead, we need to make do with what we have. Rather than our counterfactual coming to us through randomization, and hence us knowing that the two are the same but for the treatment, we try to identify groups that were similar but for the treatment, and hence any differences can be attributed to the treatment. 
 
-With observational data, sometimes there are differences between our two groups before we treat. Provided those pre-treatment differences satisfy assumptions that essentially amount to the differences being both consistent, and that we expect that consistency to continue in the absence of the treatment---the "parallel trends" assumption---then we can look to any difference in the differences as the effect of the treatment. One of the aspects of difference in differences analysis is that we can do it using relatively straight-forward methods, for instance @Tang2015. Linear regression with a binary variable is enough to get started and do a convincing job.
+With observational data, sometimes there are differences between our two groups before we treat. Provided those pre-treatment differences satisfy assumptions that essentially amount to the differences being both consistent, and that we expect that consistency to continue in the absence of the treatment---the "parallel trends" assumption---then we can look to any difference in the differences as the effect of the treatment. One of the aspects of difference-in-differences analysis is that we can do it using relatively straight forward methods, for instance @Tang2015. Linear regression with a binary variable is enough to get started and do a convincing job.
 
 Consider wanting to know the effect of a new tennis racket on serve speed. One way to test this would be to measure the difference between, say, Roger Federer's serve speed without the tennis racket and the serve speed of an enthusiastic amateur, let us call them Ville, with the tennis racket. Yes, we would find a difference, but would we know how much to attribute to the tennis racket? Another way would be to consider the difference between Ville's serve speed without the new tennis racket and Ville's serve speed with the new tennis racket. But what if serves were just getting faster naturally over time? Instead, we combine the two approaches to look at the difference in the differences.
 
 We begin by measuring Federer's serve speed and compare it to Ville's serve speed, both without the new racket. We then measure Federer's serve speed again, and measure Ville's serve speed with the new racket. That difference in the differences would then be the estimate of the effect of the new racket. There are a few key questions we must ask to see if this analysis is appropriate:
 
 1) Is there something else that may have affected only Ville, and not Federer that could affect Ville's serve speed?
-2) Is it likely that Federer and Ville have the same trajectory of serve speed improvement? This is the "parallel trends" assumption, and it dominates many discussions of difference in differences analysis. 
+2) Is it likely that Federer and Ville have the same trajectory of serve speed improvement? This is the "parallel trends" assumption, and it dominates many discussions of difference-in-differences analysis. 
 3) Finally, is it likely that the variance of our serve speeds of Federer and Ville are the same?
 
-Despite these requirements, difference in differences is a powerful approach because we do not need the treatment and control group to be the same before the treatment. We just need to have a good idea of how they differed.
+Despite these requirements, difference-in-differences is a powerful approach because we do not need the treatment and control group to be the same before the treatment. We just need to have a good idea of how they differed.
 
 ### Simulated example
 
@@ -508,7 +508,7 @@ simulated_diff_in_diff |>
   theme(legend.position = "bottom")
 ```
 
-As it is a straight-forward example, we can obtain our estimate manually, by looking at the average difference of the differences. When we do that, we find that we estimate the effect of the new tennis racket to be 5.06, which is similar to what we simulated.
+As it is a straight forward example, we can obtain our estimate manually, by looking at the average difference of the differences. When we do that, we find that we estimate the effect of the new tennis racket to be 5.06, which is similar to what we simulated.
 
 ```{r}
 #| eval: true
@@ -615,15 +615,15 @@ modelsummary::modelsummary(
 
 ### Assumptions
 
-If we want to use difference in differences, then we need to satisfy the assumptions. There were three that were touched on earlier, but here we will focus on one: the "parallel trends" assumption. The parallel trends assumption haunts everything to do with difference in differences analysis because we can never prove it; we can just be convinced of it, and try to convince others.
+If we want to use difference-in-differences, then we need to satisfy the assumptions. There were three that were touched on earlier, but here we will focus on one: the "parallel trends" assumption. The parallel trends assumption haunts everything to do with difference-in-differences analysis because we can never prove it; we can just be convinced of it, and try to convince others.
 
 To see why we can never prove it, consider an example in which we want to know the effect of a new stadium on a professional sports team's wins/loses. To do this we consider two teams: the Golden State Warriors and the Toronto Raptors. The Warriors changed stadiums at the start of the 2019-20 season, while the Raptors did not, so we will consider four time periods: the 2016-17 season, 2017-18 season, 2018-19 season, and finally we will compare the performance with the one after they moved, so the 2019-20 season. The Raptors here act as our counterfactual. This means that we assume the relationship between the Warriors and the Raptors, in the absence of a new stadium, would have continued to change in a consistent way. But the fundamental problem of causal inference means that we can never know that for certain. We must present sufficient evidence to assuage any concerns that a reader may have. 
 
-There are four main threats to validity when we use difference in differences, and we need to address all of them [@Cunningham2021, p. 272--277]:
+There are four main threats to validity when we use difference-in-differences, and we need to address all of them [@Cunningham2021, p. 272--277]:
 
-1. Non-parallel trends. The treatment and control groups may be based on differences. As such it can be difficult to convincingly argue for parallel trends. In this case, maybe try to find another factor to consider in your model that may adjust for some of that. This may require difference in difference in differences (in the earlier example, we could perhaps add the San Francisco 49ers as they are in the same broad geographic area as the Warriors). Or maybe re-think the analysis to see if we can make a different control group. Adding additional earlier time periods may help but may introduce more issues, which we touch on in the third point.
+1. Non-parallel trends. The treatment and control groups may be based on differences. As such it can be difficult to convincingly argue for parallel trends. In this case, maybe try to find another factor to consider in your model that may adjust for some of that. This may require triple-differenced approaches. For instance, in the earlier example, we could perhaps add the San Francisco 49ers as they are in the same broad geographic area as the Warriors. Or maybe rethink the analysis to see if we can make a different control group. Adding additional earlier time periods may help but may introduce more issues, which we touch on in the third point.
 2. Compositional differences. This is a concern when working with repeated cross-sections. What if the composition of those cross-sections change? For instance, if we are working at an app that is rapidly growing, and we want to look at the effect of some change. In our initial cross-section, we may have mostly young people, but in a subsequent cross-section, we may have more older people as the demographics of the app usage change. Hence our results may just be an age-effect, not an effect of the change that we are interested in. 
-3. Long-term effects compared with reliability. As we discussed in @sec-hunt-data, there is a trade-off between the length of the analysis that we run. As we run the analysis for longer there is more opportunity for other factors to affect the results. There is also increased chance for someone who was not treated to be treated. But, on the other hand, it can be difficult to convincingly argue that short-term results will continue in the long-term. 
+3. Long-term effects compared with reliability. As we discussed in @sec-hunt-data, there is a trade-off between the length of the analysis that we run. As we run the analysis for longer there is more opportunity for other factors to affect the results. There is also increased chance for someone who was not treated to be treated. But, on the other hand, it can be difficult to convincingly argue that short-term results will continue in the long term. 
 4. Functional form dependence. This is less of an issue when the outcomes are similar, but if they are different then functional form may be responsible for some aspects of the results.
 
 
@@ -639,7 +639,7 @@ There are four main threats to validity when we use difference in differences, a
 
 In this case study we introduce @angelucci2019newspapers, and replicate one of the main findings.
 
-The business model of newspapers has been challenged by the internet and many local newspapers have closed. And this issue is not new. When television was introduced, there were similar concerns. @angelucci2019newspapers use the introduction of television advertising in France, announced in 1967, to examine the effect of decreased advertising revenue on newspapers. They create a dataset of French newspapers from 1960 to 1974 and then use difference in differences to examine the effect of the reduction in advertising revenues on newspapers' content and prices. The change that they focus on is the introduction of television advertising, which they argue affected national newspapers more than local newspapers. They find that this change results in both less journalism-content in the newspapers and lower newspaper prices. Focusing on this change, and analyzing it using difference in differences, is important because it allows us to disentangle a few competing effects. For instance, did newspapers become redundant because they could no longer charge high prices for their advertisements, or because consumers preferred to get their news from the television?
+The business model of newspapers has been challenged by the internet and many local newspapers have closed. And this issue is not new. When television was introduced, there were similar concerns. @angelucci2019newspapers use the introduction of television advertising in France, announced in 1967, to examine the effect of decreased advertising revenue on newspapers. They create a dataset of French newspapers from 1960 to 1974 and then use difference-in-differences to examine the effect of the reduction in advertising revenues on newspapers' content and prices. The change that they focus on is the introduction of television advertising, which they argue affected national newspapers more than local newspapers. They find that this change results in both less journalism content in the newspapers and lower newspaper prices. Focusing on this change, and analyzing it using difference-in-differences, is important because it allows us to disentangle a few competing effects. For instance, did newspapers become redundant because they could no longer charge high prices for their advertisements, or because consumers preferred to get their news from the television?
 
 We can get free access to the [data](https://www.openicpsr.org/openicpsr/project/116438/version/V1/view) that underpins @angelucci2019newspapers after registration. The dataset is in the Stata data format, ".dta", which we can read with `read_dta()` from `haven` [@citehaven]. The file that we are interested in is "Angelucci_Cage_AEJMicro_dataset.dta", which is the "dta" folder.
 
@@ -665,9 +665,9 @@ newspapers <- read_dta("inputs/data/116438-V1/data/dta/Angelucci_Cage_AEJMicro_d
 newspapers
 ```
 
-There are 1,196 observations in the dataset and 52 variables. @angelucci2019newspapers are interested in the 1960-1974 time-period which has around 100 newspapers. There are 14 national newspapers at the beginning of the period and 12 at the end. The key period is 1967, when the French government announced it would allow advertising on television. @angelucci2019newspapers argue that national newspapers were affected by this chance, but local newspapers were not. The national newspapers are the treatment group and the local newspapers are the control group.
+There are 1,196 observations in the dataset and 52 variables. @angelucci2019newspapers are interested in the 1960-1974 time period which has around 100 newspapers. There are 14 national newspapers at the beginning of the period and 12 at the end. The key period is 1967, when the French government announced it would allow advertising on television. @angelucci2019newspapers argue that national newspapers were affected by this change, but local newspapers were not. The national newspapers are the treatment group and the local newspapers are the control group.
 
-We focus just on the headline difference in differences result and construct summary statistics.
+We focus just on the headline difference-in-differences result and construct summary statistics.
 <!-- (@tbl-frenchnewspaperssummarystatistics). -->
 
 ```{r}
@@ -709,7 +709,7 @@ newspapers
 <!-- ``` -->
 
 
-We are interested in what happened from 1967 onward, especially in terms of advertising revenue, and whether that was different for national, compared with local newspapers (@fig-frenchnewspapersrevenue). We use `scales` to adjust the y axis [@scales].
+We are interested in what happened from 1967 onward, especially in terms of advertising revenue, and whether that was different for national, compared with local newspapers (@fig-frenchnewspapersrevenue). We use `scales` to adjust the y-axis [@scales].
 
 ```{r}
 #| eval: true
@@ -746,8 +746,10 @@ newspapers |>
 
 
 The model that we are interested in estimating is:
+
 $$\mbox{ln}(y_{n,t}) = \beta_0 + \beta_1(\mbox{National binary}\times\mbox{1967 onward binary}) + \lambda_n + \gamma_t + \epsilon.$$
-It is the $\beta_1$ coefficient that we are especially interested in. We use $\lambda_n$ as fixed effect for each newspaper, and the $\gamma_y$ as a fixed effect for each year. We estimate the models using `stan_glm()`.
+
+It is the $\beta_1$ coefficient that we are especially interested in. We use $\lambda_n$ as a fixed effect for each newspaper, and the $\gamma_y$ as a fixed effect for each year. We estimate the models using `stan_glm()`.
 
 ```{r}
 #| echo: true
@@ -894,7 +896,7 @@ unit_price <-
   readRDS(file = "outputs/model/unit_price.rds")
 ```
 
-Looking at the advertising-side variables (first two columns of @tbl-frenchnewspapersadvertising) we find consistently negative coefficients. And looking at the advertising-side variables (@tbl-frenchnewspapersadvertising) we again, find a negative coefficient for unit price, and a positive coefficient for subscription price.
+Looking at the advertising-side variables, such as revenue and prices, in @tbl-frenchnewspapersadvertising we find consistently negative coefficients. 
 
 ```{r}
 #| label: tbl-frenchnewspapersadvertising
@@ -921,7 +923,7 @@ modelsummary::modelsummary(
 )
 ```
 
-In general, we can replicate the main results of @angelucci2019newspapers and find that in many cases there appears to be a difference from 1967 onward. @angelucci2019newspapers [pp. 353-358] also includes an excellent example of the discussion of interpretation, external validity, and robustness that is required for difference in differences models.
+In general, we can replicate the main results of @angelucci2019newspapers and find that in many cases there appears to be a difference from 1967 onward. @angelucci2019newspapers [pp. 353-358] also include an excellent example of the discussion of interpretation, external validity, and robustness that is required for difference-in-differences models.
 
 
 
@@ -977,15 +979,15 @@ In general, we can replicate the main results of @angelucci2019newspapers and fi
 
 ## Propensity score matching
 
-Difference in differences is a powerful analysis framework. But it can be tough to identify appropriate treatment and control groups. @alexander2018age compare migrant brothers, where one brother had most of their education in a different country, and the other brother had most of their education in the US. Given the data that are available, this match provides a reasonable treatment and control group. But other matches could have given different results, for instance friends or cousins.
+Difference-in-differences is a powerful analysis framework. But it can be tough to identify appropriate treatment and control groups. @alexander2018age compare migrant brothers, where one brother had most of their education in a different country, and the other brother had most of their education in the US. Given the data that are available, this match provides a reasonable treatment and control group. But other matches could have given different results, for instance friends or cousins.
 
-We can only match based on observable variables. For instance, age-group or education. At two different times we compare smoking rates in 18-year-olds in one city with smoking rates in 18-year-olds in another city. This would be a coarse match because we know that there are many differences between 18-year-olds, even in terms of the variables that we commonly observe, say gender and education. One way to deal with this would be to create sub-groups: 18-year-old males with a high school education, etc. But then the sample sizes quickly become small. We also have the issue of how to deal with continuous variables. And is a 18-year-old really that different to a 19-year-old? Why not also compare with them?
+We can only match based on observable variables. For instance, age-group or education. At two different times we compare smoking rates in 18-year-olds in one city with smoking rates in 18-year-olds in another city. This would be a coarse match because we know that there are many differences between 18-year-olds, even in terms of the variables that we commonly observe, say gender and education. One way to deal with this would be to create sub-groups: 18-year-old males with a high school education, etc. But then the sample sizes quickly become small. We also have the issue of how to deal with continuous variables. And is an 18-year-old really that different to a 19-year-old? Why not also compare with them?
 
 One way to proceed is to consider a nearest neighbor approach, but there can be limited concern for uncertainty with this approach. There can also be an issue with having many variables because we end up with a high-dimension graph. This leads to propensity score matching. Here we will explain the process of propensity score matching, how it is not something that should be widely used [@king2019propensity], and why that is the case.
 
 Propensity score matching involves assigning some probability to each observation. We construct that probability based on the observation's values for the independent variables, before treatment. That probability is our best guess at the probability of the observation being treated, regardless of whether it was treated or not. For instance, if 18-year-old males were treated but 19-year-old males were not, then, as there is not much difference between 18-year-old males and 19-year-old males in general, our assigned probability would be similar. We can then compare the outcomes of observations with similar propensity scores.
 
-One advantage of propensity score matching is that is allows us to easily consider many independent variables at once, and it can be constructed using logistic regression. To be more specific we can simulate some data. We will pretend that we work for a large online retailer. We are going to treat some individuals with free shipping to see what happens to their average purchase.
+One advantage of propensity score matching is that it allows us to easily consider many independent variables at once, and it can be constructed using logistic regression. To be more specific we can simulate some data. We will pretend that we work for a large online retailer. We are going to treat some individuals with free shipping to see what happens to their average purchase.
 
 ```{r}
 #| eval: true
@@ -1145,7 +1147,7 @@ The fundamental problem of unobservables can never be shown to be inconsequentia
 
 ## Regression discontinuity design
 
-Regression discontinuity design (RDD) was established by @thistlethwaite1960regression and is a popular way to get causality when there is a continuous variable with cut-offs that determine treatment. Is there a difference between a student who gets 79 per cent and a student who gets 80 per cent? Probably not much, but one may get an A-, while the other may get a B+, and seeing that on a transcript could affect who gets a job which could affect income. In this case the percentage is a "forcing variable" or "forcing function" and the cut-off for an A- is a "threshold". As the treatment is determined by the forcing variable we need to control for that variable. And these seemingly arbitrary cut-offs can be seen all the time. Hence, there has been a great deal of work using RDD.
+Regression discontinuity design (RDD) was established by @thistlethwaite1960regression and is a popular way to get causality when there is a continuous variable with cut-offs that determine treatment. Is there a difference between a student who gets 79 per cent and a student who gets 80 per cent? Probably not much, but one may get a A-, while the other may get a B+, and seeing that on a transcript could affect who gets a job which could affect income. In this case the percentage is a "forcing variable" or "forcing function" and the cut-off for an A- is a "threshold". As the treatment is determined by the forcing variable we need to control for that variable. And these seemingly arbitrary cut-offs can be seen all the time. Hence, there has been a great deal of work using RDD.
 
 There is sometimes slightly different terminology used when it comes to RDD. For instance, @Cunningham2021 refers to the forcing function as a running variable. The exact terminology that is used does not matter provided we use it consistently.  
 
@@ -1295,7 +1297,7 @@ modelsummary::modelsummary(
 )
 ```
 
-There are various caveats to this estimate that we will discuss, but the essentials of RDD are here. Given an appropriate set-up, and model, an RDD can compare favorably to randomized trials [@bloombellreiman2020].
+There are various caveats to this estimate that we will discuss, but the essentials of RDD are here. Given an appropriate set-up, and model, a RDD can compare favorably to randomized trials [@bloombellreiman2020].
 
 We could also implement RDD using `rdrobust` [@rdrobust]. The advantage of this approach is that many common extensions are easily available. 
 
@@ -1322,7 +1324,7 @@ The key assumptions of RDD are [@Cunningham2021, p. 163]:
 
 The first assumption is largely about being unable to manipulate the cut-off, and ensures that the cut-off has meaning. The second assumption enables us to be confident that people on either side of the threshold are similar, apart from just happening to just fall on either side of the threshold.
 
-When we discussed randomized control trials and A/B testing in @sec-hunt-data the randomized assignment of the treatment meant that the control and treatment groups were the same, but for the treatment. Then we moved to difference in differences, and we assumed that there was a common trend between the treated and control groups. We allowed that the groups could be different, but that we could "difference out" their differences. Finally, we considered matching, and we said that even if the control and treatment groups seemed quite different, we were able to match, to some extent, those who were treated with a group that were like them in all ways, apart from the fact that they were not treated.
+When we discussed randomized control trials and A/B testing in @sec-hunt-data the randomized assignment of the treatment meant that the control and treatment groups were the same, but for the treatment. Then we moved to difference-in-differences, and we assumed that there was a common trend between the treated and control groups. We allowed that the groups could be different, but that we could "difference out" their differences. Finally, we considered matching, and we said that even if the control and treatment groups seemed quite different, we were able to match, to some extent, those who were treated with a group that were like them in all ways, apart from the fact that they were not treated.
 
 In regression discontinuity we consider a slightly different setting. The two groups are completely different in terms of the forcing variable. They are on either side of the threshold. There is no overlap at all. But we know the threshold and believe that those on either side are essentially matched. Let us consider the 2019 NBA Eastern Conference Semifinals - Toronto and Philadelphia. Game 1: Raptors win 108-95; Game 2: 76ers win 94-89; Game 3: 76ers win 116-95; Game 4: Raptors win 101-96; Game 5: Raptors win 125-89; Game 6: 76ers win 112-101; and finally, Game 7: Raptors win 92-90, because of a ball that went in after bouncing on the rim four times. Was there really that much difference between the teams?
 
@@ -1332,8 +1334,8 @@ The continuity assumption is important, but we cannot test this as it is based o
 - Trying different specifications. We are especially concerned if results do not broadly persist with just linear or quadratic functions.
 - Considering different subsets of the data.
 - Considering different windows.
-- Be clear about uncertainty intervals, especially in graphs.
-- Discuss and assuage concerns about the possibility of omitted variables.
+- Being clear about uncertainty intervals, especially in graphs.
+- Discuss and assuaging concerns about the possibility of omitted variables.
 
 The threshold is also important. For instance, is there an actual shift or is there a non-linear relationship?
 
@@ -1634,14 +1636,14 @@ To implement instrumental variables we first regress tax rates on cigarette smok
 
 Sometimes instrumental variables are used in the context of random allocation of treatment, such as the Oregon Health Insurance Experiment introduced in @sec-hunt-data. Recall the issue was that a lottery was used to select individuals who were allocated to apply for health insurance, but there was nothing forcing them to do this. Our approach would then be to consider the relationship between being selected and taking up health insurance, and then between various health outcomes and taking up insurance. Our instrumental variable estimate, which would be the ratio, would estimate only those that took up health insurance because they were selected.
 
-Following the language of [@gelmanandhill, p. 216] when we use instrumental variables we make a variety of assumptions including:
+Following the language of @gelmanandhill [p. 216], when we use instrumental variables we make a variety of assumptions including:
 
 - Ignorability of the instrument.
 - Correlation between the instrumental variable and the treatment variable.
 - Monotonicity.
 - Exclusion restriction.
 
-As an aside, the history of instrumental variables is intriguing, and @stock2003retrospectives, via @Cunningham2021, provide a brief overview. The method was first published in @wright1928tariff. This is a book about the effect of tariffs on animal and vegetable oil. Why might instrumental variables be important in a book about tariffs on animal and vegetable oil? The fundamental problem is that the effect of tariffs depends on both supply and demand. But we only know prices and quantities, so we do not know what is driving the effect. We can use instrumental variables to pin down causality. The intriguing aspect is that the instrumental variables discussion is only in "Appendix B" of that book. It would seem odd to relegate a major statistical break-through to an appendix. Further, Philip G. Wright, the book's author, had a son Sewall Wright, who had considerable expertise in statistics and the specific method used in "Appendix B". Hence the mystery of "Appendix B": did Philip or Sewall write it? @Cunningham2021, @stock2003retrospectives, and @angristkrueger, all go into more detail, but on balance feel that it is likely that Philip authored the work.
+As an aside, the history of instrumental variables is intriguing, and @stock2003retrospectives, via @Cunningham2021, provide a brief overview. The method was first published in @wright1928tariff. This is a book about the effect of tariffs on animal and vegetable oil. Why might instrumental variables be important in a book about tariffs on animal and vegetable oil? The fundamental problem is that the effect of tariffs depends on both supply and demand. But we only know prices and quantities, so we do not know what is driving the effect. We can use instrumental variables to pin down causality. The intriguing aspect is that the instrumental variables discussion is only in "Appendix B" of that book. It would seem odd to relegate a major statistical break through to an appendix. Further, Philip G. Wright, the book's author, had a son Sewall Wright, who had considerable expertise in statistics and the specific method used in "Appendix B". Hence the mystery of "Appendix B": did Philip or Sewall write it? @Cunningham2021, @stock2003retrospectives, and @angristkrueger all go into more detail, but on balance feel that it is likely that Philip authored the work.
 
 
 ### Simulated example
@@ -1797,7 +1799,7 @@ iv_robust(health ~ smoker | tax, data = iv_example_data) |>
 ### Assumptions
 
 ::: {.content-visible when-format="pdf"}
-The set-up of instrumental variables is described in (@fig-dot-taxrebateasiv-pdf), which shows education as a confounder between income and happiness. A tax rebate likely only affects income, not education, and could be used as an instrumental variable.
+The set-up of instrumental variables is described in @fig-dot-taxrebateasiv-pdf, which shows education as a confounder between income and happiness. A tax rebate likely only affects income, not education, and could be used as an instrumental variable.
 
 ```{dot}
 //| label: fig-dot-taxrebateasiv-pdf
@@ -1822,7 +1824,7 @@ digraph D {
 :::
 
 ::: {.content-visible unless-format="pdf"}
-The set-up of instrumental variables is described in (@fig-dot-taxrebateasiv-quarto), which shows education as a confounder between income and happiness. A tax rebate likely only affects income, not education, and could be used as an instrumental variable.
+The set-up of instrumental variables is described in @fig-dot-taxrebateasiv-quarto, which shows education as a confounder between income and happiness. A tax rebate likely only affects income, not education, and could be used as an instrumental variable.
 
 ```{dot}
 //| label: fig-dot-taxrebateasiv-quarto
@@ -1917,11 +1919,11 @@ When considering an instrumental variable approach, it is important to spend con
 ### Questions {.unnumbered}
 
 1. For three months Sharla Gelfand shared two functions each day: one that was new to them and another that they already knew and loved. Please go the "Two Functions Most Days" GitHub [repo](https://github.com/sharlagelfand/twofunctionsmostdays), and find a package that they mention that you have never used. Find the relevant website for the package, and then in a paragraph or two, describe what the package does and a context in which it could be useful to you.
-2. Please again, go to Sharla's "Two Functions Most Days" GitHub [repo](https://github.com/sharlagelfand/twofunctionsmostdays), and find a function that they mention that you have never used. Please look at the help file for that function, and then detail the arguments of the function, and a context in which it could be useful to you.
+2. Please again go to Sharla's "Two Functions Most Days" GitHub [repo](https://github.com/sharlagelfand/twofunctionsmostdays), and find a function that they mention that you have never used. Please look at the help file for that function, and then detail the arguments of the function, and a context in which it could be useful to you.
 3. What is propensity score matching? If you were matching people, then what are some of the features that you would like to match on? What sort of ethical questions does collecting and storing such information raise for you?
 4. Putting the ethical issues to one side, following @king2019propensity, in at least two paragraphs, please describe some of the statistical concerns with propensity score matching.
-5. What is the key assumption when using difference in differences?
-6. Please read @markupinsurance and discuss two statistical aspects, and two ethical aspects..
+5. What is the key assumption when using difference-in-differences?
+6. Please read @markupinsurance and discuss: i) two statistical aspects; and ii) two ethical aspects.
 7. Please go to the GitHub [page](https://github.com/the-markup/investigation-allstates-algorithm) related to @markupinsurance. Please list two points about what is good, and another two points about what could be improved.
 8. What are the fundamental features of regression discontinuity design?
 9. What are the conditions that are needed in order for regression discontinuity design to be able to be used?
@@ -1932,15 +1934,15 @@ When considering an instrumental variable approach, it is important to spend con
 14. What conditions must instrumental variables satisfy?
 15. Who were some of the early instrumental variable authors?
 16. Can you please think of and explain an application of instrumental variables in your own life?
-17. What is the key assumption in difference in differences
+17. What is the key assumption in difference-in-differences
     a. Parallel trends.
     b. Heteroscedasticity.
-18. If you are using regression discontinuity, whare are some aspects to be aware of and think hard about (select all that apply)?
+18. If you are using regression discontinuity, what are some aspects to be aware of and think hard about (select all that apply)?
     a. Is the cut-off free of manipulation?
     b. Is the forcing function continuous?
     c. To what extent is the functional form driving the estimate?
     d. Would different fitted lines affect the results?
-19. What is the main reason that @oostrom2021 finds that the outcome of an RCT can depend on who is funding it (pick one)?
+19. What is the main reason that @oostrom2021 finds that the outcome of a RCT can depend on who is funding it (pick one)?
     a. Publication bias
     b. Explicit manipulation
     c. Specialization
@@ -1967,13 +1969,12 @@ When considering an instrumental variable approach, it is important to spend con
 25. According to @riedererdesignpatterns if I have "disjoint treated and untreated groups partitioned by a sharp cut-off" then which method should I use to measure the local treatment effect at the juncture between groups (pick one)?
     a. regression discontinuity
     b. matching
-    c. difference in differences
+    c. difference-in-differences
     d. event study methods
-26. According to @riedererdesignpatterns (pick all that apply):
-    a. data management
-    b. domain knowledge
-    c. probabilistic reasoning
-    d. data science
+26. What does causal inference require according to @riedererdesignpatterns (pick all that apply)?
+    a.  data management
+    b.  domain knowledge
+    c.  probabilistic reasoning
 27. Consider an Australian 30-39 year old male living in Toronto with two children and a PhD. Which of the following do you think they would match most closely with and why (please explain in a paragraph or two)?
     a. An Australian 30-39 year old male living in Toronto with one child and a bachelors degree
     b. A Canadian 30-39 year old male living in Toronto with one child and a PhD
@@ -1993,7 +1994,7 @@ When considering an instrumental variable approach, it is important to spend con
     b. A variable, z, that causes y and is caused by x, where x also causes y.
     c. A variable, z, that is caused by both x and y, where x also causes y.
 32. Draw a DAG illustrating the collider bias described by @bronnerftw.
-33. @NoiseKahneman say '... while correlation does not imply causation, causation does imply correlation. Where there is a causal link, we should find a correlation'. With reference to @Cunningham2021 [Chapter 1], are they right or wrong, and why?
+33. @NoiseKahneman say "...while correlation does not imply causation, causation does imply correlation. Where there is a causal link, we should find a correlation". With reference to @Cunningham2021 [Chapter 1], are they right or wrong, and why?
 34. Please redo the French newspaper example, but for two variables on the advertising side: "ads_p4_cst", and "ads_s", and for two variables on the consumer side: "qtotal" and "qs_s".
 
 
@@ -2005,7 +2006,7 @@ You are interested in the characteristics of people's friendship groups and how 
 You have access to individual-level data from a social media website, which contains information about social interactions (comments on posts, tags, etc) on the website, as well as a wide variety of individual-level characteristics.
 
 1. While the social media website is very popular, not everyone in the population you are interested in has an account, and not everyone that has an account is active on the website. Given you are interested in economic measures, what are some possible issues with using these data to make inferences about the broader population?
-2. The data do not contain information on individual-level income. But for around 20 per cent of the sample you have information on the "census block" of the individual. By way of background, a census block contains no more than 3,000 individuals. The median income of each census block is known. As such, you decide to estimate individual level income as follows:
+2. The data do not contain information on individual-level income. But for around 20 per cent of the sample you have information on the "census block" of the individual. By way of background, a census block contains no more than 3,000 individuals. The median income of each census block is known. As such, you decide to estimate individual-level income as follows:
     a) Regress the median income of each census block on a series of individual level characteristics (such as age, education, marital status, gender, ...).
     b) Use these estimates to predict the income of individuals that do not have location information.
 Briefly discuss the advantages and disadvantages of this approach, particularly in how it could affect the study of income characteristics of friendship groups. Ensure that you address the ecological fallacy.
