@@ -86,7 +86,7 @@ In total, 750,148 interviews were conducted, with 345,858 unique respondents, ov
 The details do not matter, but essentially they model how likely a respondent is to vote for Obama, given various information such as state, education, sex, etc:
 
 $$
-Pr\left(Y_i = \mbox{Obama}\right) = \mbox{logit}^{-1}(\alpha_0 + \alpha_{j[i]}^{\mbox{state}} + \alpha_{j[i]}^{\mbox{edu}} + \alpha_{j[i]}^{\mbox{sex}} + ...)
+\mbox{Pr}\left(Y_i = \mbox{Obama}\right) = \mbox{logit}^{-1}\left(\alpha_0 + \alpha_{j[i]}^{\mbox{state}} + \alpha_{j[i]}^{\mbox{edu}} + \alpha_{j[i]}^{\mbox{sex}} + ...\right)
 $$
 
 Having a trained model that considers the effect of these various independent variables on support for the candidates, they now post-stratify, where each of these "cell-level estimates are weighted by the proportion of the electorate in each cell and aggregated to the appropriate level (i.e., state or national)."
@@ -829,9 +829,12 @@ sample_for_australian_polling <-
 
 ### Model the survey
 
-This polling data was generated to make both males and older people less likely to vote for the ALP, and females and younger people more likely to vote for the ALP. Females are over-sampled. As such, we should have an ALP skew on the dataset. We are going to use `gtsummary` to quickly make a summary table [@citemodelsummary].
+This polling data was generated to make both males and older people less likely to vote for the ALP, and females and younger people more likely to vote for the ALP. Females are over-sampled. As such, we should have an ALP skew on the dataset. One way to make a summary table of counts such as @tbl-pollingbiassample is to use `datasummary_skim()` from `modelsummary` [@citemodelsummary].
 
 ```{r}
+#| tbl-cap: "Counts and group percentages, by variable"
+#| label: tbl-pollingbiassample
+
 sample_for_australian_polling |>
   modelsummary::datasummary_skim(type = "categorical")
 ```
@@ -839,13 +842,13 @@ sample_for_australian_polling |>
 Now we would like to see if we can get our results back (we should find females more likely than males to vote for Australian Labor Party and that people are less likely to vote Australian Labor Party as they get older). Our model is:
 
 $$
-\mbox{Pr}(\hat{FP}_{i,p=1}) = \mbox{logit}^{-1} \left(\beta_0 + \beta_1 \times \mbox{gender}_is + \beta_2\times \mbox{age}_i + \beta_3 \times \mbox{state}_i \right)
+\mbox{Pr}(\hat{FP}_{i,p=1}) = \mbox{logit}^{-1} \left(\beta_0 + \beta_1 \times \mbox{gender}_i + \beta_2\times \mbox{age}_i + \beta_3 \times \mbox{state}_i \right)
 $$
 This model says that the probability that some person, $i$, will vote for the Australian Labor Party depends on their gender, age-group, and state of residence. Based on our simulated data, we would like younger age-groups to be more likely to vote for the Australian Labor Party and for males to be less likely to vote for the Australian Labor Party.
 
 ```{r}
 #| label: tbl-initial_model_analyse_example_polling
-#| tbl-cap: "Model estimates"
+#| tbl-cap: "Model estimates of whether a respondent will vote for the Labor Party, based on the survey data"
 
 alp_support <-
   glm(
@@ -979,11 +982,11 @@ We now have post-stratified estimates for each division. Our new Bayesian approa
 
 One interesting aspect is that our multilevel approach will allow us to deal with small cell counts by borrowing information from other cells. Even if we were to remove most of the, say, 18-to-29-year-old, male respondents from Tasmania our model would still provide estimates. It does this by pooling, in which the effect of these young, male Tasmanians is partially determined by other cells that do have respondents. 
 
-There are many interesting aspects that we may like to communicate to others. For instance, we may like to show how the model is affecting our estimates of the results. We can make a graph that compares the raw estimates and the raw estimates from the biased survey sample with the model estimates (@tbl-resultsforaustraliaa). Note the skew in favor of the ALP in the biased sample estimates, and how the model is able to correct for this in most cases.
+There are many interesting aspects that we may like to communicate to others. For instance, we may like to show how the model is affecting our estimates of the results. We can make a graph that compares the raw estimates and the raw estimates from the biased survey sample with the model estimates (@fig-resultsforaustraliaa). Note the skew in favor of the ALP in the biased sample estimates, and how the model is able to correct for this in most cases.
 
 ```{r}
-#| label: tbl-resultsforaustraliaa
-#| tbl-cap: "Comparing MRP estimates with raw estimates"
+#| label: fig-resultsforaustraliaa
+#| fig-cap: "Comparing MRP estimates with raw estimates"
 
 # Raw survey estimates
 raw_estimates <- sample_for_australian_polling_all |>
@@ -1026,7 +1029,9 @@ Similarly, we may like to plot the distribution of the coefficients. We can work
 #| warning: false
 #| message: false
 #| label: fig-resultsforaustralia
-#| fig-cap: "Posterior predictive check and comparing the posterior with the prior"
+#| #| layout-ncol: 2
+#| fig-cap: "Examining the model fit and how it is affected by the data for Australian elections"
+#| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"]
 
 library(rstanarm)
 
@@ -1423,7 +1428,7 @@ And we can have a look at our estimates graphically (@fig-estimatyusamrp).
 
 ```{r}
 #| label: fig-estimatyusamrp
-#| tbl-cap: "Comparing the MRP estimates with the Nationscape raw data"
+#| fig-cap: "Comparing the MRP estimates with the Nationscape raw data"
 #| message: false
 
 biden_support_by_state |>

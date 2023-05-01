@@ -580,7 +580,7 @@ Shoulders of giants
 <p>In total, 750,148 interviews were conducted, with 345,858 unique respondents, over 30,000 of whom completed five or more polls. As may be expected, young men dominate the Xbox population: 18-to-29-year-olds comprise 65 per cent of the Xbox dataset, compared to 19 per cent in the exit poll; and men make up 93 per cent of the Xbox sample but only 47 per cent of the electorate.</p>
 <p>The details do not matter, but essentially they model how likely a respondent is to vote for Obama, given various information such as state, education, sex, etc:</p>
 <p><span class="math display">\[
-Pr\left(Y_i = \mbox{Obama}\right) = \mbox{logit}^{-1}(\alpha_0 + \alpha_{j[i]}^{\mbox{state}} + \alpha_{j[i]}^{\mbox{edu}} + \alpha_{j[i]}^{\mbox{sex}} + ...)
+\mbox{Pr}\left(Y_i = \mbox{Obama}\right) = \mbox{logit}^{-1}\left(\alpha_0 + \alpha_{j[i]}^{\mbox{state}} + \alpha_{j[i]}^{\mbox{edu}} + \alpha_{j[i]}^{\mbox{sex}} + ...\right)
 \]</span></p>
 <p>Having a trained model that considers the effect of these various independent variables on support for the candidates, they now post-stratify, where each of these “cell-level estimates are weighted by the proportion of the electorate in each cell and aggregated to the appropriate level (i.e., state or national).”</p>
 <p>This means that they need cross-tabulated population data. In general, the census would have worked, or one of the other large surveys available in the US, but the difficulty is that the variables need to be available on a cross-tab basis. As such, they use exit polls (not a viable option for most other countries).</p>
@@ -1517,12 +1517,14 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 </section>
 <section id="model-the-survey" class="level3" data-number="15.4.3">
 <h3 data-number="15.4.3" class="anchored" data-anchor-id="model-the-survey"><span class="header-section-number">15.4.3</span> Model the survey</h3>
-<p>This polling data was generated to make both males and older people less likely to vote for the ALP, and females and younger people more likely to vote for the ALP. Females are over-sampled. As such, we should have an ALP skew on the dataset. We are going to use <code>gtsummary</code> to quickly make a summary table <span class="citation" data-cites="citemodelsummary">(<a href="99-references.html#ref-citemodelsummary" role="doc-biblioref">Arel-Bundock 2021</a>)</span>.</p>
+<p>This polling data was generated to make both males and older people less likely to vote for the ALP, and females and younger people more likely to vote for the ALP. Females are over-sampled. As such, we should have an ALP skew on the dataset. One way to make a summary table of counts such as <a href="#tbl-pollingbiassample">Table&nbsp;<span>15.5</span></a> is to use <code>datasummary_skim()</code> from <code>modelsummary</code> <span class="citation" data-cites="citemodelsummary">(<a href="99-references.html#ref-citemodelsummary" role="doc-biblioref">Arel-Bundock 2021</a>)</span>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>sample_for_australian_polling <span class="sc">|&gt;</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  modelsummary<span class="sc">::</span><span class="fu">datasummary_skim</span>(<span class="at">type =</span> <span class="st">"categorical"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
+<div id="tbl-pollingbiassample" class="anchored">
 <table class="table table-sm table-striped" data-quarto-postprocess="true">
+<caption>Table&nbsp;15.5: Counts and group percentages, by variable</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;" data-quarto-table-cell-role="th"></th>
@@ -1630,13 +1632,14 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 </tr>
 </tbody>
 </table>
+</div>
 
 
 </div>
 </div>
 <p>Now we would like to see if we can get our results back (we should find females more likely than males to vote for Australian Labor Party and that people are less likely to vote Australian Labor Party as they get older). Our model is:</p>
 <p><span class="math display">\[
-\mbox{Pr}(\hat{FP}_{i,p=1}) = \mbox{logit}^{-1} \left(\beta_0 + \beta_1 \times \mbox{gender}_is + \beta_2\times \mbox{age}_i + \beta_3 \times \mbox{state}_i \right)
+\mbox{Pr}(\hat{FP}_{i,p=1}) = \mbox{logit}^{-1} \left(\beta_0 + \beta_1 \times \mbox{gender}_i + \beta_2\times \mbox{age}_i + \beta_3 \times \mbox{state}_i \right)
 \]</span> This model says that the probability that some person, <span class="math inline">\(i\)</span>, will vote for the Australian Labor Party depends on their gender, age-group, and state of residence. Based on our simulated data, we would like younger age-groups to be more likely to vote for the Australian Labor Party and for males to be less likely to vote for the Australian Labor Party.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>alp_support <span class="ot">&lt;-</span></span>
@@ -1651,7 +1654,7 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 <div class="cell-output-display">
 <div id="tbl-initial_model_analyse_example_polling" class="anchored">
 <table class="table table-sm table-striped" data-quarto-postprocess="true">
-<caption>Table&nbsp;15.5: Model estimates</caption>
+<caption>Table&nbsp;15.6: Model estimates of whether a respondent will vote for the Labor Party, based on the survey data</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;" data-quarto-table-cell-role="th"></th>
@@ -1786,7 +1789,7 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 
 </div>
 </div>
-<p>Our dependent variable is a binary, thus we used logistic regression so the results are a little more difficult to interpret (<a href="#tbl-initial_model_analyse_example_polling">Table&nbsp;<span>15.5</span></a>). Essentially we have got our inputs back.</p>
+<p>Our dependent variable is a binary, thus we used logistic regression so the results are a little more difficult to interpret (<a href="#tbl-initial_model_analyse_example_polling">Table&nbsp;<span>15.6</span></a>). Essentially we have got our inputs back.</p>
 </section>
 <section id="post-stratify" class="level3" data-number="15.4.4">
 <h3 data-number="15.4.4" class="anchored" data-anchor-id="post-stratify"><span class="header-section-number">15.4.4</span> Post-stratify</h3>
@@ -1921,8 +1924,8 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 </div>
 <p>We now have post-stratified estimates for each division. Our new Bayesian approach will enable us to think more deeply about uncertainty. We could complicate this in a variety of ways including adding more coefficients (but remember that we would need to get new cell counts), or adding some layers.</p>
 <p>One interesting aspect is that our multilevel approach will allow us to deal with small cell counts by borrowing information from other cells. Even if we were to remove most of the, say, 18-to-29-year-old, male respondents from Tasmania our model would still provide estimates. It does this by pooling, in which the effect of these young, male Tasmanians is partially determined by other cells that do have respondents.</p>
-<p>There are many interesting aspects that we may like to communicate to others. For instance, we may like to show how the model is affecting our estimates of the results. We can make a graph that compares the raw estimates and the raw estimates from the biased survey sample with the model estimates (<span class="quarto-unresolved-ref">?tbl-resultsforaustraliaa</span>). Note the skew in favor of the ALP in the biased sample estimates, and how the model is able to correct for this in most cases.</p>
-<div>
+<p>There are many interesting aspects that we may like to communicate to others. For instance, we may like to show how the model is affecting our estimates of the results. We can make a graph that compares the raw estimates and the raw estimates from the biased survey sample with the model estimates (<a href="#fig-resultsforaustraliaa">Figure&nbsp;<span>15.4</span></a>). Note the skew in favor of the ALP in the biased sample estimates, and how the model is able to correct for this in most cases.</p>
+<div class="cell">
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Raw survey estimates</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>raw_estimates <span class="ot">&lt;-</span> sample_for_australian_polling_all <span class="sc">|&gt;</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">support_alp_num =</span> <span class="fu">abs</span>(<span class="fu">as.numeric</span>(support_alp) <span class="sc">-</span> <span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
@@ -1956,19 +1959,18 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 <span id="cb42-31"><a href="#cb42-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
 <span id="cb42-32"><a href="#cb42-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">color =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">shape =</span> <span class="fu">c</span>(<span class="dv">16</span>, <span class="dv">18</span>, <span class="dv">15</span>), </span>
 <span id="cb42-33"><a href="#cb42-33" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">linetype =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>))))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div id="tbl-resultsforaustraliaa" class="cell tbl-parent quarto-layout-panel anchored" data-tbl-cap="Comparing MRP estimates with raw estimates">
-<div class="panel-caption table-caption">
-<p><strong>?(caption)</strong></p>
-</div>
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="cell-output-display quarto-layout-cell" style="flex-basis: 100.0%;justify-content: center;">
-<p><img src="15-mrp_files/figure-html/tbl-resultsforaustraliaa-1.png" class="img-fluid" width="672"></p>
-</div>
+<div class="cell-output-display">
+<div id="fig-resultsforaustraliaa" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="15-mrp_files/figure-html/fig-resultsforaustraliaa-1.png" class="img-fluid figure-img" width="672"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;15.4: Comparing MRP estimates with raw estimates</figcaption><p></p>
+</figure>
 </div>
 </div>
 </div>
 <p>Similarly, we may like to plot the distribution of the coefficients. We can work out which coefficients to be passed to <code>gather_draws()</code> with <code>tidybayes::get_variables(model)</code>; in this example we passed “b_.”, but that will not always be the case.</p>
-<div class="cell">
+<div id="fig-resultsforaustralia" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
 <div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rstanarm)</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="fu">pp_check</span>(improved_alp_support) <span class="sc">+</span></span>
@@ -1983,19 +1985,21 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 <div class="cell-output-display">
 <div id="fig-resultsforaustralia-1" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="15-mrp_files/figure-html/fig-resultsforaustralia-1.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;15.4: Posterior predictive check and comparing the posterior with the prior</figcaption><p></p>
+<p><img src="15-mrp_files/figure-html/fig-resultsforaustralia-1.png" class="img-fluid figure-img" data-ref-parent="fig-resultsforaustralia" width="672"></p>
+<p></p><figcaption class="figure-caption">(a) Posterior prediction check</figcaption><p></p>
 </figure>
 </div>
 </div>
 <div class="cell-output-display">
 <div id="fig-resultsforaustralia-2" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="15-mrp_files/figure-html/fig-resultsforaustralia-2.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;15.5: Posterior predictive check and comparing the posterior with the prior</figcaption><p></p>
+<p><img src="15-mrp_files/figure-html/fig-resultsforaustralia-2.png" class="img-fluid figure-img" data-ref-parent="fig-resultsforaustralia" width="672"></p>
+<p></p><figcaption class="figure-caption">(b) Comparing the posterior with the prior</figcaption><p></p>
 </figure>
 </div>
 </div>
+<p></p><figcaption class="figure-caption">Figure&nbsp;15.5: Examining the model fit and how it is affected by the data for Australian elections</figcaption><p></p>
+</figure>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>marginaleffects<span class="sc">::</span><span class="fu">plot_cap</span>(improved_alp_support, <span class="at">condition =</span> <span class="st">"state"</span>) <span class="sc">+</span></span>
@@ -2311,7 +2315,7 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 <span id="cb58-20"><a href="#cb58-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">seed =</span> <span class="dv">853</span></span>
 <span id="cb58-21"><a href="#cb58-21" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>We might be interested to look at the coefficient estimates (<a href="#tbl-modelsummaryusamrp">Table&nbsp;<span>15.6</span></a>).</p>
+<p>We might be interested to look at the coefficient estimates (<a href="#tbl-modelsummaryusamrp">Table&nbsp;<span>15.7</span></a>).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom.mixed)</span>
 <span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -2321,7 +2325,7 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 <div class="cell-output-display">
 <div id="tbl-modelsummaryusamrp" class="anchored">
 <table class="table table-sm table-striped" data-quarto-postprocess="true">
-<caption>Table&nbsp;15.6: Estimating a model of choice between Biden and Trump in the 2020 US election</caption>
+<caption>Table&nbsp;15.7: Estimating a model of choice between Biden and Trump in the 2020 US election</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;" data-quarto-table-cell-role="th"></th>
@@ -2433,7 +2437,7 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 </div>
 </div>
 <p>And we can have a look at our estimates graphically (<a href="#fig-estimatyusamrp">Figure&nbsp;<span>15.7</span></a>).</p>
-<div class="cell" data-tbl-cap="Comparing the MRP estimates with the Nationscape raw data">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>biden_support_by_state <span class="sc">|&gt;</span></span>
 <span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">y =</span> mean, <span class="at">x =</span> stateicp, <span class="at">color =</span> <span class="st">"MRP estimate"</span>)) <span class="sc">+</span></span>
 <span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
@@ -2461,7 +2465,7 @@ author_lines_rstanarm            -3.6       3.0   </code></pre>
 <div id="fig-estimatyusamrp" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="15-mrp_files/figure-html/fig-estimatyusamrp-1.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;15.7: <strong>?(caption)</strong></figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;15.7: Comparing the MRP estimates with the Nationscape raw data</figcaption><p></p>
 </figure>
 </div>
 </div>
