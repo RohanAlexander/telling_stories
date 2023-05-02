@@ -1218,7 +1218,7 @@ Oh, you think we have good data on that!
 <section id="book-information" class="level3" data-number="7.3.1">
 <h3 data-number="7.3.1" class="anchored" data-anchor-id="book-information"><span class="header-section-number">7.3.1</span> Book information</h3>
 <p>In this case study we will scrape a list of books available <a href="https://rohansbooks.com">here</a>. We will then clean the data and look at the distribution of the first letters of author surnames. It is slightly more complicated than the example above, but the underlying approach is the same: download the website, look for the nodes of interest, extract the information, and clean it.</p>
-<p>We use <code>rvest</code> <span class="citation" data-cites="citervest">(<a href="99-references.html#ref-citervest" role="doc-biblioref">Wickham 2022b</a>)</span> to download a website, and to then navigate the HTML to find the aspects that we are interested in. And we use <code>tidyverse</code> to clean the dataset. We first need to go to the website and then save a local copy.</p>
+<p>We use <code>rvest</code> <span class="citation" data-cites="citervest">(<a href="99-references.html#ref-citervest" role="doc-biblioref">Wickham 2022b</a>)</span> to download a website, and to then navigate the HTML to find the aspects that we are interested in. And we use the <code>tidyverse</code> to clean the dataset. We first need to go to the website and then save a local copy.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rvest)</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
@@ -1228,7 +1228,7 @@ Oh, you think we have good data on that!
 <span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write_html</span>(books_data, <span class="st">"raw_data.html"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Now we need to navigate the HTML to get the aspects that we want. And then put them into some sensible structure. We will start with trying to get the data into a tibble as quickly as possible because this will allow us to more easily use <code>dplyr</code> verbs and <code>tidyverse</code> functions.</p>
+<p>Now we need to navigate the HTML to get the aspects that we want. And then put them into some sensible structure. We will start with trying to get the data into a tibble as quickly as possible because this will allow us to more easily use <code>dplyr</code> verbs and other functions from the <code>tidyverse</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>books_data <span class="ot">&lt;-</span> <span class="fu">read_html</span>(<span class="st">"inputs/my_website/raw_data.html"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -1330,11 +1330,10 @@ Oh, you think we have good data on that!
 <span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
 <span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_letter =</span> <span class="fu">str_sub</span>(author, <span class="dv">1</span>, <span class="dv">1</span>)</span>
 <span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(first_letter) <span class="sc">|&gt;</span></span>
-<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>() <span class="sc">|&gt;</span></span>
-<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
-<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"First letter"</span>, <span class="st">"Number of times"</span>)</span>
-<span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(<span class="at">.by =</span> first_letter) <span class="sc">|&gt;</span></span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"First letter"</span>, <span class="st">"Number of times"</span>)</span>
+<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div id="tbl-lettersofbooks" class="anchored">
 <table class="table table-sm table-striped">
@@ -1553,7 +1552,7 @@ Oh, you think we have good data on that!
 <dl class="code-annotation-container-grid">
 <dt data-target-cell="annotated-cell-34" data-target-annotation="1">1</dt>
 <dd>
-<span data-code-annotation="1" data-code-lines="11" data-code-cell="annotated-cell-34">Alive PMs have slightly different format and only have born.</span>
+<span data-code-cell="annotated-cell-34" data-code-annotation="1" data-code-lines="11">Alive PMs have slightly different format and only have born.</span>
 </dd>
 </dl>
 </div>
@@ -1590,11 +1589,11 @@ Oh, you think we have good data on that!
 <dl class="code-annotation-container-grid">
 <dt data-target-cell="annotated-cell-35" data-target-annotation="1">1</dt>
 <dd>
-<span data-code-annotation="1" data-code-lines="4" data-code-cell="annotated-cell-35">PMs who have died have their birth and death years separated by a hyphen, but we need to be careful with the hyphen as it seems to be a slightly odd type of hyphen and we need to copy/paste it.</span>
+<span data-code-cell="annotated-cell-35" data-code-annotation="1" data-code-lines="4">PMs who have died have their birth and death years separated by a hyphen, but we need to be careful with the hyphen as it seems to be a slightly odd type of hyphen and we need to copy/paste it.</span>
 </dd>
 <dt data-target-cell="annotated-cell-35" data-target-annotation="2">2</dt>
 <dd>
-<span data-code-annotation="2" data-code-lines="13" data-code-cell="annotated-cell-35">Some of the PMs had two goes at it.</span>
+<span data-code-cell="annotated-cell-35" data-code-annotation="2" data-code-lines="13">Some of the PMs had two goes at it.</span>
 </dd>
 </dl>
 </div>
@@ -1852,7 +1851,7 @@ Oh, you think we have good data on that!
 [2] "Of farthest Thule; and the Atlantic surge\nPours in among the stormy Hebrides.”\n\nNor could I pass unnoticed the suggestion of the bleak shores of Lapland, Siberia, Spitzbergen,\nNova Zembla, Iceland, Greenland, with “the vast sweep of the Arctic Zone, and those forlorn\nregions of dreary space,—that reservoir of frost and snow, where firm fields of ice, the\naccumulation of centuries of winters, glazed in Alpine heights above heights, surround the pole,\nand concentre the multiplied rigours of extreme cold.” Of these death-white realms I formed an\nidea of my own: shadowy, like all the half-comprehended notions that float dim through\nchildren’s brains, but strangely impressive. The words in these introductory pages connected\nthemselves with the succeeding vignettes, and gave significance to the rock standing up alone in\na sea of billow and spray; to the broken boat stranded on a desolate coast; to the cold and ghastly\nmoon glancing through bars of cloud at a wreck just sinking.\n\nI cannot tell what sentiment haunted the quite solitary churchyard, with its inscribed headstone;\nits gate, its two trees, its low horizon, girdled by a broken wall, and its newly-risen crescent,\nattesting the hour of eventide.\n\nThe two ships becalmed on a torpid sea, I believed to be marine phantoms.\n\nThe fiend pinning down the thief’s pack behind him, I passed over quickly: it was an object of\nterror.\n\nSo was the black horned thing seated aloof on a rock, surveying a distant crowd surrounding a\ngallows.\n\nEach picture told a story; mysterious often to my undeveloped understanding and imperfect\nfeelings, yet ever profoundly interesting: as interesting as the tales Bessie sometimes narrated on\nwinter evenings, when she chanced to be in good humour; and when, having brought her ironing-\ntable to the nursery hearth, she allowed us to sit about it, and while she got up Mrs. Reed’s lace\nfrills, and crimped her nightcap borders, fed our eager attention with passages of love and\nadventure taken from old fairy tales and other ballads; or (as at a later period I discovered) from\nthe pages of Pamela, and Henry, Earl of Moreland.\n\nWith Bewick on my knee, I was then happy: happy at least in my way. I feared nothing but\ninterruption, and that came too soon. The breakfast-room door opened.\n\n“Boh! Madam Mope!” cried the voice of John Reed; then he paused: he found the room\napparently empty.\n\n“Where the dickens is she!” he continued. “Lizzy! Georgy! (calling to his sisters) Joan is not\nhere: tell mama she is run out into the rain—bad animal!”\n\n“It is well I drew the curtain,” thought I; and I wished fervently he might not discover my hiding-\nplace: nor would John Reed have found it out himself; he was not quick either of vision or\nconception; but Eliza just put her head in at the door, and said at once—\n"                                                                                                                                                                                                            </code></pre>
 </div>
 </div>
-<p>Notice that the first page is the first element of the character vector, and the second page is the second element. As we are most familiar with rectangular data, we will try to get it into that format as quickly as possible. And then we can use our regular <code>tidyverse</code> functions to deal with it.</p>
+<p>Notice that the first page is the first element of the character vector, and the second page is the second element. As we are most familiar with rectangular data, we will try to get it into that format as quickly as possible. And then we can use functions from the <code>tidyverse</code> to deal with it.</p>
 <p>First we want to convert the character vector into a tibble. At this point we may like to add page numbers as well.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>jane_eyre <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>

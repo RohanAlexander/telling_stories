@@ -295,8 +295,8 @@ books <- read_csv(
 
 lines_by_author_work <-
   books |>
-  group_by(author, title) |>
-  summarise(number_of_lines = n())
+  summarise(number_of_lines = n(),
+            .by = c(author, title))
 
 lines_by_author_work
 ```
@@ -520,8 +520,8 @@ And we can also work out what the "truth" is for the information that we are int
 
 population_for_mrp_example_summarised <-
   population_for_mrp_example |>
-  group_by(age, toilet_trained) |>
-  summarise(median_bed_time = mean(bed_time))
+  summarise(median_bed_time = mean(bed_time),
+            .by = c(age, toilet_trained))
 
 population_for_mrp_example_summarised |>
   knitr::kable(
@@ -605,8 +605,8 @@ It is clear that our sample has a different average bedtime than the overall pop
 
 sample_for_mrp_example_summarized <- 
   sample_for_mrp_example |>
-  group_by(age, toilet_trained) |>
-  summarise(median_bed_time = mean(bed_time))
+  summarise(median_bed_time = mean(bed_time),
+            .by = c(age, toilet_trained))
 
 sample_for_mrp_example_summarized |>
   knitr::kable(
@@ -660,8 +660,7 @@ In an ideal world we have individual-level data in our post-stratification datas
 ```{r}
 poststrat_dataset_grouped <-
   poststratification_dataset |>
-  group_by(age, toilet_trained) |>
-  count()
+  count(age, toilet_trained)
 
 poststrat_dataset_grouped |>
   head()
@@ -920,8 +919,8 @@ post_strat_census_data <-
 
 post_strat_census_data |>
   mutate(alp_predict_prop = fit * cell_prop_of_division_total) |>
-  group_by(state) |>
-  summarise(alp_predict = sum(alp_predict_prop))
+  summarise(alp_predict = sum(alp_predict_prop),
+            .by = state)
 ```
 
 We now have post-stratified estimates for each state. Our model has a fair few weaknesses. For instance, small cell counts are going to be problematic. And our approach ignores uncertainty, but now that we have something working we can complicate it.
@@ -965,14 +964,15 @@ post_stratified_estimates <-
   rename(alp_predict = .epred) |>
   # Post-stratification
   mutate(alp_predict_prop = alp_predict * cell_prop_of_division_total) |>
-  group_by(state, .draw) |>
-  summarise(alp_predict = sum(alp_predict_prop)) |>
-  group_by(state) |>
+  ungroup() |> 
+  summarise(alp_predict = sum(alp_predict_prop),
+            .by = c(state, .draw)) |>
   # Calculate mean and confidence interval for each state
   summarise(
     mean = mean(alp_predict),
     lower = quantile(alp_predict, 0.025),
-    upper = quantile(alp_predict, 0.975)
+    upper = quantile(alp_predict, 0.975),
+    .by = state
   )
 
 post_stratified_estimates
@@ -991,13 +991,13 @@ There are many interesting aspects that we may like to communicate to others. Fo
 # Raw survey estimates
 raw_estimates <- sample_for_australian_polling_all |>
   mutate(support_alp_num = abs(as.numeric(support_alp) - 2)) |>
-  group_by(state) |>
-  summarise(mean = mean(support_alp_num))
+  summarise(mean = mean(support_alp_num),
+            .by = state)
 
 raw_estimates_sample <- sample_for_australian_polling |>
   mutate(support_alp_num = abs(as.numeric(support_alp) - 2)) |>
-  group_by(state) |>
-  summarise(mean = mean(support_alp_num))
+  summarise(mean = mean(support_alp_num),
+            .by = state)
 
 
 post_stratified_estimates |>
@@ -1118,7 +1118,7 @@ nationscape_data <-
 # For simplicity, remove anyone not voting for Trump or Biden
 nationscape_data <-
   nationscape_data |>
-  filter(vote_2020 == "Joe Biden" | vote_2020 == "Donald Trump") |>
+  filter(vote_2020 %in% c("Joe Biden", "Donald Trump")) |>
   mutate(vote_biden = if_else(vote_2020 == "Joe Biden", 1, 0)) |>
   select(-vote_2020)
 
@@ -1316,8 +1316,7 @@ This dataset is on an individual level. We will create counts of each sub-cell, 
 ```{r}
 poststrat_data_cells <-
   poststrat_data |>
-  group_by(stateicp, gender, age_group, education_level) |>
-  count()
+  count(stateicp, gender, age_group, education_level)
 ```
 
 And finally we add proportions for each of these cells. 
@@ -1325,9 +1324,8 @@ And finally we add proportions for each of these cells.
 ```{r}
 poststrat_data_cells <-
   poststrat_data_cells |>
-  group_by(stateicp) |>
-  mutate(prop = n / sum(n)) |>
-  ungroup()
+  mutate(prop = n / sum(n),
+         .by = stateicp)
 
 poststrat_data_cells
 ```
@@ -1411,13 +1409,14 @@ biden_support_by_state <-
   tidybayes::add_epred_draws(newdata = poststrat_data_cells) |>
   rename(support_biden_predict = .epred) |>
   mutate(support_biden_predict_prop = support_biden_predict * prop) |>
-  group_by(stateicp, .draw) |>
-  summarise(support_biden_predict = sum(support_biden_predict_prop)) |>
-  group_by(stateicp) |>
+  ungroup() |> 
+  summarise(support_biden_predict = sum(support_biden_predict_prop),
+            .by = c(stateicp, .draw)) |>
   summarise(
     mean = mean(support_biden_predict),
     lower = quantile(support_biden_predict, 0.025),
-    upper = quantile(support_biden_predict, 0.975)
+    upper = quantile(support_biden_predict, 0.975),
+    .by = stateicp
   )
 
 head(biden_support_by_state)
@@ -1438,10 +1437,10 @@ biden_support_by_state |>
   geom_point(
     data =
       nationscape_data |>
-        group_by(stateicp, vote_biden) |>
-        summarise(n = n()) |>
-        group_by(stateicp) |>
-        mutate(prop = n / sum(n)) |>
+        summarise(n = n(),
+                  .by = c(stateicp, vote_biden)) |>
+        mutate(prop = n / sum(n),
+               .by = stateicp) |>
         filter(vote_biden == 1),
     aes(y = prop, x = stateicp, color = "Nationscape raw data")
   ) +

@@ -191,7 +191,7 @@ At this stage it is important to begin thinking about validity and internal cons
 
 ### Start small
 
-Having thoroughly planned we can turn to the raw data that we are dealing with. Usually, regardless of what the raw data look like, we want to manipulate them into a rectangular dataset as quickly as possible. This allows us to use familiar `tidyverse` approaches. For instance, let us assume that we are starting with a `.txt` file.
+Having thoroughly planned we can turn to the raw data that we are dealing with. Usually, regardless of what the raw data look like, we want to manipulate them into a rectangular dataset as quickly as possible. This allows us to use familiar functions from the `tidyverse`. For instance, let us assume that we are starting with a `.txt` file.
 
 The first step is to look for regularities in the dataset. We want to end up with tabular data, which means that we need some type of delimiter to distinguish different columns. Ideally this might be features such as a comma, a semicolon, a tab, a double space, or a line break. For instance, in the following case we would take advantage of the comma.
 
@@ -1005,12 +1005,11 @@ library(tidyr)
 toronto_shelters_by_day <-
   earlier_toronto_shelters |>
   drop_na(occupancy, capacity) |>
-  group_by(date) |>
-  summarize(
+  summarise(
     occupancy = sum(occupancy),
     capacity = sum(capacity),
     usage = occupancy / capacity,
-    .groups = "drop"
+    .by = date
   )
 ```
 
@@ -1179,8 +1178,8 @@ earlier_toronto_shelters_2017_flipped |>
 
 earlier_toronto_shelters_2017_flipped |>
   drop_na(occupancy, capacity) |>
-  group_by(changed_date) |>
-  summarise(occupancy = sum(occupancy), .groups = "drop") |>
+  summarise(occupancy = sum(occupancy),
+            .by = changed_date) |>
   filter(year(changed_date) == 2017) |>
   ggplot(aes(x = day(changed_date), y = occupancy)) +
   geom_point(alpha = 0.3) +
@@ -1622,7 +1621,7 @@ In this case we can see that it is a few tenths of a percentage point off.
 
 ## Example: 2019 Kenyan census
 
-Finally, as a second example, let us consider a more extensive example and gather, clean, and prepare some data from the 2019 Kenyan\index{Kenya} census. The distribution of population by age, sex, and administrative unit from the 2019 Kenyan census can be downloaded [here](https://www.knbs.or.ke/?wpdmpro=2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units). While this format as a PDF makes it easy to look up a particular result, it is not overly useful if we want to model the data. In order to be able to do that, we need to convert a PDF of Kenyan census results of counts, by age and sex, and by county and sub-county, into a tidy dataset that can be analyzed. We use `janitor` [@janitor], `pdftools` [@pdftools], `purrr` [@citepurrr], `tidyverse` [@tidyverse], and `stringi` [@stringi].
+As a final example, let us consider a more extensive situation and gather, clean, and prepare some data from the 2019 Kenyan\index{Kenya} census. The distribution of population by age, sex, and administrative unit from the 2019 Kenyan census can be downloaded [here](https://www.knbs.or.ke/?wpdmpro=2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units). While this format as a PDF makes it easy to look up a particular result, it is not overly useful if we want to model the data. In order to be able to do that, we need to convert a PDF of Kenyan census results of counts, by age and sex, and by county and sub-county, into a tidy dataset that can be analyzed. We use `janitor` [@janitor], `pdftools` [@pdftools], the `tidyverse` [@tidyverse], and `stringi` [@stringi].
 
 ```{r}
 #| message: false
@@ -1630,7 +1629,6 @@ Finally, as a second example, let us consider a more extensive example and gathe
 
 library(janitor)
 library(pdftools)
-library(purrr)
 library(tidyverse)
 library(stringi)
 ```
@@ -1783,7 +1781,8 @@ We now have a function that does what we need to each page of the PDF. We use `m
 
 ```{r}
 pages <- c(30:513)
-all_tables <- map_dfr(pages, get_data)
+all_tables <- map(pages, get_data) |> 
+  list_rbind()
 rm(pages, get_data)
 ```
 
@@ -2111,13 +2110,12 @@ follow_up <-
     age %in% c("95", "96", "97", "98", "99", "95-99") ~ "95-99",
     TRUE ~ "Other"
   )) |>
-  group_by(area_type, area, groups) |>
   mutate(
     group_sum = sum(total, na.rm = FALSE),
     group_sum = group_sum / 2,
-    difference = total - group_sum
+    difference = total - group_sum,
+    .by = c(area_type, area, groups)
   ) |>
-  ungroup() |>
   filter(age == groups) |>
   filter(total != group_sum)
 
@@ -2282,6 +2280,15 @@ agent <-
 agent
 ```
 :::
+
+
+
+
+
+
+
+
+
 
 
 

@@ -43,14 +43,13 @@ engine: knitr
   - `dplyr` [@citedplyr]
     - `count()`
     - `filter()`
-    - `group_by()`
     - `if_else()`
     - `left_join()`
     - `mutate()`
     - `rename()`
     - `rowwise()`
     - `select()`
-    - `summarize()`
+    - `summarise()`
     - `ungroup()`
   - `ggplot2` [@citeggplot]
     - `ggplot()`
@@ -114,9 +113,9 @@ treat_control
 #| message: false
 
 treat_control |>
-  group_by(group) |>
   summarise(
-    result_of_being_treated = sum(binary_effect) / length(binary_effect)
+    result_of_being_treated = sum(binary_effect) / length(binary_effect),
+    .by = group
   )
 ```
 
@@ -178,8 +177,7 @@ population <-
 population
 
 population |>
-  group_by(favorite_color) |>
-  count()
+  count(.by = favorite_color)
 ```
 
 Building on the terminology and concepts introduced in @sec-farm-data, we now construct a sampling frame that contains 80 per cent of the target population.
@@ -200,8 +198,7 @@ frame <-
   filter(in_frame == 1)
 
 frame |>
-  group_by(favorite_color) |>
-  count()
+  count(.by = favorite_color)
 ```
 
 For now, we will set aside dog or cat preferences and focus on creating treatment and control groups based on favorite color only.
@@ -226,11 +223,9 @@ When we look at the mean for the two groups, we can see that the proportions tha
 #| tbl-cap: "Proportion of the groups that prefer blue or white"
 
 sample |>
-  group_by(group, favorite_color) |>
-  count() |>
-  ungroup() |>
-  group_by(group) |>
-  mutate(prop = n / sum(n)) |>
+  count(group, favorite_color) |>
+  mutate(prop = n / sum(n),
+         .by = group) |>
   knitr::kable(
     col.names = c("Group", "Preferred color", "Number", "Proportion"),
     digits = 2,
@@ -249,11 +244,9 @@ sample |>
     frame |> select(person, prefers_dogs_to_cats),
     by = "person"
   ) |>
-  group_by(group, prefers_dogs_to_cats) |>
-  count() |>
-  ungroup() |>
-  group_by(group) |>
-  mutate(prop = n / sum(n)) |>
+  count(group, prefers_dogs_to_cats) |>
+  mutate(prop = n / sum(n),
+         .by = group) |>
   knitr::kable(
     col.names = c(
       "Group",
@@ -328,7 +321,8 @@ ate_example <-
     was_treated == "No",
     rnorm(n = 1, mean = 5, sd = 1),
     rnorm(n = 1, mean = 6, sd = 1)
-  ))
+  )) |> 
+  ungroup()
 ```
 
 We can see the difference, which we simulated to be one, between the two groups in @fig-exampleatefig. And we can compute the average between the groups and then the difference to see also that we roughly get back the result that we put in (@tbl-exampleatetable).
@@ -361,8 +355,8 @@ ate_example |>
 #| tbl-cap: "Average difference between the treatment and control groups for data simulated to have an average difference of one"
 
 ate_example |>
-  group_by(was_treated) |>
-  summarize(mean = mean(outcome)) |>
+  summarise(mean = mean(outcome),
+            .by = was_treated) |>
   pivot_wider(names_from = was_treated, values_from = mean) |>
   mutate(difference = Yes - No) |>
   knitr::kable(
@@ -524,7 +518,7 @@ Like earlier studies such as @randhealth, @finkelstein2012oregon found that the 
 
 Trust is not something that we think regularly about, but it is fairly fundamental to most interactions, both economic and personal. For instance, many of us get paid after we do some work--we are trusting our employer will make good, and vice versa. If you get paid in advance, then they are trusting you. In a strictly naive, one-shot, world without transaction costs, this does not make sense. If you get paid in advance, the incentive is for you to take the money and run in the last pay period before you quit, and through backward induction everything falls apart. We do not live in such a world. For one thing there are transaction costs, for another, generally, we have repeated interactions, and finally, the world usually ends up being fairly small.
 
-Understanding the extent of honesty in different countries may help us to explain economic development and other aspects of interest such as tax compliance, but it is hard to measure. We cannot ask people how honest they are--the liars would lie, resulting in a lemons problem [@akerlof1970market]. This is a situation of adverse selection, where the liars know they are liars, but others do not. To get around this @cohn2019civic conduct an experiment in 355 cities across 40 countries where they "turned in" a wallet that was either empty or contained the local equivalent of US$13.45. They were interested in whether the "recipient" attempted to return the wallet. They found that generally wallets with money were more likely to be returned [@cohn2019civic, p. 1].
+Understanding the extent of honesty in different countries may help us to explain economic development and other aspects of interest such as tax compliance, but it is hard to measure. We cannot ask people how honest they are---the liars would lie, resulting in a lemons problem [@akerlof1970market]. This is a situation of adverse selection, where the liars know they are liars, but others do not. To get around this @cohn2019civic conduct an experiment in 355 cities across 40 countries where they "turned in" a wallet that was either empty or contained the local equivalent of US$13.45. They were interested in whether the "recipient" attempted to return the wallet. They found that generally wallets with money were more likely to be returned [@cohn2019civic, p. 1].
 
 In total @cohn2019civic "turn in" 17,303 wallets to various institutions including banks, museums, hotels, and police stations. The importance of such institutions to an economy is generally well accepted [@acemoglu2001colonial] and they are common across most countries. Importantly, for the experiment, they usually have a reception area where the wallet could be turned in [@cohn2019civic, p. 1].
 
@@ -548,11 +542,10 @@ wallet_data <- read_csv(here::here("inputs/data/behavioral_data.csv"))
 wallet_data |>
   filter(cond %in% c(0, 1)) |>
   count(Country, cond, response) |>
-  group_by(Country, cond) %>%
-  mutate(freq = n / sum(n) * 100) |>
+  mutate(freq = n / sum(n) * 100,
+         .by = c(Country, cond)) |>
   filter(response == 100) |>
-  mutate(cond = if_else(cond == 0, "No", "Yes")) |>
-  mutate(cond = factor(cond)) |>
+  mutate(cond = factor(if_else(cond == 0, "No", "Yes"))) |>
   ggplot() +
   geom_point(aes(x = reorder(Country, -freq, FUN = mean), y = freq, color = cond)) +
   labs(
@@ -706,9 +699,8 @@ For every test, and for every picture, we want to know whether asking a question
 
 to_question_or_not_to_question <-
   upworthy_restricted |>
-  group_by(clickability_test_id, asks_question) |>
-  summarize(ave_clicks = mean(clicks)) |>
-  ungroup()
+  summarise(ave_clicks = mean(clicks),
+            .by = c(clickability_test_id, asks_question))
 
 look_at_differences <-
   to_question_or_not_to_question |>
@@ -738,8 +730,8 @@ We could also consider a cross-tab (@tbl-datasummaryupworthy).
 #| tbl-cap: "Difference between the average number of clicks"
 
 to_question_or_not_to_question |> 
-  group_by(asks_question) |> 
-  summarize(mean = mean(ave_clicks)) |> 
+  summarise(mean = mean(ave_clicks),
+            .by = asks_question) |> 
   knitr::kable(
     col.names = c("Asks a question?", "Mean clicks"),
     digits = 0

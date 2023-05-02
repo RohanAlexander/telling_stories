@@ -624,8 +624,8 @@ We can also plot the top five stations by mean delay, faceted by line (@fig-what
 #| label: fig-whatisthisagraphforants
 
 all_2021_ttc_data_no_dupes_with_explanation |>
-  group_by(line, station_clean) |>
-  summarise(mean_delay = mean(min_delay), n_obs = n()) |>
+  summarise(mean_delay = mean(min_delay), n_obs = n(),
+            .by = c(line, station_clean)) |>
   filter(n_obs > 1) |>
   arrange(line, -mean_delay) |>
   slice(1:5) |>
@@ -653,8 +653,8 @@ library(lubridate)
 all_2021_ttc_data_no_dupes_with_explanation |>
   filter(min_delay > 0) |>
   mutate(week = week(date)) |>
-  group_by(week, line) |>
-  summarise(mean_delay = mean(min_delay)) |>
+  summarise(mean_delay = mean(min_delay),
+            .by = c(week, line)) |>
   ggplot(aes(week, mean_delay, color = line)) +
   geom_point() +
   geom_smooth() +
@@ -676,8 +676,8 @@ Now let us look at the proportion of delays that were greater than ten minutes (
 
 all_2021_ttc_data_no_dupes_with_explanation |>
   mutate(week = week(date)) |>
-  group_by(week, line) |>
-  summarise(prop_delay = sum(min_delay > 10) / n()) |>
+  summarise(prop_delay = sum(min_delay > 10) / n(),
+            .by = c(week, line)) |>
   ggplot(aes(week, prop_delay, color = line)) +
   geom_point() +
   geom_smooth() +
@@ -719,8 +719,8 @@ The relationship between categorical variables takes more work, but we could als
 #| warning: false
 
 all_2021_ttc_data_no_dupes_with_explanation |>
-  group_by(line, code_desc) |>
-  summarise(mean_delay = mean(min_delay)) |>
+  summarise(mean_delay = mean(min_delay),
+            .by = c(line, code_desc)) |>
   arrange(-mean_delay) |>
   slice(1:5) |>
   ggplot(aes(

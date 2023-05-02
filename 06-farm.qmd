@@ -180,8 +180,8 @@ newborn_weight |>
 #| tbl-cap: "Comparing the means of the different scenarios identifies the bias"
 
 newborn_weight |>
-  group_by(measurement) |>
-  summarise(mean = mean(weight, na.rm = TRUE)) |>
+  summarise(mean = mean(weight, na.rm = TRUE),
+            .by = measurement) |>
   knitr::kable(
     col.names = c("Measurement", "Mean"),
     digits = 3
@@ -749,8 +749,8 @@ set.seed(853)
 selected_within_strata <-
   illustrative_sampling |>
   mutate(strata = (unit - 1) %/% 10) |>
-  group_by(strata) |>
-  slice_sample(n = 2) |>
+  slice_sample(n = 2,
+               by = strata) |>
   pull(unit)
 
 illustrative_sampling <-
@@ -1096,8 +1096,8 @@ To consider an example, perhaps we were interested in the sum of the numbers fro
 
 illustrative_sampling_long |>
   filter(in_sample == "Included") |>
-  group_by(sampling_method) |>
-  summarize(sum_from_sample = sum(unit)) |>
+  summarise(sum_from_sample = sum(unit),
+            .by = sampling_method) |>
   mutate(scaled_by_five = sum_from_sample * 5) |>
   knitr::kable(
     col.names = c(
@@ -1151,7 +1151,7 @@ The average of each is:
 
 ```{r}
 sleep |>
-  summarize(
+  summarise(
     toddler_sleep_average = mean(toddler_sleep),
     parent_sleep_average = mean(parent_sleep)
   ) |>
