@@ -98,17 +98,17 @@ Your model does not care whether you validated your data, but you should. Validi
 
 SpaceX\index{SpaceX}, the US rocket company, uses cycles of ten or 50 Hertz (equivalent to 0.1 and 0.02 seconds, respectively) to control their rockets. Each cycle, the inputs from sensors, such as temperature and pressure, are read, processed, and used to make a decision, such as whether to adjust some setting [@martinpopper]. We use a similar iterative approach of small adjustments for data cleaning and preparation\index{data cleaning and preparation}. Rather than trying to make everything perfect from the start, we get started, and iterate using a process of small, continuous improvements.
 
-To a large extent, the role of data cleaning and preparation\index{data cleaning and preparation} is so great that the only people that understand a dataset, are those that who have cleaned it. Yet, the paradox of data cleaning is that often those that do the cleaning and preparation are those that have the least trust in the resulting dataset. At some point in every data science workflow, those doing the modelling should get their hands dirty with data cleaning. Even though few want to do it [@Sambasivan2021], it can be as influential as modelling. To clean and prepare data is to make many decisions, some of which may have important effects on our results. For instance, @labelsiswrongs find the test sets of some popular datasets in computer science contain, on average, labels that are wrong in around three per cent of cases. This has the potential to result in incorrect conclusions. And @Banes2022 re-visited the Sumatran orang-utan *(Pongo abelii)* reference genome and found that eight of the ten samples had been attributed to the wrong source individuals, and sex was wrongly assigned in five individuals. It is difficult to know the true effect of this, but the paper associated with the original dataset had been cited more than 500 times. Like Sam Rayburn wishing that Kennedy's cabinet despite their intelligence, had experience in the nitty-gritty, a data scientist needs to immerse themselves in the messy reality of their dataset.
+To a large extent, the role of data cleaning and preparation\index{data cleaning and preparation} is so great that the only people that understand a dataset, are those that who have cleaned it. Yet, the paradox of data cleaning is that often those that do the cleaning and preparation are those that have the least trust in the resulting dataset. At some point in every data science workflow, those doing the modelling should get their hands dirty with data cleaning. Even though few want to do it [@Sambasivan2021], it can be as influential as modelling. To clean and prepare data is to make many decisions, some of which may have important effects on our results. For instance, @labelsiswrongs find the test sets of some popular datasets in computer science contain, on average, labels that are wrong in around three per cent of cases. @Banes2022 re-visited the Sumatran orang-utan *(Pongo abelii)* reference genome and found that eight of the ten samples had been attributed to the wrong source individuals, and sex was wrongly assigned in five individuals. And @eveninaccountingwhat find a substantial difference between the as-filed and standardized versions of a company's accounting data, especially for complex financial situations. Like Sam Rayburn wishing that Kennedy's cabinet despite their intelligence, had experience in the nitty-gritty, a data scientist needs to immerse themselves in the messy reality of their dataset.
 
-The reproducibility crisis, which was identified early in psychology [@anniesfind] but has now extended to many other fields in the physical and social sciences, brought to light issues such as p-value "hacking", researcher degrees of freedom, file-drawer issues, and even data and results fabrication [@gelman2013garden]. Steps are now being put in place to address these. But there has been relatively little focus on the data gathering, cleaning, and preparation aspects of applied statistics, despite evidence that decisions made during these steps greatly affect statistical results [@huntington2021influence]. In this chapter we focus on these issues.
+The reproducibility crisis\index{reproducibility crisis}, which was identified early in psychology [@anniesfind] but has now extended to many other fields in the physical and social sciences, brought to light issues such as p-value "hacking"\index{p-hacking}, researcher degrees of freedom, file-drawer issues, and even data and results fabrication [@gelman2013garden]. Steps are now being put in place to address these. But there has been relatively little focus on the data gathering, cleaning, and preparation aspects of applied statistics, despite evidence that decisions made during these steps greatly affect statistical results [@huntington2021influence]. In this chapter we focus on these issues.
 
-While the statistical practices that underpin data science are themselves correct and robust when applied to simulated datasets, data science is not typically conducted with data that follow the assumptions underlying the models commonly that are fit. For instance, data scientists are interested in "messy, unfiltered, and possibly unclean data---tainted by heteroskedasticity, complex dependence and missingness patterns---that until recently were avoided in polite conversations between more traditional statisticians" [@craiu2019hiring]. Big data does not resolve this issue and may even exacerbate it. For instance, population inference based on larger amounts of poor-quality data, without adjusting for data issues, will just lead to more confidently wrong conclusions [@meng2018statistical]. The problems that are found in much of applied statistics research are not necessarily associated with researcher quality, or their biases [@silberzahn2018many]. Instead, they are a result of the context within which data science is conducted. This chapter provides an approach and tools to explicitly think about this work.
+While the statistical practices that underpin data science are themselves correct and robust when applied to simulated datasets, data science is not typically conducted with data that follow the assumptions underlying the models commonly that are fit. For instance, data scientists are interested in "messy, unfiltered, and possibly unclean data---tainted by heteroskedasticity, complex dependence and missingness patterns---that until recently were avoided in polite conversations between more traditional statisticians" [@craiu2019hiring]. Big data\index{big data} does not resolve this issue and may even exacerbate it. For instance, population inference based on larger amounts of poor-quality data, without adjusting for data issues, will just lead to more confidently wrong conclusions [@meng2018statistical]. The problems that are found in much of applied statistics research are not necessarily associated with researcher quality, or their biases [@silberzahn2018many]. Instead, they are a result of the context within which data science is conducted. This chapter provides an approach and tools to explicitly think about this work.
 
-@gelman2020most, writing about the most important statistical ideas of the past 50 years, say that each of them enabled new ways of thinking about data analysis and they brought into the tent of statistics approaches that "had been considered more a matter of taste or philosophy". The focus on data cleaning and preparation in this chapter is analogous, insofar as it represents a codification, or bringing inside the tent, of aspects that are typically, incorrectly, considered those of taste rather than core statistical concerns.
+@gelman2020most, writing about the most important statistical ideas of the past 50 years, say that each of them enabled new ways of thinking about data analysis and they brought into the tent of statistics approaches that "had been considered more a matter of taste or philosophy". The focus on data cleaning and preparation\index{data cleaning and preparation} in this chapter is analogous, insofar as it represents a codification, or bringing inside the tent, of aspects that are typically, incorrectly, considered those of taste rather than core statistical concerns.
 
 The workflow\index{workflow} for data cleaning and preparation\index{data cleaning and preparation} that we advocate is:
 
-1. Save the raw data.
+1. Save the original, unedited data.
 2. Begin with an end in mind.
 3. Write tests and documentation. 
 4. Execute the plan on a small sample.
@@ -126,13 +126,13 @@ All data regardless of whether they were obtained from farming, gathering, or hu
 
 ## Workflow
 
-### Save a copy of the raw data
+### Save a copy of the unedited data
 
-The first step is to save the raw data into a separate, local folder. It is important to save this raw data, to the extent that is possible, because it establishes the foundation for reproducibility [@wilsongoodenough]. If we are obtaining our data from a third-party, such as a government website, then we have no control over whether they will continue to host that data, update it, or change the address at which it is available. Saving a local copy also reduces the burden that we impose on their servers. 
+The first step is to save the original, unedited data\index{unedited data} into a separate, local folder. It is important to save this original data, to the extent that is possible, because it establishes the foundation for reproducibility [@wilsongoodenough]. If we are obtaining our data from a third-party, such as a government website, then we have no control over whether they will continue to host that data, update it, or change the address at which it is available. Saving a local copy also reduces the burden that we impose on their servers. 
 
-Having locally saved the raw data we must maintain a copy of it in that state, and not modify it. As we begin to clean and prepare it, we instead create a copy of the dataset. Maintaining the initial, raw state of the dataset, and using scripts to create the dataset that we are interested in analyzing, ensures that our entire workflow is reproducible. It may be that the changes that we decide to make today, are not ones that we would make tomorrow, having learnt more about the dataset, and so we need to ensure that we have that data in the original state if we need to return to it [@Borer2009].
+Having locally saved the original, unedited data we must maintain a copy of it in that state, and not modify it. As we begin to clean and prepare it, we instead create a copy of the dataset. Maintaining the initial, original, unedited state of the dataset, and using scripts to create the dataset that we are interested in analyzing, ensures that our entire workflow is reproducible. It may be that the changes that we decide to make today, are not ones that we would make tomorrow, having learnt more about the dataset, and so we need to ensure that we have that data in the original state if we need to return to it [@Borer2009].
 
-We may not always be allowed to share that local copy, but we can almost always create it. If we are not even able to create a local copy of the raw data, for instance if we are using a restricted-use computer, then it may be that the best we can do is save a copy of as close to the raw data as is possible, create a simulated version of the raw data that conveys the main features, and include detailed access instructions in the README.
+We may not always be allowed to share that local copy, but we can almost always create it. If we are not even able to create a local copy of the original, unedited data, for instance if we are using a restricted-use computer, then it may be that the best we can do is save a copy of as close to the original, unedited data as is possible, create a simulated version of the original, unedited data that conveys the main features, and include detailed access instructions in the README.
 
 
 ### Begin with an end in mind
@@ -167,7 +167,7 @@ simulated_population
 
 
 ::: {.content-visible when-format="pdf"}
-Our purpose, during data cleaning and preparation\index{data cleaning and preparation}, is to then bring our raw data close to that plan. Ideally, we would plan so that the desired endpoint of our dataset is "tidy data"\index{tidy data}. This is introduced in the ["R essentials" Online Appendix](https://tellingstorieswithdata.com/20-r_essentials.html), but briefly, it means that [@r4ds; @wickham2014tidy, p. 4]:
+Our purpose, during data cleaning and preparation\index{data cleaning and preparation}, is to then bring our original, unedited data close to that plan. Ideally, we would plan so that the desired endpoint of our dataset is "tidy data"\index{tidy data}. This is introduced in the ["R essentials" Online Appendix](https://tellingstorieswithdata.com/20-r_essentials.html), but briefly, it means that [@r4ds; @wickham2014tidy, p. 4]:
 
 1. each variable is in its own column;
 2. each observation is in its own row; and
@@ -177,7 +177,7 @@ At this stage it is important to begin thinking about validity and internal cons
 :::
 
 ::: {.content-visible unless-format="pdf"}
-Our purpose, during data cleaning and preparation\index{data cleaning and preparation}, is to then bring our raw data close to that plan. Ideally, we would plan so that the desired endpoint of our dataset is "tidy data"\index{tidy data}. This is introduced in [Online Appendix -@sec-r-essentials], but briefly, it means that [@r4ds; @wickham2014tidy, p. 4]:
+Our purpose, during data cleaning and preparation\index{data cleaning and preparation}, is to then bring our original, unedited data close to that plan. Ideally, we would plan so that the desired endpoint of our dataset is "tidy data"\index{tidy data}. This is introduced in [Online Appendix -@sec-r-essentials], but briefly, it means that [@r4ds; @wickham2014tidy, p. 4]:
 
 1. each variable is in its own column;
 2. each observation is in its own row; and
@@ -191,7 +191,7 @@ At this stage it is important to begin thinking about validity and internal cons
 
 ### Start small
 
-Having thoroughly planned we can turn to the raw data that we are dealing with. Usually, regardless of what the raw data look like, we want to manipulate them into a rectangular dataset as quickly as possible. This allows us to use familiar functions from the `tidyverse`. For instance, let us assume that we are starting with a `.txt` file.
+Having thoroughly planned we can turn to the original, unedited data that we are dealing with. Usually, regardless of what the original, unedited data look like, we want to manipulate them into a rectangular dataset as quickly as possible. This allows us to use familiar functions from the `tidyverse`. For instance, let us assume that we are starting with a `.txt` file.
 
 The first step is to look for regularities in the dataset. We want to end up with tabular data, which means that we need some type of delimiter to distinguish different columns. Ideally this might be features such as a comma, a semicolon, a tab, a double space, or a line break. For instance, in the following case we would take advantage of the comma.
 
@@ -224,11 +224,11 @@ One way to approach this is to take advantage of the different classes and value
 We will now convert this final case into tidy data using `tidyr` [@citetidyr].
 
 ```{r}
-raw_data <-
+unedited_data <-
   c("Alabama 5 Alaska 0.7 Arizona 7 Arkansas 3 California 40")
 
 data_as_tibble <-
-  tibble(raw = raw_data)
+  tibble(raw = unedited_data)
 
 tidy_data <-
   data_as_tibble |>
@@ -270,7 +270,7 @@ When the tests of membership are passed, then finally we can change the class, a
 :::{.callout-note}
 ## Oh, you think we have good data on that!
 
-The simplification of reality can be especially seen in sports records, which necessarily must choose what to record. Sports records are fit for some purposes and not for others. For instance, chess is played on a 8 x 8 board of alternating black and white squares. The squares are detonated by a unique combination of both a letter (A-G) and a number (1-8). Most pieces have a unique abbreviation, for instance knights are N and bishops are B. Each game is recorded using this 'algebraic notation' by each player independently. These records allow us to recreate the moves of the game. The 2021 World Championship was contested by Magnus Carlsen and Ian Nepomniachtchi. There were a variety of reasons this game was particularly noteworthy, including it being the longest world championship game, but one is the uncharacteristic mistakes that both Carlsen and Nepomniachtchi made. For instance, at Move 33 Carlsen did not exploit an opportunity; and at Move 36 a different move would have provided Nepomniachtchi with a promising endgame [@PeterDoggers]. One reason for this may have been that both players at that point in the game had very little time remaining---they had to decide on their moves very quickly. But there is no sense of that in the representation provided by the game sheet because it does not record time. The record is fit for purpose as a 'correct' representation of what happened in the game, but not necessarily why it happened.
+The simplification of reality can be especially seen in sports records, which necessarily must choose what to record. Sports records are fit for some purposes and not for others. For instance, chess is played on an 8 x 8 board of alternating black and white squares. The squares are detonated by a unique combination of both a letter (A-G) and a number (1-8). Most pieces have a unique abbreviation, for instance knights are N and bishops are B. Each game is recorded using this "algebraic notation" by each player independently. These records allow us to recreate the moves of the game. The 2021 World Championship was contested by Magnus Carlsen and Ian Nepomniachtchi. There were a variety of reasons this game was particularly noteworthy, including it being the longest world championship game, but one is the uncharacteristic mistakes that both Carlsen and Nepomniachtchi made. For instance, at Move 33 Carlsen did not exploit an opportunity; and at Move 36 a different move would have provided Nepomniachtchi with a promising endgame [@PeterDoggers]. One reason for this may have been that both players at that point in the game had very little time remaining---they had to decide on their moves very quickly. But there is no sense of that in the representation provided by the game sheet because it does not record time. The record is fit for purpose as a "correct" representation of what happened in the game, but not necessarily why it happened.
 :::
 
 
@@ -400,7 +400,7 @@ We could now iterate the plan. In this most recent case, we started with ten ent
 
 ## Checking and testing
 
-Robert Caro\index{Robert Caro}, the biographer of Lyndon Johnson\index{Lyndon Johnson} introduced in @sec-on-writing, spent years tracking down everyone connected to the 36th President of the United States. Caro and his wife went so far as to live in Texas Hill Country for three years so that they could better understand where Johnson was from. When Caro heard that Johnson, as a senator, would run to the Senate from where he stayed in D.C., he ran that route multiple times himself to try to understand why Johnson was running. Caro eventually understood it only when he ran the route as the sun was rising, just as Johnson had done; it turns out that the sun hits the Senate Rotunda in a particularly inspiring way [@caroonworking, p. 156]. This background work enabled him to uncover aspects that no one else knew. For instance, Johnson almost surely stole his first election win [@caroonworking, p. 116]. We need to understand our data to this same extent. We must turn every page, and go to every extreme.
+Robert Caro\index{Robert Caro}, the biographer of Lyndon Johnson\index{Lyndon Johnson} introduced in @sec-on-writing, spent years tracking down everyone connected to the 36th President of the United States. Caro and his wife Ina went so far as to live in Texas Hill Country for three years so that they could better understand where Johnson was from. When Caro heard that Johnson, as a senator, would run to the Senate from where he stayed in D.C., he ran that route multiple times himself to try to understand why Johnson was running. Caro eventually understood it only when he ran the route as the sun was rising, just as Johnson had done; it turns out that the sun hits the Senate Rotunda in a particularly inspiring way [@caroonworking, p. 156]. This background work enabled him to uncover aspects that no one else knew. For instance, Johnson almost surely stole his first election win [@caroonworking, p. 116]. We need to understand our data to this same extent. We must turn every page, and go to every extreme.
 
 The idea of negative space is well established in design. It refers to that which surrounds the subject. Sometimes negative space is used as an effect, for instance the logo of FedEx, an American logistics company, has negative space between the E and X that creates an arrow. In a similar way, we want to be cognizant of the data that we have, and the data that we do not have [@citemyboy]. We are worried that the data that we do not have somehow has meaning, potentially even to the extent of changing our conclusions. When we are cleaning data, we are looking for anomalies. We are interested in values that are in there that should not be, but also the opposite situation---values that are missing that should not be. There are three tools that we use to identify these situations: graphs, counts, and tests. 
 
@@ -416,17 +416,8 @@ Graphs are an invaluable tool when cleaning data, because they show each observa
 
 youth_survey_data <-
   tibble(ages = c(
-    15.9,
-    14.9,
-    16.6,
-    15.8,
-    16.7,
-    17.9,
-    12.6,
-    11.5,
-    16.2,
-    19.5,
-    150
+    15.9, 14.9, 16.6, 15.8, 16.7, 17.9, 
+    12.6, 11.5, 16.2, 19.5, 150
   ))
 
 youth_survey_data |>
@@ -443,23 +434,11 @@ youth_survey_data |>
 
 ```{r}
 #| label: fig-youth-survey-2
-#| echo: false
-#| fig-cap: "Ages in the simulated youth survey dataset post-cleaning"
+#| fig-cap: "Ages in the simulated youth survey dataset after cleaning"
 
 youth_survey_data_fixed <-
-  tibble(ages = c(
-    15.9,
-    14.9,
-    16.6,
-    15.8,
-    16.7,
-    17.9,
-    12.6,
-    11.5,
-    16.2,
-    19.5,
-    15.0
-  ))
+  youth_survey_data |> 
+  mutate(ages = if_else(ages == 150, 15.0, ages))
 
 youth_survey_data_fixed |>
   ggplot(aes(x = ages)) +
@@ -504,9 +483,12 @@ Turning, briefly, to numeric data, @Preece1981 recommends plotting counts of the
 
 ### Tests
 
-As we said in @sec-reproducible-workflows, if you write code, then you are a programmer, but there is a difference between someone coding for fun, and an astronomer writing the code that runs the James Webb Telescope. Following @weinbergpsychology [p. 122], we distinguish between amateurs and professionals based on the end user. When we first start out coding, we typically write code that only we use. For instance, we may write some code for a paper that we submit for a class. After we get a grade, then in most cases, everything can be forgotten about. In contrast, a professional writes code for, and often with, other people. For instance, much of the academic research in the social sciences relies on code. If that research is to contribute to lasting knowledge, then partly that means the code that underpins it is being written for others and must work for others well after the researcher has moved on to other projects. A professional places appropriate care on tasks that ensure code can be considered by others. A large part of that is tests. As such, we should strive to include tests in our code when possible and where appropriate.
+As we said in @sec-reproducible-workflows, if you write code, then you are a programmer, but there is a difference between someone coding for fun, and an astronomer writing the code that runs the James Webb Telescope. Following @weinbergpsychology [p. 122], we distinguish between amateurs and professionals based the existence of subsequent users. When we first start out coding, we typically write code that only we use. For instance, we may write some code for a paper that we submit for a class. After we get a grade, then in most cases, everything can be forgotten about. In contrast, a professional writes code for, and often with, other people. For instance, much of the academic research in the social sciences relies on code. If that research is to contribute to lasting knowledge, then partly that means the code that underpins it is being written for others and must work for others well after the researcher has moved on to other projects. A professional places appropriate care on tasks that ensure code can be considered by others. A large part of that is tests. @jplcodingstandards [p. 14] claim that tests "often find at least one defect per one hundred lines of code written". And there is no reason to believe that code without tests is free of defects, just that they are not known. As such, we should strive to include tests in our code when possible and where appropriate.
 
-Some things are so important that we require that the cleaned dataset have them. These are conditions that we should check. They would typically come out of experience, expert knowledge, or the planning and simulation stages. For instance, there should be no negative numbers in an age variable, and no ages above 140. For these we could specifically require that the condition is met. Another example is when doing cross-country analysis, then a list of country names that we know should be in our dataset would be useful. Our test would then be that there were: 1) values not in that list that were in our dataset, or vice versa; 2) countries that we expected to be in our dataset that were not.
+Some things are so important that we require that the cleaned dataset have them. These are conditions that we should check. They would typically come out of experience, expert knowledge, or the planning and simulation stages. For instance, there should be no negative numbers in an age variable, and no ages above 140. For these we could specifically require that the condition is met. Another example is when doing cross-country analysis, then a list of country names that we know should be in our dataset would be useful. Our test would then be that there were: 
+
+1) values not in that list that were in our dataset, or vice versa; and 
+2) countries that we expected to be in our dataset that were not.
 
 To have a concrete example, let us consider if we were doing some analysis about the five largest counties in Kenya\index{Kenya}. From looking it up, we find these are: "Nairobi", "Kiambu", "Nakuru", "Kakamega", and "Bungoma". Let us create that variable first.
 
@@ -575,15 +557,16 @@ if (all(correct_kenya_counties %in% top_five_kenya_fixed_1_8$county |>
 }
 ```
 
-And so it is clear that we still have cleaning to do because not all the counties match what we were expecting.
+It is clear that we still have cleaning to do because not all the counties match what we were expecting.
 
 We will talk about explicit tests for class and dates, given their outsized importance, and how common it is for them to go wrong. But other aspects to explicitly consider testing include:
 
 - Variables of monetary values should be tested for reasonable bounds given the situation. In some cases negative values will not be possible. Sometimes a top bound can be identified. Monetary variables should be numeric. They should not have commas or other separators. They should not contain symbols such as currency signs or semicolons.
 - Variables of population values should likely not be negative. Populations of cities should likely be somewhere between 100,000 and 50,000,000. They again should be numeric, and contain only numbers, no symbols.
 - Names should be character variables. They likely do not contain numbers. They may contain some limited set of symbols, and this would be context specific. 
+- The number of observations is surprisingly easy to inadvertently change. While it is fine for this to happen deliberately, when it happens accidentally it can create substantial problems. The number of observations should be tested at the start of any data cleaning process against the data simulation and this expectation updated as necessary. It should be tested throughout the data cleaning process, but especially before and after any joins.
 
-More generally, work with experts and draw on prior knowledge to work out some reasonable features for the variables of interest and then implement these.
+More generally, work with experts and draw on prior knowledge to work out some reasonable features for the variables of interest and then implement these. For instance, consider how @scamswillnotsaveus was able to quickly identify an error in a claim about user numbers by roughly comparing it how many institutions in the US receive federal financial aid.
 
 We can use `validate` [@van2021data] to set up a series of tests. For instance, here we will simulate some data with clear issues.
 
@@ -643,7 +626,7 @@ In this case, we can see that there are issues with the final three rules that w
 As mentioned in @sec-farm-data, gender is something that we need to be especially careful about. We will typically have a small number of responses that are neither "male" or "female". The correct way to deal with the situation depends on context. But if responses other than "male" or "female" are going to be removed from the dataset and ignored, because there are too few of them, then the least that we can do, to show some respect for the respondent, is to go through those observations qualitatively to enable a brief discussion of how they were similar or different to the rest of the dataset. Potentially plots or a more extensive discussion could then be included in an appendix.
 
 
-### Class
+#### Class
 
 ::: {.content-visible when-format="pdf"}
 It is sometimes said that Americans are obsessed with money, while the English are obsessed with class. In the case of data cleaning and preparation we need to be English. Class is critical and worthy of special attention. We introduce class in the ["R essentials" Online Appendix](https://tellingstorieswithdata.com/20-r_essentials.html) and here we focus on "numeric", "character", and "factor". Explicit checks of the class of variables are essential. Accidentally assigning the wrong class to a variable can have a large effect on subsequent analysis. It is important to:
@@ -739,7 +722,7 @@ raw_igme_data <-
 This is typically an iterative process of initially reading in the dataset, getting a quick sense of it, and then reading it in properly with only the necessary columns and classes specified. While this will require a little extra work of us, it is important that we are clear about class.
 
 
-### Dates
+#### Dates
 
 A shibboleth for whether someone has worked with dates before is their reaction when you tell them you are going to be working with dates. If they immediately involuntarily shudder and share a horror story, then they have worked with dates before, and any other reaction means they have not!
 
@@ -1195,6 +1178,8 @@ earlier_toronto_shelters_2017_flipped |>
   ) +
   theme_minimal()
 ```
+
+
 
 
 ## Example: Running times
@@ -2305,7 +2290,7 @@ agent
 
 ### Questions {.unnumbered}
 
-1. Where would you save a copy of the raw data (pick one)?
+1. Where would you save a copy of the original, unedited data (pick one)?
     a.  "inputs"
     b. "outputs"
     c. "scripts"
