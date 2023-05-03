@@ -51,7 +51,6 @@ engine: knitr
     - `case_when()`
     - `count()`
     - `filter()`
-    - `group_by()`
     - `if_else()`
     - `left_join()`
     - `mutate()`
@@ -301,7 +300,7 @@ There are five `dplyr` functions that are regularly used, and we will now go thr
 4. `mutate()`
 5. `summarise()` or equally `summarize()`
 
-We will also cover `group_by()`, and `count()` here as they are closely related.
+We will also cover `.by`, and `count()` here as they are closely related.
 
 As we have already installed the `tidyverse`, we just need to load it.
 
@@ -701,7 +700,7 @@ australian_politicians |>
   )
 ```
 
-As an aside, `summarise()` and `summarize()` are equivalent and we can use either.
+As an aside, `summarise()` and `summarize()` are equivalent and we can use either. In this book we use `summarise()`.
 
 ```{r}
 #| eval: true
@@ -715,18 +714,18 @@ australian_politicians |>
   )
 ```
 
-By default, `summarise()` will provide one row of output for a whole dataset. For instance, in the earlier example we found the youngest, oldest, and average across all politicians. However, we can create more groups in our dataset using `group_by()`. And we can then apply another function within the context of those groups. We could use many functions on the basis of groups, but the `summarise()` function is particularly powerful in conjunction with `group_by()`. For instance, we could group by gender, and then get age-based summary statistics.
+By default, `summarise()` will provide one row of output for a whole dataset. For instance, in the earlier example we found the youngest, oldest, and average across all politicians. However, we can create more groups in our dataset using `.by` within the function. We can use many functions on the basis of groups, but the `summarise()` function is particularly powerful in conjunction with `.by`. For instance, we could group by gender, and then get age-based summary statistics.
 
 ```{r}
 #| eval: true
 #| echo: true
 
 australian_politicians |>
-  group_by(gender) |>
   summarise(
     youngest = min(age, na.rm = TRUE),
     oldest = max(age, na.rm = TRUE),
-    average = mean(age, na.rm = TRUE)
+    average = mean(age, na.rm = TRUE),
+    .by = gender
   )
 ```
 
@@ -739,17 +738,17 @@ Similarly, we could look at youngest, oldest, and mean age at death by gender.
 australian_politicians |>
   mutate(days_lived = deathDate - birthDate) |>
   drop_na(days_lived) |>
-  group_by(gender) |>
   summarise(
     min_days = min(days_lived),
     mean_days = mean(days_lived) |> round(),
-    max_days = max(days_lived)
+    max_days = max(days_lived),
+    .by = gender
   )
 ```
 
 And so we learn that female members of parliament on average lived slightly longer than male members of parliament.
 
-We can use `group_by()` on the basis of more than one group. For instance, we could look at the average number of days lived by gender and by they were in the House of Representatives or the Senate.
+We can use `.by` on the basis of more than one group. For instance, we could look at the average number of days lived by gender and by they were in the House of Representatives or the Senate.
 
 ```{r}
 #| eval: true
@@ -760,11 +759,11 @@ We can use `group_by()` on the basis of more than one group. For instance, we co
 australian_politicians |>
   mutate(days_lived = deathDate - birthDate) |>
   drop_na(days_lived) |>
-  group_by(gender, member) |>
   summarise(
     min_days = min(days_lived),
     mean_days = mean(days_lived) |> round(),
-    max_days = max(days_lived)
+    max_days = max(days_lived),
+    .by = c(gender, member)
   )
 ```
 
@@ -789,15 +788,15 @@ australian_politicians |>
   mutate(proportion = n / (sum(n)))
 ```
 
-Using `count()` is essentially the same as using `group_by()` and then `summarise()` with `n()`, and we get the same result in that way.
+Using `count()` is essentially the same as using `.by` within `summarise()` with `n()`, and we get the same result in that way.
 
 ```{r}
 #| eval: true
 #| echo: true
 
 australian_politicians |>
-  group_by(gender) |>
-  summarise(n = n())
+  summarise(n = n(),
+            .by = gender)
 ```
 
 And there is a comparably helpful function that acts similarly to`mutate()`, which is `add_count()`. The difference is that the number will be added in a new column.
@@ -807,8 +806,7 @@ And there is a comparably helpful function that acts similarly to`mutate()`, whi
 #| echo: true
 
 australian_politicians |>
-  group_by(gender) |>
-  add_count() |>
+  add_count(gender) |>
   select(uniqueID, gender, n)
 ```
 
@@ -1601,12 +1599,12 @@ days_data |>
     c. `arrange()`
     d. `mutate()`
     e. `summarise()`
-12. Which combination of two functions could provide a mean of a dataset, by sex (pick two)? 
+12. Which combination of two could provide a mean of a dataset, by sex (pick two)? 
     a. `summarise()`
     b. `filter()`
     c. `arrange()`
     d. `mutate()`
-    e. `group_by()`
+    e. `.by`
 13. Assume a variable called "age" is an integer. Which line of code would create a column that is its exponential (pick one)? 
     a. `generate(exp_age = exp(age))`
     b. `change(exp_age = exp(age))`
