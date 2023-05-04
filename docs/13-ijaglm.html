@@ -580,7 +580,7 @@ Shoulders of giants
 <p>One reason to use logistic regression is that we will be modelling a probability, hence it will be bounded between 0 and 1. Whereas with linear regression we may end up with values outside this. The foundation of logistic regression is the logit function:</p>
 <p><span class="math display">\[
 \mbox{logit}(x) = \log\left(\frac{x}{1-x}\right).
-\]</span> This will transpose values between 0 and 1 onto the real line. For instance, <code>logit(0.1) = -2.2</code>, <code>logit(0.5) = 0</code>, and <code>logit(0.9) = 2.2</code> (<a href="#fig-heyitslogit">Figure&nbsp;<span>13.1</span></a>).</p>
+\]</span> This will transpose values between 0 and 1 onto the real line. For instance, <code>logit(0.1) = -2.2</code>, <code>logit(0.5) = 0</code>, and <code>logit(0.9) = 2.2</code> (<a href="#fig-heyitslogit">Figure&nbsp;<span>13.1</span></a>). We call this the “link function”. It relates the distribution of interest in a generalized linear model to a linear model.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="at">values =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">0</span>, <span class="at">to =</span> <span class="dv">1</span>, <span class="at">by =</span> <span class="fl">0.001</span>),</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">logit =</span> boot<span class="sc">::</span><span class="fu">logit</span>(values)) <span class="sc">|&gt;</span></span>
@@ -670,8 +670,7 @@ AIC: 359.75
 Number of Fisher Scoring iterations: 7</code></pre>
 </div>
 </div>
-<p>The results of the estimation are in the first column of <a href="#tbl-modelsummarylogistic">Table&nbsp;<span>13.2</span></a>. The estimated coefficient on the number of cars is 0.19.</p>
-<p>The interpretation of the logistic regression’s coefficients is more complicated than linear regression as they relate to changes in the log-odds of the binary outcome. For instance, the estimate of 0.19 is the average change in the log-odds of it being a weekday with observing one extra car on the road. The coefficient is positive which means an increase, but as it is non-linear, if we want to specify a particular change, then this will be different for different baseline levels of the observation (e.g.&nbsp;an increase of 0.19 log-odds has a larger impact when the baseline log-odds are 0, compared to 2).</p>
+<p>The estimated coefficient on the number of cars is 0.19. The interpretation of the logistic regression’s coefficients is more complicated than linear regression as they relate to changes in the log-odds of the binary outcome. For instance, the estimate of 0.19 is the average change in the log-odds of it being a weekday with observing one extra car on the road. The coefficient is positive which means an increase. As it is non-linear, if we want to specify a particular change, then this will be different for different baseline levels of the observation. That is, an increase of 0.19 log-odds has a larger impact when the baseline log-odds are 0, compared to 2.</p>
 <p>We can translate our estimate into the probability of it being a weekday, for a given number of cars. <code>predictions()</code> from <code>marginaleffects</code> <span class="citation" data-cites="marginaleffects">(<a href="99-references.html#ref-marginaleffects" role="doc-biblioref">Arel-Bundock 2022</a>)</span> can be used to add the implied probability that it is a weekday for each observation.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(marginaleffects)</span>
@@ -754,7 +753,7 @@ Number of Fisher Scoring iterations: 7</code></pre>
 </div>
 </div>
 </div>
-<p>We might want to build a Bayesian model using <code>rstanarm</code>. Again, we will specify priors for our model, but use the default priors that <code>rstanarm</code> uses:</p>
+<p>To more thoroughly examine the situation we might want to build a Bayesian model using <code>rstanarm</code>. As in <a href="12-ijalm.html"><span>Chapter&nbsp;12</span></a> we will specify priors for our model, but these will just be the default priors that <code>rstanarm</code> uses:</p>
 <p><span class="math display">\[
 \begin{aligned}
 y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
@@ -781,7 +780,7 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 <span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"week_or_weekday_rstanarm.rds"</span></span>
 <span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>We can compare our different models (<a href="#tbl-modelsummarylogistic">Table&nbsp;<span>13.2</span></a>).</p>
+<p>The results of our Bayesian model are similar to the quick model we built using base (<a href="#tbl-modelsummarylogistic">Table&nbsp;<span>13.2</span></a>).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom.mixed)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -858,7 +857,7 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 <p>One area where logistic regression is often used is political polling. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to “support” or “not support”.</p>
 <p>As a reminder, the workflow we advocate in this book is:</p>
 <p><span class="math display">\[\mbox{Plan} \rightarrow \mbox{Simulate} \rightarrow \mbox{Acquire} \rightarrow \mbox{Explore} \rightarrow \mbox{Share}.\]</span></p>
-<p>While the focus here is the exploration of data using linear models, we still need to do the other aspects. We begin by planning. In this case, we are interested in US political support. In particular we are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. That means we are interested in a dataset with variables for who an individual voted for, and some of their characteristics, for instance, gender and education. A quick sketch of such a dataset is <a href="#fig-uspoliticalsupportsketch">Figure&nbsp;<span>13.3 (a)</span></a>. We would like our model to average over these points. A quick sketch is <a href="#fig-uspoliticalsupportmodel">Figure&nbsp;<span>13.3 (b)</span></a>.</p>
+<p>While the focus here is the exploration of data using models, we still need to do the other aspects. We begin by planning. In this case, we are interested in US political support. In particular we are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. That means we are interested in a dataset with variables for who an individual voted for, and some of their characteristics, for instance, gender and education. A quick sketch of such a dataset is <a href="#fig-uspoliticalsupportsketch">Figure&nbsp;<span>13.3 (a)</span></a>. We would like our model to average over these points. A quick sketch is <a href="#fig-uspoliticalsupportmodel">Figure&nbsp;<span>13.3 (b)</span></a>.</p>
 <div id="fig-uspoliticalsuppor" class="quarto-layout-panel">
 <figure class="figure">
 <div class="quarto-layout-row quarto-layout-valign-bottom">
@@ -1592,7 +1591,6 @@ y_i|\lambda_i &amp;\sim \mbox{Poisson}(\lambda_i)\\
 <section id="negative-binomial-regression" class="level2" data-number="13.4">
 <h2 data-number="13.4" class="anchored" data-anchor-id="negative-binomial-regression"><span class="header-section-number">13.4</span> Negative binomial regression</h2>
 <p>One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion and can use a close variant, negative binomial regression.</p>
-<!-- Before getting to this, it might be worth taking a moment to think about why we are we going through all this trouble. Common practice is to change from counts into a binary and then use logistic regression. The issue with this is that we may lose information when we group responses together. -->
 <p>Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance:</p>
 <ul>
 <li><span class="citation" data-cites="maher1982modelling">Maher (<a href="99-references.html#ref-maher1982modelling" role="doc-biblioref">1982</a>)</span> considers both in the context of results from the English Football League and discusses situations in which one may be considered more appropriate than the other.</li>
@@ -2051,7 +2049,7 @@ y_i|\lambda_i &amp;\sim \mbox{Poisson}(\lambda_i)\\
 </figure>
 </div>
 </div>
-<p>Finally, we can compare between the models using the resampling method leave-one-out (LOO) cross-validation. This is a variant of cross-validation, introduced earlier, where the size of each fold is one. That is to say, if there was a dataset with 100 observations, this LOO is equivalent to 100-fold cross validation. We can implement this in <code>rstanarm</code> with <code>loo()</code> for each model, and then compare between them with <code>loo_compare()</code>. Strictly speaking LOO-CV is not actually done by <code>loo()</code>, because it would be too computationally intensive. Instead an approximation is done which provides the expected log point wise predictive density (ELPD), where the higher the better.</p>
+<p>Finally, we can compare between the models using the resampling method leave-one-out (LOO) cross-validation. This is a variant of cross-validation, introduced in XX, where the size of each fold is one. That is to say, if there was a dataset with 100 observations, this LOO is equivalent to 100-fold cross validation. We can implement this in <code>rstanarm</code> with <code>loo()</code> for each model, and then compare between them with <code>loo_compare()</code>. Strictly speaking LOO-CV is not actually done by <code>loo()</code>, because it would be too computationally intensive. Instead an approximation is done which provides the expected log point wise predictive density (ELPD), where the higher the better.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>poisson <span class="ot">&lt;-</span> <span class="fu">loo</span>(cause_of_death_alberta_poisson, <span class="at">cores =</span> <span class="dv">2</span>)</span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>neg_binomial <span class="ot">&lt;-</span> <span class="fu">loo</span>(cause_of_death_alberta_neg_binomial, <span class="at">cores =</span> <span class="dv">2</span>)</span>
@@ -2072,8 +2070,6 @@ cause_of_death_alberta_poisson      -4536.7    1089.5</code></pre>
 <li>Posterior distributions.</li>
 <li>Posterior predictive checks.</li>
 </ul>
-<!-- ### Proportional hazards -->
-<!-- Could do like how long someone has to wait for something? -->
 </section>
 </section>
 <section id="exercises" class="level2" data-number="13.5">

@@ -72,7 +72,7 @@ engine: knitr
 > 
 > @tukey1962future [p. 64].
 
-Exploratory data analysis is never finished. It is the active process of exploring and becoming familiar with our data. Like a farmer with their hands in the earth, we need to know every contour and aspect of our data. We need to know how it changes, what it shows, hides, and what are its limits. Exploratory data analysis (EDA) is the unstructured process of doing this.
+Exploratory data analysis\index{exploratory data analysis} is never finished. It is the active process of exploring and becoming familiar with our data. Like a farmer with their hands in the earth, we need to know every contour and aspect of our data. We need to know how it changes, what it shows, hides, and what are its limits. Exploratory data analysis (EDA) is the unstructured process of doing this.
 
 EDA is a means to an end. While it will inform the entire paper, especially the data section, it is not typically something that ends up in the final paper. The way to proceed is to make a separate Quarto document. Add code and brief notes on-the-go. Do not delete previous code, just add to it. By the end of it we will have created a useful notebook that captures our exploration of the dataset. This is a document that will guide the subsequent analysis and modelling.
 
@@ -88,25 +88,23 @@ There is no one correct process or set of steps that are required to undertake a
 
 ## 1975 US states data
 
-As a first example we consider US state populations as of 1975. This dataset is built into R with `state.x77`. Here is what the dataset looks like:
+As a first example we consider US state populations\index{US states} as of 1975. This dataset is built into R with `state.x77`. Here is what the dataset looks like:
 
 ```{r}
 #| message: false
 #| warning: false
 
 library(tidyverse)
-library(janitor)
 
 us_populations <-
   state.x77 |>
   as_tibble() |>
-  clean_names() |>
+  janitor::clean_names() |>
   mutate(state = rownames(state.x77)) |>
-  select(state, population, income, illiteracy, life_exp, area)
+  select(state, population, income)
 
 us_populations
 ```
-
 
 We want to get a quick sense of the data. The first step is to have a look at the top and bottom of it with `head()` and `tail()`, then a random selection, and finally to focus on the variables and their class with `glimpse()`. The random selection is an important aspect, and anytime you use `head()` you should also quickly consider a random selection.
 
@@ -124,7 +122,7 @@ us_populations |>
   glimpse()
 ```
 
-We are then interested in understanding key statistics, such as the minimum, median, and maximum values for numeric variables with `summary()` from base R. We can use `skim` from `skimr` [@skimr] for similar purposes, the advantage being that it provides more information about character variables. We notice that population appears to be right-skewed (with a mean that is considerably larger than the median). And that life expectancy varies by six years between the states.
+We are then interested in understanding key statistics, such as the minimum, median, and maximum values for numeric variables with `summary()` from base R. We can use `skim` from `skimr` [@skimr] for similar purposes, the advantage being that it provides more information about character variables. We notice that population appears to be right-skewed (with a mean that is considerably larger than the median).
 
 ```{r}
 library(skimr)
@@ -136,8 +134,7 @@ us_populations |>
   skim()
 ```
 
-
-Finally, it is especially important to understand the behavior of these key summary statistics at the limits. In particular, one approach is to randomly remove some observations and compare what happens to them. For instance, we can randomly create five datasets that differ on the basis of which rows are removed. We can then compare the summary statistics. If any of them are especially different then we might want to look at the rows that were removed as they may contain observations with high influence.
+Finally, it is especially important to understand the behavior of these key summary statistics at the limits. In particular, one approach is to randomly remove some observations and compare what happens to them. For instance, we can randomly create five datasets that differ on the basis of which rows are removed. We can then compare the summary statistics. If any of them are especially different then we might want to look at the rows that were removed as they may contain observations with high influence\index{influential points}.
 
 ```{r}
 #| echo: true
@@ -189,13 +186,13 @@ In the case of the populations of US states, we know that larger states, such as
 
 ## Missing data
 
-We have discussed missing data a lot throughout this book, especially in @sec-farm-data. Here we return to it, because understanding missing data is something that is a substantial focus of EDA. When we find missing data---and there are always missing data of some sort or another---we want to establish what type of missingness we are dealing with. Focusing on known-missing, that is where there are observations that we can see are missing in the dataset, based on @gelmanhillvehtari2020 [p. 323] we consider three main categories of missing data: 
+We have discussed missing data a lot throughout this book, especially in @sec-farm-data. Here we return to it because understanding missing data\index{missing data} tends to be a substantial focus of EDA. When we find missing data---and there are always missing data of some sort or another---we want to establish what type of missingness we are dealing with. Focusing on known-missing, that is where there are observations that we can see are missing in the dataset, based on @gelmanhillvehtari2020 [p. 323] we consider three main categories of missing data: 
 
-- Missing Completely At Random (MCAR). Here observations are missing from the dataset independent of anything else. As discussed in @sec-farm-data, when data are MCAR there is less concern, but data are rarely MCAR and even if they were it would be difficult to be convinced of this. Nonetheless we can simulate an example. For instance we can remove the population data for three randomly selected states. 
-- Missing at Random (MAR). Here observations are missing from the dataset in a way that is related to the variables in the dataset. For instance, it may be that we are interested in understanding the effect of income and gender on political participation, and so we gather information on these three variables. It might be that for some reason males are less likely to respond to a question about income.
-- Missing Not At Random (MNAR). Here observations are missing from the the dataset in a way that is related to unobserved variables, or the missing variable itself. For instance, it may be that respondents with a higher income, or that respondents with higher education (a variable that we did not collect), are less likely to fill in their income. 
+1) Missing Completely At Random; 
+2) Missing at Random; and 
+3) Missing Not At Random.
 
-The specifics of the best approach will always be bespoke to the circumstances, but in general we always want to use simulation to understand the implications of our choices. We can simulate an example of MCAR with the states and populations dataset.
+When data are Missing Completely At Random (MCAR), observations are missing from the dataset independent of any other variables---whether in the dataset or not. As discussed in @sec-farm-data, when data are MCAR there are fewer concerns about summary statistics and inference, but data are rarely MCAR. Even if they were it would be difficult to be convinced of this. Nonetheless we can simulate an example. For instance we can remove the population data for three randomly selected states. 
 
 ```{r}
 set.seed(853)
@@ -214,8 +211,12 @@ us_states_MCAR <-
       if_else(state %in% remove_random_states, NA_real_, population)
   )
 
-us_states_MCAR
+summary(us_states_MCAR)
 ```
+
+When observations are Missing at Random (MAR) they are missing from the dataset in a way that is related to other variables in the dataset. For instance, it may be that we are interested in understanding the effect of income and gender on political participation, and so we gather information on these three variables. It might be that for some reason males are less likely to respond to a question about income. 
+
+In the case of the US states dataset, we can simulate a MAR dataset by making the three US states with the highest population not have an observation for income.
 
 ```{r}
 highest_income_states <-
@@ -230,8 +231,12 @@ us_states_MAR <-
                    NA_real_,
                    population))
 
-us_states_MAR
+summary(us_states_MAR)
 ```
+
+Finally when observations are Missing Not At Random (MNAR) they are missing from the the dataset in a way that is related to either unobserved variables, or the missing variable itself. For instance, it may be that respondents with a higher income, or that respondents with higher education (a variable that we did not collect), are less likely to fill in their income. 
+
+In the case of the US states dataset, we can simulate a MNAR dataset by making the three US states with the highest population not have an observation for population.
 
 ```{r}
 highest_population_states <-
@@ -249,9 +254,9 @@ us_states_MNAR <-
 us_states_MNAR
 ```
 
-One tempting strategy is to either remove rows that have missing data, or to infill the missing data, say with an average of the column, or using multiple imputation to fill it based on a few different options. These approaches have their place, but need to be used with humility, and extensively communicated. The use of simulation is critical. To understand why, we will consider the US population data, remove various aspects, and look at the effect on summary statistics.
+The specifics of the best approach will always be bespoke to the circumstances, but in general we always want to use simulation to better understand the implications of our choices. From a data side we can choose to remove observations that are missing or input a value. (There are also options on the model side, but those are beyond the scope of this book.) These approaches have their place, but need to be used with humility and extensively communicated. The use of simulation is critical. 
 
-We can return to our generated dataset with some missing data, and consider a few common approaches for dealing with missing data, and compare the implied values for each state, and the overall US mean population. We consider the following options:
+We can return to our US states dataset, generate some missing data, and consider a few common approaches for dealing with missing data, and compare the implied values for each state, and the overall US mean population. We consider the following options:
 
 1) Drop the observations with missing data.
 2) Impute the mean of observations without missing data.
@@ -351,7 +356,7 @@ Finally, more prosaically, but just as importantly, sometimes missing data is en
 
 ## TTC subway delays 
 
-As a second, and more involved, example of EDA we use `opendatatoronto` [@citeSharla], introduced in @sec-fire-hose, and the `tidyverse` [@tidyverse] to obtain and explore data about the Toronto subway system. We are especially interested in getting a sense of the delays that have occurred.
+As a second, and more involved, example of EDA we use `opendatatoronto` [@citeSharla], introduced in @sec-fire-hose, and the `tidyverse` [@tidyverse] to obtain and explore data about the Toronto subway system\index{Toronto subway delays}. We are especially interested in getting a sense of the delays that have occurred.
 
 To begin, we download the data on Toronto Transit Commission (TTC) subway delays in 2021. The data are available as an Excel file with a separate sheet for each month. We are interested in 2021 so we filter to just that year then download it using `get_resource()` and bring the months together with `bind_rows()`.
 
@@ -923,13 +928,13 @@ all_2021_ttc_data_no_dupes_with_explanation |>
 
 ## Airbnb listings in London
 
-In this case study we look at Airbnb listings in London as at 7 June 2022. The dataset is from [Inside Airbnb](http://insideairbnb.com) [@airbnbdata] and we will read it from their website, and then save a local copy. We can give `read_csv()` a link to where the dataset is and it will download it. This helps with reproducibility because the source is clear. But, as that link could change at any time, longer-term reproducibility, as well as wanting to minimize the effect on the Inside Airbnb servers, suggests that we should also save a local copy of the data and then use that. 
+In this case study we look at Airbnb\index{Airbnb} listings in London\index{London} as at 14 March 2023. The dataset is from [Inside Airbnb](http://insideairbnb.com) [@airbnbdata] and we will read it from their website, and then save a local copy. We can give `read_csv()` a link to where the dataset is and it will download it. This helps with reproducibility because the source is clear. But, as that link could change at any time, longer-term reproducibility, as well as wanting to minimize the effect on the Inside Airbnb servers, suggests that we should also save a local copy of the data and then use that. 
 
 To get the dataset that we need, go to Inside Airbnb -> "Data" -> "Get the Data", then scroll down to London. We are interested in the "listings dataset", and we right click to get the URL that we need (@fig-getairbnb). Inside Airbnb update the data that they make available, and so the particular dataset that is available will change over time.
 
-![Obtaining the Airbnb data from Inside Airbnb](figures/inside_airbnb.png){#fig-getairbnb width=95% fig-align="center"}
+![Obtaining the Airbnb data from Inside Airbnb](figures/11-inside_airbnb.png){#fig-getairbnb width=95% fig-align="center"}
 
-As the original dataset is not ours, we should not make that public without first getting written permission. For instance, we may want to add it to our inputs folder, but use a ".gitignore" entry, covered in @sec-reproducible-workflows, to ensure that we do not push it to GitHub. The "guess_max" option in `read_csv()` helps us avoid having to specify the column types. Usually `read_csv()` takes a best guess at the column types based on the first few rows. But sometimes those first ones are misleading and so "guess_max" forces it to look at a larger number of rows to try to work out what is going on. Paste the URL that we copied from Inside Airbnb into the URL part. And once it is downloaded, save a local copy.
+As the original dataset is not ours, we should not make that public without first getting written permission. For instance, we may want to add it to our inputs folder, but use a ".gitignore" entry, covered in @sec-reproducible-workflows, to ensure that we do not push it to GitHub. The "guess_max" option in `read_csv()` helps us avoid having to specify the column types. Usually `read_csv()` takes a best guess at the column types based on the first few rows. But sometimes those first ones are misleading and so "guess_max" forces it to look at a larger number of rows to try to work out what is going on. Paste the URL that we copied from Inside Airbnb into the URL part. And once it is downloaded, save a local copy. 
 
 ```{r}
 #| include: true
@@ -942,7 +947,7 @@ library(tidyverse)
 url <-
   paste0(
     "http://data.insideairbnb.com/united-kingdom/england/",
-    "london/2022-06-07/data/listings.csv.gz"
+    "london/2023-03-14/data/listings.csv.gz"
   )
 
 airbnb_data <-
@@ -956,15 +961,53 @@ write_csv(airbnb_data, "airbnb_data.csv")
 airbnb_data
 ```
 
-It is extremely important that we refer to this local copy of our data when we run our scripts to explore the data, rather than asking the Inside Airbnb servers for the data each time. It might be worth even commenting out this call to their servers to ensure that we do not accidentally stress their service.
+It is important that we refer to this local copy of our data when we run our scripts to explore the data, rather than asking the Inside Airbnb servers for the data each time. It might be worth even commenting out this call to their servers to ensure that we do not accidentally stress their service.
+
+Again, add this filename---"airbnb_data.csv"---to the ".gitignore" file so that it is not pushed to GitHub. The size of the dataset will create complications that we would like to avoid. 
 
 ```{r}
 #| eval: false
 #| include: false
 
 # INTERNAL
-write_csv(airbnb_data, "dont_push/2022-06-07-london-airbnblistings.csv")
+write_csv(airbnb_data, "dont_push/2023-03-14-london-airbnb_data.csv")
+
+airbnb_data <-
+  read_csv(
+    file = "dont_push/2023-03-14-london-airbnb_data.csv",
+    guess_max = 20000
+  )
 ```
+
+While we need to archive this CSV because that is the original, unedited data, at more than 100MB it is a little unwieldy. For exploratory purposes we will create a parquet file\index{parquet} with selected variables (we do this in an iterative way, using `names(airbnb_data)` to work out the variable names).
+
+```{r}
+#| eval: false
+#| include: true
+
+airbnb_data_selected <-
+  airbnb_data |>
+  select(
+    host_id,
+    host_response_time,
+    host_is_superhost,
+    host_total_listings_count,
+    neighbourhood_cleansed,
+    bathrooms,
+    bedrooms,
+    price,
+    number_of_reviews,
+    review_scores_rating,
+    review_scores_accuracy,
+    review_scores_value
+  )
+
+arrow::write_parquet(x = airbnb_data_selected, 
+                     sink = "2023-03-14-london-airbnblistings-select_variables.parquet")
+
+rm(airbnb_data)
+```
+
 
 
 ```{r}
@@ -975,55 +1018,13 @@ write_csv(airbnb_data, "dont_push/2022-06-07-london-airbnblistings.csv")
 
 library(tidyverse)
 
-airbnb_data <-
-  read_csv(
-    here::here("dont_push/2022-06-07-london-airbnblistings.csv"),
-    guess_max = 20000
-  )
-
-airbnb_data
-```
-
-### Distribution and properties of individual variables
-
-There are many columns, so we will just select a few.
-
-```{r}
-#| eval: true
-#| include: true
-
-names(airbnb_data) |>
-  length()
-
-airbnb_data_selected <-
-  airbnb_data |>
-  select(
-    host_id,
-    host_since,
-    host_response_time,
-    host_is_superhost,
-    host_listings_count,
-    host_total_listings_count,
-    host_neighbourhood,
-    host_listings_count,
-    neighbourhood_cleansed,
-    room_type,
-    bathrooms,
-    bedrooms,
-    price,
-    number_of_reviews,
-    has_availability,
-    review_scores_rating,
-    review_scores_accuracy,
-    review_scores_cleanliness,
-    review_scores_checkin,
-    review_scores_communication,
-    review_scores_location,
-    review_scores_value
-  )
+airbnb_data_selected <- 
+  arrow::read_parquet(file = "inputs/data/2023-03-14-london-airbnblistings-select_variables.parquet")
 
 airbnb_data_selected
 ```
+
+### Distribution and properties of individual variables
 
 First we might be interested in price. It is a character at the moment and so we need to convert it to a numeric. This is a common problem, and we need to be a little careful that it does not all just convert to NAs. In our case if we just force the price data to be a numeric then it will go to NA because there are a lot of characters where it is unclear what the numeric equivalent is, such as "$". We need to remove those characters first.
 
@@ -1060,7 +1061,7 @@ Now we can look at the distribution of prices (@fig-airbnbpricesfirst-1). There 
 #| warning: false
 #| message: false
 #| label: fig-airbnbpricesfirst
-#| fig-cap: "Distribution of prices of London Airbnb rentals in June 2022"
+#| fig-cap: "Distribution of prices of London Airbnb rentals in March 2023"
 #| fig-subcap:
 #|   - "Distribution of prices"
 #|   - "Using the log scale for prices more than $1,000"
@@ -1095,7 +1096,7 @@ If we focus on prices that are less than \$1,000, then we see that most properti
 #| warning: false
 #| message: false
 #| label: fig-airbnbpricesbunch
-#| fig-cap: "Distribution of prices less than $1000 for London Airbnb rentals in June 2022 shows bunching"
+#| fig-cap: "Distribution of prices less than $1000 for London Airbnb rentals in March 2023 shows bunching"
 #| fig-subcap:
 #|   - "Prices less than $1,000"
 #|   - "Prices between $90 and $210"
@@ -1166,7 +1167,7 @@ On Airbnb, guests can give one to five star ratings across a variety of differen
 #| message: false
 #| warning: false
 #| include: true
-#| fig-cap: "Distribution of review scores rating for London Airbnb rentals in June 2022"
+#| fig-cap: "Distribution of review scores rating for London Airbnb rentals in March 2023"
 #| label: fig-airbnbreviews
 
 airbnb_data_no_superhost_nas |>
@@ -1222,7 +1223,7 @@ One approach would be to just focus on those that are not missing and the main r
 
 ```{r}
 #| include: true
-#| fig-cap: "Distribution of review scores for London Airbnb rentals in June 2022"
+#| fig-cap: "Distribution of review scores for London Airbnb rentals in March 2023"
 #| label: fig-airbnbreviewsselected
 #| eval: true
 #| warning: false
@@ -1285,7 +1286,7 @@ There is clearly an issue with NAs as there are a lot of them. For instance, we 
 #| include: true
 #| message: false
 #| warning: false
-#| fig-cap: "Distribution of review scores for properties with NA response time, for London Airbnb rentals in June 2022"
+#| fig-cap: "Distribution of review scores for properties with NA response time, for London Airbnb rentals in March 2023"
 #| label: fig-airbnbreviewsselectednasresponse
 
 airbnb_data_has_reviews |>
@@ -1336,34 +1337,15 @@ airbnb_data_selected <-
   filter(!is.na(host_response_time))
 ```
 
-There are two versions of a variable that suggest how many properties a host has on Airbnb. We might be interested to know whether there is a difference between them.
+We might be interested in how many properties a host has on Airbnb (@fig-airbnbhostlisting).
 
 ```{r}
 #| eval: true
-#| include: true
-
-airbnb_data_selected |>
-  mutate(listings_count_is_same = 
-           if_else(host_listings_count == host_total_listings_count, 
-                   1, 
-                   0)
-         ) |>
-  filter(listings_count_is_same == 0)
-```
-
-As there are no differences in this dataset, we can just remove one version of the variable for now and have a look at the other one (@fig-airbnbhostlisting).
-
-```{r}
-#| eval: true
-#| fig-cap: "Distribution of the number of properties a host has on Airbnb, for London Airbnb rentals in June 2022"
+#| fig-cap: "Distribution of the number of properties a host has on Airbnb, for London Airbnb rentals in March 2023"
 #| include: true
 #| label: fig-airbnbhostlisting
 #| message: false
 #| warning: false
-
-airbnb_data_selected <-
-  airbnb_data_selected |>
-  select(-host_listings_count)
 
 airbnb_data_selected |>
   ggplot(aes(x = host_total_listings_count)) +
@@ -1408,7 +1390,7 @@ Look at the relationship between price and reviews, and whether they are a super
 
 ```{r}
 #| eval: true
-#| fig-cap: "Relationship between price and review and whether a host is a superhost, for London Airbnb rentals in June 2022"
+#| fig-cap: "Relationship between price and review and whether a host is a superhost, for London Airbnb rentals in March 2023"
 #| include: true
 #| label: fig-priceandreview
 #| message: false
@@ -1447,6 +1429,8 @@ We could build a table that looks at a hosts response time by whether they are a
 ```{r}
 #| eval: true
 #| include: true
+
+library(janitor)
 
 airbnb_data_selected |>
   tabyl(host_response_time, host_is_superhost) |>
@@ -1516,6 +1500,23 @@ modelsummary::modelsummary(logistic_reg_superhost_response_review)
 
 We see that each of the levels is positively associated with the probability of being a superhost. However, having a host that responds within an hour is associated with individuals that are superhosts in our dataset.
 
+We will save this analysis dataset.
+
+```{r}
+#| eval: false
+#| include: true
+
+arrow::write_parquet(x = airbnb_data_selected, 
+                     sink = "2023-05-05-london-airbnblistings-analysis_dataset.parquet")
+```
+
+```{r}
+#| eval: false
+#| include: false
+
+arrow::write_parquet(x = airbnb_data_selected, 
+                     sink = "outputs/data/2023-05-05-london-airbnblistings-analysis_dataset.parquet")
+```
 
 
 
@@ -1524,9 +1525,6 @@ We see that each of the levels is positively associated with the probability of 
 In this chapter we have considered exploratory data analysis, which is the active process of getting to know a dataset. We focused on missing data, the distributions of variables, and the relationships between variables. And we extensively used graphs and tables to do this. 
 
 The approaches to EDA will vary depending on context, and the issues and features that are encountered in the dataset. It will also depend on your skills, for instance it is common to consider regression models, and dimensionality reduction approaches.
-
-
-
 
 
 

@@ -56,7 +56,7 @@ engine: knitr
 
 ## Introduction
 
-Linear models, covered in @sec-its-just-a-linear-model, have evolved substantially over the past century. Francis Galton, mentioned in @sec-hunt-data, and others of his generation used linear regression in earnest in the late 1800s and early 1900s. Binary outcomes quickly became of interest and needed special treatment, leading to the development and wide adaption of logistic regression and similar methods in the mid-1900s [@cramer2002origins]. The generalized linear model framework came into being, in a formal sense, in the 1970s with @nelder1972generalized. Generalized linear models (GLMs) broaden the types of outcomes that are allowed. We still model outcomes as a linear function, but we are less constrained. The outcome can be anything in the exponential family, and popular choices include the logistic distribution and the Poisson distribution. A further generalization of GLMs is generalized additive models (GAMs) where we broaden the structure of the explanatory side. We still explain the dependent variable as an additive function of various bits and pieces, but those bits and pieces can be functions. This framework was proposed in the 1990s by @hastie1990generalized.
+Linear models, covered in @sec-its-just-a-linear-model, have evolved substantially over the past century. Francis Galton, mentioned in @sec-hunt-data, and others of his generation used linear regression in earnest in the late 1800s and early 1900s. Binary outcomes quickly became of interest and needed special treatment, leading to the development and wide adaption of logistic regression and similar methods in the mid-1900s [@cramer2002origins]. The generalized linear model framework came into being, in a formal sense, in the 1970s with @nelder1972generalized. Generalized linear models (GLMs)\index{generalized linear models} broaden the types of outcomes that are allowed. We still model outcomes as a linear function, but we are less constrained. The outcome can be anything in the exponential family, and popular choices include the logistic distribution and the Poisson distribution. A further generalization of GLMs is generalized additive models (GAMs) where we broaden the structure of the explanatory side. We still explain the dependent variable as an additive function of various bits and pieces, but those bits and pieces can be functions. This framework was proposed in the 1990s by @hastie1990generalized.
 
 :::{.callout-note}
 ## Shoulders of giants
@@ -71,9 +71,9 @@ In this chapter we consider logistic, Poisson, and negative binomial regression.
 
 Linear regression is a useful way to better understand our data. But it assumes a continuous outcome variable that can take any number on the real line. We would like some way to use this same machinery when we cannot satisfy this condition. We turn to logistic and Poisson regression for binary and count outcome variables, respectively, noting they are still linear models, because the independent variables enter in a linear fashion.
 
-Logistic regression, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it. For instance, win or lose, available or not available, support or not.
+Logistic regression\index{logistic regression}, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it. For instance, win or lose, available or not available, support or not.
 
-The foundation of this is the Bernoulli distribution where there is a certain probability, $p$, of outcome "1" and the remainder, $1-p$, for outcome "0". We can use `rbernoulli()` to simulate data from the Bernoulli distribution. 
+The foundation of this is the Bernoulli distribution\index{Bernoulli distribution} where there is a certain probability, $p$, of outcome "1" and the remainder, $1-p$, for outcome "0". We can use `rbernoulli()` to simulate data from the Bernoulli distribution. 
 
 ```{r}
 #| message: false
@@ -89,12 +89,12 @@ bernoulli_example <-
 bernoulli_example |> pull(draws)
 ```
 
-One reason to use logistic regression is that we will be modelling a probability, hence it will be bounded between 0 and 1. Whereas with linear regression we may end up with values outside this. The foundation of logistic regression is the logit function:
+One reason to use logistic regression\index{logistic regression} is that we will be modelling a probability, hence it will be bounded between 0 and 1. Whereas with linear regression we may end up with values outside this. The foundation of logistic regression is the logit function\index{logit function}:
 
 $$
 \mbox{logit}(x) = \log\left(\frac{x}{1-x}\right).
 $$
-This will transpose values between 0 and 1 onto the real line. For instance, `logit(0.1) = -2.2`, `logit(0.5) = 0`, and `logit(0.9) = 2.2` (@fig-heyitslogit).
+This will transpose values between 0 and 1 onto the real line. For instance, `logit(0.1) = -2.2`, `logit(0.5) = 0`, and `logit(0.9) = 2.2` (@fig-heyitslogit). We call this the "link function". It relates the distribution of interest in a generalized linear model to a linear model.
 
 ```{r}
 #| eval: true
@@ -115,7 +115,7 @@ tibble(values = seq(from = 0, to = 1, by = 0.001),
 ```
 
 
-To illustrate logistic regression, we will simulate data on whether it is a weekday or weekend, based on the number of cars on the road. We will assume that on weekdays the road is busier.
+To illustrate logistic regression\index{logistic regression}, we will simulate data on whether it is a weekday or weekend, based on the number of cars on the road. We will assume that on weekdays the road is busier.
 
 ```{r}
 #| message: false
@@ -163,9 +163,7 @@ week_or_weekday_model <-
 summary(week_or_weekday_model)
 ```
 
-The results of the estimation are in the first column of @tbl-modelsummarylogistic. The estimated coefficient on the number of cars is 0.19.
-
-The interpretation of the logistic regression's coefficients is more complicated than linear regression as they relate to changes in the log-odds of the binary outcome. For instance, the estimate of 0.19 is the average change in the log-odds of it being a weekday with observing one extra car on the road. The coefficient is positive which means an increase, but as it is non-linear, if we want to specify a particular change, then this will be different for different baseline levels of the observation (e.g. an increase of 0.19 log-odds has a larger impact when the baseline log-odds are 0, compared to 2).
+The estimated coefficient on the number of cars is 0.19. The interpretation of the logistic regression's\index{logistic regression} coefficients is more complicated than linear regression as they relate to changes in the log-odds of the binary outcome. For instance, the estimate of 0.19 is the average change in the log-odds of it being a weekday with observing one extra car on the road. The coefficient is positive which means an increase. As it is non-linear, if we want to specify a particular change, then this will be different for different baseline levels of the observation. That is, an increase of 0.19 log-odds has a larger impact when the baseline log-odds are 0, compared to 2.
 
 We can translate our estimate into the probability of it being a weekday, for a given number of cars. `predictions()` from `marginaleffects` [@marginaleffects] can be used to add the implied probability that it is a weekday for each observation.
 
@@ -207,7 +205,7 @@ week_or_weekday_predictions |>
   theme(legend.position = "bottom")
 ```
 
-The marginal effect at each observation is of interest because it provides a sense of how this probability is changing. It enables us to say that at the mean (which in this case is if we were to see 50 cars) the probability of it being a weekday increases by almost five per cent if we were to see another car (@tbl-marginaleffectcar).
+The marginal effect\index{marginal effect} at each observation is of interest because it provides a sense of how this probability is changing. It enables us to say that at the mean (which in this case is if we were to see 50 cars) the probability of it being a weekday increases by almost five per cent if we were to see another car (@tbl-marginaleffectcar).
 
 ```{r}
 #| label: tbl-marginaleffectcar
@@ -220,7 +218,7 @@ marginaleffects(week_or_weekday_model, newdata = "mean") |>
   )
 ```
 
-We might want to build a Bayesian model using `rstanarm`. Again, we will specify priors for our model, but use the default priors that `rstanarm` uses:
+To more thoroughly examine the situation we might want to build a Bayesian model using `rstanarm`. As in @sec-its-just-a-linear-model we will specify priors for our model, but these will just be the default priors that `rstanarm` uses:
 
 $$
 \begin{aligned}
@@ -279,7 +277,7 @@ week_or_weekday_rstanarm <-
   readRDS(file = "outputs/model/week_or_weekday_rstanarm.rds")
 ```
 
-We can compare our different models (@tbl-modelsummarylogistic).
+The results of our Bayesian model are similar to the quick model we built using base (@tbl-modelsummarylogistic).
 
 ```{r}
 #| label: tbl-modelsummarylogistic
@@ -301,13 +299,13 @@ modelsummary::modelsummary(
 
 ### US political support
 
-One area where logistic regression is often used is political polling. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to "support" or "not support".
+One area where logistic regression is often used is political polling\index{political polling}. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to "support" or "not support".
 
 As a reminder, the workflow we advocate in this book is: 
 
 $$\mbox{Plan} \rightarrow \mbox{Simulate} \rightarrow \mbox{Acquire} \rightarrow \mbox{Explore} \rightarrow \mbox{Share}.$$
 
-While the focus here is the exploration of data using linear models, we still need to do the other aspects. We begin by planning. In this case, we are interested in US political support. In particular we are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. That means we are interested in a dataset with variables for who an individual voted for, and some of their characteristics, for instance, gender and education. A quick sketch of such a dataset is @fig-uspoliticalsupportsketch. We would like our model to average over these points. A quick sketch is @fig-uspoliticalsupportmodel.
+While the focus here is the exploration of data using models, we still need to do the other aspects. We begin by planning. In this case, we are interested in US political support. In particular we are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. That means we are interested in a dataset with variables for who an individual voted for, and some of their characteristics, for instance, gender and education. A quick sketch of such a dataset is @fig-uspoliticalsupportsketch. We would like our model to average over these points. A quick sketch is @fig-uspoliticalsupportmodel.
 
 ::: {#fig-uspoliticalsuppor layout-ncol=2 layout-valign="bottom"}
 
@@ -342,7 +340,7 @@ us_political_preferences <-
 us_political_preferences
 ```
 
-We can use the 2020 Cooperative Election Study (CES) [@cooperativeelectionstudyus], which is a long-standing annual survey of US political opinion. In 2020, there were 61,000 respondents who completed the post-election survey. While the sampling methodology, detailed in @guidetothe2020ces [p. 13], is not a perfect random sample and relies on matching, it is a widely used and accepted approach that balances sampling concerns and cost.
+We can use the 2020 Cooperative Election Study\index{Cooperative Election Study} (CES) [@cooperativeelectionstudyus], which is a long-standing annual survey of US political opinion. In 2020, there were 61,000 respondents who completed the post-election survey. While the sampling methodology, detailed in @guidetothe2020ces [p. 13], is not a perfect random sample and relies on matching, it is a widely used and accepted approach that balances sampling concerns and cost.
 
 We can access the CES using `get_dataframe_by_name()` from `dataverse` [@dataverse], which was an approach that was introduced in @sec-gather-data and @sec-store-and-share. We save the data that are of interest to us, and then refer to that saved dataset.
 
@@ -487,9 +485,9 @@ ces2020 |>
 
 ## Poisson regression
 
-When we have count data we should initially think to take advantage of the Poisson distribution. The Poisson distribution is governed by one parameter, $\lambda$. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. As such, the Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. The Poisson probability mass function is [@pitman, p. 121]: 
+When we have count data we should initially think to take advantage of the Poisson distribution\index{Poisson regression}. The Poisson distribution is governed by one parameter, $\lambda$. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. As such, the Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. The Poisson probability mass function is [@pitman, p. 121]: 
 $$P_{\lambda}(k) = e^{-\lambda}\lambda^k/k!\mbox{, for }k=0,1,2,...$$
-We can simulate $n=20$ draws from the Poisson distribution with `rpois()`, where $\lambda$ here is equal to three. 
+We can simulate $n=20$ draws from the Poisson distribution\index{Poisson distribution} with `rpois()`, where $\lambda$ here is equal to three. 
 
 ```{r}
 rpois(n = 20, lambda = 3)
@@ -636,7 +634,7 @@ grades_base <-
 summary(grades_base)
 ```
 
-As with logistic regression, the interpretation of the coefficients from Poisson regression can be difficult. The interpretation of the coefficient on "department2" is that it is the log of the expected difference between departments. We expect $e^{0.883} \approx 2.4$ and $e^{1.703} \approx 5.5$ as many A grades in departments 2 and 3, respectively, compared with department 1 (@tbl-modelsummarypoisson).
+As with logistic regression, the interpretation of the coefficients from Poisson regression\index{Poisson regression} can be difficult. The interpretation of the coefficient on "department2" is that it is the log of the expected difference between departments. We expect $e^{0.883} \approx 2.4$ and $e^{1.703} \approx 5.5$ as many A grades in departments 2 and 3, respectively, compared with department 1 (@tbl-modelsummarypoisson).
 
 We could build a Bayesian model and estimate it with `rstanarm` (@tbl-modelsummarypoisson).
 
@@ -709,7 +707,7 @@ modelsummary::modelsummary(
 )
 ```
 
-As with logistic regression, we can use `marginaleffects()` from [@marginaleffects] to help with interpreting these results. It may be useful to consider how we expect the number of A grades to change as we go from one department to another. @tbl-marginaleffectspoisson suggests that in our dataset, classes in Department 2 tend to have around five additional A grades, compared with Department 1, and that classes in Department 3 tend to have around 17 more A grades, compared with Department 1.
+As with logistic regression, we can use `marginaleffects()` from [@marginaleffects] to help with interpreting these results.\index{marginal effects} It may be useful to consider how we expect the number of A grades to change as we go from one department to another. @tbl-marginaleffectspoisson suggests that in our dataset, classes in Department 2 tend to have around five additional A grades, compared with Department 1, and that classes in Department 3 tend to have around 17 more A grades, compared with Department 1.
 
 ```{r}
 #| label: tbl-marginaleffectspoisson
@@ -727,7 +725,7 @@ marginaleffects(grades_rstanarm) |>
 
 ### Letters used in *Jane Eyre* 
 
-In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë. We could then consider the first ten lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/Es increases as more words are used. If not, it could suggest that the distribution of e/Es is not consistent, which could be of interest to linguists.
+In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë\index{Jane Eyre}. We could then consider the first ten lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/Es increases as more words are used. If not, it could suggest that the distribution of e/Es is not consistent, which could be of interest to linguists.\index{Poisson regression}
 
 Following the workflow advocated in this book, we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-letterssketch, and a quick sketch of our model is @fig-lettersmodel.
 
@@ -994,9 +992,7 @@ plot_cap(jane_e_counts, condition = "word_count") +
 
 ## Negative binomial regression
 
-One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion and can use a close variant, negative binomial regression. 
-
-<!-- Before getting to this, it might be worth taking a moment to think about why we are we going through all this trouble. Common practice is to change from counts into a binary and then use logistic regression. The issue with this is that we may lose information when we group responses together. -->
+One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion and can use a close variant, negative binomial regression\index{negative binomial regression}. 
 
 Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance: 
 
@@ -1042,7 +1038,7 @@ Poisson and negative binomial models go hand in hand. It is often the case that 
 
 ### Mortality in Alberta
 
-Consider, somewhat morbidly, that every year each individual either dies or does not. From the perspective of a geographic area, we could gather data on the number of people who died each year, by their cause of death. The Canadian province of Alberta has made [available](https://open.alberta.ca/opendata/leading-causes-of-death) the number of deaths, by cause, since 2001, for the top 30 causes each year. 
+Consider, somewhat morbidly, that every year each individual either dies or does not\index{mortality}. From the perspective of a geographic area, we could gather data on the number of people who died each year, by their cause of death. The Canadian province of Alberta\index{Alberta} has made [available](https://open.alberta.ca/opendata/leading-causes-of-death) the number of deaths, by cause, since 2001, for the top 30 causes each year. 
 
 As always we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-albertadatasketch, and a quick sketch of our model is @fig-albertamodelsketch
 
@@ -1194,7 +1190,7 @@ datasummary(
 )
 ```
 
-We can implement negative binomial regression when using `stan_glm()` by specifying that distribution in "family". In this case, we run both Poisson and negative binomial.
+We can implement negative binomial regression\index{negative binomial regression} when using `stan_glm()` by specifying that distribution in "family". In this case, we run both Poisson and negative binomial.
 
 ```{r}
 #| echo: true
@@ -1276,7 +1272,7 @@ modelsummary::modelsummary(
 )
 ```
 
-We could use posterior predictive checks, introduced in @sec-inferencewithbayesianmethods, to more clearly show that the negative binomial approach is a better choice for this circumstance (@fig-ppcheckpoissonvsbinomial).
+We could use posterior predictive checks\index{posterior predictive checks}, introduced in @sec-inferencewithbayesianmethods, to more clearly show that the negative binomial approach is a better choice for this circumstance (@fig-ppcheckpoissonvsbinomial).
 
 ```{r}
 #| echo: true
@@ -1295,7 +1291,7 @@ pp_check(cause_of_death_alberta_neg_binomial) +
   theme(legend.position = "bottom")
 ```
 
-Finally, we can compare between the models using the resampling method leave-one-out (LOO) cross-validation. This is a variant of cross-validation, introduced earlier, where the size of each fold is one. That is to say, if there was a dataset with 100 observations, this LOO is equivalent to 100-fold cross validation. We can implement this in `rstanarm` with `loo()` for each model, and then compare between them with `loo_compare()`. Strictly speaking LOO-CV is not actually done by `loo()`, because it would be too computationally intensive. Instead an approximation is done which provides the expected log point wise predictive density (ELPD), where the higher the better.
+Finally, we can compare between the models using the resampling method leave-one-out\index{leave-one-out} (LOO) cross-validation. This is a variant of cross-validation, introduced in XX, where the size of each fold is one. That is to say, if there was a dataset with 100 observations, this LOO is equivalent to 100-fold cross validation. We can implement this in `rstanarm` with `loo()` for each model, and then compare between them with `loo_compare()`. Strictly speaking LOO-CV is not actually done by `loo()`, because it would be too computationally intensive. Instead an approximation is done which provides the expected log point wise predictive density (ELPD), where the higher the better.
 
 ```{r}
 #| message: false
@@ -1316,18 +1312,6 @@ We have covered a variety of diagnostic aspects for Bayesian models. While it is
 - Rhat plots.
 - Posterior distributions.
 - Posterior predictive checks.
-
-
-
-<!-- ### Proportional hazards -->
-
-<!-- Could do like how long someone has to wait for something? -->
-
-
-
-
-
-
 
 
 
