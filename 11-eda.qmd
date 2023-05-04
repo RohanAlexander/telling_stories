@@ -107,7 +107,6 @@ us_populations <-
 us_populations
 ```
 
-### Distribution and properties of individual variables
 
 We want to get a quick sense of the data. The first step is to have a look at the top and bottom of it with `head()` and `tail()`, then a random selection, and finally to focus on the variables and their class with `glimpse()`. The random selection is an important aspect, and anytime you use `head()` you should also quickly consider a random selection.
 
@@ -188,36 +187,71 @@ sample_means |>
 
 In the case of the populations of US states, we know that larger states, such as California and New York, will have an out sized effect on our estimate of the mean. @tbl-summarystatesrandom supports that, as we can see that when we use seeds 2 and 3, there is a lower mean.
 
+## Missing data
 
-### Missing data
+We have discussed missing data a lot throughout this book, especially in @sec-farm-data. Here we return to it, because understanding missing data is something that is a substantial focus of EDA. When we find missing data---and there are always missing data of some sort or another---we want to establish what type of missingness we are dealing with. Focusing on known-missing, that is where there are observations that we can see are missing in the dataset, based on @gelmanhillvehtari2020 [p. 323] we consider three main categories of missing data: 
 
-We have discussed missing data a lot throughout this book, and understanding missing data is something that is a substantial focus of EDA. One tempting strategy is to either remove rows that have missing data, or to infill the missing data, say with an average of the column, or using multiple imputation to fill it based on a few different options. These approaches have their place, but need to be used with humility, and extensively communicated. The use of simulation is critical. To understand why, we will consider the US population data, remove various aspects, and look at the effect on summary statistics.
+- Missing Completely At Random (MCAR). Here observations are missing from the dataset independent of anything else. As discussed in @sec-farm-data, when data are MCAR there is less concern, but data are rarely MCAR and even if they were it would be difficult to be convinced of this. Nonetheless we can simulate an example. For instance we can remove the population data for three randomly selected states. 
+- Missing at Random (MAR). Here observations are missing from the dataset in a way that is related to the variables in the dataset. For instance, it may be that we are interested in understanding the effect of income and gender on political participation, and so we gather information on these three variables. It might be that for some reason males are less likely to respond to a question about income.
+- Missing Not At Random (MNAR). Here observations are missing from the the dataset in a way that is related to unobserved variables, or the missing variable itself. For instance, it may be that respondents with a higher income, or that respondents with higher education (a variable that we did not collect), are less likely to fill in their income. 
 
-We can start by removing the population data for three randomly selected states. 
+The specifics of the best approach will always be bespoke to the circumstances, but in general we always want to use simulation to understand the implications of our choices. We can simulate an example of MCAR with the states and populations dataset.
 
 ```{r}
 set.seed(853)
 
-remove_these_states <-
+remove_random_states <-
   sample(
     x = state.name,
     size = 3,
     replace = FALSE
   )
 
-remove_these_states
-
-us_states_with_missing_observations <-
+us_states_MCAR <-
   us_populations |>
   mutate(
     population =
-      if_else(state %in% remove_these_states, NA_real_, population)
+      if_else(state %in% remove_random_states, NA_real_, population)
   )
 
-us_states_with_missing_observations
+us_states_MCAR
 ```
 
-Having generated a dataset with some missing data, we can now consider a few common approaches for dealing with missing data, and compare the implied values for each state, and the overall US mean population. We consider the following options:
+```{r}
+highest_income_states <-
+  us_populations |>
+  slice_max(income, n = 3) |>
+  pull(state)
+
+us_states_MAR <-
+  us_populations |>
+  mutate(population =
+           if_else(state %in% highest_income_states,
+                   NA_real_,
+                   population))
+
+us_states_MAR
+```
+
+```{r}
+highest_population_states <-
+  us_populations |>
+  slice_max(population, n = 3) |>
+  pull(state)
+
+us_states_MNAR <-
+  us_populations |>
+  mutate(population =
+           if_else(state %in% highest_population_states,
+                   NA_real_,
+                   population))
+
+us_states_MNAR
+```
+
+One tempting strategy is to either remove rows that have missing data, or to infill the missing data, say with an average of the column, or using multiple imputation to fill it based on a few different options. These approaches have their place, but need to be used with humility, and extensively communicated. The use of simulation is critical. To understand why, we will consider the US population data, remove various aspects, and look at the effect on summary statistics.
+
+We can return to our generated dataset with some missing data, and consider a few common approaches for dealing with missing data, and compare the implied values for each state, and the overall US mean population. We consider the following options:
 
 1) Drop the observations with missing data.
 2) Impute the mean of observations without missing data.
@@ -233,12 +267,14 @@ library(mice)
 
 multiple_imputation <-
   mice(
-    us_states_with_missing_observations,
+    us_states_MCAR,
     print = FALSE
   )
+
 mice_estimates <-
   complete(multiple_imputation) |>
   as_tibble()
+
 mice_estimates
 ```
 
@@ -256,20 +292,20 @@ actual_us_mean <-
   pull()
 
 us_mean_with_missing_dropped <-
-  us_states_with_missing_observations |>
+  us_states_MCAR |>
   summarise(mean = mean(population, na.rm = TRUE)) |>
   pull()
 
-us_states_with_missing_observations_mean_imputation <-
-  us_states_with_missing_observations |>
+us_states_MCAR_mean_imputation <-
+  us_states_MCAR |>
   mutate(population = if_else(
-    is.na(us_states_with_missing_observations$population),
+    is.na(us_states_MCAR$population),
     us_mean_with_missing_dropped,
     population
   ))
 
 mean_imputation_overall <-
-  mean(us_states_with_missing_observations_mean_imputation$population)
+  mean(us_states_MCAR_mean_imputation$population)
 
 tibble(
   observation = c("Florida", "Montana", "New Hampshire", "Overall"),
