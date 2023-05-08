@@ -15,7 +15,9 @@ engine: knitr
 
 **Key concepts and skills**
 
-- Linear regression can be generalized for alternative types of dependent variables. For instance, logistic and Poisson regression have a binary and integer count dependent variable, respectively.
+- Linear regression can be generalized for alternative types of dependent variables. 
+- Logistic regression can be used when we have a binary dependent variable.
+- Poisson regression can be used when we have an integer count dependent variable. A variant, negative binomial regression, is often also considered because the assumptions are less onerous. 
 
 **Key packages and functions**
 
@@ -56,7 +58,7 @@ engine: knitr
 
 ## Introduction
 
-Linear models, covered in @sec-its-just-a-linear-model, have evolved substantially over the past century. Francis Galton, mentioned in @sec-hunt-data, and others of his generation used linear regression in earnest in the late 1800s and early 1900s. Binary outcomes quickly became of interest and needed special treatment, leading to the development and wide adaption of logistic regression and similar methods in the mid-1900s [@cramer2002origins]. The generalized linear model framework came into being, in a formal sense, in the 1970s with @nelder1972generalized. Generalized linear models (GLMs)\index{generalized linear models} broaden the types of outcomes that are allowed. We still model outcomes as a linear function, but we are less constrained. The outcome can be anything in the exponential family, and popular choices include the logistic distribution and the Poisson distribution. A further generalization of GLMs is generalized additive models (GAMs) where we broaden the structure of the explanatory side. We still explain the dependent variable as an additive function of various bits and pieces, but those bits and pieces can be functions. This framework was proposed in the 1990s by @hastie1990generalized.
+Linear models, covered in @sec-its-just-a-linear-model, have evolved substantially over the past century. Francis Galton,\index{Galton, Francis} mentioned in @sec-hunt-data, and others of his generation used linear regression in earnest in the late 1800s and early 1900s. Binary outcomes quickly became of interest and needed special treatment, leading to the development and wide adaption of logistic regression and similar methods in the mid-1900s [@cramer2002origins]. The generalized linear model framework came into being, in a formal sense, in the 1970s with @nelder1972generalized. Generalized linear models (GLMs)\index{generalized linear models} broaden the types of outcomes that are allowed. We still model outcomes as a linear function, but we are less constrained. The outcome can be anything in the exponential family, and popular choices include the logistic distribution and the Poisson distribution. A further generalization of GLMs is generalized additive models (GAMs) where we broaden the structure of the explanatory side. We still explain the dependent variable as an additive function of various bits and pieces, but those bits and pieces can be functions. This framework was proposed in the 1990s by @hastie1990generalized.
 
 :::{.callout-note}
 ## Shoulders of giants
@@ -71,7 +73,7 @@ In this chapter we consider logistic, Poisson, and negative binomial regression.
 
 Linear regression is a useful way to better understand our data. But it assumes a continuous outcome variable that can take any number on the real line. We would like some way to use this same machinery when we cannot satisfy this condition. We turn to logistic and Poisson regression for binary and count outcome variables, respectively, noting they are still linear models, because the independent variables enter in a linear fashion.
 
-Logistic regression\index{logistic regression}, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it. For instance, win or lose, available or not available, support or not.
+Logistic regression\index{logistic regression}, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable\index{binary outcome} may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it. For instance, win or lose, available or not available, support or not.
 
 The foundation of this is the Bernoulli distribution\index{Bernoulli distribution} where there is a certain probability, $p$, of outcome "1" and the remainder, $1-p$, for outcome "0". We can use `rbernoulli()` to simulate data from the Bernoulli distribution. 
 
@@ -94,7 +96,7 @@ One reason to use logistic regression\index{logistic regression} is that we will
 $$
 \mbox{logit}(x) = \log\left(\frac{x}{1-x}\right).
 $$
-This will transpose values between 0 and 1 onto the real line. For instance, `logit(0.1) = -2.2`, `logit(0.5) = 0`, and `logit(0.9) = 2.2` (@fig-heyitslogit). We call this the "link function". It relates the distribution of interest in a generalized linear model to a linear model.
+This will transpose values between 0 and 1 onto the real line. For instance, `logit(0.1) = -2.2`, `logit(0.5) = 0`, and `logit(0.9) = 2.2` (@fig-heyitslogit). We call this the "link function". It relates the distribution of interest in a generalized linear model to the machinery we use in linear models.
 
 ```{r}
 #| eval: true
@@ -113,7 +115,6 @@ tibble(values = seq(from = 0, to = 1, by = 0.001),
   labs(x = "Values of x",
        y = "logit(x)")
 ```
-
 
 To illustrate logistic regression\index{logistic regression}, we will simulate data on whether it is a weekday or weekend, based on the number of cars on the road. We will assume that on weekdays the road is busier.
 
@@ -143,7 +144,7 @@ arrow::write_parquet(x = week_or_weekday,
                      sink = "outputs/data/week_or_weekday.parquet")
 ```
 
-We can use `glm()` from base R to do a quick estimation. In this case we will try to work out whether it is a weekday or weekend, based on the number of cars we can see. We are interested in estimating @eq-logisticexample:
+We can use `glm()` from base R to do a quick estimation.\index{logistic regression!Base R} In this case we will try to work out whether it is a weekday or weekend, based on the number of cars we can see. We are interested in estimating @eq-logisticexample:
 
 $$
 \mbox{Pr}(y_i=1) = \mbox{logit}^{-1}\left(\beta_0+\beta_1 x_i\right)
@@ -163,7 +164,7 @@ week_or_weekday_model <-
 summary(week_or_weekday_model)
 ```
 
-The estimated coefficient on the number of cars is 0.19. The interpretation of the logistic regression's\index{logistic regression} coefficients is more complicated than linear regression as they relate to changes in the log-odds of the binary outcome. For instance, the estimate of 0.19 is the average change in the log-odds of it being a weekday with observing one extra car on the road. The coefficient is positive which means an increase. As it is non-linear, if we want to specify a particular change, then this will be different for different baseline levels of the observation. That is, an increase of 0.19 log-odds has a larger impact when the baseline log-odds are 0, compared to 2.
+The estimated coefficient on the number of cars is 0.19. The interpretation of the logistic regression's\index{logistic regression!interpretation} coefficients is more complicated than linear regression as they relate to changes in the log-odds of the binary outcome. For instance, the estimate of 0.19 is the average change in the log-odds of it being a weekday with observing one extra car on the road. The coefficient is positive which means an increase. As it is non-linear, if we want to specify a particular change, then this will be different for different baseline levels of the observation. That is, an increase of 0.19 log-odds has a larger impact when the baseline log-odds are 0, compared to 2.
 
 We can translate our estimate into the probability of it being a weekday, for a given number of cars. `predictions()` from `marginaleffects` [@marginaleffects] can be used to add the implied probability that it is a weekday for each observation.
 
@@ -218,7 +219,7 @@ marginaleffects(week_or_weekday_model, newdata = "mean") |>
   )
 ```
 
-To more thoroughly examine the situation we might want to build a Bayesian model using `rstanarm`. As in @sec-its-just-a-linear-model we will specify priors for our model, but these will just be the default priors that `rstanarm` uses:
+To more thoroughly examine the situation we might want to build a Bayesian model using `rstanarm`.\index{Bayesian!logistic regression}\index{logistic regression!Bayesian} As in @sec-its-just-a-linear-model we will specify priors for our model, but these will just be the default priors that `rstanarm` uses:
 
 $$
 \begin{aligned}
@@ -299,11 +300,11 @@ modelsummary::modelsummary(
 
 ### Political support in the United States
 
-One area where logistic regression is often used is political polling\index{political polling}. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to "support" or "not support".
+One area where logistic regression is often used is political polling\index{United States!political polling}. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to "support" or "not support".
 
 As a reminder, the workflow we advocate in this book is: 
 
-$$\mbox{Plan} \rightarrow \mbox{Simulate} \rightarrow \mbox{Acquire} \rightarrow \mbox{Explore} \rightarrow \mbox{Share}.$$
+$$\mbox{Plan} \rightarrow \mbox{Simulate} \rightarrow \mbox{Acquire} \rightarrow \mbox{Explore} \rightarrow \mbox{Share}$$
 
 While the focus here is the exploration of data using models, we still need to do the other aspects. We begin by planning. In this case, we are interested in US political support. In particular we are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. That means we are interested in a dataset with variables for who an individual voted for, and some of their characteristics, for instance, gender and education. A quick sketch of such a dataset is @fig-uspoliticalsupportsketch. We would like our model to average over these points. A quick sketch is @fig-uspoliticalsupportmodel.
 
@@ -480,6 +481,84 @@ ces2020 |>
   theme(legend.position = "bottom")
 ```
 
+The model that we are interested in is:
+
+$$
+\begin{aligned}
+\mbox{Pr}(y_i=1) &= \mbox{logit}^{-1}\left(\beta_0+\beta_1 \times \mbox{gender}_i + \beta_2 \times \mbox{education}_i\right)\\
+\beta_0 & \sim \mbox{Normal}(0, 2.5)\\
+\beta_1 & \sim \mbox{Normal}(0, 2.5)\\
+\beta_2 & \sim \mbox{Normal}(0, 2.5)
+\end{aligned}
+$$
+where $y_i$ is the political preference of the respondent, $\mbox{gender}_i$ is the gender of the respondent, and $\mbox{education}_i$ is the education of the respondent. We could estimate the parameters using `stan_glm()`. (In the interest of run-time we will randomly sample 1,000 observations and fit the model on that, rather than the full dataset.)
+
+```{r}
+#| eval: false
+#| echo: true
+#| message: false
+#| warning: false
+
+set.seed(853)
+
+ces2020_reduced <- 
+  ces2020 |> 
+  slice_sample(n = 1000)
+
+political_preferences <-
+  stan_glm(
+    voted_for ~ gender + education,
+    data = ces2020_reduced,
+    family = binomial(link = "logit"),
+    seed = 853
+  )
+
+saveRDS(
+  political_preferences,
+  file = "political_preferences.rds"
+)
+```
+
+```{r}
+#| eval: false
+#| echo: false
+
+# INTERNAL
+
+saveRDS(
+  political_preferences,
+  file = "outputs/model/political_preferences.rds"
+)
+```
+
+```{r}
+#| eval: true
+#| include: false
+#| message: false
+#| warning: false
+
+library(rstanarm)
+
+political_preferences <-
+  readRDS(file = "outputs/model/political_preferences.rds")
+```
+
+The results of our Bayesian model are interesting and suggest males were less likely to vote for Biden, and that there is a considerable effect of education (@tbl-modelsummarylogisticpolitical).
+
+```{r}
+#| label: tbl-modelsummarylogisticpolitical
+#| tbl-cap: "Whether a respondent is likely to vote for either Biden or Trump based on their gender and education"
+#| message: false
+#| warning: false
+
+library(broom.mixed)
+
+modelsummary::modelsummary(
+  list(
+    "Support Biden" = political_preferences
+  )
+)
+```
 
 
 
