@@ -63,7 +63,7 @@ Linear models, covered in @sec-its-just-a-linear-model, have evolved substantial
 :::{.callout-note}
 ## Shoulders of giants
 
-Dr Robert Tibshirani\index{Tibshirani, Robert} is Professor in the Departments of Statistics and Biomedical Data Science at Stanford University. After earning a PhD in Statistics from Stanford University in 1981, he joined the University of Toronto as an assistant professor. He was promoted to full professor in 1994 and moved to Stanford in 1998. He made fundamental contributions including GAMs, mentioned above, and lasso regression, which is a way of automated variable selection. He is an author of @islr. He was awarded the COPSS Presidents' Award in 1996 and was appointed a Fellow of the Royal Society in 2019.
+Dr Robert Tibshirani\index{Tibshirani, Robert} is Professor in the Departments of Statistics and Biomedical Data Science at Stanford University. After earning a PhD in Statistics from Stanford University in 1981, he joined the University of Toronto as an assistant professor. He was promoted to full professor in 1994 and moved to Stanford in 1998. He made fundamental contributions including GAMs, mentioned above, and lasso regression, which is a way of automated variable selection. He is an author of @islr. He was awarded the COPSS Presidents' Award in 1996 and was appointed a Fellow of the Royal Society in 2019.\index{COPSS Presidents' Award}
 :::
 
 In this chapter we consider logistic, Poisson, and negative binomial regression. 
@@ -71,7 +71,7 @@ In this chapter we consider logistic, Poisson, and negative binomial regression.
 
 ## Logistic regression
 
-Linear regression is a useful way to better understand our data. But it assumes a continuous outcome variable that can take any number on the real line. We would like some way to use this same machinery when we cannot satisfy this condition. We turn to logistic and Poisson regression for binary and count outcome variables, respectively, noting they are still linear models, because the independent variables enter in a linear fashion.
+Linear regression is a useful way to better understand our data. But it assumes a continuous outcome variable that can take any number on the real line. We would like some way to use this same machinery when we cannot satisfy this condition. We turn to logistic and Poisson regression for binary and count outcome variables, respectively. They are still linear models, because the independent variables enter in a linear fashion.
 
 Logistic regression\index{logistic regression}, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable\index{binary outcome} may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it. For instance, win or lose, available or not available, support or not.
 
@@ -91,7 +91,7 @@ bernoulli_example <-
 bernoulli_example |> pull(draws)
 ```
 
-One reason to use logistic regression\index{logistic regression} is that we will be modelling a probability, hence it will be bounded between 0 and 1. Whereas with linear regression we may end up with values outside this. The foundation of logistic regression is the logit function\index{logit function}:
+One reason to use logistic regression\index{logistic regression} is that we will be modelling a probability, hence it will be bounded between 0 and 1. With linear regression we may end up with values outside this. The foundation of logistic regression is the logit function\index{logit function}:
 
 $$
 \mbox{logit}(x) = \log\left(\frac{x}{1-x}\right).
@@ -101,6 +101,7 @@ This will transpose values between 0 and 1 onto the real line. For instance, `lo
 ```{r}
 #| eval: true
 #| include: true
+#| echo: false
 #| fig-cap: "Example of the logit function for values between 0 and 1"
 #| label: fig-heyitslogit
 #| message: false
@@ -126,11 +127,10 @@ set.seed(853)
 
 week_or_weekday <-
   tibble(
-    number_of_cars = runif(n = 1000, min = 0, max = 100),
+    number_of_cars = sample.int(n = 100, size = 1000, replace = TRUE),
     noise = rnorm(n = 1000, mean = 0, sd = 10),
     is_weekday = if_else(number_of_cars + noise > 50, 1, 0)
   ) |>
-  mutate(number_of_cars = round(number_of_cars)) |>
   select(-noise)
 
 week_or_weekday
@@ -164,9 +164,9 @@ week_or_weekday_model <-
 summary(week_or_weekday_model)
 ```
 
-The estimated coefficient on the number of cars is 0.19. The interpretation of the logistic regression's\index{logistic regression!interpretation} coefficients is more complicated than linear regression as they relate to changes in the log-odds of the binary outcome. For instance, the estimate of 0.19 is the average change in the log-odds of it being a weekday with observing one extra car on the road. The coefficient is positive which means an increase. As it is non-linear, if we want to specify a particular change, then this will be different for different baseline levels of the observation. That is, an increase of 0.19 log-odds has a larger impact when the baseline log-odds are 0, compared to 2.
+The estimated coefficient on the number of cars is 0.19. The interpretation of coefficients in logistic regression\index{logistic regression!interpretation} is more complicated than linear regression as they relate to changes in the log-odds of the binary outcome. For instance, the estimate of 0.19 is the average change in the log-odds of it being a weekday with observing one extra car on the road. The coefficient is positive which means an increase. As it is non-linear, if we want to specify a particular change, then this will be different for different baseline levels of the observation. That is, an increase of 0.19 log-odds has a larger impact when the baseline log-odds are 0, compared to 2.
 
-We can translate our estimate into the probability of it being a weekday, for a given number of cars. `predictions()` from `marginaleffects` [@marginaleffects] can be used to add the implied probability that it is a weekday for each observation.
+We can translate our estimate into the probability of it being a weekday, for a given number of cars. We can add the implied probability that it is a weekday for each observation using `predictions()` from `marginaleffects` [@marginaleffects].
 
 ```{r}
 library(marginaleffects)
@@ -306,7 +306,7 @@ As a reminder, the workflow we advocate in this book is:
 
 $$\mbox{Plan} \rightarrow \mbox{Simulate} \rightarrow \mbox{Acquire} \rightarrow \mbox{Explore} \rightarrow \mbox{Share}$$
 
-While the focus here is the exploration of data using models, we still need to do the other aspects. We begin by planning. In this case, we are interested in US political support. In particular we are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. That means we are interested in a dataset with variables for who an individual voted for, and some of their characteristics, for instance, gender and education. A quick sketch of such a dataset is @fig-uspoliticalsupportsketch. We would like our model to average over these points. A quick sketch is @fig-uspoliticalsupportmodel.
+While the focus here is the exploration of data using models, we still need to do the other aspects. We begin by planning. In this case, we are interested in US political support. In particular we are interested in whether we can forecast who a respondent is likely to vote for, based only on knowing their highest level of education and gender. That means we are interested in a dataset with variables for who an individual voted for, and some of their characteristics, such as gender and education. A quick sketch of such a dataset is @fig-uspoliticalsupportsketch. We would like our model to average over these points. A quick sketch is @fig-uspoliticalsupportmodel.
 
 ::: {#fig-uspoliticalsuppor layout-ncol=2 layout-valign="bottom"}
 
@@ -341,9 +341,9 @@ us_political_preferences <-
 us_political_preferences
 ```
 
-We can use the 2020 Cooperative Election Study\index{Cooperative Election Study} (CES) [@cooperativeelectionstudyus], which is a long-standing annual survey of US political opinion. In 2020, there were 61,000 respondents who completed the post-election survey. While the sampling methodology, detailed in @guidetothe2020ces [p. 13], is not a perfect random sample and relies on matching, it is a widely used and accepted approach that balances sampling concerns and cost.
+For the actual data we can use the 2020 Cooperative Election Study\index{Cooperative Election Study} (CES) [@cooperativeelectionstudyus], which is a long-standing annual survey of US political opinion. In 2020, there were 61,000 respondents who completed the post-election survey. While the sampling methodology, detailed in @guidetothe2020ces [p. 13], is not a perfect random sample and relies on matching, it is a widely used and accepted approach that balances sampling concerns and cost.
 
-We can access the CES using `get_dataframe_by_name()` from `dataverse` [@dataverse], which was an approach that was introduced in @sec-gather-data and @sec-store-and-share. We save the data that are of interest to us, and then refer to that saved dataset.
+We can access the CES using `get_dataframe_by_name()` from `dataverse` [@dataverse]. This approach was introduced in @sec-gather-data and @sec-store-and-share. We save the data that are of interest to us, and then refer to that saved dataset.
 
 ```{r}
 #| echo: true
@@ -485,12 +485,14 @@ The model that we are interested in is:
 
 $$
 \begin{aligned}
-\mbox{Pr}(y_i=1) &= \mbox{logit}^{-1}\left(\beta_0+\beta_1 \times \mbox{gender}_i + \beta_2 \times \mbox{education}_i\right)\\
+y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
+\mbox{logit}(\pi_i) & = \left(\beta_0+\beta_1 \times \mbox{gender}_i + \beta_2 \times \mbox{education}_i\right) \\
 \beta_0 & \sim \mbox{Normal}(0, 2.5)\\
 \beta_1 & \sim \mbox{Normal}(0, 2.5)\\
 \beta_2 & \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
 $$
+
 where $y_i$ is the political preference of the respondent, $\mbox{gender}_i$ is the gender of the respondent, and $\mbox{education}_i$ is the education of the respondent. We could estimate the parameters using `stan_glm()`. (In the interest of run-time we will randomly sample 1,000 observations and fit the model on that, rather than the full dataset.)
 
 ```{r}
@@ -510,6 +512,8 @@ political_preferences <-
     voted_for ~ gender + education,
     data = ces2020_reduced,
     family = binomial(link = "logit"),
+    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -543,7 +547,7 @@ political_preferences <-
   readRDS(file = "outputs/model/political_preferences.rds")
 ```
 
-The results of our Bayesian model are interesting and suggest males were less likely to vote for Biden, and that there is a considerable effect of education (@tbl-modelsummarylogisticpolitical).
+The results of our Bayesian model are interesting. They suggest males were less likely to vote for Biden, and that there is a considerable effect of education (@tbl-modelsummarylogisticpolitical).
 
 ```{r}
 #| label: tbl-modelsummarylogisticpolitical
@@ -577,6 +581,7 @@ We can also look at what happens to the distribution as we change the value of $
 ```{r}
 #| eval: true
 #| include: true
+#| echo: false
 #| message: false
 #| warning: false
 #| fig-cap: "The Poisson distribution is governed by the value of the mean, which is the same as its variance"
@@ -720,11 +725,12 @@ We could build a Bayesian model and estimate it with `rstanarm` (@tbl-modelsumma
 $$
 \begin{aligned}
 y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
-\log(\lambda_i) & = \beta_0 + \beta_1 x_i\\
+\log(\lambda_i) & = \beta_0 + \beta_1 \times\mbox{department}_i\\
 \beta_0 & \sim \mbox{Normal}(0, 2.5)\\
 \beta_1 & \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
 $$
+where $y_i$ is the number of As awarded.
 
 ```{r}
 #| include: true
@@ -804,7 +810,7 @@ marginaleffects(grades_rstanarm) |>
 
 ### Letters used in *Jane Eyre* 
 
-In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë\index{Jane Eyre}. (Recall that in Chapter @sec-gather-data we converted PDFs of *Jane Eyre* into a dataset.) We could then consider the first ten lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/Es increases as more words are used. If not, it could suggest that the distribution of e/Es is not consistent, which could be of interest to linguists.\index{Poisson regression}
+In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë\index{Brontë, Charlotte!Jane Eyre}. (Recall that in @sec-gather-data we converted PDFs of *Jane Eyre* into a dataset.) We could then consider the first ten lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/Es increases as more words are used. If not, it could suggest that the distribution of e/Es is not consistent, which could be of interest to linguists.\index{Poisson regression}
 
 Following the workflow advocated in this book, we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-letterssketch, and a quick sketch of our model is @fig-lettersmodel.
 
@@ -817,7 +823,7 @@ Following the workflow advocated in this book, we first sketch our dataset and m
 Sketches of the expected dataset and analysis force us to consider what we are interested in
 :::
 
-We simulate a dataset of how the number of e/Es are distributed following the Poisson distribution (@fig-simenum).
+We simulate a dataset of how the number of e/Es could be distributed following the Poisson distribution (@fig-simenum).
 
 ```{r}
 #| echo: true
@@ -846,7 +852,7 @@ count_of_e_simulation |>
   scale_fill_brewer(palette = "Set1")
 ```
 
-We can now gather and prepare our data.
+We can now gather and prepare our data. We download the text of the book from Project Gutenberg using `gutenberg_download()`.
 
 ```{r}
 #| eval: false
@@ -910,7 +916,7 @@ jane_eyre <- read_csv(
 jane_eyre
 ```
 
-We are interested in only those lines that have content, so we remove those empty lines that are just there for spacing. Then we can create counts of the number of times "e" or "E" occurs in that line, for the first ten lines of each chapter. For instance, we can look at the first few lines and see that there are five e/Es in the first line and eight in the second.
+We are interested in only those lines that have content, so we remove those empty lines that are just there for spacing. Then we can create counts of the number of e/Es in that line, for the first ten lines of each chapter. For instance, we can look at the first few lines and see that there are five e/Es in the first line and eight in the second.
 
 ```{r}
 jane_eyre_reduced <-
@@ -991,12 +997,12 @@ We could consider the following model:
 $$
 \begin{aligned}
 y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
-\log(\lambda_i) & = \beta_0 + \beta_1 x_i\\
+\log(\lambda_i) & = \beta_0 + \beta_1 \mbox{Number of words}_i\\
 \beta_0 & \sim \mbox{Normal}(0, 2.5)\\
 \beta_1 & \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
 $$
-where $y_i$ is the number of e/Es in the line and $x_i$ is the number of words in the line. We could estimate the parameters using `stan_glm()`. 
+where $y_i$ is the number of e/Es in the line and the explanatory variable is the number of words in the line. We could estimate the parameters using `stan_glm()`. 
 
 ```{r}
 #| eval: false
@@ -1009,6 +1015,8 @@ jane_e_counts <-
     count_e ~ word_count,
     data = jane_eyre_reduced,
     family = poisson(link = "log"),
+    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -1071,7 +1079,7 @@ plot_cap(jane_e_counts, condition = "word_count") +
 
 ## Negative binomial regression
 
-One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion and can use a close variant, negative binomial regression\index{negative binomial regression}. 
+One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion by using a close variant, negative binomial regression\index{negative binomial regression}. 
 
 Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance: 
 
@@ -1190,7 +1198,7 @@ alberta_cod <-
   mutate(cause = str_trunc(cause, 30))
 ```
 
-If we were to look at the top-ten causes in 2021, we would notice a variety of interesting aspects (@tbl-albertahuh). For instance, we would expect that the most common causes would be in all 21 years of our data. But we notice that that most common cause, "Other ill-defined and unknown causes of mortality", is only in three years. Naturally, "COVID-19, virus identified", is only in two other years, as there were no COVID deaths in Canada before 2020.
+If we were to look at the top-ten causes in 2021, we would notice a variety of interesting aspects (@tbl-albertahuh). For instance, we would expect that the most common causes would be in all 21 years of our data. But we notice that that most common cause, "Other ill-defined and unknown causes of mortality", is only in three years. "COVID-19, virus identified", is only in two other years, as there were no known COVID deaths in Canada before 2020.
 
 ```{r}
 #| label: tbl-albertahuh
