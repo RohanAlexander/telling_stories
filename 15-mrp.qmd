@@ -43,6 +43,7 @@ engine: knitr
 - `tidybayes` [@citetidybayes]
   - `add_epred_draws()`
   - `get_variables()`
+  - `spread_draws()`
 - `tidyverse` [@Wickham2017]
 
 ## Introduction
@@ -75,7 +76,7 @@ One famous MRP example is @wang2015forecasting. They used data from the Xbox gam
 ## Shoulders of giants
 
 Dr Andrew Gelman\index{Gelman, Andrew} is Higgins Professor of Statistics and Political Science at Columbia University. After earning a PhD in Statistics from Harvard University in 1990, he was appointed as an assistant professor at the University of California, Berkeley, and then moved to Columbia in 1996, where he was promoted to full professor in 2000. 
-His research focuses on statistics, social sciences, and their intersection. For instance, @wang2015forecasting showed that biased surveys can still have value. He was the principal investigator for Stan, a probabilistic programming language, that is widely used for Bayesian modelling.
+His research focuses on statistics, social sciences, and their intersection. For instance, @wang2015forecasting showed that biased surveys can still have value. He was the principal investigator for Stan, a probabilistic programming language, that is widely used for Bayesian modelling.\index{Bayesian modelling}
 And he has written many books, with @gelmanandhill and @bda having been especially influential on a generation of researchers that followed.
 He was appointed a Fellow of the American Statistical Association in 1998 and awarded the COPSS Presidents' Award in 2003.\index{COPSS Presidents' Award}
 
@@ -91,18 +92,18 @@ $$
 
 Having a trained model that considers the effect of these various independent variables on support for the candidates, they now post-stratify, where each of these "cell-level estimates are weighted by the proportion of the electorate in each cell and aggregated to the appropriate level (i.e., state or national)."
 
-This means that they need cross-tabulated population data. In general, the census would have worked, or one of the other large surveys available in the US, but the difficulty is that the variables need to be available on a cross-tab basis. As such, they use exit polls (not a viable option for most other countries).
+This means that they need cross-tabulated population data. In general, the census would have worked, or one of the other large surveys available in the US, such as the ACS, which we introduced in @sec-farm-data. The difficulty is that the variables need to be available on a cross-tabulated basis. As such, they use exit polls (not a viable option for most other countries).
 
 They make state-specific estimates by post-stratifying to the features of each state. And they similarly examine demographic-differences. Finally, they convert their estimates into electoral college estimates.
 
-In general, MRP is a good way to accomplish specific aims, but it is not without trade-offs.\index{MRP!trade-offs} If we have a good quality survey, then it may be a way to speak to disaggregated aspects of it. Or if we are concerned about uncertainty then it is a good way to think about that. If we have a biased survey, then it is a great place to start, but it is not a panacea. There is plenty of scope for exciting work from a variety of approaches. For instance, from a more statistical perspective, there is a lot of work to do in terms of thinking through how survey design and modelling approaches interact and the extent to which we are underestimating uncertainty. It is also very interesting to think through the implications of small samples and uncertainty in the post-stratification dataset. There is an awful lot to do in terms of thinking through what the appropriate model is to use, and how do we even evaluate what "appropriate" means here, for instance, based on @si2020use. More generally, we just have little idea of the conditions under which we will have the stable preferences and relationships that are required for MRP to be accurate. A great deal of work is needed to understand how this relates to uncertainty in survey design, for instance, based on @lauderdale2020model or @ghitza2020voter.
+In general, MRP is a good way to accomplish specific aims, but it is not without trade-offs.\index{MRP!trade-offs} If we have a good quality survey, then it may be a way to speak to disaggregated aspects of it. Or if we are concerned about uncertainty then it is a good way to think about that. If we have a biased survey, then it is a great place to start, but it is not a panacea. There is plenty of scope for exciting work from a variety of approaches. For instance, from a more statistical perspective, there is a lot of work to do in terms of thinking through how survey design and modelling approaches interact and the extent to which we are underestimating uncertainty. It is also interesting to think through the implications of small samples and uncertainty in the post-stratification dataset. There is an awful lot to do in terms of thinking through what the appropriate model is to use, and how do we even evaluate what "appropriate" means here, for instance, based on @si2020use. More generally, we just have little idea of the conditions under which we will have the stable preferences and relationships that are required for MRP to be accurate. A great deal of work is needed to understand how this relates to uncertainty in survey design, for instance, based on @lauderdale2020model or @ghitza2020voter.
 
 In this chapter, we begin with simulating a situation in which we pretend that we know the features of the population. We then consider the famous Xbox poll MRP example in greater depth. We will finally move to examples from the Australian political context, and then the US 2020 presidential election.
 
 
 ## Multilevel modelling
 
-Before we can turn to MRP, we need to become comfortable with multilevel modelling.\index{multilevel modelling}\index{hierarchical modelling}\index{random effects} This approach goes by a variety of names including "hierarchical", and "random effects". While there are sometimes small differences in meaning between disciplines, in general they refer to the same or at least very similar ideas.
+Before we can turn to MRP, we need to become comfortable with multilevel modelling.\index{multilevel modelling}\index{hierarchical modelling}\index{random effects} This approach goes by a variety of names including "hierarchical", and "random effects". While there are sometimes small differences in meaning between disciplines, in general they refer to the same or at least similar ideas.
 
 :::{.callout-note}
 ## Shoulders of giants
@@ -113,7 +114,7 @@ One area of her research is multilevel modelling and applications in demography,
 She was awarded the Royal Statistical Society Guy Medal\index{Guy Medal} in Bronze in 2008.
 :::
 
-The fundamental insight of multilevel modelling is that a lot of the time, our observations are not completely independent of each other, and can instead be grouped. Accounting for that grouping when we model, can provide us with some useful information. For instance, there is a difference in the earnings of professional athletes depending on whether they compete in men's or women's events. If we were interested in trying to forecast the earnings of a particular athlete, based on their competition results, then knowing which type of competition it was would enable the model to make a better forecast.
+The fundamental insight of multilevel modelling is that a lot of the time our observations are not completely independent of each other, and can instead be grouped. Accounting for that grouping when we model, can provide us with some useful information. For instance, there is a difference in the earnings of professional athletes depending on whether they compete in men's or women's events. If we were interested in trying to forecast the earnings of a particular athlete, based on their competition results, then knowing which type of competition it was would enable the model to make a better forecast.
 
 We distinguish between three settings:\index{multilevel modelling!pooling} 1) Complete pooling, where we treat every observation as being from the same group, which is what we have been doing to this point. 2) No pooling, where we treat every group separately, which might happen if we were to run a separate regression for each group. 3) Partial pooling, where we allow group membership to have some influence. As an example, consider we are interested in the relationship between GDP and inflation for each of the countries in the world. Complete pooling would have us put all the countries into the one group; no pooling would have us run separate regressions for each continent. We will now illustrate the partial pooling approach.
 
@@ -207,7 +208,7 @@ When we move to multilevel modelling, it is possible that some `rstanarm` models
 
 ### Austen, Brontë, Dickens, and Shakespeare
 
-As an example of multilevel modelling regression, we consider data from Project Gutenberg on the length of books by two different authors: Jane Austen,\index{Austen, Jane} Charlotte Brontë,\index{Brontë, Charlotte} Charles Dickens,\index{Dickens, Charles} and William Shakespeare.\index{Shakespeare, William} We would expect that Austen, as she wrote books, will have longer books than Shakespeare, as he wrote plays.
+As an example of multilevel modelling, we consider data from Project Gutenberg on the length of books by two different authors: Jane Austen,\index{Austen, Jane} Charlotte Brontë,\index{Brontë, Charlotte} Charles Dickens,\index{Dickens, Charles} and William Shakespeare.\index{Shakespeare, William} We would expect that Austen, as she wrote books, will have longer books than Shakespeare, as he wrote plays.
 
 ```{r}
 #| eval: false
@@ -420,43 +421,62 @@ modelsummary::modelsummary(
 )
 ```
 
-
-
+@tbl-modelsummaryaustenshakes is a little empty for the multilevel model, and we often use graphs to avoid overwhelming the reader with numbers. For instance, @fig-multilevelexampleleveldistribution shows the distribution of draws for each of the four authors using `@spread_draws()` from `tidybayes`.
 
 ```{r}
 #| echo: true
 #| eval: true
 #| message: false
 #| warning: false
-#| label: fig-ppcheckmultilevelexample
-#| layout-ncol: 2
-#| fig-cap: "Comparing posterior prediction checks for negative binomial models with and without multilevel modelling"
-#| fig-subcap: ["Negative binomial model", "Negative binomial model with multilevel modelling"]
+#| label: fig-multilevelexampleleveldistribution
+#| fig-cap: "Examining the distribution of draws for each of the four authors"
 
-pp_check(author_lines_rstanarm)
+library(tidybayes)
 
-pp_check(author_lines_rstanarm_multilevel)
+author_lines_rstanarm_multilevel |>
+  spread_draws(`(Intercept)`, b[, group]) |>
+  mutate(condition_mean = `(Intercept)` + b) |>
+  ggplot(aes(y = group, x = condition_mean)) +
+  stat_halfeye()
 ```
 
-```{r}
-#| message: false
-#| warning: false
-
-neg_binomial <- loo(author_lines_rstanarm, cores = 2)
-neg_binomial_multilevel <- loo(author_lines_rstanarm_multilevel, cores = 2)
-
-loo_compare(neg_binomial, neg_binomial_multilevel)
-```
-
-In this case it is not overwhelmingly obvious that the multilevel model is the better choice, but it is slightly preferred on the basis of LOO.
 
 
 
-## Simulation
+<!-- ```{r} -->
+<!-- #| echo: true -->
+<!-- #| eval: true -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+<!-- #| label: fig-ppcheckmultilevelexample -->
+<!-- #| layout-ncol: 2 -->
+<!-- #| fig-cap: "Comparing posterior prediction checks for negative binomial models with and without multilevel modelling" -->
+<!-- #| fig-subcap: ["Negative binomial model", "Negative binomial model with multilevel modelling"] -->
+
+<!-- pp_check(author_lines_rstanarm) -->
+
+<!-- pp_check(author_lines_rstanarm_multilevel) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+
+<!-- neg_binomial <- loo(author_lines_rstanarm, cores = 2) -->
+<!-- neg_binomial_multilevel <- loo(author_lines_rstanarm_multilevel, cores = 2) -->
+
+<!-- loo_compare(neg_binomial, neg_binomial_multilevel) -->
+<!-- ``` -->
+
+In this case, there is not a substantial difference between the two settings.
+
+
+
+## Simulated example: coffee or tea?
 
 ### Construct a population
 
-To get started we will simulate some data about children's behavior from a population that has various properties, take a biased sample, and then conduct MRP to demonstrate how we can get those properties back. We are going to have two "explanatory variables"---age and toilet trained---and one dependent variable---bedtime. Bedtime will increase as age increases, and will be later for children that are toilet trained, compared with those that are not. To be clear, in this example we will "know" the "true" features of the population, but this is not something that occurs when we use real data---it is just to help to explain what is happening in MRP.
+To get started we will simulate some population about whether someone prefers coffee or two. We will then take a biased sample in favor of tea, and use MRP get those population-level preferences back. We will have two explanatory variables. Age-group will be either "young" or "old", and nationality will be either "United States" or "England". The simulation will impose an increased chance of preferring tea of the individual is English and/or old. Everything in our population will be roughly balanced, (that is half and half between each of the variables). But our survey will skew older and English. To be clear, in this example we will "know" the "true" features of the population, but this is not something that occurs when we use real data---it is just to help to explain what is happening in MRP.
 
 ```{r}
 #| message: false
@@ -466,605 +486,611 @@ library(tidyverse)
 
 set.seed(853)
 
-size_of_population <- 1000000
+population_size <- 1000000
 
-population_for_mrp_example <-
+simulated_population <-
   tibble(
-    age = sample(
-      x = c(1:3),
-      size = size_of_population,
-      replace = TRUE
-    ),
-    toilet_trained = sample(
-      x = c(0, 1),
-      size = size_of_population,
-      replace = TRUE
-    ),
-    noise = rnorm(size_of_population, mean = 0, sd = 1),
-    # No special reason for this intercept to be five; it could be anything.
-    bed_time = 5 + 0.5 * age + 1 * toilet_trained + noise,
-  ) |>
-  select(-noise) |>
-  mutate(
-    age = as_factor(age),
-    toilet_trained = as_factor(toilet_trained)
-  )
+    age = rbinom(n = population_size, size = 1, prob = 0.5),
+    nationality = rbinom(n = population_size, size = 1, prob = 0.5),
+    probability = (age + nationality + 0.1) / 2.2, # 0.1 and 2.2 prevent certainty
+    prefers_tea = rbinom(n = population_size, 1, prob = probability)
+  ) 
 
-population_for_mrp_example |>
-  head()
+simulated_population
 ```
 
-That is, as always, when we have a dataset, we first try to graph it to better understand what is going on. As there are a million points, we can just grab the first 1,000 so that it plots nicely.
+We can see that the counts, by group, are fairly similar (tbl-teapreferencecounts). 
 
 ```{r}
 #| message: false
 #| warning: false
+#| label: tbl-teapreferencecounts
+#| tbl-cap: "Preference for tea, by age and nationality"
 
-population_for_mrp_example |>
-  slice(1:1000) |>
-  ggplot(aes(x = age, y = bed_time)) +
-  geom_jitter(
-    aes(color = toilet_trained),
-    alpha = 0.4,
-    width = 0.1,
-    height = 0
-  ) +
-  labs(
-    x = "Age",
-    y = "Bedtime",
-    color = "Toilet trained"
-  ) +
-  theme_classic() +
-  scale_color_brewer(palette = "Set1")
-```
-
-And we can also work out what the "truth" is for the information that we are interested in (remembering that we would never actually know this when we move away from simulated examples) (@tbl-toilettrained).
-
-```{r}
-#| label: tbl-toilettrained
-#| tbl-cap: "Average metrics for bedtime, based on whether a toddler is toilet trained"
-#| message: false
-#| warning: false
-
-population_for_mrp_example_summarised <-
-  population_for_mrp_example |>
-  summarise(median_bed_time = mean(bed_time),
-            .by = c(age, toilet_trained))
-
-population_for_mrp_example_summarised |>
+simulated_population |>
+  count(age, nationality, prefers_tea) |> 
   knitr::kable(
-    digits = 2,
-    col.names = c("Age", "Toilet trained?", "Average bedtime"),
-    booktabs = TRUE,
-    linesep = ""
-  )
+    col.names = c("Age", "Nationality", "Prefers tea", "Number"),
+    format.args = list(big.mark = ",")
+    )
 ```
 
-### Get a biased sample from it
+On average, 50 per cent of the population prefers tea, but this preference depends on the population sub-groups.
 
-Now we want to pretend that we have some survey that has a biased sample. We will allow that it over-samples children that are younger and those that are not toilet trained. For instance, perhaps we gathered our sample based on the records of a pediatrician, so it is more likely that they will see this biased sample of children. We are interested in assessing what proportion of children are toilet trained at various ages compared with the whole population, and how this may affect raw estimates of bedtimes for different sub-groups.
+### Take a biased sample
+
+Now we want to pretend that we have some survey that has a biased sample. We will allow that it over-samples 
+older respondents and English respondents. 
+We are interested in looking at what proportion of our biased sample prefers tea to coffee, and expect, by construction, that it will lean toward tea.
 
 ```{r}
-# This code based on that of Monica Alexander
 set.seed(853)
 
-# Add a weight for each "type" (has to sum to one)
-population_for_mrp_example <-
-  population_for_mrp_example |>
-  mutate(
-    weight =
-      case_when(
-        toilet_trained == 0 & age == 1 ~ 0.7,
-        toilet_trained == 0 ~ 0.1,
-        age %in% c(1, 2, 3) ~ 0.2
-      ),
-    id = 1:n()
-  )
-
-get_these <-
-  sample(
-    x = population_for_mrp_example$id,
-    size = 1000,
-    prob = population_for_mrp_example$weight
-  )
-
-sample_for_mrp_example <-
-  population_for_mrp_example |>
-  filter(id %in% get_these) |>
-  select(-weight, -id)
-
-# Clean up
-poststratification_dataset <-
-  population_for_mrp_example |>
-  select(-weight, -id)
+tea_sample <- 
+  simulated_population |> 
+  slice_sample(n = 1000, weight_by = probability)
 ```
 
-And we can plot those also.
 
 ```{r}
-#| fig-cap: "Bedtime by whether toilet trained and age"
-#| label: fig-mrptoilettsim
 #| message: false
 #| warning: false
+#| label: tbl-teapreferencesamplecounts
+#| tbl-cap: "Biased sample of preferences for tea, by age and nationality, oversampling those who like tea"
 
-sample_for_mrp_example |>
-  mutate(toilet_trained = as_factor(toilet_trained)) |>
-  ggplot(aes(x = age, y = bed_time)) +
-  geom_jitter(
-    aes(color = toilet_trained),
-    alpha = 0.4,
-    width = 0.1,
-    height = 0
-  ) +
-  labs(x = "Age",
-       y = "Bedtime",
-       color = "Toilet trained") +
-  theme_classic() +
-  scale_color_brewer(palette = "Set1")
-```
-
-It is clear that our sample has a different average bedtime than the overall population (@fig-mrptoilettsim). We can also do the same exercise as before and look at the mean by age and toilet trained status (@tbl-mrptoilettsim).
-
-```{r}
-#| tbl-cap: "Summary statistics, differenced by age and whether toilet trained"
-#| label: tbl-mrptoilettsim
-#| message: false
-#| warning: false
-
-sample_for_mrp_example_summarized <- 
-  sample_for_mrp_example |>
-  summarise(median_bed_time = mean(bed_time),
-            .by = c(age, toilet_trained))
-
-sample_for_mrp_example_summarized |>
+tea_sample |>
+  count(age, nationality, prefers_tea) |> 
   knitr::kable(
-    digits = 2,
-    col.names = c("Age", "Toilet trained?", "Average bedtime"),
-    booktabs = TRUE,
-    linesep = ""
-  )
+    col.names = c("Age", "Nationality", "Prefers tea", "Number"),
+    format.args = list(big.mark = ",")
+    )
 ```
+
+It is clear that our sample has a different average tea preference than the overall population (@tbl-teapreferencesamplecounts). 
+
 
 
 ### Model the sample
 
-We will quickly train a model based on the (biased) survey. We will use `modelsummary` [@citemodelsummary] to format our estimates (@tbl-mrptoilettsimmodel).
+We now train a model based on the biased survey. We explain tea preferences based on age and nationality. There is nothing that says you have to use a multilevel model, but a lot of situations will have circumstances such that it is not likely to do any worse. To be clear, this means that although we have individual-level data, there is some grouping of the individuals that we will take advantage of.
+
+$$
+\begin{aligned}
+y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
+\mbox{logit}(\pi_i) & = \left(\beta_0+\beta_1 \times \mbox{age}_i + \beta_2 \times \mbox{nationality}_i\right) \\
+\beta_0 & \sim \mbox{Normal}(0, 2.5)\\
+\beta_1 & \sim \mbox{Normal}(0, 2.5)\\
+\beta_2 & \sim \mbox{Normal}(0, 2.5)
+\end{aligned}
+$$
+
+where $y_i$ is the tea preference of the respondent, $\mbox{age}_i$ is the age of the respondent, and $\mbox{nationality}_i$ is the nationality of the respondent. We will estimate the model using `stan_glm()`. 
 
 ```{r}
-#| tbl-cap: "Model summary output"
-#| label: tbl-mrptoilettsimmodel
+#| eval: false
+#| echo: true
+#| message: false
+#| warning: false
 
-mrp_example_model <-
-  lm(bed_time ~ age + toilet_trained, data = sample_for_mrp_example)
+tea_preference_model <-
+  stan_glmer(
+    prefers_tea ~ (1 | age) + (1 | nationality),
+    data = tea_sample,
+    family = binomial(link = "logit"),
+    prior = normal(location = 0, scale = 0.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 0.5, autoscale = TRUE),
+    seed = 853
+  )
 
-mrp_example_model |>
-  modelsummary::modelsummary(fmt = 2)
+saveRDS(
+  tea_preference_model,
+  file = "tea_preference_model.rds"
+)
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| message: false
+#| warning: false
+
+# INTERNAL
+saveRDS(
+  tea_preference_model,
+  file = "outputs/model/tea_preference_model.rds"
+)
+```
+
+```{r}
+#| eval: false
+#| echo: true
+#| warning: false
+#| message: false
+
+library(rstanarm)
+
+tea_preference_model <-
+  readRDS(file = "tea_preference_model.rds")
+```
+
+```{r}
+#| eval: true
+#| echo: false
+#| warning: false
+#| message: false
+
+library(rstanarm)
+
+tea_preference_model <-
+  readRDS(file = "outputs/model/tea_preference_model.rds")
 ```
 
 
 
+```{r}
+#| tbl-cap: "Model trained on biased sample that oversamples a preference for tea"
+#| label: tbl-teamodelresults
+#| warning: false
+
+library(broom.mixed)
+
+modelsummary::modelsummary(
+  list(
+    "Tea preferences" = tea_preference_model
+  )
+)
+```
+
+@fig-teamodelresultsplots shows the distribution of draws for each of the different groups.
+
+```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-teamodelresultsplots
+#| fig-cap: "Examining the distribution of draws for each of the groups"
+
+library(tidybayes)
+
+tea_preference_model |>
+  spread_draws(`(Intercept)`, b[, group]) |>
+  mutate(condition_mean = `(Intercept)` + b) |>
+  ggplot(aes(y = group, x = condition_mean)) +
+  stat_halfeye()
+```
 
 
 ### Get a post-stratification dataset
 
-Now we will use a post-stratification dataset to get some estimates of the number in each cell. We typically use a larger dataset that may more closely reflect the population. In the US a popular choice is the American Community Survey (ACS), while in other countries we typically have to use the census.
+Now we will use a post-stratification dataset to get some estimates of the number in each cell. We typically use a larger dataset that may more closely reflect the population. In the US a popular choice is the American Community Survey (ACS) which we covered in @sec-farm-data, while in other countries we typically have to use the census.
 
-In this simulation example, we will just take a 10 per cent sample from the population and use that as our post-stratification dataset.
+In this simulated example, we will just take a 1 per cent sample from the population and use that as our post-stratification dataset. We want to remove tea preferences from that, because that is what we are pretending we do not know. 
 
 ```{r}
 set.seed(853)
 
-poststratification_dataset <-
-  population_for_mrp_example |>
-  slice(1:100000) |>
-  select(-bed_time)
+tea_poststrat_dataset <- 
+  simulated_population |> 
+  slice_sample(n = 10000) |> 
+  select(-prefers_tea)
 
-poststratification_dataset |>
-  head()
-```
-
-In an ideal world we have individual-level data in our post-stratification dataset (that is the case above). In that world we can apply our model to each individual. The more likely situation, in reality, is that we just have counts by groups, so we are going to try to construct an estimate for each group.
-
-```{r}
-poststrat_dataset_grouped <-
-  poststratification_dataset |>
-  count(age, toilet_trained)
-
-poststrat_dataset_grouped |>
-  head()
+tea_poststrat_dataset
 ```
 
 
 ### Post-stratify our model estimates
 
-Now we create an estimate for each group, and add some confidence intervals.
+This is an idealized example where we assume individual-level data in our post-stratification dataset. In that world we can apply our model to each individual. 
 
 ```{r}
-poststrat_dataset_grouped <-
-  mrp_example_model |>
-  predict(newdata = poststrat_dataset_grouped, interval = "confidence") |>
-  as_tibble() |>
-  cbind(poststrat_dataset_grouped)
-```
-
-@fig-mrptoilettsimmodelcompare illustrates the MRP estimates (circles) along with their confidence intervals, and compare them the raw estimates from the biased sample data (squares). In this case, because we know the truth, we can also compare them to the known truth (triangles), but that is not something we can do normally.
-
-```{r}
-#| fig-cap: "MRP estimates compared with true estimates"
-#| label: fig-mrptoilettsimmodelcompare
-
-poststrat_dataset_grouped |>
-  ggplot(aes(x = age, y = fit)) +
-  geom_point(
-    data = population_for_mrp_example_summarised,
-    aes(x = age, y = median_bed_time, color = toilet_trained),
-    shape = 17
-  ) +
-  geom_point(
-    data = sample_for_mrp_example_summarized,
-    aes(x = age, y = median_bed_time, color = toilet_trained),
-    shape = 15
-  ) +
-  geom_pointrange(aes(ymin = lwr, ymax = upr, color = toilet_trained)) +
-  labs(
-    x = "Age",
-    y = "Bedtime",
-    color = "Toilet trained"
-  ) +
-  theme_classic() +
-  scale_color_brewer(palette = "Set1")
-```
-
-In most cases the MRP estimates are closer to the truth than the raw data estimates.
-
-
-
-## Australian voting
-
-### Overview
-
-As a reminder, the workflow that we use is:
-
-1) read in the poll;
-2) model the poll; 
-3) read in the post-stratification data; and
-4) apply the model to the post-stratification data.
-
-In the earlier example, we did not really do too much in the modelling step, and despite the name "multilevel modelling with post-stratification", we did not actually use a multilevel model. There is nothing that says you have to use a multilevel model, but a lot of situations will have circumstances such that it is not likely to do any worse. To be clear, this means that although we have individual-level data, there is some grouping of the individuals that we will take advantage of. For instance, in the case of trying to model elections, usually districts/divisions/electorates/ridings/etc exist within provinces/states so it would likely make sense to, at least, include a coefficient that adjusts the intercept for each province.\index{Australia!politics}
-
-In this section we are going to simulate another dataset and then fit a few different models to it. We are going to draw on the Australian elections set-up. In Australia we have a parliamentary system, with 151 seats in the parliament, one for each electorate. These electorates are grouped within six states and two territories. There are two major parties - the Australian Labor Party (ALP) and the Liberal Party (LP). Somewhat confusingly, the Liberal party are actually the conservative, right-wing party, while the Labor party are the progressive, left-wing, party.
-
-### Construct a survey
-
-To move us slightly closer to reality, we are going to simulate a survey (rather than sample from a population as we did earlier) and then post-stratify it using real data. The dependent variable is "supports_ALP", which is a binary variable - either 0 or 1. We will just start with three independent variables here: 
-
-- "gender", which is either "female" or "male" (as that is what is available from the Australian Bureau of Statistics); 
-- "age_group", which is one of four groups: "ages 18 to 29", "ages 30 to 44", "ages 45 to 59", and "ages 60 plus";
-- "state", which is one of eight integers: 1 - 8 (inclusive).
-
-```{r}
-library(tidyverse)
-set.seed(853)
-
-size_of_sample_for_australian_polling <- 2000
-
-sample_for_australian_polling <-
-  tibble(
-    age_group =
-      sample(
-        x = c(0:3),
-        size = size_of_sample_for_australian_polling,
-        replace = TRUE
-      ),
-    gender =
-      sample(
-        x = c(0:1),
-        size = size_of_sample_for_australian_polling,
-        replace = TRUE
-      ),
-    state =
-      sample(
-        x = c(1:8),
-        size = size_of_sample_for_australian_polling,
-        replace = TRUE
-      ),
-    noise = rnorm(size_of_sample_for_australian_polling, mean = 0, sd = 1),
-    support_alp = 1 + 0.5 * age_group + 0.5 * gender + 0.01 * state + noise
-  )
-
-# Normalize the outcome variable
-sample_for_australian_polling <-
-  sample_for_australian_polling |>
-  mutate(
-    support_alp =
-      if_else(
-        support_alp > median(support_alp, na.rm = TRUE),
-        "Supports ALP",
-        "Does not"
-      )
-  )
-
-# Clean up the simulated data
-sample_for_australian_polling <-
-  sample_for_australian_polling |>
-  mutate(
-    age_group = case_when(
-      age_group == 0 ~ "Ages 18 to 29",
-      age_group == 1 ~ "Ages 30 to 44",
-      age_group == 2 ~ "Ages 45 to 59",
-      age_group == 3 ~ "Ages 60 plus",
-      TRUE ~ "Problem"
-    ),
-    gender = case_when(
-      gender == 0 ~ "Male",
-      gender == 1 ~ "Female",
-      TRUE ~ "Problem"
-    ),
-    state = case_when(
-      state == 1 ~ "Queensland",
-      state == 2 ~ "New South Wales",
-      state == 3 ~ "Australian Capital Territory",
-      state == 4 ~ "Victoria",
-      state == 5 ~ "Tasmania",
-      state == 6 ~ "Northern Territory",
-      state == 7 ~ "South Australia",
-      state == 8 ~ "Western Australia",
-      TRUE ~ "Problem"
-    ),
-  ) |>
-  select(-noise)
-
-# Tidy the class
-sample_for_australian_polling <-
-  sample_for_australian_polling |>
-  mutate(across(c(age_group, gender, state, support_alp), as_factor))
-
-sample_for_australian_polling |>
-  head()
-```
-
-Finally, we want our survey to over-sample females, so we will just get rid of 300 males.
-
-```{r}
-sample_for_australian_polling_all <- sample_for_australian_polling
-
-sample_for_australian_polling <-
-  sample_for_australian_polling |>
-  arrange(gender) |>
-  slice(1:1700)
-```
-
-### Model the survey
-
-This polling data was generated to make both males and older people less likely to vote for the ALP, and females and younger people more likely to vote for the ALP. Females are over-sampled. As such, we should have an ALP skew on the dataset. One way to make a summary table of counts such as @tbl-pollingbiassample is to use `datasummary_skim()` from `modelsummary` [@citemodelsummary].
-
-```{r}
-#| tbl-cap: "Counts and group percentages, by variable"
-#| label: tbl-pollingbiassample
-
-sample_for_australian_polling |>
-  modelsummary::datasummary_skim(type = "categorical")
-```
-
-Now we would like to see if we can get our results back (we should find females more likely than males to vote for Australian Labor Party and that people are less likely to vote Australian Labor Party as they get older). Our model is:
-
-$$
-\mbox{Pr}(\hat{FP}_{i,p=1}) = \mbox{logit}^{-1} \left(\beta_0 + \beta_1 \times \mbox{gender}_i + \beta_2\times \mbox{age}_i + \beta_3 \times \mbox{state}_i \right)
-$$
-This model says that the probability that some person, $i$, will vote for the Australian Labor Party depends on their gender, age-group, and state of residence. Based on our simulated data, we would like younger age-groups to be more likely to vote for the Australian Labor Party and for males to be less likely to vote for the Australian Labor Party.
-
-```{r}
-#| label: tbl-initial_model_analyse_example_polling
-#| tbl-cap: "Model estimates of whether a respondent will vote for the Labor Party, based on the survey data"
-
-alp_support <-
-  glm(
-    support_alp ~ gender + age_group + state,
-    data = sample_for_australian_polling,
-    family = "binomial"
-  )
-
-alp_support |>
-  modelsummary::modelsummary(fmt = 2, exponentiate = TRUE)
-```
-
-Our dependent variable is a binary, thus we used logistic regression so the results are a little more difficult to interpret  (@tbl-initial_model_analyse_example_polling). Essentially we have got our inputs back. 
-
-### Post-stratify
-
-Now we would like to see if we can use what we found in the poll to get an estimate for each state based on their demographic features.
-
-First read in some real demographic data, on a state basis, from the ABS.
-
-```{r} 
-#| message: false
-#| warning: false
-
-post_strat_census_data <-
-  read_csv("outputs/data/census_data.csv")
-
-head(post_strat_census_data)
-```
-
-At this point, we have got a decision to make because we need the variables to be the same in the survey and the post-stratification dataset, but here the state abbreviations have been used, while in the survey, the full names were used. We will change the post-stratification dataset because the survey data has already been modelled.
-
-```{r}
-post_strat_census_data <-
-  post_strat_census_data |>
-  mutate(
-    state =
-      case_when(
-        state == "ACT" ~ "Australian Capital Territory",
-        state == "NSW" ~ "New South Wales",
-        state == "NT" ~ "Northern Territory",
-        state == "QLD" ~ "Queensland",
-        state == "SA" ~ "South Australia",
-        state == "TAS" ~ "Tasmania",
-        state == "VIC" ~ "Victoria",
-        state == "WA" ~ "Western Australia",
-        TRUE ~ "Problem"
-      ),
-    age_group =
-      case_when(
-        age_group == "ages18to29" ~ "Ages 18 to 29",
-        age_group == "ages30to44" ~ "Ages 30 to 44",
-        age_group == "ages45to59" ~ "Ages 45 to 59",
-        age_group == "ages60plus" ~ "Ages 60 plus",
-        TRUE ~ "Problem"
-      )
-  )
-```
-
-
-We are just going to do some rough forecasts. For each gender and age-group we want the relevant coefficient from the example data and from there we can construct the estimates.
-
-```{r}
-post_strat_census_data <-
-  alp_support |>
-  predict(newdata = post_strat_census_data, type = "response", se.fit = TRUE) |>
-  as_tibble() |>
-  cbind(post_strat_census_data)
-
-post_strat_census_data |>
-  mutate(alp_predict_prop = fit * cell_prop_of_division_total) |>
-  summarise(alp_predict = sum(alp_predict_prop),
-            .by = state)
-```
-
-We now have post-stratified estimates for each state. Our model has a fair few weaknesses. For instance, small cell counts are going to be problematic. And our approach ignores uncertainty, but now that we have something working we can complicate it.
-
-
-
-
-### Improving the model
-
-We would like to address some of the major issues with our approach, specifically being able to deal with small cell counts, and also taking better account of uncertainty. As we are dealing with survey data, prediction intervals or something similar are critical, and it is not appropriate to only report central estimates. To do this we will use the same broad approach as before, but just improve the model. We are going to change to a Bayesian model and use `rstanarm` [@citerstanarm].
-
-Now, we use the same basic model as before, but in a Bayesian setting.
-
-```{r}
-library(rstanarm)
-
-improved_alp_support <-
-  stan_glm(
-    support_alp ~ gender + age_group + state,
-    data = sample_for_australian_polling,
-    family = binomial(link = "logit"),
-    prior = normal(0, 1),
-    prior_intercept = normal(0, 1),
-    cores = 2,
-    seed = 12345
-  )
-```
-
-As before, we would like an estimate for each state based on their demographic features. We are just going to do some rough forecasts. For each gender and age-group we want the relevant coefficient in the example data and we can construct the estimates (this code is from @monicanamechanges). We are going to use `tidybayes` for this [@citetidybayes].
-
-```{r}
-#| message: false
-
-library(tidybayes)
-
-post_stratified_estimates <-
-  # Bayesian model
-  improved_alp_support |>
-  # Generate predictions from samples of post-stratification dataset
-  add_epred_draws(newdata = post_strat_census_data) |>
-  rename(alp_predict = .epred) |>
-  # Post-stratification
-  mutate(alp_predict_prop = alp_predict * cell_prop_of_division_total) |>
-  ungroup() |> 
-  summarise(alp_predict = sum(alp_predict_prop),
-            .by = c(state, .draw)) |>
-  # Calculate mean and confidence interval for each state
+predicted_tea_preference <-
+  tea_preference_model |>
+  tidybayes::add_epred_draws(newdata = tea_poststrat_dataset,
+                             value = "preference") |>
+  ungroup() |>
   summarise(
-    mean = mean(alp_predict),
-    lower = quantile(alp_predict, 0.025),
-    upper = quantile(alp_predict, 0.975),
-    .by = state
+    average_preference = mean(preference),
+    lower = quantile(preference, 0.025),
+    upper = quantile(preference, 0.975),
+    .by = c(age, nationality, .row)
   )
 
-post_stratified_estimates
-```
-
-We now have post-stratified estimates for each division. Our new Bayesian approach will enable us to think more deeply about uncertainty. We could complicate this in a variety of ways including adding more coefficients (but remember that we would need to get new cell counts), or adding some layers.
-
-One interesting aspect is that our multilevel approach will allow us to deal with small cell counts by borrowing information from other cells. Even if we were to remove most of the, say, 18-to-29-year-old, male respondents from Tasmania our model would still provide estimates. It does this by pooling, in which the effect of these young, male Tasmanians is partially determined by other cells that do have respondents. 
-
-There are many interesting aspects that we may like to communicate to others. For instance, we may like to show how the model is affecting our estimates of the results. We can make a graph that compares the raw estimates and the raw estimates from the biased survey sample with the model estimates (@fig-resultsforaustraliaa). Note the skew in favor of the ALP in the biased sample estimates, and how the model is able to correct for this in most cases.
-
-```{r}
-#| label: fig-resultsforaustraliaa
-#| fig-cap: "Comparing MRP estimates with raw estimates"
-
-# Raw survey estimates
-raw_estimates <- sample_for_australian_polling_all |>
-  mutate(support_alp_num = abs(as.numeric(support_alp) - 2)) |>
-  summarise(mean = mean(support_alp_num),
-            .by = state)
-
-raw_estimates_sample <- sample_for_australian_polling |>
-  mutate(support_alp_num = abs(as.numeric(support_alp) - 2)) |>
-  summarise(mean = mean(support_alp_num),
-            .by = state)
-
-
-post_stratified_estimates |>
-  ggplot(aes(y = mean, x = forcats::fct_inorder(state))) +
-  geom_point(aes(color = "MRP estimate"), shape = 16, size = 2.5) +
-  geom_errorbar(aes(ymin = lower, ymax = upper, color = "MRP estimate"), 
-                width = 0) +
-  geom_point(data = raw_estimates_sample, 
-             aes(color = "Biased sample"), 
-             shape = 15, size = 2.5) +
-  geom_point(data = raw_estimates, aes(color = "Raw estimate"), 
-             shape = 18, size = 3) +
-  labs(
-    y = "Proportion ALP support",
-    x = "State"
-  ) +
-  theme_minimal() +
-  scale_color_brewer(palette = "Set1") +
-  theme(legend.position = "bottom") +
-  theme(legend.title = element_blank()) +
-  coord_flip() +
-  guides(color = guide_legend(override.aes = list(shape = c(16, 18, 15), 
-                                                  linetype = c(1, 0, 0))))
-```
-
-Similarly, we may like to plot the distribution of the coefficients. We can work out which coefficients to be passed to `gather_draws()` with `tidybayes::get_variables(model)`; in this example we passed "b_.", but that will not always be the case.
-
-```{r}
-#| warning: false
-#| message: false
-#| label: fig-resultsforaustralia
-#| #| layout-ncol: 2
-#| fig-cap: "Examining the model fit and how it is affected by the data for Australian elections"
-#| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"]
-
-library(rstanarm)
-
-pp_check(improved_alp_support) +
-  theme_classic() +
-  theme(legend.position = "bottom")
-
-posterior_vs_prior(improved_alp_support) +
-  theme_minimal() +
-  scale_color_brewer(palette = "Set1") +
-  theme(legend.position = "bottom") +
-  coord_flip()
+predicted_tea_preference |>
+  count(age, nationality, average_preference)
 ```
 
 
-```{r}
-#| label: fig-resultsforaustraliaf
-#| fig-cap: "Comparing MRP estimates with raw estimates"
+@tbl-mrpteammodelcompare compares the MRP estimates, with the raw estimates from the biased sample. In this case, because we know the truth, we can also compare them to the known truth, but that is not something we can do normally.
 
-marginaleffects::plot_cap(improved_alp_support, condition = "state") +
-  labs(
-    x = "State",
-    y = "Average support"
+```{r}
+#| tbl-cap: "MRP estimates compared with the truth and the biased sample"
+#| label: tbl-mrpteammodelcompare
+
+true_population_level_tea_preference <-
+  simulated_population |>
+  summarise(overall_tea_preference = mean(prefers_tea)) |>
+  pull()
+
+sample_overall_tea_preference <-
+  tea_sample |>
+  summarise(sample_tea_preference = mean(prefers_tea)) |>
+  pull()
+
+post_strat_overall_tea_preference <-
+  predicted_tea_preference |>
+  summarise(post_strat_tea_preference = mean(average_preference)) |> 
+  pull()
+
+comparison <-
+  tibble(
+    Type = c("Truth", "Biased sample", "MRP estimate"),
+    Estimate = c(
+      true_population_level_tea_preference,
+      sample_overall_tea_preference,
+      post_strat_overall_tea_preference
+    )
   )
+
+comparison |> 
+  knitr::kable(digits = 2)
 ```
+
+In this case, the MRP approach has done a good job of taking a biased sample and resulting in an estimate of tea preferences that did reflect the truth.
+
+
+
+
+<!-- ## Australian voting -->
+
+<!-- ### Overview -->
+
+<!-- As a reminder, the workflow that we use is: -->
+
+<!-- 1) read in the poll; -->
+<!-- 2) model the poll;  -->
+<!-- 3) read in the post-stratification data; and -->
+<!-- 4) apply the model to the post-stratification data. -->
+
+<!-- In the earlier example, we did not really do too much in the modelling step, and despite the name "multilevel modelling with post-stratification", we did not actually use a multilevel model. There is nothing that says you have to use a multilevel model, but a lot of situations will have circumstances such that it is not likely to do any worse. To be clear, this means that although we have individual-level data, there is some grouping of the individuals that we will take advantage of. For instance, in the case of trying to model elections, usually districts/divisions/electorates/ridings/etc exist within provinces/states so it would likely make sense to, at least, include a coefficient that adjusts the intercept for each province.\index{Australia!politics} -->
+
+<!-- In this section we are going to simulate another dataset and then fit a few different models to it. We are going to draw on the Australian elections set-up. In Australia we have a parliamentary system, with 151 seats in the parliament, one for each electorate. These electorates are grouped within six states and two territories. There are two major parties - the Australian Labor Party (ALP) and the Liberal Party (LP). Somewhat confusingly, the Liberal party are actually the conservative, right-wing party, while the Labor party are the progressive, left-wing, party. -->
+
+<!-- ### Construct a survey -->
+
+<!-- To move us slightly closer to reality, we are going to simulate a survey (rather than sample from a population as we did earlier) and then post-stratify it using real data. The dependent variable is "supports_ALP", which is a binary variable - either 0 or 1. We will just start with three independent variables here:  -->
+
+<!-- - "gender", which is either "female" or "male" (as that is what is available from the Australian Bureau of Statistics);  -->
+<!-- - "age_group", which is one of four groups: "ages 18 to 29", "ages 30 to 44", "ages 45 to 59", and "ages 60 plus"; -->
+<!-- - "state", which is one of eight integers: 1 - 8 (inclusive). -->
+
+<!-- ```{r} -->
+<!-- library(tidyverse) -->
+<!-- set.seed(853) -->
+
+<!-- size_of_sample_for_australian_polling <- 2000 -->
+
+<!-- sample_for_australian_polling <- -->
+<!--   tibble( -->
+<!--     age_group = -->
+<!--       sample( -->
+<!--         x = c(0:3), -->
+<!--         size = size_of_sample_for_australian_polling, -->
+<!--         replace = TRUE -->
+<!--       ), -->
+<!--     gender = -->
+<!--       sample( -->
+<!--         x = c(0:1), -->
+<!--         size = size_of_sample_for_australian_polling, -->
+<!--         replace = TRUE -->
+<!--       ), -->
+<!--     state = -->
+<!--       sample( -->
+<!--         x = c(1:8), -->
+<!--         size = size_of_sample_for_australian_polling, -->
+<!--         replace = TRUE -->
+<!--       ), -->
+<!--     noise = rnorm(size_of_sample_for_australian_polling, mean = 0, sd = 1), -->
+<!--     support_alp = 1 + 0.5 * age_group + 0.5 * gender + 0.01 * state + noise -->
+<!--   ) -->
+
+<!-- # Normalize the outcome variable -->
+<!-- sample_for_australian_polling <- -->
+<!--   sample_for_australian_polling |> -->
+<!--   mutate( -->
+<!--     support_alp = -->
+<!--       if_else( -->
+<!--         support_alp > median(support_alp, na.rm = TRUE), -->
+<!--         "Supports ALP", -->
+<!--         "Does not" -->
+<!--       ) -->
+<!--   ) -->
+
+<!-- # Clean up the simulated data -->
+<!-- sample_for_australian_polling <- -->
+<!--   sample_for_australian_polling |> -->
+<!--   mutate( -->
+<!--     age_group = case_when( -->
+<!--       age_group == 0 ~ "Ages 18 to 29", -->
+<!--       age_group == 1 ~ "Ages 30 to 44", -->
+<!--       age_group == 2 ~ "Ages 45 to 59", -->
+<!--       age_group == 3 ~ "Ages 60 plus", -->
+<!--       TRUE ~ "Problem" -->
+<!--     ), -->
+<!--     gender = case_when( -->
+<!--       gender == 0 ~ "Male", -->
+<!--       gender == 1 ~ "Female", -->
+<!--       TRUE ~ "Problem" -->
+<!--     ), -->
+<!--     state = case_when( -->
+<!--       state == 1 ~ "Queensland", -->
+<!--       state == 2 ~ "New South Wales", -->
+<!--       state == 3 ~ "Australian Capital Territory", -->
+<!--       state == 4 ~ "Victoria", -->
+<!--       state == 5 ~ "Tasmania", -->
+<!--       state == 6 ~ "Northern Territory", -->
+<!--       state == 7 ~ "South Australia", -->
+<!--       state == 8 ~ "Western Australia", -->
+<!--       TRUE ~ "Problem" -->
+<!--     ), -->
+<!--   ) |> -->
+<!--   select(-noise) -->
+
+<!-- # Tidy the class -->
+<!-- sample_for_australian_polling <- -->
+<!--   sample_for_australian_polling |> -->
+<!--   mutate(across(c(age_group, gender, state, support_alp), as_factor)) -->
+
+<!-- sample_for_australian_polling |> -->
+<!--   head() -->
+<!-- ``` -->
+
+<!-- Finally, we want our survey to over-sample females, so we will just get rid of 300 males. -->
+
+<!-- ```{r} -->
+<!-- sample_for_australian_polling_all <- sample_for_australian_polling -->
+
+<!-- sample_for_australian_polling <- -->
+<!--   sample_for_australian_polling |> -->
+<!--   arrange(gender) |> -->
+<!--   slice(1:1700) -->
+<!-- ``` -->
+
+<!-- ### Model the survey -->
+
+<!-- This polling data was generated to make both males and older people less likely to vote for the ALP, and females and younger people more likely to vote for the ALP. Females are over-sampled. As such, we should have an ALP skew on the dataset. One way to make a summary table of counts such as @tbl-pollingbiassample is to use `datasummary_skim()` from `modelsummary` [@citemodelsummary]. -->
+
+<!-- ```{r} -->
+<!-- #| tbl-cap: "Counts and group percentages, by variable" -->
+<!-- #| label: tbl-pollingbiassample -->
+
+<!-- sample_for_australian_polling |> -->
+<!--   modelsummary::datasummary_skim(type = "categorical") -->
+<!-- ``` -->
+
+<!-- Now we would like to see if we can get our results back (we should find females more likely than males to vote for Australian Labor Party and that people are less likely to vote Australian Labor Party as they get older). Our model is: -->
+
+<!-- $$ -->
+<!-- \mbox{Pr}(\hat{FP}_{i,p=1}) = \mbox{logit}^{-1} \left(\beta_0 + \beta_1 \times \mbox{gender}_i + \beta_2\times \mbox{age}_i + \beta_3 \times \mbox{state}_i \right) -->
+<!-- $$ -->
+<!-- This model says that the probability that some person, $i$, will vote for the Australian Labor Party depends on their gender, age-group, and state of residence. Based on our simulated data, we would like younger age-groups to be more likely to vote for the Australian Labor Party and for males to be less likely to vote for the Australian Labor Party. -->
+
+<!-- ```{r} -->
+<!-- #| label: tbl-initial_model_analyse_example_polling -->
+<!-- #| tbl-cap: "Model estimates of whether a respondent will vote for the Labor Party, based on the survey data" -->
+
+<!-- alp_support <- -->
+<!--   glm( -->
+<!--     support_alp ~ gender + age_group + state, -->
+<!--     data = sample_for_australian_polling, -->
+<!--     family = "binomial" -->
+<!--   ) -->
+
+<!-- alp_support |> -->
+<!--   modelsummary::modelsummary(fmt = 2, exponentiate = TRUE) -->
+<!-- ``` -->
+
+<!-- Our dependent variable is a binary, thus we used logistic regression so the results are a little more difficult to interpret  (@tbl-initial_model_analyse_example_polling). Essentially we have got our inputs back.  -->
+
+<!-- ### Post-stratify -->
+
+<!-- Now we would like to see if we can use what we found in the poll to get an estimate for each state based on their demographic features. -->
+
+<!-- First read in some real demographic data, on a state basis, from the ABS. -->
+
+<!-- ```{r}  -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+
+<!-- post_strat_census_data <- -->
+<!--   read_csv("outputs/data/census_data.csv") -->
+
+<!-- head(post_strat_census_data) -->
+<!-- ``` -->
+
+<!-- At this point, we have got a decision to make because we need the variables to be the same in the survey and the post-stratification dataset, but here the state abbreviations have been used, while in the survey, the full names were used. We will change the post-stratification dataset because the survey data has already been modelled. -->
+
+<!-- ```{r} -->
+<!-- post_strat_census_data <- -->
+<!--   post_strat_census_data |> -->
+<!--   mutate( -->
+<!--     state = -->
+<!--       case_when( -->
+<!--         state == "ACT" ~ "Australian Capital Territory", -->
+<!--         state == "NSW" ~ "New South Wales", -->
+<!--         state == "NT" ~ "Northern Territory", -->
+<!--         state == "QLD" ~ "Queensland", -->
+<!--         state == "SA" ~ "South Australia", -->
+<!--         state == "TAS" ~ "Tasmania", -->
+<!--         state == "VIC" ~ "Victoria", -->
+<!--         state == "WA" ~ "Western Australia", -->
+<!--         TRUE ~ "Problem" -->
+<!--       ), -->
+<!--     age_group = -->
+<!--       case_when( -->
+<!--         age_group == "ages18to29" ~ "Ages 18 to 29", -->
+<!--         age_group == "ages30to44" ~ "Ages 30 to 44", -->
+<!--         age_group == "ages45to59" ~ "Ages 45 to 59", -->
+<!--         age_group == "ages60plus" ~ "Ages 60 plus", -->
+<!--         TRUE ~ "Problem" -->
+<!--       ) -->
+<!--   ) -->
+<!-- ``` -->
+
+
+<!-- We are just going to do some rough forecasts. For each gender and age-group we want the relevant coefficient from the example data and from there we can construct the estimates. -->
+
+<!-- ```{r} -->
+<!-- post_strat_census_data <- -->
+<!--   alp_support |> -->
+<!--   predict(newdata = post_strat_census_data, type = "response", se.fit = TRUE) |> -->
+<!--   as_tibble() |> -->
+<!--   cbind(post_strat_census_data) -->
+
+<!-- post_strat_census_data |> -->
+<!--   mutate(alp_predict_prop = fit * cell_prop_of_division_total) |> -->
+<!--   summarise(alp_predict = sum(alp_predict_prop), -->
+<!--             .by = state) -->
+<!-- ``` -->
+
+<!-- We now have post-stratified estimates for each state. Our model has a fair few weaknesses. For instance, small cell counts are going to be problematic. And our approach ignores uncertainty, but now that we have something working we can complicate it. -->
+
+
+
+
+<!-- ### Improving the model -->
+
+<!-- We would like to address some of the major issues with our approach, specifically being able to deal with small cell counts, and also taking better account of uncertainty. As we are dealing with survey data, prediction intervals or something similar are critical, and it is not appropriate to only report central estimates. To do this we will use the same broad approach as before, but just improve the model. We are going to change to a Bayesian model and use `rstanarm` [@citerstanarm]. -->
+
+<!-- Now, we use the same basic model as before, but in a Bayesian setting. -->
+
+<!-- ```{r} -->
+<!-- library(rstanarm) -->
+
+<!-- improved_alp_support <- -->
+<!--   stan_glm( -->
+<!--     support_alp ~ gender + age_group + state, -->
+<!--     data = sample_for_australian_polling, -->
+<!--     family = binomial(link = "logit"), -->
+<!--     prior = normal(0, 1), -->
+<!--     prior_intercept = normal(0, 1), -->
+<!--     cores = 2, -->
+<!--     seed = 12345 -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- As before, we would like an estimate for each state based on their demographic features. We are just going to do some rough forecasts. For each gender and age-group we want the relevant coefficient in the example data and we can construct the estimates (this code is from @monicanamechanges). We are going to use `tidybayes` for this [@citetidybayes]. -->
+
+<!-- ```{r} -->
+<!-- #| message: false -->
+
+<!-- library(tidybayes) -->
+
+<!-- post_stratified_estimates <- -->
+<!--   # Bayesian model -->
+<!--   improved_alp_support |> -->
+<!--   # Generate predictions from samples of post-stratification dataset -->
+<!--   add_epred_draws(newdata = post_strat_census_data) |> -->
+<!--   rename(alp_predict = .epred) |> -->
+<!--   # Post-stratification -->
+<!--   mutate(alp_predict_prop = alp_predict * cell_prop_of_division_total) |> -->
+<!--   ungroup() |>  -->
+<!--   summarise(alp_predict = sum(alp_predict_prop), -->
+<!--             .by = c(state, .draw)) |> -->
+<!--   # Calculate mean and confidence interval for each state -->
+<!--   summarise( -->
+<!--     mean = mean(alp_predict), -->
+<!--     lower = quantile(alp_predict, 0.025), -->
+<!--     upper = quantile(alp_predict, 0.975), -->
+<!--     .by = state -->
+<!--   ) -->
+
+<!-- post_stratified_estimates -->
+<!-- ``` -->
+
+<!-- We now have post-stratified estimates for each division. Our new Bayesian approach will enable us to think more deeply about uncertainty. We could complicate this in a variety of ways including adding more coefficients (but remember that we would need to get new cell counts), or adding some layers. -->
+
+<!-- One interesting aspect is that our multilevel approach will allow us to deal with small cell counts by borrowing information from other cells. Even if we were to remove most of the, say, 18-to-29-year-old, male respondents from Tasmania our model would still provide estimates. It does this by pooling, in which the effect of these young, male Tasmanians is partially determined by other cells that do have respondents.  -->
+
+<!-- There are many interesting aspects that we may like to communicate to others. For instance, we may like to show how the model is affecting our estimates of the results. We can make a graph that compares the raw estimates and the raw estimates from the biased survey sample with the model estimates (@fig-resultsforaustraliaa). Note the skew in favor of the ALP in the biased sample estimates, and how the model is able to correct for this in most cases. -->
+
+<!-- ```{r} -->
+<!-- #| label: fig-resultsforaustraliaa -->
+<!-- #| fig-cap: "Comparing MRP estimates with raw estimates" -->
+
+<!-- # Raw survey estimates -->
+<!-- raw_estimates <- sample_for_australian_polling_all |> -->
+<!--   mutate(support_alp_num = abs(as.numeric(support_alp) - 2)) |> -->
+<!--   summarise(mean = mean(support_alp_num), -->
+<!--             .by = state) -->
+
+<!-- raw_estimates_sample <- sample_for_australian_polling |> -->
+<!--   mutate(support_alp_num = abs(as.numeric(support_alp) - 2)) |> -->
+<!--   summarise(mean = mean(support_alp_num), -->
+<!--             .by = state) -->
+
+
+<!-- post_stratified_estimates |> -->
+<!--   ggplot(aes(y = mean, x = forcats::fct_inorder(state))) + -->
+<!--   geom_point(aes(color = "MRP estimate"), shape = 16, size = 2.5) + -->
+<!--   geom_errorbar(aes(ymin = lower, ymax = upper, color = "MRP estimate"),  -->
+<!--                 width = 0) + -->
+<!--   geom_point(data = raw_estimates_sample,  -->
+<!--              aes(color = "Biased sample"),  -->
+<!--              shape = 15, size = 2.5) + -->
+<!--   geom_point(data = raw_estimates, aes(color = "Raw estimate"),  -->
+<!--              shape = 18, size = 3) + -->
+<!--   labs( -->
+<!--     y = "Proportion ALP support", -->
+<!--     x = "State" -->
+<!--   ) + -->
+<!--   theme_minimal() + -->
+<!--   scale_color_brewer(palette = "Set1") + -->
+<!--   theme(legend.position = "bottom") + -->
+<!--   theme(legend.title = element_blank()) + -->
+<!--   coord_flip() + -->
+<!--   guides(color = guide_legend(override.aes = list(shape = c(16, 18, 15),  -->
+<!--                                                   linetype = c(1, 0, 0)))) -->
+<!-- ``` -->
+
+<!-- Similarly, we may like to plot the distribution of the coefficients. We can work out which coefficients to be passed to `gather_draws()` with `tidybayes::get_variables(model)`; in this example we passed "b_.", but that will not always be the case. -->
+
+<!-- ```{r} -->
+<!-- #| warning: false -->
+<!-- #| message: false -->
+<!-- #| label: fig-resultsforaustralia -->
+<!-- #| #| layout-ncol: 2 -->
+<!-- #| fig-cap: "Examining the model fit and how it is affected by the data for Australian elections" -->
+<!-- #| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"] -->
+
+<!-- library(rstanarm) -->
+
+<!-- pp_check(improved_alp_support) + -->
+<!--   theme_classic() + -->
+<!--   theme(legend.position = "bottom") -->
+
+<!-- posterior_vs_prior(improved_alp_support) + -->
+<!--   theme_minimal() + -->
+<!--   scale_color_brewer(palette = "Set1") + -->
+<!--   theme(legend.position = "bottom") + -->
+<!--   coord_flip() -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- #| label: fig-resultsforaustraliaf -->
+<!-- #| fig-cap: "Comparing MRP estimates with raw estimates" -->
+
+<!-- marginaleffects::plot_cap(improved_alp_support, condition = "state") + -->
+<!--   labs( -->
+<!--     x = "State", -->
+<!--     y = "Average support" -->
+<!--   ) -->
+<!-- ``` -->
+
+
+
+
 
 
 

@@ -336,7 +336,17 @@ us_political_preferences <-
     prob = c(support_prob, 1 - support_prob)
   )) |>
   ungroup() |>
-  select(-support_prob, supports_biden, gender, education)
+  select(-support_prob, supports_biden, gender, education) |> 
+  mutate(education = 
+           case_when(
+             education == 1 ~ "< High school",
+             education == 2 ~ "High school",
+             education == 3 ~ "Some college",
+             education == 4 ~ "College",
+             education == 5 ~ "Post-grad"
+             ),
+         gender = if_else(gender == 1, "Male", "Female")
+         )
 
 us_political_preferences
 ```
@@ -412,7 +422,7 @@ ces2020 <-
 ces2020
 ```
 
-When we look at the actual data, there are concerns that we did not anticipate in our sketches. We only want respondents who are registered to vote, and we are only interested in those that voted for either Biden or Trump. We can filter to only those respondents and then add more informative labels. Genders of "female" and "male" is what is available from the CES.
+When we look at the actual data, there are concerns that we did not anticipate in our sketches. We use the codebook to investigate this more thoroughly. We only want respondents who are registered to vote, and we are only interested in those that voted for either Biden or Trump. We see that when the variable "CC20_410" is 1, then this means the respondent supported Biden, and when it is 2 that means Trump. We can filter to only those respondents and then add more informative labels. Genders of "female" and "male" is what is available from the CES, and when the variable "gender" is 1, then this means "male", and when it is 2 this means "females". Finally, the codebook tells us that "educ" is a variable from 1 to 6, in increasing levels of education.   
 
 ```{r}
 ces2020 <-
@@ -568,9 +578,9 @@ modelsummary::modelsummary(
 
 ## Poisson regression
 
-When we have count data we should initially think to take advantage of the Poisson distribution\index{Poisson regression}. The Poisson distribution is governed by one parameter, $\lambda$. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. As such, the Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. The Poisson probability mass function is [@pitman, p. 121]: 
+When we have count data we should initially think to take advantage of the Poisson distribution.\index{distributions!Poisson}\index{Poisson regression} One fun application of Poisson regression is in modelling the outcomes of sports. For instance @Burch2023 builds a Poisson model of hockey outcomes, and their model follows @Baio2010 who build a Poisson model of football outcomes. The Poisson distribution is governed by one parameter, $\lambda$. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. As such, the Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. The Poisson probability mass function is [@pitman, p. 121]: 
 $$P_{\lambda}(k) = e^{-\lambda}\lambda^k/k!\mbox{, for }k=0,1,2,...$$
-We can simulate $n=20$ draws from the Poisson distribution\index{Poisson distribution} with `rpois()`, where $\lambda$ here is equal to three. 
+We can simulate $n=20$ draws from the Poisson distribution\index{distribution!Poisson} with `rpois()`, where $\lambda$ here is equal to three. 
 
 ```{r}
 rpois(n = 20, lambda = 3)
@@ -639,7 +649,7 @@ poisson_takes_shape |>
   )
 ```
 
-To illustrate the situation, we could simulate data about the number of A grades that are awarded in each university course. In this simulated example, we consider three departments, each of which has many courses. Each course will award a different number of A grades.
+To illustrate the situation, we could simulate data about the number of As that are awarded in each university course. In this simulated example, we consider three departments, each of which has many courses. Each course will award a different number of As.
 
 ```{r}
 set.seed(853)
@@ -655,7 +665,7 @@ count_of_A <-
       paste0("DEP_2_", letters),
       paste0("DEP_3_", letters)
     ),
-    number_of_A = c(
+    number_of_As = c(
       rpois(n = class_size, lambda = 5),
       rpois(n = class_size, lambda = 10),
       rpois(n = class_size, lambda = 20)
@@ -678,14 +688,14 @@ arrow::write_parquet(x = count_of_A,
 #| eval: true
 #| message: false
 #| warning: false
-#| fig-cap: "Simulated number of A grades in various classes across three departments"
+#| fig-cap: "Simulated number of As in various classes across three departments"
 #| label: fig-simgradesdepartments
 
 count_of_A |>
-  ggplot(aes(x = number_of_A)) +
+  ggplot(aes(x = number_of_As)) +
   geom_histogram(aes(fill = department), position = "dodge") +
   labs(
-    x = "Number of A grades awarded",
+    x = "Number of As awarded",
     y = "Number of classes",
     fill = "Department"
   ) +
@@ -693,24 +703,24 @@ count_of_A |>
   scale_fill_brewer(palette = "Set1")
 ```
 
-Our simulated dataset has the number of A grades awarded by courses, which are structured within departments (@fig-simgradesdepartments). In @sec-multilevel-regression-with-post-stratification, we will take advantage of this departmental structure, but for now we just ignore it.
+Our simulated dataset has the number of As awarded by courses, which are structured within departments (@fig-simgradesdepartments). In @sec-multilevel-regression-with-post-stratification, we will take advantage of this departmental structure, but for now we just ignore it and focus on differences between departments.
 
 The model that we are interested in estimating is:
 
 $$
 \begin{aligned}
 y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
-\log(\lambda_i) & = \beta_0 + \beta_1 x_i
+\log(\lambda_i) & = \beta_0 + \beta_1 \mbox{department}_i
 \end{aligned}
 $$
-where $y_i$ is the number of A grades awarded, and $x_i$ is the course.
+where $y_i$ is the number of A grades awarded, and we are interested in how this differs by department. 
 
 We can use `glm()` from base R to get a quick sense of the data. This function is quite general, and we specify Poisson regression by setting the "family" parameter. The estimates are contained in the first column of @tbl-modelsummarypoisson.
 
 ```{r}
 grades_base <-
   glm(
-    number_of_A ~ department,
+    number_of_As ~ department,
     data = count_of_A,
     family = "poisson"
   )
@@ -740,7 +750,7 @@ where $y_i$ is the number of As awarded.
 
 grades_rstanarm <-
   stan_glm(
-    number_of_A ~ department,
+    number_of_As ~ department,
     data = count_of_A,
     family = poisson(link = "log"),
     prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
@@ -797,7 +807,7 @@ As with logistic regression, we can use `marginaleffects()` from [@marginaleffec
 ```{r}
 #| label: tbl-marginaleffectspoisson
 #| tbl-cap: "The estimated difference in the number of A grades awarded at each department"
-
+library(marginaleffects)
 marginaleffects(grades_rstanarm) |>
   summary() |>
   select(-term) |>

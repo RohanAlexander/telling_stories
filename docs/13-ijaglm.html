@@ -892,23 +892,33 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 <span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">prob =</span> <span class="fu">c</span>(support_prob, <span class="dv">1</span> <span class="sc">-</span> support_prob)</span>
 <span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">|&gt;</span></span>
 <span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>support_prob, supports_biden, gender, education)</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>us_political_preferences</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>support_prob, supports_biden, gender, education) <span class="sc">|&gt;</span> </span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">education =</span> </span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>           <span class="fu">case_when</span>(</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>             education <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"&lt; High school"</span>,</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>             education <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="st">"High school"</span>,</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>             education <span class="sc">==</span> <span class="dv">3</span> <span class="sc">~</span> <span class="st">"Some college"</span>,</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>             education <span class="sc">==</span> <span class="dv">4</span> <span class="sc">~</span> <span class="st">"College"</span>,</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>             education <span class="sc">==</span> <span class="dv">5</span> <span class="sc">~</span> <span class="st">"Post-grad"</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>             ),</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>         <span class="at">gender =</span> <span class="fu">if_else</span>(gender <span class="sc">==</span> <span class="dv">1</span>, <span class="st">"Male"</span>, <span class="st">"Female"</span>)</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>         )</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>us_political_preferences</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1,000 × 3
-   education gender supports_biden
-       &lt;int&gt;  &lt;int&gt; &lt;chr&gt;         
- 1         5      2 yes           
- 2         3      1 no            
- 3         4      1 no            
- 4         3      2 yes           
- 5         4      2 yes           
- 6         3      2 yes           
- 7         2      2 yes           
- 8         2      2 no            
- 9         1      2 yes           
-10         1      1 no            
+   education     gender supports_biden
+   &lt;chr&gt;         &lt;chr&gt;  &lt;chr&gt;         
+ 1 Post-grad     Female yes           
+ 2 Some college  Male   no            
+ 3 College       Male   no            
+ 4 Some college  Female yes           
+ 5 College       Female yes           
+ 6 Some college  Female yes           
+ 7 High school   Female yes           
+ 8 High school   Female no            
+ 9 &lt; High school Female yes           
+10 &lt; High school Male   no            
 # ℹ 990 more rows</code></pre>
 </div>
 </div>
@@ -961,7 +971,7 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 # ℹ 60,990 more rows</code></pre>
 </div>
 </div>
-<p>When we look at the actual data, there are concerns that we did not anticipate in our sketches. We only want respondents who are registered to vote, and we are only interested in those that voted for either Biden or Trump. We can filter to only those respondents and then add more informative labels. Genders of “female” and “male” is what is available from the CES.</p>
+<p>When we look at the actual data, there are concerns that we did not anticipate in our sketches. We use the codebook to investigate this more thoroughly. We only want respondents who are registered to vote, and we are only interested in those that voted for either Biden or Trump. We see that when the variable “CC20_410” is 1, then this means the respondent supported Biden, and when it is 2 that means Trump. We can filter to only those respondents and then add more informative labels. Genders of “female” and “male” is what is available from the CES, and when the variable “gender” is 1, then this means “male”, and when it is 2 this means “females”. Finally, the codebook tells us that “educ” is a variable from 1 to 6, in increasing levels of education.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>ces2020 <span class="ot">&lt;-</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  ces2020 <span class="sc">|&gt;</span></span>
@@ -1147,7 +1157,7 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 </section>
 <section id="poisson-regression" class="level2" data-number="13.3">
 <h2 data-number="13.3" class="anchored" data-anchor-id="poisson-regression"><span class="header-section-number">13.3</span> Poisson regression</h2>
-<p>When we have count data we should initially think to take advantage of the Poisson distribution. The Poisson distribution is governed by one parameter, <span class="math inline">\(\lambda\)</span>. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. As such, the Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. The Poisson probability mass function is <span class="citation" data-cites="pitman">(<a href="99-references.html#ref-pitman" role="doc-biblioref">Pitman 1993, 121</a>)</span>: <span class="math display">\[P_{\lambda}(k) = e^{-\lambda}\lambda^k/k!\mbox{, for }k=0,1,2,...\]</span> We can simulate <span class="math inline">\(n=20\)</span> draws from the Poisson distribution with <code>rpois()</code>, where <span class="math inline">\(\lambda\)</span> here is equal to three.</p>
+<p>When we have count data we should initially think to take advantage of the Poisson distribution. One fun application of Poisson regression is in modelling the outcomes of sports. For instance <span class="citation" data-cites="Burch2023">Burch (<a href="99-references.html#ref-Burch2023" role="doc-biblioref">2023</a>)</span> builds a Poisson model of hockey outcomes, and their model follows <span class="citation" data-cites="Baio2010">Baio and Blangiardo (<a href="99-references.html#ref-Baio2010" role="doc-biblioref">2010</a>)</span> who build a Poisson model of football outcomes. The Poisson distribution is governed by one parameter, <span class="math inline">\(\lambda\)</span>. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. As such, the Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. The Poisson probability mass function is <span class="citation" data-cites="pitman">(<a href="99-references.html#ref-pitman" role="doc-biblioref">Pitman 1993, 121</a>)</span>: <span class="math display">\[P_{\lambda}(k) = e^{-\lambda}\lambda^k/k!\mbox{, for }k=0,1,2,...\]</span> We can simulate <span class="math inline">\(n=20\)</span> draws from the Poisson distribution with <code>rpois()</code>, where <span class="math inline">\(\lambda\)</span> here is equal to three.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rpois</span>(<span class="at">n =</span> <span class="dv">20</span>, <span class="at">lambda =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -1165,7 +1175,7 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 </div>
 </div>
 </div>
-<p>To illustrate the situation, we could simulate data about the number of A grades that are awarded in each university course. In this simulated example, we consider three departments, each of which has many courses. Each course will award a different number of A grades.</p>
+<p>To illustrate the situation, we could simulate data about the number of As that are awarded in each university course. In this simulated example, we consider three departments, each of which has many courses. Each course will award a different number of As.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1180,7 +1190,7 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 <span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste0</span>(<span class="st">"DEP_2_"</span>, letters),</span>
 <span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste0</span>(<span class="st">"DEP_3_"</span>, letters)</span>
 <span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">number_of_A =</span> <span class="fu">c</span>(</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">number_of_As =</span> <span class="fu">c</span>(</span>
 <span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rpois</span>(<span class="at">n =</span> class_size, <span class="at">lambda =</span> <span class="dv">5</span>),</span>
 <span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rpois</span>(<span class="at">n =</span> class_size, <span class="at">lambda =</span> <span class="dv">10</span>),</span>
 <span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rpois</span>(<span class="at">n =</span> class_size, <span class="at">lambda =</span> <span class="dv">20</span>)</span>
@@ -1190,27 +1200,27 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 <span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>count_of_A</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 78 × 3
-   department course  number_of_A
-   &lt;chr&gt;      &lt;chr&gt;         &lt;int&gt;
- 1 1          DEP_1_a           4
- 2 1          DEP_1_b           2
- 3 1          DEP_1_c           5
- 4 1          DEP_1_d           4
- 5 1          DEP_1_e           1
- 6 1          DEP_1_f           4
- 7 1          DEP_1_g           3
- 8 1          DEP_1_h           3
- 9 1          DEP_1_i           3
-10 1          DEP_1_j           3
+   department course  number_of_As
+   &lt;chr&gt;      &lt;chr&gt;          &lt;int&gt;
+ 1 1          DEP_1_a            4
+ 2 1          DEP_1_b            2
+ 3 1          DEP_1_c            5
+ 4 1          DEP_1_d            4
+ 5 1          DEP_1_e            1
+ 6 1          DEP_1_f            4
+ 7 1          DEP_1_g            3
+ 8 1          DEP_1_h            3
+ 9 1          DEP_1_i            3
+10 1          DEP_1_j            3
 # ℹ 68 more rows</code></pre>
 </div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>count_of_A <span class="sc">|&gt;</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> number_of_A)) <span class="sc">+</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> number_of_As)) <span class="sc">+</span></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="fu">aes</span>(<span class="at">fill =</span> department), <span class="at">position =</span> <span class="st">"dodge"</span>) <span class="sc">+</span></span>
 <span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Number of A grades awarded"</span>,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Number of As awarded"</span>,</span>
 <span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Number of classes"</span>,</span>
 <span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"Department"</span></span>
 <span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
@@ -1220,24 +1230,24 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 <div id="fig-simgradesdepartments" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="13-ijaglm_files/figure-html/fig-simgradesdepartments-1.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;13.6: Simulated number of A grades in various classes across three departments</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;13.6: Simulated number of As in various classes across three departments</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Our simulated dataset has the number of A grades awarded by courses, which are structured within departments (<a href="#fig-simgradesdepartments">Figure&nbsp;<span>13.6</span></a>). In <a href="15-mrp.html"><span>Chapter&nbsp;15</span></a>, we will take advantage of this departmental structure, but for now we just ignore it.</p>
+<p>Our simulated dataset has the number of As awarded by courses, which are structured within departments (<a href="#fig-simgradesdepartments">Figure&nbsp;<span>13.6</span></a>). In <a href="15-mrp.html"><span>Chapter&nbsp;15</span></a>, we will take advantage of this departmental structure, but for now we just ignore it and focus on differences between departments.</p>
 <p>The model that we are interested in estimating is:</p>
 <p><span class="math display">\[
 \begin{aligned}
 y_i|\lambda_i &amp;\sim \mbox{Poisson}(\lambda_i)\\
-\log(\lambda_i) &amp; = \beta_0 + \beta_1 x_i
+\log(\lambda_i) &amp; = \beta_0 + \beta_1 \mbox{department}_i
 \end{aligned}
-\]</span> where <span class="math inline">\(y_i\)</span> is the number of A grades awarded, and <span class="math inline">\(x_i\)</span> is the course.</p>
+\]</span> where <span class="math inline">\(y_i\)</span> is the number of A grades awarded, and we are interested in how this differs by department.</p>
 <p>We can use <code>glm()</code> from base R to get a quick sense of the data. This function is quite general, and we specify Poisson regression by setting the “family” parameter. The estimates are contained in the first column of <a href="#tbl-modelsummarypoisson">Table&nbsp;<span>13.4</span></a>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>grades_base <span class="ot">&lt;-</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">glm</span>(</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    number_of_A <span class="sc">~</span> department,</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    number_of_As <span class="sc">~</span> department,</span>
 <span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> count_of_A,</span>
 <span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">family =</span> <span class="st">"poisson"</span></span>
 <span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  )</span>
@@ -1246,7 +1256,8 @@ y_i|\lambda_i &amp;\sim \mbox{Poisson}(\lambda_i)\\
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:
-glm(formula = number_of_A ~ department, family = "poisson", data = count_of_A)
+glm(formula = number_of_As ~ department, family = "poisson", 
+    data = count_of_A)
 
 Deviance Residuals: 
      Min        1Q    Median        3Q       Max  
@@ -1282,7 +1293,7 @@ y_i|\lambda_i &amp;\sim \mbox{Poisson}(\lambda_i)\\
 <div class="cell">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>grades_rstanarm <span class="ot">&lt;-</span></span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stan_glm</span>(</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    number_of_A <span class="sc">~</span> department,</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    number_of_As <span class="sc">~</span> department,</span>
 <span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> count_of_A,</span>
 <span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">family =</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
 <span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="fl">2.5</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
@@ -1368,13 +1379,14 @@ y_i|\lambda_i &amp;\sim \mbox{Poisson}(\lambda_i)\\
 </div>
 <p>As with logistic regression, we can use <code>marginaleffects()</code> from <span class="citation" data-cites="marginaleffects">(<a href="99-references.html#ref-marginaleffects" role="doc-biblioref">Arel-Bundock 2022</a>)</span> to help with interpreting these results. It may be useful to consider how we expect the number of A grades to change as we go from one department to another. <a href="#tbl-marginaleffectspoisson">Table&nbsp;<span>13.5</span></a> suggests that in our dataset, classes in Department 2 tend to have around five additional A grades, compared with Department 1, and that classes in Department 3 tend to have around 17 more A grades, compared with Department 1.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">marginaleffects</span>(grades_rstanarm) <span class="sc">|&gt;</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>() <span class="sc">|&gt;</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>term) <span class="sc">|&gt;</span></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">digits =</span> <span class="dv">2</span>,</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Departmental comparison"</span>, <span class="st">"Estimate"</span>, <span class="st">"2.5%"</span>, <span class="st">"97.5%"</span>)</span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(marginaleffects)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">marginaleffects</span>(grades_rstanarm) <span class="sc">|&gt;</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>() <span class="sc">|&gt;</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>term) <span class="sc">|&gt;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">digits =</span> <span class="dv">2</span>,</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Departmental comparison"</span>, <span class="st">"Estimate"</span>, <span class="st">"2.5%"</span>, <span class="st">"97.5%"</span>)</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div id="tbl-marginaleffectspoisson" class="anchored">
 <table data-quarto-postprocess="true" class="table table-sm table-striped">
@@ -2211,6 +2223,9 @@ Arel-Bundock, Vincent. 2021. <em><span class="nocase">modelsummary: Summary Tabl
 <div id="ref-beepr" class="csl-entry" role="listitem">
 Bååth, Rasmus. 2018. <em><span class="nocase">beepr: Easily Play Notification Sounds on any Platform</span></em>. <a href="https://CRAN.R-project.org/package=beepr">https://CRAN.R-project.org/package=beepr</a>.
 </div>
+<div id="ref-Baio2010" class="csl-entry" role="listitem">
+Baio, Gianluca, and Marta Blangiardo. 2010. <span>“Bayesian Hierarchical Model for the Prediction of Football Results.”</span> <em>Journal of Applied Statistics</em> 37 (2): 253–64. <a href="https://doi.org/10.1080/02664760802684177">https://doi.org/10.1080/02664760802684177</a>.
+</div>
 <div id="ref-mixedbroom" class="csl-entry" role="listitem">
 Bolker, Ben, and David Robinson. 2022. <em><span class="nocase">broom.mixed: Tidying Methods for Mixed Models</span></em>. <a href="https://CRAN.R-project.org/package=broom.mixed">https://CRAN.R-project.org/package=broom.mixed</a>.
 </div>
@@ -2219,6 +2234,9 @@ Bolton, Ruth, and Randall Chapman. 1986. <span>“Searching for Positive Returns
 </div>
 <div id="ref-Box1976" class="csl-entry" role="listitem">
 Box, George E. P. 1976. <span>“Science and Statistics.”</span> <em>Journal of the American Statistical Association</em> 71 (356): 791–99. <a href="https://doi.org/10.1080/01621459.1976.10480949">https://doi.org/10.1080/01621459.1976.10480949</a>.
+</div>
+<div id="ref-Burch2023" class="csl-entry" role="listitem">
+Burch, Tyler James. 2023. <span>“<span>2023 NHL Playoff Predictions</span>,”</span> April. <a href="https://tylerjamesburch.com/blog/misc/nhl-predictions">https://tylerjamesburch.com/blog/misc/nhl-predictions</a>.
 </div>
 <div id="ref-chellel2018gambler" class="csl-entry" role="listitem">
 Chellel, Kit. 2018. <span>“The Gambler Who Cracked the Horse-Racing Code.”</span> <em>Bloomberg Businessweek</em>, May. <a href="https://www.bloomberg.com/news/features/2018-05-03/the-gambler-who-cracked-the-horse-racing-code">https://www.bloomberg.com/news/features/2018-05-03/the-gambler-who-cracked-the-horse-racing-code</a>.
