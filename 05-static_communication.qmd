@@ -4,7 +4,7 @@ engine: knitr
 
 # Static communication {#sec-static-communication}
 
-**Required material**
+**Prerequisites**
 
 - Read *R for Data Science*, Chapter 2 "Data visualization", [@r4ds]
   - This chapter provides an overview of `ggplot2`.
@@ -98,6 +98,25 @@ In contrast to the role of graphs, which is to show the actual observations, the
 
 Finally, we cover maps as a variant of graphs that are used to show a particular type of data. We will build static maps using `ggmap` [@KahleWickham2013] after having obtained geocoded data using `tidygeocoder` [@citetidygeocoder].
 
+The packages that we need in this chapter are:
+```{r}
+#| message: false
+#| warning: false
+
+library(datasauRus)
+library(ggmap)
+library(kableExtra)
+library(knitr)
+library(maps)
+library(modelsummary)
+library(patchwork)
+library(tidygeocoder)
+library(tidyverse)
+library(troopdata)
+library(viridis)
+library(WDI)
+```
+
 ## Graphs
 
 > A world turning to a saner and richer civilization will be a world turning to charts.
@@ -112,17 +131,7 @@ In a way, graphing is an information encoding process where we use purposeful ma
 To see why graphing the actual data is important\index{graphs!importance of}, consider a dataset from `datasauRus` [@citedatasauRus]. After installing and loading the necessary packages, we can take a quick look at the dataset.
 
 ```{r}
-#| eval: false
-#| echo: true
-
-install.packages("datasauRus")
-```
-
-```{r}
 #| message: false
-
-library(tidyverse)
-library(datasauRus)
 
 head(datasaurus_dozen)
 
@@ -144,7 +153,7 @@ datasaurus_dozen |>
     across(c(x, y), list(mean = mean, sd = sd)),
     x_y_cor = cor(x, y),
     .by = dataset) |>
-  knitr::kable(
+  kable(
     col.names = c(
     "Dataset", "x mean", "x sd", "y mean", "y sd", "correlation"
     ),
@@ -212,7 +221,7 @@ tidy_anscombe |>
     x_y_cor = cor(x, y),
     .by = set
     ) |>
-  knitr::kable(
+  kable(
     col.names = c(
     "Dataset", "x mean", "x sd", "y mean", "y sd", "correlation"
     ),
@@ -388,8 +397,6 @@ At this point, we may like to address the general look of the graph. There are v
 #| label: fig-bepthemes
 #| warning: false
 
-library(patchwork)
-
 theme_bw <-
   beps |>
   ggplot(mapping = aes(x = age_group)) +
@@ -554,8 +561,6 @@ The name of the "brewer" palette refers to Cindy Brewer\index{Brewer, Cindy} [@b
 #| fig-subcap: ["Brewer palette 'Blues'", "Brewer palette 'Set1'", "Viridis palette default", "Viridis palette 'magma'"]
 #| layout-ncol: 2
 
-library(viridis)
-
 # Panel (a)
 beps |>
   ggplot(mapping = aes(x = age_group, fill = vote)) +
@@ -618,17 +623,7 @@ Gross Domestic Product (GDP) "combines in a single figure, and with no double co
 
 ```{r}
 #| echo: true
-#| eval: false
-
-install.packages("WDI")
-```
-
-```{r}
-#| echo: true
 #| eval: true
-
-library(tidyverse)
-library(WDI)
 
 WDIsearch("gdp growth")
 WDIsearch("inflation")
@@ -1259,7 +1254,6 @@ It is worth pointing out that even for many of these applications, a graph may b
 We illustrate showing part of a dataset using `kable()` from `knitr` and drawing on `kableExtra` for enhancement. We use the World Bank\index{World Bank} dataset that we downloaded earlier (unemployment data are not available for every year for every country).\index{tables!knitr::kable()}
 
 ```{r}
-library(knitr)
 head(world_bank_data)
 ```
 
@@ -1375,8 +1369,6 @@ We can use `kableExtra` [@citekableextra] to add extra functionality to `kable`.
 #| message: false
 #| tbl-cap: "Economic indicators for Australia, Ethiopia, India, and the US"
 
-library(kableExtra)
-
 world_bank_data |>
   slice(1:10) |>
   kable(
@@ -1410,8 +1402,6 @@ We remove "population" for reasons of space.
 #| message: false
 #| warning: false
 
-library(modelsummary)
-
 world_bank_data |>
   select(-population) |>
   rename(unem_rate = unemployment_rate) |> 
@@ -1423,8 +1413,6 @@ world_bank_data |>
 ```{r}
 #| message: false
 #| warning: false
-
-library(modelsummary)
 
 world_bank_data |>
   datasummary_skim()
@@ -1549,8 +1537,6 @@ The first step is to get some data. There is some geographic data built into `gg
 #| message: false
 #| warning: false
 
-library(maps)
-
 france <- map_data(map = "france")
 
 head(france)
@@ -1620,8 +1606,6 @@ It can be useful to use Google Maps,\index{maps!Google Maps} or other mapping pl
 #| warning: false
 #| message: false
 
-library(ggmap)
-
 bbox <- c(left = 148.95, bottom = -35.5, right = 149.3, top = -35.1)
 ```
 
@@ -1649,7 +1633,7 @@ Once we have a map then we can use `ggmap()` to plot it. Now we want to get some
 
 # Read in the booths data for each year
 booths <-
-  readr::read_csv(
+  read_csv(
     paste0(
       "https://results.aec.gov.au/24310/Website/Downloads/",
       "GeneralPollingPlacesDownload-24310.csv"
@@ -1669,7 +1653,7 @@ head(booths)
 
 # Read in the booths data for each year
 booths <-
-  readr::read_csv(
+  read_csv(
     "https://results.aec.gov.au/24310/Website/Downloads/GeneralPollingPlacesDownload-24310.csv",
     skip = 1,
     guess_max = 10000
@@ -1749,14 +1733,6 @@ Finally, the reason that we used Stamen Maps and OpenStreetMap is because it is 
 Let us see another example of a static map, this time using data on US military deployments from `troopdata` [@troopdata].\index{maps!US military deployments} We can access data about US overseas military bases back to the start of the Cold War using `get_basedata()`.
 
 ```{r}
-#| eval: false
-
-install.packages("troopdata")
-```
-
-```{r}
-library(troopdata)
-
 bases <- get_basedata()
 
 head(bases)
@@ -1767,8 +1743,6 @@ We will look at the locations of US military bases in Germany,\index{Germany} Ja
 ```{r}
 #| message: false
 #| warning: false
-
-library(ggmap)
 
 # From: https://data.humdata.org/dataset/bounding-boxes-for-countries
 bbox_germany <-
@@ -1907,8 +1881,6 @@ place_names
 ```{r}
 #| message: false
 #| warning: false
-
-library(tidygeocoder)
 
 place_names <-
   geo(

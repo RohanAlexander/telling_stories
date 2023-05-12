@@ -4,7 +4,7 @@ engine: knitr
 
 # Text as data {#sec-text-as-data}
 
-**Required material**
+**Prerequisites**
 
 - Read *Text as data: An overview*, [@benoit2020text]
   - An overview of using text as data.
@@ -60,48 +60,55 @@ engine: knitr
 Text is all around us.\index{text as data} In many cases, text is the earliest type of data that we are exposed to. Increases in computational power, the development of new methods, and the enormous availability of text means that there has been a great deal of interest in using text as data. Using text as data opens up a wide opportunity for unique analyses. For instance:
 
 - text analysis of state-run newspapers in African countries can identify manipulation by governments [@Hassan2022]; 
-- the analysis of notes in Electronic Health Records (EHR) can improve the efficiency of disease prediction [@jessgronsbell]; and 
-- analysis of US congressional records indicates just how much women legislators are interrupted by men [@millersutherland2022].
+- the text from UK daily newspapers can be used to generate better forecasts of GDP and inflation [@Kalamara2022], and similarly, the New York Times\index{New York Times} can be used to create an uncertainty index which correlates with US economic activity [@Alexopoulos2015]; 
+- the analysis of notes in Electronic Health Records (EHR)\index{Electronic Health Records (EHR)} can improve the efficiency of disease prediction [@jessgronsbell]; and 
+- analysis of US congressional records indicates just how often women legislators are interrupted by men [@millersutherland2022].
 
-Earlier approaches to the analysis of text tend to convert words into numbers, divorced of context. They could then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text, which can bring additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, it is useful to know that that a crocodile could eat you while a tree probably would not.
+Earlier approaches to the analysis of text tend to convert words into numbers, divorced of context. They could then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text, which can bring additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, it is useful to know that a crocodile could eat you while a tree probably would not.
 
 Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with wide data, insofar as often each variable is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with one variable of words and another of the counts. Considering text as data naturally requires some abstraction from its context. But this should not be entirely separated as this can perpetuate historical inequities. For instance, @koenecke2020 find that automated speech recognition systems perform much worse for Black compared with White speakers, and @davidson2019racial find that tweets that use Black American\index{Black American} English, which is a specifically defined technical term, are classified at hate speech at higher rates than similar tweets in Standard American English, which again is a technical term.
 
-In this chapter we cover a variety of approaches that enable us to consider text as data. One exciting aspect of text data is that it is typically not generated for the purposes of our analysis. The trade-off is that we typically must do a bunch more work to get it into a form that we can work with. There are a lot of decisions to be made in the data cleaning and preparation stages.
+One exciting aspect of text data is that it is typically not generated for the purposes of our analysis. The trade-off is that we typically must do a bunch more work to get it into a form that we can work with. There are a lot of decisions to be made in the data cleaning and preparation stages.\index{data cleaning and preparation}
 
-The larger size of text datasets means that it is especially important to simulate, and start small, when it comes to their analysis. Using text as data is exciting because of the quantity and variety of text that is available to us. In general, dealing with text datasets is messy. There is a lot of cleaning and preparation that is typically required. Often, text datasets are large. As such having a reproducible workflow in place and then clearly communicating your findings, becomes critical. Nonetheless, it is an exciting area.
+The larger size of text datasets means that it is especially important to simulate, and start small, when it comes to their analysis. Using text as data is exciting because of the quantity and variety of text that is available to us. But in general, dealing with text datasets is messy. There is a lot of cleaning and preparation that is typically required. Often, text datasets are large. As such having a reproducible workflow in place and then clearly communicating your findings, becomes critical.\index{reproducibility}\index{workflow} Nonetheless, it is an exciting area.
 
-In this chapter we first consider preparing text datasets. We then consider logistic and lasso regression, and finally topic models.
+In this chapter we first consider preparing text datasets. We then consider Term Frequency-Inverse Document Frequency (TF-IDF) and topic models.
 
-## Text cleaning and preparation
-
-Text modelling is an exciting area of research.\index{cleaning and preparation!text} But, and this is true more generally, the cleaning and preparation aspect is at least as difficult as the modelling. We will cover some essentials and provide a foundation that can be built on.
-
-The first step is to get some data. We discussed data gathering in @sec-gather-data and mentioned in passing many sources including:
-
-<!-- - Accessing the Twitter API using `rtweet` [@rtweet]. -->
-- Using *Inside Airbnb*, which provides text from reviews. 
-- Getting the text from out-of-copyright books using `gutenbergr` [@gutenbergr].
-- Scraping Wikipedia or other websites.
-
-The workhorse packages that we need for text cleaning and preparation are `stringr` [@citestringr], which is part of the `tidyverse` [@tidyverse], and `quanteda` [@quanteda].
-
-For illustrative purposes we construct a corpus of the first sentence, or two, from three books: *Beloved*, *Don Quixote*, and *Jane Eyre*.
+The packages that we need in this chapter are:
 
 ```{r}
 #| message: false
 #| warning: false
 
+library(astrologer)
+library(beepr)
+library(fs)
+library(gutenbergr)
 library(quanteda)
+library(stm)
+library(tidytext)
 library(tidyverse)
+```
 
-don_quixote <-
-  paste0(
-    "In a village of La Mancha, the name of which I have no desire to ",
-    "call to mind, there lived not long since one of those gentlemen ",
-    "that keep a lance in the lance-rack, an old buckler, a lean hack, ",
-    "and a greyhound for coursing."
-  )
+## Text cleaning and preparation
+
+Text modelling is an exciting area of research.\index{text!cleaning and preparation} But, and this is true more generally, the cleaning and preparation aspect is often at least as difficult as the modelling.\index{data cleaning and preparation} We will cover some essentials and provide a foundation that can be built on.
+
+The first step is to get some data. We discussed data gathering in @sec-gather-data and mentioned in passing many sources including:
+
+- Using *Inside Airbnb*, which provides text from reviews. 
+- Project Gutenberg which provides the text from out-of-copyright books.\index{Project Gutenberg}
+- Scraping Wikipedia\index{Wikipedia} or other websites.
+
+The workhorse packages that we need for text cleaning and preparation are `stringr`, which is part of the `tidyverse`, and `quanteda`.
+
+For illustrative purposes we construct a corpus of the first sentence or two, from three books: *Beloved* by Toni Morrison,\index{Morrison, Toni!Beloved} *The Last Samurai* by Helen DeWitt,\index{DeWitt, Helen!The Last Samurai} and *Jane Eyre* by Charlotte Brontë.\index{Brontë, Charlotte!Jane Eyre}
+
+```{r}
+#| message: false
+#| warning: false
+
+last_samurai <-"My father's father was a Methodist minister."
 
 beloved <- "124 was spiteful. Full of Baby's venom."
 
@@ -109,8 +116,8 @@ jane_eyre <- "There was no possibility of taking a walk that day."
 
 bookshelf <-
   tibble(
-    book = c("Don Quixote", "Beloved", "Jane Eyre"),
-    first_sentence = c(don_quixote, beloved, jane_eyre)
+    book = c("Last Samurai", "Beloved", "Jane Eyre"),
+    first_sentence = c(last_samurai, beloved, jane_eyre)
   )
 
 bookshelf
@@ -136,45 +143,39 @@ books_dfm <-
 books_dfm
 ```
 
-While this is relatively straightforward, there are many decisions that will need to be made as part of this process, which we now consider. There is no definitive right or wrong answer. Instead, we make those decisions based on what we will be using the dataset for.
+We now consider some of the many decisions that need to be made as part of this process. There is no definitive right or wrong answer. Instead, we make those decisions based on what we will be using the dataset for.
 
 ### Stop words
 
-Stop words are words such as "the", "and", and "a". For a long time, such words were thought to not convey much meaning, and there was often a memory of computation constraint.\index{text as data!stop words} A common step of preparing a text dataset was to remove them. We now know that stop words can have a great deal of meaning [@schofield2017]. The decision to remove them is a nuanced one that depends on circumstances.
+Stop words are words such as "the", "and", and "a".\index{text!stop words} For a long time stop words were not thought to convey much meaning, and there were concerns around memory-constrained computation. A common step of preparing a text dataset was to remove stop words. We now know that stop words can have a great deal of meaning [@schofield2017]. The decision to remove them is a nuanced one that depends on circumstances.
 
-We can get a list of stop words using `stopwords()` from `quanteda` [@quanteda], and then do a crude removal using `str_replace_all()`.
+We can get a list of stop words using `stopwords()` from `quanteda`. 
 
 ```{r}
 stopwords(source = "snowball")[1:10]
+```
 
+We could then look for all instances of words in that list and crudely remove them with `str_replace_all()`.
+
+```{r}
 stop_word_list <-
   paste(stopwords(source = "snowball"), collapse = " | ")
 
 bookshelf |>
-  mutate(extra_space = str_replace_all(
-    string = first_sentence,
-    pattern = "([ ,.])", # Spaces and punctuation marks present in text
-    replacement = " \\1" # Add a space before any of the detected characters
-  )) |>
   mutate(no_stops = str_replace_all(
-    # Remove stop words
-    string = extra_space,
+    string = first_sentence,
     pattern = stop_word_list,
-    replacement = ""
-  )) |>
-  mutate(no_stops = str_squish( # Remove extra spaces within string
-    string = no_stops
-  )) |>
+    replacement = " ")
+  ) |>
   select(no_stops, first_sentence)
 ```
 
 There are many different lists of stop words that have been put together by others. For instance, `stopwords()` can use lists including: "snowball", "stopwords-iso", "smart", "marimo", "ancient", and "nltk". More generally, if we decide to use stop words then we often need to augment such lists with project-specific words. We can do this by creating a count of individual words in the corpus, and then sorting by the most common and adding those to the stop words list as appropriate.
 
 ```{r}
-
 stop_word_list_updated <-
   paste(
-    "village |",
+    "Methodist |",
     "spiteful |",
     "possibility |",
     stop_word_list,
@@ -182,36 +183,26 @@ stop_word_list_updated <-
   )
 
 bookshelf |>
-  mutate(extra_space = str_replace_all(
-    # Add double spaces
-    string = first_sentence,
-    pattern = " ",
-    replacement = "  "
-  )) |>
   mutate(no_stops = str_replace_all(
-    # Remove stop words
-    string = extra_space,
+    string = first_sentence,
     pattern = stop_word_list_updated,
-    replacement = ""
-  )) |>
-  mutate(no_stops = str_squish( # Remove extra spaces within string
-    string = no_stops
-  )) |>
+    replacement = " ")
+  ) |>
   select(no_stops)
 ```
 
-We can integrate the removal of stop words into our construction of the DFM with `dfm_remove()`.
+We can integrate the removal of stop words into our construction of the DFM with `dfm_remove()` from `quanteda`.
 
 ```{r}
 books_dfm |>
   dfm_remove(stopwords(source = "snowball"))
 ```
 
-When we remove stop words we artificially adjust our dataset. Sometimes there may be a good reason to do that. But it must not be done unthinkingly. For instance, in @sec-farm-data we discussed how sometimes datasets may need to be censored, truncated, or manipulated in other similar ways, to preserve the privacy of respondents. It is possible that the integration of the removal of stop words as a default step in natural language processing was due to computational power, which may have been more limited when these methods were developed. In any case, @jurafskymartin [p. 62] conclude that removing stop words does not improve performance for text classification. Relatedly, @schofield2017 find that inference from topic models is not improved by the removal of anything other than the most frequent words. If stop words are to be removed, they recommend doing this after topics are constructed.
+When we remove stop words we artificially adjust our dataset. Sometimes there may be a good reason to do that. But it must not be done unthinkingly. For instance, in @sec-farm-data and @sec-store-and-share we discussed how sometimes datasets may need to be censored, truncated, or manipulated in other similar ways, to preserve the privacy of respondents. It is possible that the integration of the removal of stop words as a default step in natural language processing was due to computational power, which may have been more limited when these methods were developed. In any case, @jurafskymartin [p. 62] conclude that removing stop words does not improve performance for text classification. Relatedly, @schofield2017 find that inference from topic models is not improved by the removal of anything other than the most frequent words. If stop words are to be removed, then they recommend doing this after topics are constructed.
 
 ### Case, numbers, and punctuation
 
-There are times when all we care about is the word, not the case or punctuation.\index{text as data!case}\index{text as data!numbers}\index{text as data!punctuation} For instance, if the text corpus was particularly messy or the existence of particular words was informative. We trade-off the loss of much information for the benefit of making things more simple. We can convert to lower case with `str_to_lower()`, and use `str_replace_all()` to remove punctuation with "[:punct:]", and numbers with "[:digit:]".
+There are times when all we care about is the word, not the case or punctuation.\index{text!case}\index{text!numbers}\index{text!punctuation} For instance, if the text corpus was particularly messy or the existence of particular words was informative. We trade-off the loss of information for the benefit of making things simpler. We can convert to lower case with `str_to_lower()`, and use `str_replace_all()` to remove punctuation with "[:punct:]", and numbers with "[:digit:]".
 
 ```{r}
 bookshelf |>
@@ -248,13 +239,13 @@ As an aside, we can remove letters, numbers, and punctuation with "[:graph:]" in
 ```{r}
 bookshelf |>
   mutate(
-    remove_obvious = str_replace_all(
+    let_num_punc = str_replace_all(
       string = first_sentence,
       pattern = "[:graph:]",
       replacement = " "
     )
   ) |>
-  select(remove_obvious)
+  select(let_num_punc)
 ```
 
 More generally, we can use arguments in `tokens()` from `quanteda()` to do this. 
@@ -266,7 +257,7 @@ books_corpus |>
 
 ### Typos and uncommon words
 
-Then we need to decide what to do about typos and other minor issues.\index{text as data!typos} Firstly, every real-world text has typos. Sometimes these should clearly be fixed. But if they are made in a systematic way, for instance, a certain writer always makes the same mistakes, then they would have value if we were interested in grouping by the writer. The use of OCR\index{OCR} will introduce common issues as well, as was seen in @sec-gather-data. For instance, "the" is commonly incorrectly changed to "thc".
+Then we need to decide what to do about typos and other minor issues.\index{text!typos} Every real-world text has typos. Sometimes these should clearly be fixed. But if they are made in a systematic way, for instance, a certain writer always makes the same mistakes, then they could have value if we were interested in grouping by the writer. The use of OCR\index{OCR} will introduce common issues as well, as was seen in @sec-gather-data. For instance, "the" is commonly incorrectly recognized as "thc".
 
 We could fix typos in the same way that we fixed stop words, i.e. with lists of corrections. When it comes to uncommon words, we can build this into our document-feature matrix creation with `dfm_trim()`. For instance, we could use "min_termfreq = 2" to remove any word that does not occur at least twice, or "min_docfreq = 0.05" to remove any word that is not in at least five per cent of documents or "max_docfreq = 0.90" to remove any word that is in at least 90 per cent of documents.
 
@@ -279,9 +270,9 @@ books_corpus |>
 
 ### Tuples
 
-A tuple is an ordered list of elements, and in the context of text, it is a series of words.\index{text as data!tuples} If it is two words then we term this a "bi-gram", three words is a "tri-gram", etc. These are an issue when it comes to text cleaning and preparation because we typically need to separate terms based on a space. This would result in an inappropriate separation.
+A tuple is an ordered list of elements. In the context of text it is a series of words.\index{text!tuples} If the tuple comprises two words, then we term this a "bi-gram", three words is a "tri-gram", etc. These are an issue when it comes to text cleaning and preparation because we often separate terms based on a space. This would result in an inappropriate separation.
 
-This is a clear issue when it comes to place names. For instance, consider "British Columbia", "New Hampshire", "United Kingdom", and "Port Hedland". One way forward is to create a list of such places and then use `str_replace_all()` to add an underbar, for instance, "British_Columbia", "New_Hampshire", "United_Kingdom", and "Port_Hedland". Another option is to use `tokens_compound()` from `quanteda`.
+This is a clear issue when it comes to place names. For instance, consider "British Columbia", "New Hampshire", "United Kingdom", and "Port Hedland". One way forward is to create a list of such places and then use `str_replace_all()` to add an underscore, for instance, "British_Columbia", "New_Hampshire", "United_Kingdom", and "Port_Hedland". Another option is to use `tokens_compound()` from `quanteda`.
 
 ```{r}
 some_places <- c("British Columbia", 
@@ -295,46 +286,21 @@ tokens(a_sentence) |>
   tokens_compound(pattern = phrase(some_places))
 ```
 
-In that case, we knew what the tuples were. But it might be that we were not sure what the common tuples were in the corpus. We could then use `tokens_ngrams()` to identify them. We could ask for, say, all bi-grams in an excerpt from the book *Don Quixote*.
+In that case, we knew what the tuples were. But it might be that we were not sure what the common tuples were in the corpus. We could use `tokens_ngrams()` to identify them. We could ask for, say, all bi-grams in an excerpt from the book *Jane Eyre*.\index{Brontë, Charlotte!Jane Eyre} We showed how to download the text of this book from Project Gutenberg\index{Project Gutenberg} in @sec-its-just-a-generalized-linear-model and so here we load the local version that we saved earlier.
 
 ```{r}
 #| eval: false
 #| echo: true
 
-library(gutenbergr)
-
-don_quixote <-
-  gutenberg_download(
-    gutenberg_id = 996
-  ) |>
-  filter(text != "") |>
-  slice_sample(n = 1000)
-
-write_csv(don_quixote, "books-don_quixote.csv")
-```
-
-```{r}
-#| eval: false
-#| echo: false
-
-# INTERNAL
-
-write_csv(don_quixote, "inputs/data/books-don_quixote.csv")
-```
-
-
-
-```{r}
-#| eval: false
-#| echo: true
-
-don_quixote <- read_csv(
-  "books-don_quixote.csv",
+jane_eyre <- read_csv(
+  "jane_eyre.csv",
   col_types = cols(
     gutenberg_id = col_integer(),
     text = col_character()
   )
 )
+
+jane_eyre
 ```
 
 ```{r}
@@ -343,41 +309,40 @@ don_quixote <- read_csv(
 
 # INTERNAL
 
-don_quixote <- read_csv(
-  "inputs/data/books-don_quixote.csv",
+jane_eyre <- read_csv(
+  "inputs/jane_eyre.csv",
   col_types = cols(
     gutenberg_id = col_integer(),
     text = col_character()
   )
 )
+
+jane_eyre
+```
+
+As there are many blank lines we will remove them.
+
+```{r}
+jane_eyre <- 
+  jane_eyre |> 
+  filter(!is.na(text))
 ```
 
 
 ```{r}
-don_q_text <- tibble(
-  book = "Don Quixote",
-  text = paste(don_quixote$text, collapse = " ") |>
-    str_replace_all(
-      pattern = "[:punct:]",
-      replacement = " "
-    ) |>
-    str_replace_all(
-      # Add double spaces
-      pattern = " ",
-      replacement = "  "
-    ) |>
-    str_replace_all(
-      # Remove stop words
-      pattern = stop_word_list,
-      replacement = ""
-    ) |>
-    str_squish()
+jane_eyre_text <- tibble(
+  book = "Jane Eyre",
+  text = paste(jane_eyre$text, collapse = " ") |>
+    str_replace_all(pattern = "[:punct:]",
+                    replacement = " ") |>
+    str_replace_all(pattern = stop_word_list,
+                    replacement = " ")
 )
 
-don_q_corpus <-
-  corpus(don_q_text, docid_field = "book", text_field = "text")
+jane_eyre_corpus <-
+  corpus(jane_eyre_text, docid_field = "book", text_field = "text")
 
-ngrams <- tokens_ngrams(tokens(don_q_corpus), n = 2)
+ngrams <- tokens_ngrams(tokens(jane_eyre_corpus), n = 2)
 
 ngram_counts <-
   tibble(ngrams = unlist(ngrams)) |>
@@ -386,16 +351,15 @@ ngram_counts <-
 head(ngram_counts)
 ```
 
-Having identified some common bi-grams, we could add them to the list to be changed. This example includes names like "Don Quixote" and "Sancho Panza" which would need to remain together for analysis.
+Having identified some common bi-grams, we could add them to the list to be changed. This example includes names like "Mr Rochester" and "St John" which would need to remain together for analysis.
 
 ### Stemming and lemmatizing
 
-Stemming and lemmatizing words is another common approach for reducing the dimensionality of a text dataset.\index{text as data!stemming and lemmatizing} Stemming means to remove the last part of the word, in the expectation that this will result in more general words. For instance, "Canadians", "Canadian", and "Canada" all stem to "Canad". Lemmatizing is similar, but is more involved. It means changing words, not just on their spelling, but on their canonical form [@textasdata, p. 54]. For instance, "Canadians", "Canadian", "Canucks", and "Canuck" may all be changed to "Canada".
+Stemming and lemmatizing words is another common approach for reducing the dimensionality of a text dataset.\index{text!stemming} Stemming means to remove the last part of the word, in the expectation that this will result in more general words. For instance, "Canadians", "Canadian", and "Canada" all stem to "Canad". Lemmatizing\index{text!lemmatizing} is similar, but is more involved. It means changing words, not just on their spelling, but on their canonical form [@textasdata, p. 54]. For instance, "Canadians", "Canadian", "Canucks", and "Canuck" may all be changed to "Canada".
 
-We can do this with `dfm_wordstem()`.
+We can do this with `dfm_wordstem()`. We notice, that, say, "minister", has been changed to "minist".
 
 ```{r}
-
 char_wordstem(c("Canadians", "Canadian", "Canada"))
 
 books_corpus |>
@@ -404,15 +368,11 @@ books_corpus |>
   dfm_wordstem()
 ```
 
-
-Again, while this is a common step in using text as data, @schofield2017understanding find that in the context of LDA, which we cover later, stemming has little effect and there is little need to do it.
-
+While this is a common step in using text as data, @schofield2017understanding find that in the context of topic modelling, which we cover later, stemming has little effect and there is little need to do it.
 
 ### Duplication
 
-Duplication is a major concern with text datasets because of their size.\index{text as data!duplication} For instance, @bandy2021addressing showed that around 30 per cent of the data were inappropriately duplicated in a large text dataset commonly used in computer science, and @schofield2017quantifying show that this is a major concern and could substantially affect results. However, it can be a subtle and difficult to diagnose problem. For instance, in @sec-its-just-a-linear-model when we considered counts of page numbers for various authors in the context of Poisson regression, we could easily have accidentally included each Shakespeare\index{Shakespeare} entry twice because not only are there entries for each play, but also many anthologies that contained all of them. Careful consideration of our dataset identified the issue, but that would be difficult at scale.
-
-
+Duplication is a major concern with text datasets because of their size.\index{text!duplication} For instance, @bandy2021addressing showed that around 30 per cent of the data were inappropriately duplicated in a large text dataset commonly used in computer science, and @schofield2017quantifying show that this is a major concern and could substantially affect results. However, it can be a subtle and difficult to diagnose problem. For instance, in @sec-its-just-a-linear-model when we considered counts of page numbers for various authors in the context of Poisson regression, we could easily have accidentally included each Shakespeare\index{Shakespeare} entry twice because not only are there entries for each play, but also many anthologies that contained all of them. Careful consideration of our dataset identified the issue, but that would be difficult at scale.
 
 ## Term Frequency-Inverse Document Frequency (TF-IDF)
 
@@ -421,20 +381,13 @@ We now use `astrologer` [@astrologer], which is a dataset of horoscopes to explo
 ```{r}
 #| echo: true
 #| eval: false
-library(devtools)
 
-install_github("sharlagelfand/astrologer")
+devtools::install_github("sharlagelfand/astrologer")
 ```
 
 We can then access the "horoscopes" dataset.
 
 ```{r}
-#| warning: false
-#| message: false
-
-library(astrologer)
-library(tidyverse)
-
 horoscopes
 ```
 
@@ -445,28 +398,26 @@ horoscopes |>
   count(zodiacsign)
 ```
 
-We can see that there are 106 horoscopes for each zodiac sign. In this example we first tokenize by word, and then create counts based on zodiac sign only, not date. We use `tidytext` [@SilgeRobinson2016], as it is used extensively in @hvitfeldt2021supervised.
+We can see that there are 106 horoscopes for each zodiac sign. In this example we first tokenize by word, and then create counts based on zodiac sign only, not date. We use `tidytext` because it is used extensively in @hvitfeldt2021supervised.
 
 ```{r}
-library(tidytext)
-
 horoscopes_by_word <-
   horoscopes |>
-  select(-startdate, -url) |>
-  unnest_tokens(
-    output = word,
-    input = horoscope,
-    token = "words"
-  )
+  select(-startdate,-url) |>
+  unnest_tokens(output = word,
+                input = horoscope,
+                token = "words")
 
 horoscopes_counts_by_word <-
   horoscopes_by_word |>
   count(zodiacsign, word, sort = TRUE)
 
-head(horoscopes_counts_by_word)
+horoscopes_counts_by_word
 ```
 
-We can see that the most popular words appear to be similar for the different zodiacs. At this point, we could use the data in a variety of ways. We might be interested to know which words characterize each group---that is to say, which words are commonly used only in each group. We can do that by first looking at a word's term frequency (TF), which is how many times a word is used in the horoscopes for each zodiac sign. The issue is that there are a lot of words that are commonly used regardless of context. As such, we may also like to look at the inverse document frequency (IDF) in which we "penalize" words that occur in the horoscopes for many zodiac signs. A word that occurs in the horoscopes of many zodiac signs would have a lower IDF than a word that only occurs in the horoscopes of one. The term frequency–inverse document frequency (tf-idf) is then the product of these.\index{term frequency–inverse document frequency}
+We can see that the most popular words appear to be similar for the different zodiacs. At this point, we could use the data in a variety of ways. 
+
+We might be interested to know which words characterize each group---that is to say, which words are commonly used only in each group.\index{term frequency–inverse document frequency} We can do that by first looking at a word's term frequency (TF), which is how many times a word is used in the horoscopes for each zodiac sign. The issue is that there are a lot of words that are commonly used regardless of context. As such, we may also like to look at the inverse document frequency (IDF) in which we "penalize" words that occur in the horoscopes for many zodiac signs. A word that occurs in the horoscopes of many zodiac signs would have a lower IDF than a word that only occurs in the horoscopes of one. The term frequency–inverse document frequency (tf-idf) is then the product of these.
 
 We can create this value using `bind_tf_idf()` from `tidytext`. It will create new variables for each of these measures.
 
@@ -490,23 +441,19 @@ In @tbl-zodiac we look at the words that distinguish the horoscopes of each zodi
 #| tbl-cap: "Most common words in horoscopes that are unique to a particular zodiac sign"
 
 horoscopes_counts_by_word_tf_idf |>
-  slice(1:10,
+  slice(1:5,
         .by = zodiacsign) |>
   select(zodiacsign, word) |>
   summarise(all = paste0(word, collapse = "; "),
             .by = zodiacsign) |>
-  knitr::kable(
-    col.names = c(
-      "Zodiac sign",
-      "Most common words unique to that sign"
-    )
-  )
+  knitr::kable(col.names = c("Zodiac sign",
+                             "Most common words unique to that sign"))
 ```
 
 
 <!-- ## Lasso regression -->
 
-<!-- One of the nice aspects of text is that we can adapt our existing methods to use it as an input. Here we are going to use a variant of logistic regression, along with text inputs, to forecast. Inspired by @silge2018 we are going to have two different text inputs, train a model on a sample of text from each of them, and then try to use that model to forecast the text in a training set. Although this is a arbitrary example, we could imagine many real-world applications. For instance, we may be interested in whether some text was likely written by a bot or a human. -->
+<!-- One of the nice aspects of text is that we can adapt our existing methods to use it as an input. Here we are going to use a variant of logistic regression, along with text inputs, to forecast. Inspired by @silge2018 we are going to have two different text inputs, train a model on a sample of text from each of them, and then try to use that model to forecast the text in a training set. Although this is an arbitrary example, we could imagine many real-world applications. For instance, we may be interested in whether some text was likely written by a bot or a human. -->
 
 
 <!-- First we need to get some data. We use books from Project Gutenberg using `gutenberg_download()` from `gutenbergr` [@gutenbergr]. We consider *Jane Eyre* [@janeeyre] and *Alice's Adventures in Wonderland* [@citealice]. -->
@@ -727,7 +674,7 @@ horoscopes_counts_by_word_tf_idf |>
 
 ## Topic models
 
-Topic models\index{topic models} are useful when we have many statements and we want to create groups based on which sentences that use similar words. We consider those groups of similar words to define topics. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA)\index{latent Dirichlet allocation} method of @Blei2003latent, as implemented by `stm` [@stm]. For clarity, in the context of this chapter, LDA refers to latent Dirichlet allocation and not Linear Discriminant Analysis, although this is another common subject associated with the acronym LDA.
+Topic models\index{topic models} are useful when we have many statements and we want to create groups based on which sentences that use similar words. We consider those groups of similar words to define topics. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA)\index{latent Dirichlet allocation} method of @Blei2003latent, as implemented by `stm`. For clarity, in the context of this chapter, LDA refers to latent Dirichlet allocation and not Linear Discriminant Analysis, although this is another common subject associated with the acronym LDA.
 
 The key assumption behind the LDA method is that for each statement, a document, is made by a person who decides the topics they would like to talk about in that document, and who then chooses words, terms, that are appropriate to those topics. A topic could be thought of as a collection of terms, and a document as a collection of topics. The topics are not specified *ex ante*; they are an outcome of the method. Terms are not necessarily unique to a particular topic, and a document could be about more than one topic. This provides more flexibility than other approaches such as a strict word count method. The goal is to have the words found in documents group themselves to define topics.
 
@@ -742,22 +689,14 @@ LDA considers each statement to be a result of a process where a person first ch
 
 document_1 <- tibble(
   Topics = c(
-    "topic 1",
-    "topic 2",
-    "topic 3",
-    "topic 4",
-    "topic 5"
+    "topic 1", "topic 2", "topic 3", "topic 4", "topic 5"
   ),
   Probability = c(0.40, 0.40, 0.1, 0.05, 0.05)
 )
 
 document_2 <- tibble(
   Topics = c(
-    "topic 1",
-    "topic 2",
-    "topic 3",
-    "topic 4",
-    "topic 5"
+    "topic 1", "topic 2", "topic 3", "topic 4", "topic 5"
   ),
   Probability = c(0.01, 0.04, 0.35, 0.20, 0.4)
 )
@@ -784,47 +723,27 @@ Similarly, each topic could be considered a probability distribution over terms.
 #| layout-ncol: 2
 #| fig-subcap: ["Distribution for Topic 1", "Distribution for Topic 2"]
 
+some_terms <- c(
+  "immigration", "race", "influx", "loans", "wealth", 
+  "saving", "chinese", "france", "british", "english")
+
 topic_1 <- tibble(
-  Terms = c(
-    "immigration",
-    "race",
-    "influx",
-    "loans",
-    "wealth",
-    "saving",
-    "chinese",
-    "france",
-    "british",
-    "english"
-  ),
+  Terms = some_terms,
   Probability = c(0.0083, 0.0083, 0.0083, 0.0083, 0.0083, 0.0083, 0.2, 0.15, 0.4, 0.2)
 )
 
 topic_2 <- tibble(
-  Terms = c(
-    "immigration",
-    "race",
-    "influx",
-    "loans",
-    "wealth",
-    "saving",
-    "chinese",
-    "france",
-    "british",
-    "english"
-  ),
+  Terms = some_terms,
   Probability = c(0.0142, 0.0142, 0.0142, 0.25, 0.35, 0.30, 0.0142, 0.0142, 0.0142, 0.0142)
 )
 
 ggplot(topic_1, aes(Terms, Probability)) +
   geom_point() +
   theme_classic() +
-  labs(title = "Distribution over terms for Topic 1") +
   coord_cartesian(ylim = c(0, 0.4))
 ggplot(topic_2, aes(Terms, Probability)) +
   geom_point() +
   theme_classic() +
-  labs(title = "Distribution over terms for Topic 2") +
   coord_cartesian(ylim = c(0, 0.4))
 ```
 
@@ -836,7 +755,7 @@ ggplot(topic_2, aes(Terms, Probability)) +
 <!--     a. Randomly choose a topic for that term $n$, in that document $d$, $z_{d,n}$, from the multinomial distribution over topics in that document, $z_{d,n} \sim \mbox{Multinomial}(\theta_d)$.  -->
 <!--     b. Randomly choose a term from the relevant multinomial distribution over the terms for that topic, $w_{d,n} \sim \mbox{Multinomial}(\beta_{z_{d,n}})$. -->
     
-By way of background, the Dirichlet distribution is a variation of the beta distribution that is commonly used as a prior for categorical and multinomial variables. If there are just two categories, then the Dirichlet and the beta distributions are the same. In the special case of a symmetric Dirichlet distribution, $\eta=1$, it is equivalent to a uniform distribution. If $\eta<1$, then the distribution is sparse and concentrated on a smaller number of the values, and this number decreases as $\eta$ decreases. A hyperparameter, in this usage, is a parameter of a prior distribution.
+By way of background, the Dirichlet distribution\index{distribution!Dirichlet} is a variation of the beta distribution that is commonly used as a prior for categorical and multinomial variables. If there are just two categories, then the Dirichlet and the beta distributions are the same. In the special case of a symmetric Dirichlet distribution, $\eta=1$, it is equivalent to a uniform distribution. If $\eta<1$, then the distribution is sparse and concentrated on a smaller number of the values, and this number decreases as $\eta$ decreases. A hyperparameter, in this usage, is a parameter of a prior distribution.
 
 <!-- Given this set-up, the joint distribution for the variables is [@blei2012, p.6]: -->
 <!-- $$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}) = \prod^{K}_{i=1}p(\beta_i) \prod^{D}_{d=1}p(\theta_d) \left(\prod^N_{n=1}p(z_{d,n}|\theta_d)p\left(w_{d,n}|\beta_{1:K},z_{d,n}\right) \right).$$ -->
@@ -850,9 +769,9 @@ If we observe the terms in each document, then we can obtain estimates of the to
 <!-- That is, we are trying to calculate the posterior distribution of the topics given the terms observed in each document (@blei2012, p.7):  -->
 <!-- $$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N} | w_{1:D, 1:N}) = \frac{p\left(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}\right)}{p(w_{1:D, 1:N})}.$$ -->
 
-The initial practical step when implementing LDA given a corpus of documents is usually to remove stop words. Although, as mentioned earlier, this is not necessary, and may be better done after the groups are created. We often also remove punctuation and capitalization. We then construct our document-feature matrix using `dfm()` from `quanteda` [@quanteda].
+The initial practical step when implementing LDA given a corpus of documents is usually to remove stop words. Although, as mentioned earlier, this is not necessary, and may be better done after the groups are created. We often also remove punctuation and capitalization. We then construct our document-feature matrix using `dfm()` from `quanteda`.
 
-After the dataset is ready, `stm` [@stm] can be used to implement LDA and approximate the posterior. 
+After the dataset is ready, `stm` can be used to implement LDA and approximate the posterior. 
 <!-- It does this using Gibbs sampling or the variational expectation-maximization algorithm. Following @SteyversGriffiths2006 and @Darling2011, the Gibbs sampling  -->
 The process attempts to find a topic for a particular term in a particular document, given the topics of all other terms for all other documents. Broadly, it does this by first assigning every term in every document to a random topic, specified by Dirichlet priors.
 <!-- with $\alpha = \frac{50}{K}$ and $\eta = 0.1$  (@SteyversGriffiths2006 recommends $\eta = 0.01$), where $\alpha$ refers to the distribution over topics and $\eta$ refers to the distribution over terms (@Grun2011, p.7).  -->
@@ -861,9 +780,9 @@ It then selects a particular term in a particular document and assigns it to a n
 <!-- where $z'_{d, n}$ refers to all other topic assignments; $\lambda'_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$; $\lambda'_{.\rightarrow k}$ is a count of how many other times that any term has been assigned to topic $k$; $\lambda'^{(d)}_{n\rightarrow k}$ is a count of how many other times that term has been assigned to topic $k$ in that particular document; and $\lambda'^{(d)}_{-i}$ is a count of how many other times that term has been assigned in that document.  -->
 Once this has been estimated, then estimates for the distribution of words into topics and topics into documents can be backed out.
 
-This conditional distribution assigns topics depending on how often a term has been assigned to that topic previously, and how common the topic is in that document [@SteyversGriffiths2006]. The initial random allocation of topics means that the results of early passes through the corpus of document are poor, but given enough time the algorithm converges to an appropriate estimate. 
+The conditional distribution assigns topics depending on how often a term has been assigned to that topic previously, and how common the topic is in that document [@SteyversGriffiths2006]. The initial random allocation of topics means that the results of early passes through the corpus of document are poor, but given enough time the algorithm converges to an appropriate estimate. 
 
-The choice of the number of topics, *k*, affects the results, and must be specified *a priori*. If there is a strong reason for a particular number, then this can be used. Otherwise, one way to choose an appropriate number is to use a test and training set process. Essentially, this means running the process on a variety of possible values for *k* and then picking an appropriate value that performs well.
+The choice of the number of topics, $k$, affects the results, and must be specified *a priori*. If there is a strong reason for a particular number, then this can be used. Otherwise, one way to choose an appropriate number is to use a test and training set process. Essentially, this means running the process on a variety of possible values for *k* and then picking an appropriate value that performs well.
 
 One weakness of the LDA method is that it considers a "bag of words" where the order of those words does not matter [@blei2012]. It is possible to extend the model to reduce the impact of the bag-of-words assumption and add conditionality to word order. Additionally, alternatives to the Dirichlet distribution can be used to extend the model to allow for correlation. 
 
@@ -871,14 +790,11 @@ One weakness of the LDA method is that it considers a "bag of words" where the o
 
 Following the example of the British, the written record of what is said in the Canadian parliament is called "Hansard". It is not completely verbatim, but is very close. It is available in CSV format from [LiPaD](https://www.lipad.ca), which was constructed by @BeelenEtc2017.\index{Hansard}\index{Canada!Hansard}
 
-We are interested in what was talked about in the Canadian parliament in 2018. To get started we can download the entire corpus from [here](https://www.lipad.ca/data/), and then discard all of the years apart from 2018. If the datasets are in a folder called "2018", we can use `read_csv()` to read and combine all the CSVs.
+We are interested in what was talked about in the Canadian parliament in 2018.\index{Canada!parliament}\index{political science} To get started we can download the entire corpus from [here](https://www.lipad.ca/data/), and then discard all of the years apart from 2018. If the datasets are in a folder called "2018", we can use `read_csv()` to read and combine all the CSVs.
 
 ```{r}
 #| echo: true
 #| eval: false
-
-library(fs)
-library(tidyverse)
 
 files_of_interest <-
   dir_ls(
@@ -892,20 +808,11 @@ hansard_canada_2018 <-
     files_of_interest,
     col_types = cols(
       basepk = col_integer(),
-      hid = col_character(),
       speechdate = col_date(),
-      pid = col_character(),
-      opid = col_integer(),
-      speakeroldname = col_character(),
-      speakerposition = col_character(),
-      maintopic = col_character(),
-      subtopic = col_character(),
-      subsubtopic = col_character(),
       speechtext = col_character(),
       speakerparty = col_character(),
       speakerriding = col_character(),
-      speakername = col_character(),
-      speakerurl = col_character()
+      speakername = col_character()
     ),
     col_select = c(
       basepk,
@@ -925,9 +832,6 @@ hansard_canada_2018
 #| echo: false
 #| eval: true
 
-library(fs)
-library(tidyverse)
-
 files_of_interest <-
   dir_ls(
     path = "inputs/data/2018/",
@@ -940,20 +844,11 @@ hansard_canada_2018 <-
     files_of_interest,
     col_types = cols(
       basepk = col_integer(),
-      hid = col_character(),
       speechdate = col_date(),
-      pid = col_character(),
-      opid = col_integer(),
-      speakeroldname = col_character(),
-      speakerposition = col_character(),
-      maintopic = col_character(),
-      subtopic = col_character(),
-      subsubtopic = col_character(),
       speechtext = col_character(),
       speakerparty = col_character(),
       speakerriding = col_character(),
-      speakername = col_character(),
-      speakerurl = col_character()
+      speakername = col_character()
     ),
     col_select = c(
       basepk,
@@ -972,9 +867,6 @@ hansard_canada_2018
 The use of `filter()` at the end is needed because sometimes aspects such as "directions" and similar non-speech aspects are included in the Hansard. For instance, if we do not include that `filter()` then the first line is "The House resumed from November 9, 2017, consideration of the motion." We can then construct a corpus.
 
 ```{r}
-#| warning: false
-#| message: false
-
 hansard_canada_2018_corpus <-
   corpus(hansard_canada_2018, docid_field = "basepk", text_field = "speechtext")
 
@@ -997,18 +889,15 @@ hansard_dfm <-
 hansard_dfm
 ```
 
-At this point we can use `stm()` from `stm` [@stm] to implement a LDA model.\index{latent Dirichlet allocation} We need to specify a document-feature matrix and the number of topics. Topic models are essentially just summaries. Instead of a document becoming a collection of words, they become a collection of topics with some probability associated with each topic. But because it is just providing a collection of words that tend to be used at similar times, rather than actual underlying meaning, we need to specify the number of topics that we are interested in. This decision will have a big impact, and we should consider a few different numbers.
+At this point we can use `stm()` from `stm` to implement a LDA model.\index{latent Dirichlet allocation} We need to specify a document-feature matrix and the number of topics. Topic models are essentially just summaries. Instead of a document becoming a collection of words, they become a collection of topics with some probability associated with each topic. But because it is just providing a collection of words that tend to be used at similar times, rather than actual underlying meaning, we need to specify the number of topics that we are interested in. This decision will have a big impact, and we should consider a few different numbers.
 
 ```{r}
 #| echo: true
 #| eval: false
 
-library(stm)
-library(beepr)
-
 hansard_topics <- stm(documents = hansard_dfm, K = 10)
 
-beep()
+beepr::beep()
 
 write_rds(
   hansard_topics,
@@ -1021,8 +910,6 @@ write_rds(
 #| eval: false
 
 # INTERNAL
-library(beepr)
-library(stm)
 
 hansard_topics <- stm(documents = hansard_dfm, K = 10)
 
@@ -1061,123 +948,15 @@ We can look at the words in each topic with `labelTopics()`.
 #| message: false
 #| eval: false
 
-library(stm)
 labelTopics(hansard_topics)
 ```
 :::
 
 ::: {.content-visible unless-format="pdf"}
 ```{r}
-#| message: false
-
-library(stm)
 labelTopics(hansard_topics)
 ```
 :::
-
-
-
-
-
-
-
-
-
-<!-- ## Word embeddings -->
-
-<!-- Add Python here? -->
-
-
-
-
-<!-- ## Simulated example - categorizing spending by merchant -->
-
-<!-- *Thank you to Josh Harris for discussions that led to this example. The code draws on Alexander and Leslie, 2019.* -->
-
-<!-- To begin with, let's pretend that we work for KOHO - a Toronto-based fintech. One important feature of the KOHO app is that it categorizes your spending. For instance, buying a double-double from Tim Hortons could be categorized into "Eating out". This works because each merchant has a unique name, however that uniqueness means that the Tim Hortons at Sid Smith has a slightly different name to the Tim Hortons at Queen and John. Despite this slightly different name, we would like for them both to be classified as "Eating out". -->
-
-<!-- To get started, let's generate some data: -->
-
-<!-- ```{r} -->
-<!-- library(glmnet) -->
-<!-- library(tidytext) -->
-<!-- library(tidyverse) -->
-
-<!-- size_of_labelled_data <- 1000 -->
-
-<!-- # List of retailers in Toronto -->
-<!-- list_of_retailers <- c("Tim Hortons", "Hudsons Bay", "Loblaws", "Shoppers Drug Mart", "Canadian Tire") -->
-
-<!-- # List of roads in Toronto -->
-<!-- # This is from https://en.wikipedia.org/wiki/List_of_north%E2%80%93south_roads_in_Toronto and https://en.wikipedia.org/wiki/List_of_east%E2%80%93west_roads_in_Toronto. -->
-<!-- list_of_roads <- c("Adelaide St", "Allen Rd", "Annette St", "Ave Rd", "Bathurst St", "Bay St", "Bayview Ave", "Beare Rd", "Bellamy Rd", "Beverley St", "Birchmount Rd", "Black Creek Dr", "Bloor St", "Blythwood Rd", "Bond St", "Brimley Rd", "BRdview Ave", "Browns Line", "Burnhamthorpe Rd", "Caledonia Rd", "Carlingview Dr", "Carlton St", "Centennial Rd", "Christie St", "Church St", "College St", "Conlins Rd", "Coxwell Ave", "Cummer Ave", "Danforth Ave", "Davenport Rd", "Davisville Ave", "Dixon Rd", "Don Mills Rd", "Don Valley Parkway", "Donlands Ave", "Draper St", "Dufferin St", "Dundas St", "Dupont St", "East Ave", "Eastern Ave", "Eglinton Ave", "Ellesmere Rd", "Ellis Ave", "Finch Ave", "Front St", "Galloway Rd", "Gardiner Expressway", "Gerrard St", "Glencairn Ave", "Greenwood Ave", "Harbord St", "Highway 27", "Highway 401", "Highway 404", "Highway 427", "Islington Ave", "Jameson Ave", "Jane St", "Jarvis St", "John St", "Keele St", "Kennedy Rd", "King St", "Kipling Ave", "Laird Dr", "Lake Shore Boulevard", "Lansdowne Ave", "Lawrence Ave", "Leader Lane", "Leslie St", "Main St", "Manse Rd", "Markham Rd", "Marlee Ave", "Martin Grove Rd", "McCowan Rd", "Meadowvale Rd", "Middlefield Rd", "Midland Ave", "Mill St", "Millwood Rd", "Morningside Ave", "Morrish Rd", "Mount Pleasant Rd", "Neilson Rd", "Oakwood Ave", "OConnor Dr", "Ontario Highway 409", "Orfus Rd", "Orton Park Rd", "Ossington Ave", "Pape Ave", "Parkside Dr", "Parliament St", "Pharmacy Ave", "Port Union Rd", "Queen St", "Queens Park", "Queens Quay", "Rathburn Rd", "Rees St", "Reesor Rd", "Reggae Lane", "Renforth Dr", "Richmond St", "Rogers Rd", "Roncesvalles Ave", "Roselawn Ave", "Royal York Rd", "Runnymede Rd", "Scarborough Golf Club Rd", "Scarborough-Pickering Townline", "Scarlett Rd", "Sewells Rd", "Sheppard Ave", "Sherbourne St", "Simcoe St", "Spadina Ave", "St Clair Ave", "St George St", "Steeles Ave", "The Queensway", "University Ave", "Victoria Park Ave", "Warden Ave", "Wellesley St", "Wellington St", "Weston Rd", "Willowdale Ave", "Wilson Ave", "Woodbine Ave", "Yonge St", "York Mills Rd", "York St") -->
-
-<!-- example_spending_data <- -->
-<!--   tibble( -->
-<!--     merchant_actual = sample(list_of_retailers, -->
-<!--                              size = size_of_labelled_data, -->
-<!--                              replace = TRUE), -->
-<!--     merchant_unique_name_noise = sample(list_of_roads, -->
-<!--                                         size = size_of_labelled_data, -->
-<!--                                         replace = TRUE), -->
-<!--     merchant_unique_name = paste(merchant_actual, merchant_unique_name_noise, sep = " ") -->
-<!--     ) |> -->
-<!--   select(-merchant_unique_name_noise) -->
-
-<!-- head(example_spending_data) -->
-<!-- ``` -->
-
-<!-- We could pretend that we have these 1,000 data points of the unique names and that we labelled the actual merchant by hand so that we are sure. Let's use this dataset to train a model. We'll then use that trained model on a new dataset. -->
-
-<!-- First make a separate line for every word. -->
-
-<!-- ```{r} -->
-<!-- all_words <- -->
-<!--   example_spending_data |> -->
-<!--   unnest_tokens(word, merchant_unique_name) -->
-
-<!-- head(all_words) -->
-<!-- ``` -->
-
-<!-- Now create a document-term matrix. -->
-
-<!-- ```{r} -->
-<!-- example_dtm <- -->
-<!--   all_words |> -->
-<!--   count(merchant_actual, word, sort = TRUE) |> -->
-<!--   cast_dtm(merchant_actual, word, n) -->
-<!-- ``` -->
-
-
-
-<!-- ```{r} -->
-<!-- predictor <- example_dtm |> as.matrix() -->
-<!-- response <- dimnames(example_dtm)[[1]] -->
-<!-- ``` -->
-
-<!-- Now we can model it. -->
-
-<!-- ```{r} -->
-<!-- # names_model <- cv.glmnet(predictor, -->
-<!-- #                          response, -->
-<!-- #                          family = "multinomial", -->
-<!-- #                          alpha = 0.9) -->
-<!-- ``` -->
-
-
-
-<!-- ### Google Colab -->
-
-<!-- Google Colab is similar to RStudio Cloud, in that it is set-up to allow us to just log in and get started. In this case, we need a Google account. While we can use R on Google Colab, it is designed for Python. Advantages over RStudio Cloud include the ability to use GPUs, not just CPUs. -->
-
-<!-- To get started, while logged into Google, go to [Colab](colab.research.google.com) and select "New notebook". -->
-
-<!-- To get started you need to tell Google Colab that you want to use R. You can do this by using this: https://colab.research.google.com/notebook#create=true&language=r. -->
-
-<!-- At this point you have a Jupyter notebook open that will run R. (But it is not a Quarto document.) You can install packages as normal, e.g. `install.packages("tidyverse")`, and then call the package e.g. `library(tidyverse)`. -->
-
-<!-- Google Colab is a good option if you have a good reason for using the broader capabilities that it has. If you want to go deeper into that then the Morris reading has a bunch of options that you can explore, but as Morris puts it "Colab is a gateway drug - for large-scale processing pipelines you'll need to move up to Google Cloud Platform or one of its competitors AWS, Azure, etc." and that is what we do now. -->
-
 
 
 
@@ -1193,6 +972,38 @@ labelTopics(hansard_topics)
 
 ### Questions {.unnumbered}
 
+1. Which argument to `str_replace_all()` would remove punctuation?
+    a.  "[:punct:]"
+    b. "[:digit:]"
+    c. "[:alpha:]"
+    d. "[:lower:]"
+2. Change `stopwords(source = "snowball")[1:10]` to find the ninth stopword in the "nltk" list.
+    a. "her"
+    b. "my"
+    c.  "you"
+    d. "i" 
+3. Which function from quanteda() will tokenize a corpus?
+    a. `tokenizer()`
+    b. `token()`
+    c. `tokenize()`
+    d.  `tokens()`
+4. Which argument to `dfm_trim()` should be used if we want to only include terms that occur at least twice? = 2)
+    a. "min_wordfreq"
+    b.  "min_termfreq"
+    c. "min_term_occur"
+    d. "min_ occurrence"
+5. What is your favorite example of a tri-gram?
+6. What is the second-most common word used in the zodiac signs for cancer?
+    a. to
+    b. your
+    c. the
+    d.  you
+7. What is the sixth-most common word used in the zodiac signs for pisces, that is unique to that sign?
+    a. shoes
+    b.  prayer
+    c. fishes
+    d. pisces
+8. Re-run the Canadian topic model model, but only including five topics. Looking at the words in each topic, how would you describe what each of them is about?
 
 
 ### Tutorial {.unnumbered}

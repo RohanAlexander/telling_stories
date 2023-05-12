@@ -4,7 +4,7 @@ engine: knitr
 
 # Farm data {#sec-farm-data}
 
-**Required material**
+**Prerequisites**
 
 - Watch *Introduction to Sampling and Randomization*, [@register2020sampling]
   - This video provides an overview of sampling approaches with helpful examples.
@@ -77,6 +77,20 @@ Finally, even though these farmed datasets are put together for us to use, and c
 
 It may seem remarkable that he was considered an expert and his views had influence. Yet today, many will, say, use inflation statistics without ever having tried to track a few prices, use the responses from political surveys without themselves ever having asked a respondent a question, or use ImageNet without the experience of hand-labeling at least a few of the images. We must always throw ourselves into the details of the data.
 
+The packages that we need in this chapter are below. One package---`canlang`---is not yet available on CRAN,\index{CRAN} and so we install it from GitHub,\index{packages!GitHub installation} using: `devtools::install_github("ttimbers/canlang")`.
+```{r}
+#| message: false
+#| warning: false
+
+library(cancensus)
+library(canlang)
+library(devtools)
+library(maps)
+library(tidycensus)
+library(tidyverse)
+```
+
+
 ## Measurement
 
 Measurement\index{measurement} is an old concern. Even Aristotle\index{Aristotle} distinguished between quantities and qualities [@sepmeasurementscience]. Measurement, and especially, the comparison of measurements, underpins all of data science due to its foundations in statistics. But deciding what to measure, and how to do it, is especially challenging. Measurement is trickier than it seems. For instance, what makes a one-hit wonder? A surprising number of artists that may immediately come to mind, turn out to have at least one or two other songs that did reasonably well in terms of making it onto charts [@molophany]. Should an analysis of all one-term governments include those that did not make it through a full term? How about those that only lasted a week? How do we even begin to measure the extent of government transfers when so much of these are in-kind benefits [@garfinkel2006re]? How can we measure how well represented a person is in a democracy despite that being the fundamental concern [@Achen1978]? And why should the standard definition used by the World Health Organization (WHO) of pregnancy-related and maternal deaths only include those that occur within 42 days of delivery, termination, or abortion when this has a substantial effect on the estimate [@Gazeley2022]?\index{World Health Organization (WHO)}
@@ -128,8 +142,6 @@ To illustrate the difference between these concepts, consider a situation in whi
 #| message: false
 #| fig-cap: "Comparison of actual weights with censored and truncated weights"
 #| label: fig-babyweights
-
-library(tidyverse)
 
 set.seed(853)
 
@@ -219,27 +231,11 @@ While farmed datasets have always been useful, they were developed for a time wh
 
 The first census in Canada was conducted in 1666.\index{census!Canada} This was also the first modern census, whereby every individual was recorded by name [@godfrey1918history, p. 179], although it is worth pointing out that it does not include Aboriginal peoples. There were 3,215 inhabitants that were counted, and the census asked about age, sex, marital status, and occupation [@statcanhistory]. In association with the Confederation, in 1867 a decennial census was required so that political representatives could be allocated for the new Parliament. Regular censuses have occurred since then, the most recent in 2021.
 
-We can explore some data on languages spoken in Canada from the 2016 Census using `canlang` [@canlang]. This package is not yet available on CRAN,\index{CRAN} and so we install it from GitHub,\index{packages!GitHub installation} using `devtools` [@citeDevtools]. 
-
-```{r}
-#| include: true
-#| eval: false
-
-install.packages("devtools")
-
-library(devtools)
-
-install_github("ttimbers/canlang")
-```
-
-We will start with the "can_lang" dataset, which provides the number of Canadians who use each of 214 languages.
+We can explore some data on languages spoken in Canada from the 2016 Census using `canlang` [@canlang]. We will start with the "can_lang" dataset, which provides the number of Canadians who use each of 214 languages.
 
 ```{r}
 #| message: false
 #| warning: false
-
-library(tidyverse)
-library(canlang)
 
 can_lang
 ```
@@ -283,9 +279,6 @@ We can use `get_census()` to get census data. We need to specify a census of int
 #| warning: false
 #| eval: false
 
-library(tidyverse)
-library(cancensus)
-
 set_api_key("ADD_YOUR_API_KEY_HERE", install = TRUE)
 
 ontario_population <-
@@ -303,9 +296,6 @@ ontario_population
 #| message: false
 #| warning: false
 #| include: false
-
-library(tidyverse)
-library(cancensus)
 
 options(cancensus.cache_path = "inputs/data/cancensus/")
 
@@ -343,9 +333,6 @@ Having set that up, we can use `get_decennial()` to obtain data on variables of 
 #| warning: false
 #| eval: false
 #| echo: true
-
-library(tidyverse)
-library(tidycensus)
 
 census_api_key("ADD_YOUR_API_KEY_HERE")
 
@@ -392,9 +379,6 @@ us_ave_household_size_2010 |>
 
 # INTERNAL
 
-library(tidyverse)
-library(tidycensus)
-
 us_ave_household_size_2010 <-
   get_decennial(
     geography = "state",
@@ -413,9 +397,6 @@ write_csv(us_ave_household_size_2010, "inputs/data/census_household_size.csv")
 #| eval: true
 #| label: fig-utahvsdc
 #| fig-cap: "Comparing average household size in DC, Utah, and Massachusetts, by household type"
-
-library(tidyverse)
-library(tidycensus)
 
 us_ave_household_size_2010 <-
   read_csv("inputs/data/census_household_size.csv")
@@ -533,7 +514,6 @@ We will be asked to log in or create an account, and after doing that will be ab
 #| eval: false
 #| echo: true
 
-library(tidyverse)
 ipums_extract <- read_csv("usa_00010.csv")
 
 ipums_extract
@@ -545,7 +525,6 @@ ipums_extract
 #| message: false
 #| echo: false
 
-library(tidyverse)
 ipums_extract <- read_csv(here::here("dont_push/usa_00010.csv"))
 
 ipums_extract |>
@@ -683,8 +662,6 @@ To add some more specificity to our discussion, in a way that is also used by @l
 ```{r}
 #| message: false
 #| warning: false
-
-library(tidyverse)
 
 set.seed(853)
 
@@ -982,9 +959,6 @@ illustrative_sampling_long |>
 #| warning: false
 
 set.seed(853)
-
-library(tidyverse)
-library(maps)
 
 cluster_sample <-
   tibble(

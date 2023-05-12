@@ -4,7 +4,7 @@ engine: knitr
 
 # Gather data {#sec-gather-data}
 
-**Required material**
+**Prerequisites**
 
 - Read *Turning History into Data: Data Collection, Measurement, and Inference in HPE*, [@cirone]
   - This paper discusses some of the challenges of creating datasets.
@@ -65,7 +65,7 @@ engine: knitr
 
 In this chapter we consider data that we must gather ourselves. This means that although the observations exist, we have to parse, pull, clean, and prepare them into the dataset that we will consider. In contrast to farmed data, discussed in  @sec-farm-data, typically, these observations are not being made available for us for the purpose of analysis. This means we need to be especially concerned with documentation, inclusion and exclusion decisions, missing data, and ethical behavior. 
 
-As a preeminent example of such a gathered dataset, consider @Cummins2022 who use individual-level probate records from England between 1892 and 1992 to create a dataset that they then use to estimate how much wealth was being hidden.\index{England!probate records} They find that about a third of the inheritance of "elites" is concealed.\index{England!interitance} Wills are clearly not created for the purpose of being included in a dataset, but with a respectful approach they enable insights that we could not get by other means. We term this data gathering, while @Salganik2018 similarly talks about "custom-made" and "ready-made" data.
+As a preeminent example of such a gathered dataset, consider @Cummins2022 who use individual-level probate records from England between 1892 and 1992 to create a dataset that they then use to estimate how much wealth was being hidden.\index{England!probate records} They find that about a third of the inheritance of "elites" is concealed.\index{England!interitance} Wills are not created for the purpose of being included in a dataset, but with a respectful approach they enable insights that we could not get by other means. We term this data gathering, while @Salganik2018 similarly talks about "custom-made" and "ready-made" data.
 
 Decisions need to be made at the start of a project about the values we want the project to have. For instance, @huggingfaceethics value transparency, reproducibility, fairness, being self-critical, and giving credit. How might that affect the project?\index{ethics!values} Valuing "giving credit" might mean being especially zealous about considering attribution and licensing. And being "self-critical" might mean going out of one's way to not make more of results than is appropriate.
 
@@ -79,6 +79,29 @@ Finally, we consider gathering data from PDFs. While less common than needing to
 
 Gathering data requires more of us than using farmed data, but it allows us to explore especially exciting datasets and answer questions that we could not otherwise. Some of the most exciting work in the world uses gathered data, but it is especially important that we approach it with respect.
 
+The packages that we need in this chapter are:
+```{r}
+#| message: false
+#| warning: false
+
+library(babynames)
+library(gh)
+library(here)
+library(httr)
+library(janitor)
+library(jsonlite)
+library(knitr)
+library(lubridate)
+library(pdftools)
+library(purrr)
+library(rvest)
+library(spotifyr)
+library(stringr)
+library(tesseract)
+library(tidyverse)
+library(usethis)
+library(xml2)
+```
 
 ## APIs
 
@@ -104,10 +127,6 @@ In this case study we will use an [API provided by arXiv](https://arxiv.org/help
 ```{r}
 #| message: false
 #| warning: false
-
-library(httr)
-library(tidyverse)
-library(xml2)
 
 arxiv <-
   GET("http://export.arxiv.org/api/query?id_list=2111.09299")
@@ -175,14 +194,14 @@ Examining the returned data using `content()`, we can see that we are provided w
 ```{r}
 # APOD December 26, 2021
 content(NASA_APOD_20211226)$date
-content(NASA_APOD_20211226)$title |> stringr::str_trunc(width = 70)
-content(NASA_APOD_20211226)$explanation |> stringr::str_trunc(width = 70)
+content(NASA_APOD_20211226)$title |> str_trunc(width = 70)
+content(NASA_APOD_20211226)$explanation |> str_trunc(width = 70)
 content(NASA_APOD_20211226)$url
 
 # APOD July 19, 2019
 content(NASA_APOD_20190719)$date
-content(NASA_APOD_20190719)$title |> stringr::str_trunc(width = 70)
-content(NASA_APOD_20190719)$explanation |> stringr::str_trunc(width = 70)
+content(NASA_APOD_20190719)$title |> str_trunc(width = 70)
+content(NASA_APOD_20190719)$explanation |> str_trunc(width = 70)
 content(NASA_APOD_20190719)$url
 ```
 :::
@@ -237,8 +256,6 @@ We can parse JSON with `jsonlite` [@jsonlite]. To consider a specific example, a
 #| warning: false
 #| eval: true
 #| echo: true
-
-library(jsonlite)
 
 politics_datasets <-
   fromJSON("https://demo.dataverse.org/api/search?q=politics")
@@ -377,16 +394,6 @@ as_tibble(politics_datasets[["data"]][["items"]])
 
 We use `spotifyr` [@spotifyr], which is a wrapper around the Spotify API.\index{API!Spotify} Install and load the package.
 
-```{r}
-#| eval: false
-
-install.packages("spotifyr")
-```
-
-```{r}
-library(spotifyr)
-```
-
 To access the Spotify API, we need a [Spotify Developer Account](https://developer.spotify.com/dashboard/). This will require logging in with a Spotify account and then accepting the Developer Terms (@fig-spotifyaccept).\index{Spotify}
 
 ![Spotify Developer Account Terms agreement page](figures/spotify.png){#fig-spotifyaccept width=90% fig-align="center"}
@@ -395,8 +402,6 @@ Continuing with the registration process, in our case, we "do not know" what we 
 
 ```{r}
 #| eval: false
-
-library(usethis)
 
 edit_r_environ()
 ```
@@ -459,8 +464,6 @@ radiohead |>
 #| label: fig-readioovertime
 #| message: false
 #| warning: false
-
-library(lubridate)
 
 radiohead |>
   mutate(album_release_date = ymd(album_release_date)) |>
@@ -620,8 +623,6 @@ We will use `read_html()` from `rvest` [@citervest] to read in the data.
 #| warning: false
 #| message: false
 
-library(rvest)
-
 rohans_data <- read_html(website_extract)
 
 rohans_data
@@ -661,10 +662,6 @@ We use `rvest` [@citervest] to download a website, and to then navigate the HTML
 
 # INTERNAL
 
-library(rvest)
-library(tidyverse)
-library(xml2)
-
 books_data <- read_html("https://rohansbooks.com")
 
 write_html(books_data, "inputs/my_website/raw_data.html")
@@ -674,10 +671,6 @@ write_html(books_data, "inputs/my_website/raw_data.html")
 #| echo: true
 #| eval: false
 #| include: true
-
-library(rvest)
-library(tidyverse)
-library(xml2)
 
 books_data <- read_html("https://rohansbooks.com")
 
@@ -769,7 +762,7 @@ all_books |>
     first_letter = str_sub(author, 1, 1)
   ) |>
   count(.by = first_letter) |>
-  knitr::kable(
+  kable(
     col.names = c("First letter", "Number of times")
   )
 ```
@@ -786,8 +779,6 @@ To that end, we can start by generating some simulated data. Ideally, we want a 
 #| echo: true
 #| message: false
 #| warning: false
-
-library(babynames)
 
 set.seed(853)
 
@@ -824,16 +815,6 @@ One of the advantages of generating a simulated dataset is that if we are workin
 We are starting with a question that is of interest, which is how long each UK prime minister lived. As such, we need to identify a source of data. While there are plenty of data sources that have the births and deaths of each prime minister, we want one that we can trust, and as we are going to be scraping, we want one that has some structure to it. The [Wikipedia page about UK prime ministers](https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom) fits both these criteria. As it is a popular page the information is likely to be correct, and the data are available in a table.
 
 We load `rvest` and then download the page using `read_html()`. Saving it locally provides us with a copy that we need for reproducibility in case the website changes, and means that we do not have to keep visiting the website. But it is not ours, and so this is typically not something that should be publicly redistributed.
-
-```{r}
-#| echo: true
-#| message: false
-#| warning: false
-
-library(rvest)
-library(tidyverse)
-library(xml2)
-```
 
 ```{r}
 #| echo: true
@@ -923,7 +904,7 @@ In this case there are many columns that we do not need, and some duplicated row
 
 parsed_data <-
   parse_data_selector_gadget |> 
-  janitor::clean_names() |> 
+  clean_names() |> 
   rename(raw_text = prime_minister_office_lifespan) |> 
   select(raw_text) |> 
   filter(raw_text != "Prime ministerOffice(Lifespan)") |> 
@@ -987,7 +968,7 @@ Our dataset looks similar to the one that we said we wanted at the start (@tbl-c
 
 cleaned_data |>
   head() |>
-  knitr::kable(
+  kable(
     col.names = c("Prime Minister", 
                   "Birth year", 
                   "Death year", 
@@ -1041,8 +1022,6 @@ First we set up a tibble that has the information that we need.
 ```{r}
 #| eval: true
 #| message: false
-
-library(tidyverse)
 
 common_url_bit <- "https://www.rba.gov.au/publications/smp/2021/"
 
@@ -1130,9 +1109,6 @@ We will start by walking through several examples and then go through a case stu
 #| eval: false
 #| include: true
 
-library(pdftools)
-library(tidyverse)
-
 first_example <- pdf_text("first_example.pdf")
 
 first_example
@@ -1143,9 +1119,6 @@ class(first_example)
 ```{r}
 #| eval: true
 #| echo: false
-
-library(pdftools)
-library(tidyverse)
 
 first_example <- pdf_text("inputs/pdfs/first_example.pdf")
 
@@ -1164,7 +1137,7 @@ We use the same function as before.
 #| eval: false
 #| echo: true
 
-second_example <- pdftools::pdf_text("second_example.pdf")
+second_example <- pdf_text("second_example.pdf")
 class(second_example)
 second_example
 ```
@@ -1175,9 +1148,9 @@ second_example
 #| eval: true
 #| echo: false
 
-second_example <- pdftools::pdf_text("inputs/pdfs/second_example.pdf")
+second_example <- pdf_text("inputs/pdfs/second_example.pdf")
 class(second_example)
-second_example |> stringr::str_trunc(width = 70)
+second_example |> str_trunc(width = 70)
 ```
 :::
 
@@ -1186,7 +1159,7 @@ second_example |> stringr::str_trunc(width = 70)
 #| eval: true
 #| echo: false
 
-second_example <- pdftools::pdf_text("inputs/pdfs/second_example.pdf")
+second_example <- pdf_text("inputs/pdfs/second_example.pdf")
 class(second_example)
 second_example
 ```
@@ -1198,7 +1171,7 @@ Again, we have a character vector. The end of each line is signaled by "\\n", bu
 #| eval: false
 #| echo: true
 
-third_example <- pdftools::pdf_text("third_example.pdf")
+third_example <- pdf_text("third_example.pdf")
 class(third_example)
 third_example
 ```
@@ -1208,9 +1181,9 @@ third_example
 #| eval: true
 #| echo: false
 
-third_example <- pdftools::pdf_text("inputs/pdfs/third_example.pdf")
+third_example <- pdf_text("inputs/pdfs/third_example.pdf")
 class(third_example)
-third_example |> stringr::str_trunc(width = 70)
+third_example |> str_trunc(width = 70)
 ```
 :::
 
@@ -1219,7 +1192,7 @@ third_example |> stringr::str_trunc(width = 70)
 #| eval: true
 #| echo: false
 
-third_example <- pdftools::pdf_text("inputs/pdfs/third_example.pdf")
+third_example <- pdf_text("inputs/pdfs/third_example.pdf")
 class(third_example)
 third_example
 ```
@@ -1280,7 +1253,7 @@ summary_tfr_dataset <- read_csv("inputs/tfr_tables_info.csv")
 
 summary_tfr_dataset |>
   select(year, page, table, column_name, url) |>
-  knitr::kable(
+  kable(
     col.names = c("Year", "Page", "Table", "Column", "URL")
   )
 ```
@@ -1319,8 +1292,6 @@ We then read the PDF in as a character vector using `pdf_text()` from `pdftools`
 #| eval: false
 #| echo: true
 
-library(pdftools)
-
 dhs_2000 <- pdf_text("year_2000.pdf")
 ```
 
@@ -1328,9 +1299,7 @@ dhs_2000 <- pdf_text("year_2000.pdf")
 #| eval: true
 #| echo: false
 
-library(pdftools)
-
-dhs_2000 <- pdftools::pdf_text("inputs/pdfs/dhs/year_2000.pdf")
+dhs_2000 <- pdf_text("inputs/pdfs/dhs/year_2000.pdf")
 ```
 
 ```{r}
@@ -1473,8 +1442,6 @@ We will use `walk2()` from `purrr` for this iteration [@citepurrr].
 #| eval: false
 #| echo: true
 
-library(purrr)
-
 summary_tfr_dataset <-
   summary_tfr_dataset |>
   mutate(pdf_name = paste0("dhs/year_", year, ".pdf"))
@@ -1495,8 +1462,6 @@ summary_tfr_dataset <-
 #| eval: false
 #| echo: true
 
-library(purrr)
-
 walk2(
   summary_tfr_dataset$url,
   summary_tfr_dataset$pdf_name,
@@ -1513,8 +1478,6 @@ Now we need to get the data from the PDFs. As before, we are going to build on t
 ```{r}
 #| echo: true
 #| eval: false
-
-library(pdftools)
 
 dhs_2000 <- pdf_text("year_2000.pdf")
 
@@ -1563,10 +1526,6 @@ We will start by writing a function that will go through all the files, grab the
 #| message: false
 #| warning: false
 #| echo: true
-
-library(tidyverse)
-library(pdftools)
-library(purrr)
 
 get_pdf_convert_to_tibble <- function(pdf_name, page, year) {
   dhs_table_of_interest <-
@@ -1716,7 +1675,7 @@ And we are done (@tbl-tfrforthewin)!
 tfr_data |>
   slice(1:10) |>
   mutate(year = as_factor(year)) |> # For formatting reasons
-  knitr::kable(
+  kable(
     col.names = c("State", "Year", "TFR"),
     digits = 0,
     format.args = list(big.mark = ",")
@@ -1749,10 +1708,8 @@ Let us see an example with a scan from the first page of *Jane Eyre* (@fig-janes
 #| eval: false
 #| include: true
 
-library(tesseract)
-
-text <- tesseract::ocr(
-  here::here("jane_scan.png"),
+text <- ocr(
+  here("jane_scan.png"),
   engine = tesseract("eng")
 )
 cat(text)
@@ -1762,10 +1719,8 @@ cat(text)
 #| eval: true
 #| echo: false
 
-library(tesseract)
-
 text <- ocr(
-  here::here("figures/jane_scan.png"),
+  here("figures/jane_scan.png"),
   engine = tesseract("eng")
 )
 cat(text)
@@ -1801,8 +1756,6 @@ In general the result is not too bad. OCR is a useful tool but is not perfect an
 ```{r}
 #| eval: false
 # Based on Tyler Bradley and Monica Alexander
-library(tidyverse)
-library(gh)
 repos <- gh("/users/RohanAlexander/repos", per_page = 100)
 repo_info <- tibble(
   name = map_chr(repos, "name"),
@@ -1846,7 +1799,7 @@ repo_info <- tibble(
     c. 204.124
     d.  128.665	
 6. Please submit the code that you wrote to answer the above question.
-7. What is the main argument to `httr::GET()` (pick one)?
+7. What is the main argument to `GET()` from `httr` (pick one)?
     a.  "url"
     b. "website"
     c. "domain"
