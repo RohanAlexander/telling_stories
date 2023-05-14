@@ -556,6 +556,13 @@ div.csl-indent {
 <h2 data-number="H.1" class="anchored" data-anchor-id="introduction"><span class="header-section-number">H.1</span> Introduction</h2>
 <p>As discussed in <a href="12-ijalm.html"><span>Chapter&nbsp;12</span></a>, models tend to be focused on either inference or prediction. The rise of data science and machine learning in particular, has substantially been driven by developing models in Python and using them for forecasting.</p>
 <p>In this chapter, we begin with a focus on forecasting using the R approach of <code>tidymodels</code>. We then turn to Python.</p>
+<p>The packages that we need in this chapter are:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(poissonreg)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 <section id="prediction-with-tidymodels" class="level2" data-number="H.2">
 <h2 data-number="H.2" class="anchored" data-anchor-id="prediction-with-tidymodels"><span class="header-section-number">H.2</span> Prediction with <code>tidymodels</code></h2>
@@ -578,20 +585,18 @@ y_i | \mu_i &amp;\sim \mbox{Normal}(\mu_i, \sigma) \\
 <p>where <span class="math inline">\(y_i\)</span> refers to the marathon time of some individual <span class="math inline">\(i\)</span> and <span class="math inline">\(x_i\)</span> refers to their five-kilometer time. Here we say that the marathon time of some individual <span class="math inline">\(i\)</span> is normally distributed with a mean of <span class="math inline">\(\mu\)</span> and a standard deviation of <span class="math inline">\(\sigma\)</span>, where the mean depends on two parameters <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span> and their five-kilometer time. Here “~” means “is distributed as”. We use this slightly different notation from earlier to be more explicit about the distributions being used, but this model is equivalent to <span class="math inline">\(y_i=\beta_0+\beta_1 x_i + \epsilon_i\)</span>, where <span class="math inline">\(\epsilon\)</span> is normally distributed.</p>
 <p>As we are focused on prediction, we are worried about over-fitting our data, which would limit our ability to make claims about other datasets. One way to partially address this is to split our dataset in two using <code>initial_split()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>sim_run_data <span class="ot">&lt;-</span> </span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  arrow<span class="sc">::</span><span class="fu">read_parquet</span>(<span class="at">file =</span> <span class="st">"outputs/data/running_data.parquet"</span>)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>sim_run_data_split <span class="ot">&lt;-</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">initial_split</span>(</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> sim_run_data,</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">prop =</span> <span class="fl">0.80</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>sim_run_data_split</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sim_run_data <span class="ot">&lt;-</span> </span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_parquet</span>(<span class="at">file =</span> <span class="st">"outputs/data/running_data.parquet"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>sim_run_data_split <span class="ot">&lt;-</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">initial_split</span>(</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> sim_run_data,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">prop =</span> <span class="fl">0.80</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>sim_run_data_split</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>&lt;Training/Testing/Total&gt;
 &lt;160/40/200&gt;</code></pre>
@@ -599,22 +604,22 @@ y_i | \mu_i &amp;\sim \mbox{Normal}(\mu_i, \sigma) \\
 </div>
 <p>Having split the data, we then create training and test datasets with <code>training()</code> and <code>testing()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sim_run_data_train <span class="ot">&lt;-</span> <span class="fu">training</span>(sim_run_data_split)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>sim_run_data_test <span class="ot">&lt;-</span> <span class="fu">testing</span>(sim_run_data_split)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sim_run_data_train <span class="ot">&lt;-</span> <span class="fu">training</span>(sim_run_data_split)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>sim_run_data_test <span class="ot">&lt;-</span> <span class="fu">testing</span>(sim_run_data_split)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We have placed 80 per cent of our dataset into the training dataset. We will use that to estimate the parameters of our model. We have kept the remaining 20 per cent of it back, and we will use that to evaluate our model. Why might we do this? Our concern is the bias-variance trade-off, which haunts all aspects of modelling. We are concerned that our results may be too particular to the dataset that we have, such that they are not applicable to other datasets. To take an extreme example, consider a dataset with ten observations. We could come up with a model that perfectly hits those observations. But when we took that model to other datasets, even those generated by the same underlying process, it would not be accurate.</p>
 <p>One way to deal with this concern is to split the data in this way. We use the training data to inform our estimates of the coefficients, and then use the test data to evaluate the model. A model that too closely matched the data in the training data would not do well in the test data, because it would be too specific to the training data. The use of this test-training split enables us the opportunity to build an appropriate model.</p>
 <p>It is more difficult to do this separation appropriately than one might initially think. We want to avoid the situation where aspects of the test dataset are present in the training dataset because this inappropriately telegraphs what is about to happen. This is called data leakage. But if we consider data cleaning and preparation, which likely involves the entire dataset, it may be that some features of each are influencing each other. <span class="citation" data-cites="kapoornarayanan2022">Kapoor and Narayanan (<a href="99-references.html#ref-kapoornarayanan2022" role="doc-biblioref">2022</a>)</span> find extensive data leakage in applications of machine learning that could invalidate much research.</p>
 <p>To use <code>tidymodels</code> we first specify that we are interested in linear regression with <code>linear_reg()</code>. We then specify the type of linear regression, in this case multiple linear regression, with <code>set_engine()</code>. Finally, we specify the model with <code>fit()</code>. While this requires considerably more infrastructure than the base R approach detailed above, the advantage of this approach is that it can be used to fit many models; we have created a model factory, as it were.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sim_run_data_first_model_tidymodels <span class="ot">&lt;-</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">linear_reg</span>() <span class="sc">|&gt;</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="at">engine =</span> <span class="st">"lm"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    marathon_time <span class="sc">~</span> five_km_time <span class="sc">+</span> was_raining,</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> sim_run_data_train</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sim_run_data_first_model_tidymodels <span class="ot">&lt;-</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">linear_reg</span>() <span class="sc">|&gt;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="at">engine =</span> <span class="st">"lm"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    marathon_time <span class="sc">~</span> five_km_time <span class="sc">+</span> was_raining,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> sim_run_data_train</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The estimated coefficients are summarized in the first column of <a href="12-ijalm.html#tbl-modelsummarybayesbetter">Table&nbsp;<span>12.4</span></a>. For instance, we find that on average in our dataset, five-kilometer run times that are one minute longer are associated with marathon times that are about eight minutes longer.</p>
 </section>
@@ -622,36 +627,33 @@ y_i | \mu_i &amp;\sim \mbox{Normal}(\mu_i, \sigma) \\
 <h3 data-number="H.2.2" class="anchored" data-anchor-id="logistic-regression"><span class="header-section-number">H.2.2</span> Logistic regression</h3>
 <p>We can also use <code>tidymodels</code> for logistic regression problems. To accomplish this, we first need to change the class of our dependent variable into a factor because this is required for classification models.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>week_or_weekday <span class="ot">&lt;-</span> </span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  arrow<span class="sc">::</span><span class="fu">read_parquet</span>(<span class="at">file =</span> <span class="st">"outputs/data/week_or_weekday.parquet"</span>)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>week_or_weekday <span class="ot">&lt;-</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  week_or_weekday <span class="sc">|&gt;</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">is_weekday =</span> <span class="fu">as_factor</span>(is_weekday))</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>week_or_weekday_split <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(week_or_weekday, <span class="at">prop =</span> <span class="fl">0.80</span>)</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>week_or_weekday_train <span class="ot">&lt;-</span> <span class="fu">training</span>(week_or_weekday_split)</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>week_or_weekday_test <span class="ot">&lt;-</span> <span class="fu">testing</span>(week_or_weekday_split)</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>week_or_weekday_tidymodels <span class="ot">&lt;-</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">logistic_reg</span>(<span class="at">mode =</span> <span class="st">"classification"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"glm"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    is_weekday <span class="sc">~</span> number_of_cars,</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> week_or_weekday_train</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>week_or_weekday <span class="ot">&lt;-</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_parquet</span>(<span class="at">file =</span> <span class="st">"outputs/data/week_or_weekday.parquet"</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>week_or_weekday <span class="ot">&lt;-</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  week_or_weekday <span class="sc">|&gt;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">is_weekday =</span> <span class="fu">as_factor</span>(is_weekday))</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>week_or_weekday_split <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(week_or_weekday, <span class="at">prop =</span> <span class="fl">0.80</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>week_or_weekday_train <span class="ot">&lt;-</span> <span class="fu">training</span>(week_or_weekday_split)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>week_or_weekday_test <span class="ot">&lt;-</span> <span class="fu">testing</span>(week_or_weekday_split)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>week_or_weekday_tidymodels <span class="ot">&lt;-</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">logistic_reg</span>(<span class="at">mode =</span> <span class="st">"classification"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"glm"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    is_weekday <span class="sc">~</span> number_of_cars,</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> week_or_weekday_train</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>As before, we can make a graph of the actual results compared with our estimates. But one nice aspect of this is that we could use our test dataset to evaluate our model’s forecasting ability more thoroughly, for instance through a confusion matrix, which specifies the count of each prediction by what the truth was. We find that the model does well on the held-out dataset. There were 90 observations where the model predicted it was a weekday, and it was actually a weekday, and 95 where the model predicted it was a weekend, and it was a weekend. It was wrong for 15 observations, and these were split across seven where it forecast a weekday, but it was a weekend, and eight where it was the opposite case.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>week_or_weekday_tidymodels <span class="sc">|&gt;</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(<span class="at">new_data =</span> week_or_weekday_test) <span class="sc">|&gt;</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(week_or_weekday_test) <span class="sc">|&gt;</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">conf_mat</span>(<span class="at">truth =</span> is_weekday, <span class="at">estimate =</span> .pred_class)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>week_or_weekday_tidymodels <span class="sc">|&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(<span class="at">new_data =</span> week_or_weekday_test) <span class="sc">|&gt;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(week_or_weekday_test) <span class="sc">|&gt;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">conf_mat</span>(<span class="at">truth =</span> is_weekday, <span class="at">estimate =</span> .pred_class)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>          Truth
 Prediction  0  1
@@ -663,24 +665,24 @@ Prediction  0  1
 <h4 data-number="H.2.2.1" class="anchored" data-anchor-id="us-political-support"><span class="header-section-number">H.2.2.1</span> US political support</h4>
 <p>One approach is to use <code>tidymodels</code> to build a prediction-focused logistic regression model in the same way as before, i.e.&nbsp;a validation set approach <span class="citation" data-cites="islr">(<a href="99-references.html#ref-islr" role="doc-biblioref">James et al. [2013] 2021, 176</a>)</span>. In this case, the probability will be that of voting for Biden.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>ces2020 <span class="ot">&lt;-</span> </span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  arrow<span class="sc">::</span><span class="fu">read_parquet</span>(<span class="at">file =</span> <span class="st">"outputs/data/ces2020.parquet"</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>ces2020_split <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(ces2020, <span class="at">prop =</span> <span class="fl">0.80</span>)</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>ces2020_train <span class="ot">&lt;-</span> <span class="fu">training</span>(ces2020_split)</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>ces2020_test <span class="ot">&lt;-</span> <span class="fu">testing</span>(ces2020_split)</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>ces_tidymodels <span class="ot">&lt;-</span></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">logistic_reg</span>(<span class="at">mode =</span> <span class="st">"classification"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"glm"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    voted_for <span class="sc">~</span> gender <span class="sc">+</span> education,</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> ces2020_train</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>ces_tidymodels</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ces2020 <span class="ot">&lt;-</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_parquet</span>(<span class="at">file =</span> <span class="st">"outputs/data/ces2020.parquet"</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>ces2020_split <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(ces2020, <span class="at">prop =</span> <span class="fl">0.80</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>ces2020_train <span class="ot">&lt;-</span> <span class="fu">training</span>(ces2020_split)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>ces2020_test <span class="ot">&lt;-</span> <span class="fu">testing</span>(ces2020_split)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>ces_tidymodels <span class="ot">&lt;-</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">logistic_reg</span>(<span class="at">mode =</span> <span class="st">"classification"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"glm"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    voted_for <span class="sc">~</span> gender <span class="sc">+</span> education,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> ces2020_train</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>ces_tidymodels</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>parsnip model object
 
@@ -705,10 +707,10 @@ Residual Deviance: 45430    AIC: 45440</code></pre>
 </div>
 <p>And then evaluate it on the test set. It appears as though the model is having difficulty identifying Trump supporters.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ces_tidymodels <span class="sc">|&gt;</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(<span class="at">new_data =</span> ces2020_test) <span class="sc">|&gt;</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(ces2020_test) <span class="sc">|&gt;</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">conf_mat</span>(<span class="at">truth =</span> voted_for, <span class="at">estimate =</span> .pred_class)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ces_tidymodels <span class="sc">|&gt;</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(<span class="at">new_data =</span> ces2020_test) <span class="sc">|&gt;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(ces2020_test) <span class="sc">|&gt;</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">conf_mat</span>(<span class="at">truth =</span> voted_for, <span class="at">estimate =</span> .pred_class)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>          Truth
 Prediction Trump Biden
@@ -719,9 +721,9 @@ Prediction Trump Biden
 <p>When we introduced <code>tidymodels</code>, we discussed the importance of randomly constructing training and test sets. We use the training dataset to estimate parameters, and then evaluate the model on the test set. It is natural to ask why we should be subject to the whims of randomness and whether we are making the most of our data. For instance, what if a good model is poorly evaluated because of some random inclusion in the test set? Further, what if we do not have a large test set?</p>
 <p>One commonly used resampling method that goes some way to addressing this is <span class="math inline">\(k\)</span>-fold cross-validation. In this approach we create <span class="math inline">\(k\)</span> different samples, or “folds”, from the dataset without replacement. We then fit the model to the first <span class="math inline">\(k-1\)</span> folds, and evaluate it on the last fold. We do this <span class="math inline">\(k\)</span> times, once for every fold, such that every observation will be used for training <span class="math inline">\(k-1\)</span> times and for testing once. The <span class="math inline">\(k\)</span>-fold cross-validation estimate is then the average mean squared error <span class="citation" data-cites="islr">(<a href="99-references.html#ref-islr" role="doc-biblioref">James et al. [2013] 2021, 181</a>)</span>. For instance, <code>vfold_cv()</code> from <code>tidymodels</code> can be used to create, say, ten folds.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>ces2020_10_folds <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(ces2020, <span class="at">v =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>ces2020_10_folds <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(ces2020, <span class="at">v =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The model can then be fit across the different combinations of folds with <code>fit_resamples()</code>. In this case, the model will be fit ten times.</p>
 <!-- ```{r} -->
@@ -792,26 +794,23 @@ Prediction Trump Biden
 <h3 data-number="H.2.3" class="anchored" data-anchor-id="poisson-regression"><span class="header-section-number">H.2.3</span> Poisson regression</h3>
 <p>We can use <code>tidymodels</code> to estimate Poisson models with <code>poissonreg</code> <span class="citation" data-cites="poissonreg">(<a href="99-references.html#ref-poissonreg" role="doc-biblioref">Kuhn and Frick 2022</a>)</span> (<a href="13-ijaglm.html#tbl-modelsummarypoisson">Table&nbsp;<span>13.4</span></a>).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(poissonreg)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>count_of_A <span class="ot">&lt;-</span> </span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  arrow<span class="sc">::</span><span class="fu">read_parquet</span>(<span class="at">file =</span> <span class="st">"outputs/data/count_of_A.parquet"</span>)</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>count_of_A_split <span class="ot">&lt;-</span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">initial_split</span>(count_of_A, <span class="at">prop =</span> <span class="fl">0.80</span>)</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>count_of_A_train <span class="ot">&lt;-</span> <span class="fu">training</span>(count_of_A_split)</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>count_of_A_test <span class="ot">&lt;-</span> <span class="fu">testing</span>(count_of_A_split)</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>grades_tidymodels <span class="ot">&lt;-</span></span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">poisson_reg</span>(<span class="at">mode =</span> <span class="st">"regression"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"glm"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    number_of_As <span class="sc">~</span> department,</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> count_of_A_train</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>count_of_A <span class="ot">&lt;-</span> </span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_parquet</span>(<span class="at">file =</span> <span class="st">"outputs/data/count_of_A.parquet"</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>count_of_A_split <span class="ot">&lt;-</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">initial_split</span>(count_of_A, <span class="at">prop =</span> <span class="fl">0.80</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>count_of_A_train <span class="ot">&lt;-</span> <span class="fu">training</span>(count_of_A_split)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>count_of_A_test <span class="ot">&lt;-</span> <span class="fu">testing</span>(count_of_A_split)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>grades_tidymodels <span class="ot">&lt;-</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">poisson_reg</span>(<span class="at">mode =</span> <span class="st">"regression"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"glm"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    number_of_As <span class="sc">~</span> department,</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> count_of_A_train</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The results of this estimation are in the second column of <a href="13-ijaglm.html#tbl-modelsummarypoisson">Table&nbsp;<span>13.4</span></a>. They are similar to the estimates from <code>glm()</code>, but the number of observations is less because of the split.</p>
 </section>

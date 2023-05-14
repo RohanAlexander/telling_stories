@@ -57,6 +57,23 @@ Just because a dataset is FAIR, it is not necessarily an unbiased representation
 
 Finally, in this chapter we consider efficiency. As datasets and code bases get larger it becomes more difficult to deal with them, especially if we want them to be shared. We come to concerns around efficiency, not for its own sake, but to enable us to tell stories that could not otherwise be told. This might mean moving beyond CSV files to formats with other properties, or even using databases, such as Postgres, although even as we do so acknowledging that the simplicity of a CSV, as it is text-based which lends itself to human inspection, can be a useful feature. 
 
+The packages that we need in this chapter are:
+```{r}
+#| message: false
+#| warning: false
+
+library(arrow)
+library(devtools)
+library(diffpriv)
+library(fs)
+library(janitor)
+library(kableExtra)
+library(knitr)
+library(openssl)
+library(purrr)
+library(tictoc)
+library(tidyverse)
+```
 
 ## Plan
 
@@ -95,8 +112,6 @@ We can then add that URL as an argument to `read_csv()`.
 ```{r}
 #| message: false
 #| warning: false
-
-library(tidyverse)
 
 data_location <-
   paste0(
@@ -139,8 +154,6 @@ To get started, create a new package ("File" -> "New project" -> "New Directory"
 #| message: false
 #| warning: false
 #| eval: false
-
-library(tidyverse)
 
 set.seed(853)
 
@@ -209,8 +222,6 @@ We can now go to the "Build" tab and click "Install and Restart". After this, th
 ```{r}
 #| eval: false
 #| include: true
-
-library(devtools)
 
 install_github("RohanAlexander/favcolordata")
 
@@ -299,8 +310,6 @@ For instance, consider some information that we would like to keep private, such
 #| message: false
 #| warning: false
 
-library(tidyverse)
-
 some_private_information <-
   tibble(
     names = c("Rohan", "Monica", "Edward", "Hugo"),
@@ -370,13 +379,11 @@ While the approach for the first variable, names, is good because the names cann
 <!-- hashing -->
 <!-- ``` -->
 
-Rather than write our own hash functions, we can use cryptographic hash functions such as `md5()` from `openssl` [@openssl].
+Rather than write our own hash functions, we can use cryptographic hash functions such as `md5()` from `openssl`.
 
 ```{r}
 #| message: false
 #| warning: false
-
-library(openssl)
 
 some_private_information |>
   mutate(
@@ -450,14 +457,12 @@ mean(grades$problem_set_1) + runif(n = 1, min = -10, max = 10)
 
 The professor could then announce this modified mean. This would make the students' plan more difficult. One thing to notice about that approach is that it would not work with persistent questioning. For instance, eventually the students would be able to back out the distribution of the noise that the professor was adding. One implication is that the professor would need to limit the number of queries that we allow.
 
-We can implement a differentially private approach using `diffpriv` [@diffpriv]. This results in a mean that we could announce (@tbl-diffprivaexample).
+We can implement a differentially private approach using `diffpriv`. This results in a mean that we could announce (@tbl-diffprivaexample).
 
 ```{r}
 #| message: false
 
 # Code based on the diffpriv example
-library(diffpriv)
-
 target <- function(X) mean(X)
 
 mech <- DPMechLaplace(target = target)
@@ -483,7 +488,7 @@ tibble(
   actual = mean(grades$problem_set_1),
   announce = r$response
 ) |> 
-  knitr::kable(
+  kable(
     col.names = c(
       "Actual mean",
       "Announceable mean"
@@ -519,9 +524,6 @@ The need to read in multiple files and combine them into the one tibble is a sur
 
 # INTERNAL
 
-library(tidyverse)
-library(fs)
-
 dir_create(path = "inputs/data/user_data")
 
 set.seed(853)
@@ -547,9 +549,6 @@ walk(month.name |> tolower(), simulate_and_save_data)
 ```{r}
 #| eval: false
 #| echo: true
-
-library(tidyverse)
-library(fs)
 
 dir_create(path = "user_data")
 
@@ -579,8 +578,6 @@ Having created our dataset with each month saved to a different CSV, we can now 
 #| eval: false
 #| echo: true
 
-library(fs)
-
 files_of_interest <-
   dir_ls(path = "user_data/", glob = "*.csv")
 
@@ -591,8 +588,6 @@ files_of_interest
 ```{r}
 #| eval: true
 #| echo: false
-
-library(fs)
 
 files_of_interest <- dir_ls(path = "inputs/data/user_data/", glob = "*.csv") |>
   str_remove("inputs/data/user_data/")
@@ -647,8 +642,6 @@ This works well when we have CSV files, but we might not always have CSV files a
 #| eval: false
 #| echo: true
 
-library(purrr)
-
 year_of_data_using_purrr <-
   files_of_interest |>
   map_dfr(read_csv, .id = "file")
@@ -661,9 +654,6 @@ year_of_data_using_purrr <-
 #| warning: false
 
 # INTERNAL
-
-library(fs)
-library(purrr)
 
 year_of_data_using_purrr <-
   files_of_interest |>
@@ -694,9 +684,6 @@ Having loaded `arrow`, we can use parquet files in a similar way to CSV files. A
 #| message: false
 #| warning: false
 
-library(arrow)
-library(tidyverse)
-
 number_of_draws <- 1000000
 
 # Homage to: https://www.rand.org/pubs/monograph_reports/MR1418.html
@@ -713,8 +700,8 @@ write_csv(x = a_million_random_digits,
 write_parquet(x = a_million_random_digits,
               sink = "a_million_random_digits.parquet")
 
-fs::file_size("a_million_random_digits.csv")
-fs::file_size("a_million_random_digits.parquet")
+file_size("a_million_random_digits.csv")
+file_size("a_million_random_digits.parquet")
 ```
 
 ```{r}
@@ -734,11 +721,6 @@ We get significant reductions in file size when we compare the size of the same 
 #| warning: false
 
 # INTERNAL
-
-library(arrow)
-library(fs)
-library(tictoc)
-library(tidyverse)
 
 set.seed(853)
 
@@ -836,15 +818,15 @@ read_csv(
 ) |>
   mutate(
     draws = format(draws, scientific = FALSE, big.mark = ","),
-    csv_size = fs::as_fs_bytes(csv_size),
-    parquet_size = fs::as_fs_bytes(parquet_size)
+    csv_size = as_fs_bytes(csv_size),
+    parquet_size = as_fs_bytes(parquet_size)
   ) |>
-  janitor::clean_names() |> 
+  clean_names() |> 
   select(draws, 
          csv_size, csv_write, csv_read,
          parquet_size, parquet_write, parquet_read
          ) |> 
- knitr::kable(
+ kable(
     col.names = c(
       "Number of observations",
       "File size",
@@ -855,7 +837,7 @@ read_csv(
       "Read time (sec)"
     )
   ) |>
-  kableExtra::add_header_above(c(" " = 1, "CSV" = 3, "Parquet" = 3))
+  add_header_above(c(" " = 1, "CSV" = 3, "Parquet" = 3))
 ```
 
 

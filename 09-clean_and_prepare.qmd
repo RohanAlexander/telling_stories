@@ -121,8 +121,28 @@ We will need a variety of skills to be effective, but this is the very stuff of 
 All data regardless of whether they were obtained from farming, gathering, or hunting, will have issues. It is critical that we have approaches that can deal with a variety of concerns, and more importantly, understand how they might affect our modelling [@van2005data]. To clean data is to analyze data. This is because the process forces us to make choices about what we value in our results [@thatrandyauperson].
 
 
+The packages that we need in this chapter are:
+```{r}
+#| message: false
+#| warning: false
 
-
+library(glue)
+library(here)
+library(janitor)
+library(knitr)
+library(lubridate)
+library(modelsummary)
+library(opendatatoronto)
+library(pdftools)
+library(pointblank)
+library(readxl)
+library(scales)
+library(stringi)
+library(testthat)
+library(tidyr)
+library(tidyverse)
+library(validate)
+```
 
 ## Workflow
 
@@ -150,8 +170,6 @@ We then implement that using code to simulate data. Again, this process forces u
 ```{r}
 #| message: false
 #| warning: false
-
-library(tidyverse)
 
 set.seed(853)
 
@@ -370,8 +388,6 @@ Another way to write tests for our dataset is to use `testthat` [@testthat]. Alt
 #| message: false
 #| warning: false
 
-library(testthat)
-
 # Is the dataset of length one?
 expect_length(check_me, 1) 
 # Are all of the observations characters?
@@ -574,8 +590,6 @@ We can use `validate` [@van2021data] to set up a series of tests. For instance, 
 #| warning: false
 #| message: false
 
-library(tidyverse)
-
 set.seed(853)
 
 dataset_with_issues <-
@@ -604,8 +618,6 @@ In this case, there is an impossible age, one observation in the gender variable
 ```{r}
 #| warning: false
 #| message: false
-
-library(validate)
 
 rules <- validator(
   is.numeric(age),
@@ -662,8 +674,6 @@ Let us start with "group" as an integer and use logistic regression, which we co
 ```{r}
 #| label: tbl-effect-of-class
 #| tbl-cap: "Examining the effect of class on regression results"
-
-library(modelsummary)
 
 models <- list(
   "Group as integer" = glm(
@@ -741,9 +751,6 @@ In @sec-fire-hose we introduced a dataset of shelter usage in Toronto in 2021 us
 #| eval: false
 #| echo: true
 
-library(opendatatoronto)
-library(tidyverse)
-
 earlier_toronto_shelters <-
   search_packages("Daily Shelter Occupancy") |>
   list_package_resources() |>
@@ -771,7 +778,7 @@ write_csv(
 
 write_csv(
   x = earlier_toronto_shelters,
-  file = here::here("inputs/data/earlier_toronto_shelters.csv")
+  file = here("inputs/data/earlier_toronto_shelters.csv")
 )
 ```
 
@@ -782,7 +789,7 @@ write_csv(
 
 earlier_toronto_shelters <-
   read_csv(
-    here::here("inputs/data/earlier_toronto_shelters.csv"),
+    here("inputs/data/earlier_toronto_shelters.csv"),
     show_col_types = FALSE
   )
 
@@ -794,8 +801,6 @@ We need to make the names easier to type, specify the year based on the file, an
 ```{r}
 #| warning: false
 #| message: false
-
-library(janitor)
 
 earlier_toronto_shelters_clean_years <-
   earlier_toronto_shelters |>
@@ -834,8 +839,6 @@ We first fix that, check our guesses, and then get to a more pernicious and subt
 ```{r}
 #| warning: false
 #| message: false
-
-library(lubridate)
 
 earlier_toronto_shelters_test_date <-
   earlier_toronto_shelters_clean_years |>
@@ -898,7 +901,7 @@ earlier_toronto_shelters_test_date <-
 earlier_toronto_shelters_test_date |>
   count(one) |>
   rename(`First component` = one, Number = n) |>
-  knitr::kable(
+  kable(
     col.names = c("First component", "Number"),
     digits = 2,
     format.args = list(big.mark = ",")
@@ -982,8 +985,6 @@ earlier_toronto_shelters |>
 While this is just a quick graph it illustrates the point---there are a lot in order, but not all. If they were in order, then we would expect them to be along the diagonal. It is odd that the data are not in order, especially as there appears to be something systematic initially. We can summarize the data to get a count of occupancy by day.
 
 ```{r}
-library(tidyr)
-
 # Based on code by Lisa Lendway
 toronto_shelters_by_day <-
   earlier_toronto_shelters |>
@@ -1146,8 +1147,6 @@ Now let us take a look (@fig-sheltersdatebyrowadj). It has not fixed all the iss
 #| fig-subcap: ["Date of each row in order in 2017 after adjustment", "Toronto shelters daily occupancy in 2017 after adjustment"]
 #| layout-ncol: 2
 
-library(tidyr)
-
 earlier_toronto_shelters_2017_flipped |>
   mutate(counter = seq_len(nrow(earlier_toronto_shelters_2017_flipped))) |>
   filter(year(date) == 2017) |>
@@ -1261,8 +1260,6 @@ Actual survey data on the relationship between five kilometer and marathon run t
 #| eval: false
 #| include: true
 
-library(readxl)
-
 vickers_data <- 
   read_excel("13102_2016_52_MOESM2_ESM.xlsx") |> 
   select(k5_ti, mf_ti) |> 
@@ -1274,8 +1271,6 @@ vickers_data
 ```{r}
 #| eval: true
 #| include: false
-
-library(readxl)
 
 vickers_data <- 
   read_excel("inputs/data/13102_2016_52_MOESM2_ESM.xlsx") |> 
@@ -1348,8 +1343,6 @@ Names should also be unique within a dataset, and unique within a collection of 
 An especially useful function to use to get closer to machine-readable names is `clean_names()` from `janitor` [@janitor]. This deals with those issues mentioned above as well as a few others.\index{data cleaning and preparation!names}
 
 ```{r}
-library(janitor)
-
 some_bad_names <-
   tibble(
     "First" = c(1),
@@ -1431,8 +1424,6 @@ We can then simulate a dataset.
 #| warning: false
 #| message: false
 
-library(tidyverse)
-
 simulated_tanzania_dataset <-
   tibble(
     age_group = rep(x = c("0-4", "5-9")),
@@ -1481,8 +1472,6 @@ When we have a PDF and want to read the content into R, then `pdf_text()` from `
 #| eval: false
 #| include: true
 
-library(pdftools)
-
 tanzania_dhs <-
   pdf_text(
     pdf = "1996_Tanzania_DHS.pdf"
@@ -1494,8 +1483,6 @@ tanzania_dhs <-
 #| include: false
 
 # INTERNAL
-library(pdftools)
-
 tanzania_dhs <- pdf_text("inputs/pdfs/1996_Tanzania_DHS.pdf")
 ```
 
@@ -1503,11 +1490,9 @@ In this case we are interested in Table 2.1, which is on the 33rd page of the PD
 
 ![The page of interest in the 1996 Tanzanian DHS](figures/tanzanian_dhs.png){#fig-tanzanian-dhs width=95% fig-align="center"}
 
-We use `stri_split_lines()` from `stringi` [@stringi] to focus on that particular page.
+We use `stri_split_lines()` from `stringi` to focus on that particular page.
 
 ```{r}
-library(stringi)
-
 # Based on Bob Rudis: https://stackoverflow.com/a/47793617
 tanzania_dhs_page_33 <- stri_split_lines(tanzania_dhs[[33]])[[1]]
 ```
@@ -1517,8 +1502,6 @@ We first want to remove all the written content and focus on the table. We then 
 ```{r}
 #| warning: false
 #| message: false
-
-library(tidyverse)
 
 tanzania_dhs_page_33_only_data <- tanzania_dhs_page_33[31:55]
 
@@ -1606,17 +1589,7 @@ In this case we can see that it is a few tenths of a percentage point off.
 
 ## 2019 Kenyan census
 
-As a final example, let us consider a more extensive situation and gather, clean, and prepare some data from the 2019 Kenyan\index{Kenya} census. The distribution of population by age, sex, and administrative unit from the 2019 Kenyan census can be downloaded [here](https://www.knbs.or.ke/?wpdmpro=2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units). While this format as a PDF makes it easy to look up a particular result, it is not overly useful if we want to model the data. In order to be able to do that, we need to convert a PDF of Kenyan census results of counts, by age and sex, and by county and sub-county, into a tidy dataset that can be analyzed. We use `janitor` [@janitor], `pdftools` [@pdftools], the `tidyverse` [@tidyverse], and `stringi` [@stringi].
-
-```{r}
-#| message: false
-#| warning: false
-
-library(janitor)
-library(pdftools)
-library(tidyverse)
-library(stringi)
-```
+As a final example, let us consider a more extensive situation and gather, clean, and prepare some data from the 2019 Kenyan\index{Kenya} census. The distribution of population by age, sex, and administrative unit from the 2019 Kenyan census can be downloaded [here](https://www.knbs.or.ke/?wpdmpro=2019-kenya-population-and-housing-census-volume-iii-distribution-of-population-by-age-sex-and-administrative-units). While this format as a PDF makes it easy to look up a particular result, it is not overly useful if we want to model the data. In order to be able to do that, we need to convert a PDF of Kenyan census results of counts, by age and sex, and by county and sub-county, into a tidy dataset that can be analyzed. We use `janitor`, `pdftools`, the `tidyverse`, and `stringi`.
 
 ### Gather and clean data
 
@@ -2025,7 +1998,7 @@ all <-
 all <-
   all |>
   mutate(
-    page = glue::glue(
+    page = glue(
 "Total from p. {page}, rural from p. {page_rural}, urban from p. {page_urban}"
     )
   ) |>
@@ -2158,7 +2131,7 @@ write_csv(all, file = "outputs/data/cleaned_kenya_2019_census.csv")
 ```{r}
 #| include: false
 #| eval: false
-library(tidyverse)
+
 all <- read_csv("outputs/data/cleaned_kenya_2019_census.csv")
 ```
 
@@ -2180,7 +2153,7 @@ all |>
   filter(gender != "total") |>
   ggplot(aes(x = age, y = number, fill = gender)) +
   geom_col(aes(x = age, y = number, fill = gender), position = "dodge") +
-  scale_y_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = comma) +
   scale_x_discrete(breaks = c(seq(from = 0, to = 99, by = 5), "100+")) +
   theme_classic() +
   scale_fill_brewer(palette = "Set1") +
@@ -2213,15 +2186,13 @@ column_names_as_contracts <-
 ```
 
 ::: {.content-visible when-format="pdf"}
-We can then use `pointblank` [@pointblank] to set up tests for us (@fig-pointblankvalidation).
+We can then use `pointblank` to set up tests for us (@fig-pointblankvalidation).
 
 ```{r}
 #| echo: true
 #| eval: false
 #| message: false
 #| warning: false
-
-library(pointblank)
 
 agent <-
   create_agent(tbl = column_names_as_contracts) |>
@@ -2241,15 +2212,13 @@ agent
 :::
 
 ::: {.content-visible unless-format="pdf"}
-We can then use `pointblank` [@pointblank] to set-up tests for us.
+We can then use `pointblank` to set-up tests for us.
 
 ```{r}
 #| echo: true
 #| eval: true
 #| message: false
 #| warning: false
-
-library(pointblank)
 
 agent <-
   create_agent(tbl = column_names_as_contracts) |>

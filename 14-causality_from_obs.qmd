@@ -52,6 +52,24 @@ For instance, @dagan2021bnt162b2 use observational data to confirm the effective
 
 This chapter is about using observational data in sophisticated ways. How we can nonetheless be comfortable making causal statements, even when we cannot run A/B tests or RCTs. Indeed, in what circumstances may we prefer to not run those or to run observational-based approaches in addition to them. We cover three of the major methods: difference-in-differences, regression discontinuity, and instrumental variables.
 
+The packages that we need in this chapter are:
+```{r}
+#| message: false
+#| warning: false
+
+library(broom)
+library(broom.mixed)
+library(estimatr)
+library(haven)
+library(knitr)
+library(MatchIt)
+library(modelsummary)
+library(palmerpenguins)
+library(rdrobust)
+library(rstanarm)
+library(scales)
+library(tidyverse)
+```
 
 ## Directed acyclic graphs
 
@@ -265,8 +283,6 @@ Simpson's paradox occurs when we estimate some relationship for subsets of our d
 #| message: false
 #| warning: false
 
-library(tidyverse)
-
 set.seed(853)
 
 number_in_each <- 1000
@@ -330,8 +346,6 @@ More recently, as mentioned in its documentation, the "penguins" dataset from `p
 #| label: fig-simpsonsparadoxinpenguins
 #| message: false
 #| warning: false
-
-library(palmerpenguins)
 
 penguins |>
   ggplot(aes(x = body_mass_g, y = bill_depth_mm)) +
@@ -523,7 +537,7 @@ average_differences$average_difference[2] - average_differences$average_differen
 ```
 
 And we can use linear regression to get the same result. The equation that we are interested in is:
-$$Y_{i,t} = \beta_0 + \beta_1\mbox{Treatment}_i + \beta_2\mbox{Time}_t + \beta_3(\mbox{Treatment} \times\mbox{Time})_{i,t} + \epsilon_{i,t}$$
+$$Y_{i,t} = \beta_0 + \beta_1\times\mbox{Treatment}_i + \beta_2\times\mbox{Time}_t + \beta_3\times(\mbox{Treatment} \times\mbox{Time})_{i,t} + \epsilon_{i,t}$$
 
 While we should include the separate aspects as well, it is the estimate of the interaction that we are interested in. In this case it is $\beta_3$. And we find that our estimated effect is 5.06 (@tbl-diffindifftennisracket).
 
@@ -532,9 +546,6 @@ While we should include the separate aspects as well, it is the estimate of the 
 #| eval: false
 #| warning: false
 #| message: false
-
-library(modelsummary)
-library(rstanarm)
 
 diff_in_diff_example_regression <-
   stan_glm(
@@ -583,8 +594,6 @@ diff_in_diff_example_regression <-
 #| warning: false
 #| message: false
 
-library(rstanarm)
-
 diff_in_diff_example_regression <-
   readRDS(file = "outputs/model/diff_in_diff_example_regression.rds")
 ```
@@ -596,9 +605,7 @@ diff_in_diff_example_regression <-
 #| warning: false
 #| message: false
 
-library(broom.mixed)
-
-modelsummary::modelsummary(
+modelsummary(
   diff_in_diff_example_regression
 )
 ```
@@ -638,8 +645,6 @@ We can get free access to the [data](https://www.openicpsr.org/openicpsr/project
 #| eval: false
 #| include: true
 
-library(haven)
-
 newspapers <- read_dta("Angelucci_Cage_AEJMicro_dataset.dta")
 
 newspapers
@@ -648,8 +653,6 @@ newspapers
 
 ```{r} 
 #| echo: false
-
-library(haven)
 
 newspapers <- read_dta("inputs/data/116438-V1/data/dta/Angelucci_Cage_AEJMicro_dataset.dta")
 
@@ -698,8 +701,6 @@ We are interested in what happened from 1967 onward, especially in terms of adve
 #| message: false
 #| warning: false
 
-library(scales)
-
 newspapers |>
   mutate(type = if_else(local == 1, "Local", "National")) |>
   ggplot(aes(x = year, y = ra_cst)) +
@@ -726,7 +727,7 @@ newspapers |>
 
 The model that we are interested in estimating is:
 
-$$\mbox{ln}(y_{n,t}) = \beta_0 + \beta_1(\mbox{National binary}\times\mbox{1967 onward binary}) + \lambda_n + \gamma_t + \epsilon.$$
+$$\mbox{ln}(y_{n,t}) = \beta_0 + \beta_1\times(\mbox{National binary}\times\mbox{1967 onward binary}) + \lambda_n + \gamma_t + \epsilon$$
 
 It is the $\beta_1$ coefficient that we are especially interested in. We use $\lambda_n$ as a fixed effect for each newspaper, and the $\gamma_y$ as a fixed effect for each year. We estimate the models using `stan_glm()`.
 
@@ -735,9 +736,6 @@ It is the $\beta_1$ coefficient that we are especially interested in. We use $\l
 #| eval: false
 #| warning: false
 #| message: false
-
-library(modelsummary)
-library(rstanarm)
 
 ad_revenue <-
   stan_glm(
@@ -860,8 +858,6 @@ unit_price <-
 #| warning: false
 #| message: false
 
-library(rstanarm)
-
 ad_revenue <-
   readRDS(file = "outputs/model/ad_revenue.rds")
 
@@ -883,15 +879,13 @@ Looking at the advertising-side variables, such as revenue and prices, in @tbl-f
 #| warning: false
 #| message: false
 
-library(broom.mixed)
-
 selected_variables <-
   c(
     "year" = "Year",
     "after_national1" = "After change"
   )
 
-modelsummary::modelsummary(
+modelsummary(
   models = list(
     "Ad revenue" = ad_revenue,
     "Ad revenue over circulation" = ad_revenue_div_circulation,
@@ -999,7 +993,7 @@ Naively we can see that there is a difference in the average spend between those
 purchase_data |> 
   summarise(average_spend = round(mean(spend), 2), .by = free_shipping) |> 
   mutate(free_shipping = if_else(free_shipping == 0, "No", "Yes")) |> 
-  knitr::kable(
+  kable(
     col.names = c("Received free shipping?", "Average spend")
   )
 ```
@@ -1009,8 +1003,6 @@ We use `matchit()` from `MatchIt` [@MatchIt] to implement logistic regression an
 
 ```{r}
 #| message: false
-
-library(MatchIt)
 
 matched_groups <- 
   matchit(
@@ -1040,7 +1032,7 @@ propensity_score_regression <- lm(
   data = matched_dataset
 )
 
-modelsummary::modelsummary(propensity_score_regression)
+modelsummary(propensity_score_regression)
 ```
 
 In @tbl-treatedexample we find that the effect is what we simulated. That is, there is a difference of ten between the average spend of those who received free shipping and those that did not.
@@ -1067,8 +1059,6 @@ To be more specific about the situation, we simulate data. We will consider the 
 #| warnings: false
 #| eval: true
 #| message: false
-
-library(tidyverse)
 
 set.seed(853)
 
@@ -1132,9 +1122,6 @@ We can use a binary variable with linear regression to estimate the effect of ge
 #| warning: false
 #| message: false
 
-library(modelsummary)
-library(rstanarm)
-
 rdd_example_data <-
   rdd_example_data |>
   mutate(mark_80_and_over = if_else(mark < 80, 0, 1))
@@ -1185,8 +1172,6 @@ rdd_example <-
 #| warning: false
 #| message: false
 
-library(rstanarm)
-
 rdd_example <-
   readRDS(file = "outputs/model/rdd_example.rds")
 ```
@@ -1196,9 +1181,8 @@ rdd_example <-
 #| tbl-cap: "Example of regression discontinuity with simulated data"
 #| warning: false
 #| message: false
-library(broom.mixed)
 
-modelsummary::modelsummary(
+modelsummary(
   models = rdd_example,
   fmt = 2
 )
@@ -1209,8 +1193,6 @@ There are various caveats to this estimate that we will discuss, but the essenti
 We could also implement RDD using `rdrobust` [@rdrobust]. The advantage of this approach is that many common extensions are easily available. 
 
 ```{r}
-library(rdrobust)
-
 rdrobust(
   y = rdd_example_data$income,
   x = rdd_example_data$mark,
@@ -1315,9 +1297,6 @@ We can obtain their replication data [@carpenterdobkinreplicationdata] from [her
 #| eval: false
 #| echo: true
 
-library(haven)
-library(tidyverse)
-
 carpenter_dobkin <-
   read_dta(
     "P01 Age Profile of Arrest Rates 1979-2006.dta"
@@ -1327,9 +1306,6 @@ carpenter_dobkin <-
 ```{r}
 #| eval: true
 #| echo: false
-
-library(haven)
-library(tidyverse)
 
 carpenter_dobkin <-
   read_dta(
@@ -1440,8 +1416,6 @@ rdd_carpenter_dobkin <-
 #| warning: false
 #| message: false
 
-library(rstanarm)
-
 rdd_carpenter_dobkin <-
   readRDS(file = "outputs/model/rdd_carpenter_dobkin.rds")
 ```
@@ -1452,9 +1426,7 @@ rdd_carpenter_dobkin <-
 #| warning: false
 #| message: false
 
-library(broom.mixed)
-
-modelsummary::modelsummary(
+modelsummary(
   models = rdd_carpenter_dobkin,
   fmt = 2
 )
@@ -1463,8 +1435,6 @@ modelsummary::modelsummary(
 And the results are similar if we use `rdrobust`.
 
 ```{r}
-library(rdrobust)
-
 rdrobust(
   y = carpenter_dobkin_aggravated_assault_only$number,
   x = carpenter_dobkin_aggravated_assault_only$age,
@@ -1527,9 +1497,6 @@ As a reminder, we are simulating data for illustrative purposes, so we need to i
 ```{r}
 #| warnings: false
 #| message: false
-
-library(broom)
-library(tidyverse)
 
 set.seed(853)
 
@@ -1649,7 +1616,7 @@ first_stage <- lm(smoker ~ tax, data = iv_example_data)
 health_hat <- first_stage$fitted.values
 second_stage <- lm(health ~ health_hat, data = iv_example_data)
 
-modelsummary::modelsummary(second_stage)
+modelsummary(second_stage)
 ```
 
 We can use `iv_robust()` from `estimatr` [@estimatr] to estimate IV (@tbl-ivexamplesmoker). One nice reason for doing this is that it can help to keep everything organized and adjust the standard errors.
@@ -1660,10 +1627,8 @@ We can use `iv_robust()` from `estimatr` [@estimatr] to estimate IV (@tbl-ivexam
 #| warning: false
 #| message: false
 
-library(estimatr)
-
 iv_robust(health ~ smoker | tax, data = iv_example_data) |>
-  modelsummary::modelsummary()
+  modelsummary()
 ```
 
 ### Assumptions

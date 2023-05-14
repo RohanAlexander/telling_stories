@@ -72,6 +72,20 @@ In this chapter we begin with simple linear regression, and then move to multipl
 In this chapter we begin with simple linear regression, and then move to multiple linear regression, the difference being the number of explanatory variables that we allow. We go through two approaches for each of these: base R, in particular the `lm()` and `glm()` functions, which are useful when we want to quickly use the models in EDA; and `rstanarm` [@citerstanarm] for when we are interested in inference. In general, a model is either optimized for inference or prediction. A focus on prediction is one of the hallmarks of machine learning. For historical reasons that has tended to be dominated by Python, although `tidymodels` [@citeTidymodels] has been developed in R, and we devote @sec-predictingpythons to various approaches focused on prediction. Regardless of the approach we use, the important thing to remember that we are just doing something akin to fancy averaging, and our results always reflect the biases and idiosyncrasies of the dataset.
 :::
 
+The packages that we need in this chapter are:
+```{r}
+#| message: false
+#| warning: false
+
+library(beepr)
+library(broom)
+library(broom.mixed)
+library(knitr)
+library(modelsummary)
+library(rstanarm)
+library(testthat)
+library(tidyverse)
+```
 
 ## Simple linear regression
 
@@ -91,8 +105,6 @@ As introduced in [Appendix -@sec-r-essentials], we use `rnorm()` to simulate dat
 ```{r}
 #| message: false
 #| warning: false
-
-library(tidyverse)
 
 set.seed(853)
 
@@ -138,7 +150,7 @@ estimated_standard_deviation <-
 estimated_standard_error <-
   estimated_standard_deviation / sqrt(nrow(normal_example))
 
-knitr::kable(
+kable(
   tibble(mean = estimated_mean,
          sd = estimated_standard_deviation,
          se = estimated_standard_error),
@@ -370,7 +382,7 @@ sim_run_data_centered_model <-
 #| label: tbl-modelsummaryfivekmonly
 #| tbl-cap: "Explaining marathon times based on five-kilometer run times"
 
-modelsummary::modelsummary(
+modelsummary(
   list(
     "Five km only" = sim_run_data_first_model,
     "Five km only, centered" = sim_run_data_centered_model
@@ -389,7 +401,7 @@ We use `augment()` from `broom` [@broom] to add the fitted values and residuals 
 
 ```{r}
 sim_run_data <-
-  broom::augment(
+  augment(
     sim_run_data_first_model,
     data = sim_run_data
   )
@@ -601,8 +613,6 @@ We could then change the regression code to call these test files rather than wr
 #| message: false
 #| eval: false
 
-library(testthat)
-
 test_file("tests/test_observations.R")
 test_file("tests/test_class.R")
 
@@ -713,7 +723,7 @@ sim_run_data_rain_and_humidity_model <-
     data = sim_run_data
   )
 
-modelsummary::modelsummary(
+modelsummary(
   list(
     "Five km only" = sim_run_data_first_model,
     "Add rain" = sim_run_data_rain_model,
@@ -775,8 +785,6 @@ Another aspect that is different between Bayesian approaches and the way we have
 #| message: false
 #| warning: false
 
-library(rstanarm)
-
 sim_run_data_first_model_rstanarm <-
   stan_glm(
     formula = marathon_time ~ five_km_time + was_raining,
@@ -788,7 +796,7 @@ sim_run_data_first_model_rstanarm <-
     seed = 853
   )
 
-beepr::beep()
+beep()
 
 saveRDS(
   sim_run_data_first_model_rstanarm,
@@ -824,8 +832,6 @@ sim_run_data_first_model_rstanarm <-
 #| eval: true
 #| warning: false
 #| message: false
-
-library(rstanarm)
 
 sim_run_data_first_model_rstanarm <-
   readRDS(file = "outputs/model/sim_run_data_first_model_rstanarm.rds")
@@ -978,8 +984,6 @@ saveRDS(
 #| warning: false
 #| message: false
 
-library(rstanarm)
-
 sim_run_data_second_model_rstanarm <-
   readRDS(file = "outputs/model/sim_run_data_second_model_rstanarm.rds")
 ```
@@ -989,9 +993,7 @@ sim_run_data_second_model_rstanarm <-
 #| tbl-cap: "Forecasting and explanatory models of marathon times based on five-kilometer run times"
 #| warning: false
 
-library(broom.mixed)
-
-modelsummary::modelsummary(
+modelsummary(
   list(
     "rstanarm" = sim_run_data_first_model_rstanarm,
     "rstanarm better priors" = sim_run_data_second_model_rstanarm

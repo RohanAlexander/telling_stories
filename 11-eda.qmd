@@ -86,6 +86,23 @@ Interestingly, coming to thoroughly understand the data that we have often helps
 
 There is no one correct process or set of steps that are required to undertake and complete EDA. Instead, the relevant steps and tools depend on the data and question of interest. As such, in this chapter we will illustrate approaches to EDA through various examples of EDA including US state populations, subway delays in Toronto, and Airbnb listings in London.
 
+The packages that we need in this chapter are:
+```{r}
+#| message: false
+#| warning: false
+
+library(arrow)
+library(janitor)
+library(knitr)
+library(lubridate)
+library(mice)
+library(modelsummary)
+library(naniar)
+library(opendatatoronto)
+library(skimr)
+library(tidyverse)
+```
+
 ## 1975 US states data
 
 As a first example we consider US state populations\index{United States} as of 1975. This dataset is built into R with `state.x77`. Here is what the dataset looks like:
@@ -94,12 +111,10 @@ As a first example we consider US state populations\index{United States} as of 1
 #| message: false
 #| warning: false
 
-library(tidyverse)
-
 us_populations <-
   state.x77 |>
   as_tibble() |>
-  janitor::clean_names() |>
+  clean_names() |>
   mutate(state = rownames(state.x77)) |>
   select(state, population, income)
 
@@ -125,8 +140,6 @@ us_populations |>
 We are then interested in understanding key statistics, such as the minimum, median, and maximum values for numeric variables with `summary()` from base R. We can use `skim` from `skimr` [@skimr] for similar purposes, the advantage being that it provides more information about character variables. We notice that population appears to be right-skewed (with a mean that is considerably larger than the median).
 
 ```{r}
-library(skimr)
-
 us_populations |>
   summary()
 
@@ -142,8 +155,6 @@ Finally, it is especially important to understand the behavior of these key summ
 #| tbl-cap: "Comparing the mean population when different states are randomly removed"
 #| message: false
 #| warning: false
-
-library(tidyverse)
 
 sample_means <-
   tibble(
@@ -171,7 +182,7 @@ for (i in c(1:5)) {
 }
 
 sample_means |>
-  knitr::kable(
+  kable(
     col.names = c(
       "Seed",
       "Mean",
@@ -268,8 +279,6 @@ To drop the observations with missing data, we can use `mean()` because by defau
 #| message: false
 #| warning: false
 
-library(mice)
-
 multiple_imputation <-
   mice(
     us_states_MCAR,
@@ -334,7 +343,7 @@ tibble(
     actual_us_mean
   )
 ) |>
-  knitr::kable(
+  kable(
     col.names = c(
       "Observation",
       "Drop missing rows",
@@ -364,10 +373,6 @@ To begin, we download the data on Toronto Transit Commission (TTC) subway delays
 #| eval: false
 #| include: true
 
-library(janitor)
-library(opendatatoronto)
-library(tidyverse)
-
 all_2021_ttc_data <-
   list_package_resources("996cfe8d-fb35-40ce-b569-698d51fc683b") |>
   filter(name == "ttc-subway-delay-data-2021") |>
@@ -392,10 +397,6 @@ write_csv(all_2021_ttc_data, "inputs/data/all_2021_ttc_data.csv")
 ```{r}
 #| eval: true
 #| echo: false
-
-library(janitor)
-library(opendatatoronto)
-library(tidyverse)
 
 all_2021_ttc_data <- read_csv("inputs/data/all_2021_ttc_data.csv")
 
@@ -690,8 +691,6 @@ As discussed in @sec-clean-and-prepare, dates are often difficult to work with b
 #| message: false
 #| warning: false
 
-library(lubridate)
-
 all_2021_ttc_data_no_dupes_with_explanation |>
   filter(min_delay > 0) |>
   mutate(week = week(date)) |>
@@ -942,8 +941,6 @@ As the original dataset is not ours, we should not make that public without firs
 #| warning: false
 #| eval: false
 
-library(tidyverse)
-
 url <-
   paste0(
     "http://data.insideairbnb.com/united-kingdom/england/",
@@ -1002,7 +999,7 @@ airbnb_data_selected <-
     review_scores_value
   )
 
-arrow::write_parquet(x = airbnb_data_selected, 
+write_parquet(x = airbnb_data_selected, 
                      sink = "2023-03-14-london-airbnblistings-select_variables.parquet")
 
 rm(airbnb_data)
@@ -1016,10 +1013,8 @@ rm(airbnb_data)
 #| warning: false
 #| message: false
 
-library(tidyverse)
-
 airbnb_data_selected <- 
-  arrow::read_parquet(file = "inputs/data/2023-03-14-london-airbnblistings-select_variables.parquet")
+  read_parquet(file = "inputs/data/2023-03-14-london-airbnblistings-select_variables.parquet")
 
 airbnb_data_selected
 ```
@@ -1310,8 +1305,6 @@ Usually missing values are dropped by `ggplot2`. We can use `geom_miss_point()` 
 #| fig-cap: "Missing values in London Airbnb data, by host response time"
 #| label: fig-visualisemissing
 
-library(naniar)
-
 airbnb_data_has_reviews |>
   ggplot(aes(
     x = host_response_time,
@@ -1430,8 +1423,6 @@ We could build a table that looks at a hosts response time by whether they are a
 #| eval: true
 #| include: true
 
-library(janitor)
-
 airbnb_data_selected |>
   tabyl(host_response_time, host_is_superhost) |>
   adorn_percentages("col") |>
@@ -1495,7 +1486,7 @@ We can have a quick look at the results using `modelsummary()` from `modelsummar
 #| label: tbl-modelsummarylogisticregressionsuper
 #| tbl-cap: "Explaining whether a host is a superhost based on their response time"
 
-modelsummary::modelsummary(logistic_reg_superhost_response_review)
+modelsummary(logistic_reg_superhost_response_review)
 ```
 
 We see that each of the levels is positively associated with the probability of being a superhost. However, having a host that responds within an hour is associated with individuals that are superhosts in our dataset.
@@ -1506,7 +1497,7 @@ We will save this analysis dataset.
 #| eval: false
 #| include: true
 
-arrow::write_parquet(x = airbnb_data_selected, 
+write_parquet(x = airbnb_data_selected, 
                      sink = "2023-05-05-london-airbnblistings-analysis_dataset.parquet")
 ```
 
@@ -1514,7 +1505,7 @@ arrow::write_parquet(x = airbnb_data_selected,
 #| eval: false
 #| include: false
 
-arrow::write_parquet(x = airbnb_data_selected, 
+write_parquet(x = airbnb_data_selected, 
                      sink = "outputs/data/2023-05-05-london-airbnblistings-analysis_dataset.parquet")
 ```
 

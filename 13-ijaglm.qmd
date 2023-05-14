@@ -68,6 +68,22 @@ Dr Robert Tibshirani\index{Tibshirani, Robert} is Professor in the Departments o
 
 In this chapter we consider logistic, Poisson, and negative binomial regression. 
 
+The packages that we need in this chapter are:
+```{r}
+#| message: false
+#| warning: false
+
+library(boot)
+library(broom.mixed)
+library(dataverse)
+library(gutenbergr)
+library(janitor)
+library(knitr)
+library(marginaleffects)
+library(modelsummary)
+library(rstanarm)
+library(tidyverse)
+```
 
 ## Logistic regression
 
@@ -80,8 +96,6 @@ The foundation of this is the Bernoulli distribution\index{distribution!Bernoull
 ```{r}
 #| message: false
 #| warning: false
-
-library(tidyverse)
 
 set.seed(853)
 
@@ -108,7 +122,7 @@ This will transpose values between 0 and 1 onto the real line. For instance, `lo
 #| warning: false
 
 tibble(values = seq(from = 0, to = 1, by = 0.001),
-       logit = boot::logit(values)) |>
+       logit = logit(values)) |>
   ggplot(aes(x = values, y = logit)) +
   geom_line() +
   theme_classic() +
@@ -169,8 +183,6 @@ The estimated coefficient on the number of cars is 0.19. The interpretation of c
 We can translate our estimate into the probability of it being a weekday, for a given number of cars. We can add the implied probability that it is a weekday for each observation using `predictions()` from `marginaleffects` [@marginaleffects].
 
 ```{r}
-library(marginaleffects)
-
 week_or_weekday_predictions <-
   predictions(week_or_weekday_model) |>
   as_tibble()
@@ -214,7 +226,7 @@ The marginal effect\index{marginal effect} at each observation is of interest be
 
 marginaleffects(week_or_weekday_model, newdata = "mean") |>
   select(term, estimate, std.error) |>
-  knitr::kable(
+  kable(
     col.names = c("Term", "Estimate", "Standard error")
   )
 ```
@@ -236,8 +248,6 @@ where $y_i$ is whether it is a weekday (actually 0 or 1), $x_i$ is the number of
 #| echo: true
 #| message: false
 #| warning: false
-
-library(rstanarm)
 
 week_or_weekday_rstanarm <-
   stan_glm(
@@ -286,9 +296,7 @@ The results of our Bayesian model are similar to the quick model we built using 
 #| message: false
 #| warning: false
 
-library(broom.mixed)
-
-modelsummary::modelsummary(
+modelsummary(
   list(
     "rstanarm" = week_or_weekday_rstanarm
   )
@@ -359,14 +367,12 @@ We can access the CES using `get_dataframe_by_name()` from `dataverse` [@dataver
 #| echo: true
 #| eval: false
 
-library(dataverse)
-
 ces2020 <-
   get_dataframe_by_name(
     filename = "CES20_Common_OUTPUT_vv.csv",
     dataset = "10.7910/DVN/E9N6PH",
     server = "dataverse.harvard.edu",
-    .f = readr::read_csv
+    .f = read_csv
   ) |>
   select(votereg, CC20_410, gender, educ)
 
@@ -551,8 +557,6 @@ saveRDS(
 #| message: false
 #| warning: false
 
-library(rstanarm)
-
 political_preferences <-
   readRDS(file = "outputs/model/political_preferences.rds")
 ```
@@ -565,9 +569,7 @@ The results of our Bayesian model are interesting. They suggest males were less 
 #| message: false
 #| warning: false
 
-library(broom.mixed)
-
-modelsummary::modelsummary(
+modelsummary(
   list(
     "Support Biden" = political_preferences
   )
@@ -710,7 +712,7 @@ The model that we are interested in estimating is:
 $$
 \begin{aligned}
 y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
-\log(\lambda_i) & = \beta_0 + \beta_1 \mbox{department}_i
+\log(\lambda_i) & = \beta_0 + \beta_1 \times \mbox{department}_i
 \end{aligned}
 $$
 where $y_i$ is the number of A grades awarded, and we are interested in how this differs by department. 
@@ -793,9 +795,7 @@ The results are contained in the third column of @tbl-modelsummarypoisson.
 #| label: tbl-modelsummarypoisson
 #| tbl-cap: "Examining the number of A grades given in different departments"
 
-library(broom.mixed)
-
-modelsummary::modelsummary(
+modelsummary(
   list(
     "rstanarm" = grades_rstanarm
   )
@@ -807,11 +807,11 @@ As with logistic regression, we can use `marginaleffects()` from [@marginaleffec
 ```{r}
 #| label: tbl-marginaleffectspoisson
 #| tbl-cap: "The estimated difference in the number of A grades awarded at each department"
-library(marginaleffects)
+
 marginaleffects(grades_rstanarm) |>
   summary() |>
   select(-term) |>
-  knitr::kable(
+  kable(
     digits = 2,
     col.names = c("Departmental comparison", "Estimate", "2.5%", "97.5%")
   )
@@ -820,7 +820,7 @@ marginaleffects(grades_rstanarm) |>
 
 ### Letters used in *Jane Eyre* 
 
-In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@Stigler1978 [p. 301] provides helpful background and @HistData makes this dataset available with `HistData::Dactyl`). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë\index{Brontë, Charlotte!Jane Eyre}. (Recall that in @sec-gather-data we converted PDFs of *Jane Eyre* into a dataset.) We could then consider the first ten lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/Es increases as more words are used. If not, it could suggest that the distribution of e/Es is not consistent, which could be of interest to linguists.\index{Poisson regression}
+In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@Stigler1978 [p. 301] provides helpful background and the dataset is available using `Dactyl` from `HistData` [@HistData]). Inspired by this we could use `gutenbergr` [@gutenbergr] to get the text of *Jane Eyre* by Charlotte Brontë\index{Brontë, Charlotte!Jane Eyre}. (Recall that in @sec-gather-data we converted PDFs of *Jane Eyre* into a dataset.) We could then consider the first ten lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/Es increases as more words are used. If not, it could suggest that the distribution of e/Es is not consistent, which could be of interest to linguists.\index{Poisson regression}
 
 Following the workflow advocated in this book, we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-letterssketch, and a quick sketch of our model is @fig-lettersmodel.
 
@@ -867,8 +867,6 @@ We can now gather and prepare our data. We download the text of the book from Pr
 ```{r}
 #| eval: false
 #| echo: true
-
-library(gutenbergr)
 
 gutenberg_id_of_janeeyre <- 1260
 
@@ -1007,7 +1005,7 @@ We could consider the following model:
 $$
 \begin{aligned}
 y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
-\log(\lambda_i) & = \beta_0 + \beta_1 \mbox{Number of words}_i\\
+\log(\lambda_i) & = \beta_0 + \beta_1 \times \mbox{Number of words}_i\\
 \beta_0 & \sim \mbox{Normal}(0, 2.5)\\
 \beta_1 & \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
@@ -1053,8 +1051,6 @@ saveRDS(
 #| include: false
 #| message: false
 #| warning: false
-
-library(rstanarm)
 
 jane_e_counts <-
   readRDS(file = "outputs/model/jane_e_counts.rds")
@@ -1183,7 +1179,7 @@ alberta_cod <-
       `Total Deaths` = col_integer()
     )
   ) |>
-  janitor::clean_names() |>
+  clean_names() |>
   add_count(cause) |>
   mutate(cause = str_trunc(cause, 30))
 ```
@@ -1203,7 +1199,7 @@ alberta_cod <-
       `Total Deaths` = col_integer()
     )
   ) |>
-  janitor::clean_names() |>
+  clean_names() |>
   add_count(cause) |>
   mutate(cause = str_trunc(cause, 30))
 ```
@@ -1221,7 +1217,7 @@ alberta_cod |>
     ranking <= 10
   ) |>
   mutate(total_deaths = format(total_deaths, big.mark = ",")) |>
-  knitr::kable(
+  kable(
     col.names = c(
       "Year",
       "Cause",
@@ -1276,9 +1272,7 @@ One thing that we notice is that the mean, 1,273, is different to the variance, 
 #| echo: false
 #| eval: true
 #| label: tbl-ohboyalberta
-#| tbl-cap: "Summary statistics of the number of yearly deaths, by cause, in Alberta"
-
-library(modelsummary)
+#| tbl-cap: "Summary statistics of the number of yearly deaths, by cause, in Alberta, Canada"
 
 datasummary(
   total_deaths ~ Min + Mean + Max + SD + Var + N,
@@ -1347,8 +1341,6 @@ We can compare our different models (@tbl-modelsummarypoissonvsnegbinomial) (we 
 #| label: tbl-modelsummarypoissonvsnegbinomial
 #| tbl-cap: "Modelling the most prevelent cause of deaths in Alberta, 2001-2020"
 
-library(broom.mixed)
-
 coef_short_names <- 
   c("causeAll other forms of chronic ischemic heart disease"
     = "causeAll other forms of...",
@@ -1360,7 +1352,7 @@ coef_short_names <-
     = "causeOther chronic obst..."
     )
 
-modelsummary::modelsummary(
+modelsummary(
   list(
     "Poisson" = cause_of_death_alberta_poisson,
     "Negative binomial" = cause_of_death_alberta_neg_binomial

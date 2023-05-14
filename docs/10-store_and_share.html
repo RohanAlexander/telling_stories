@@ -539,6 +539,20 @@ div.csl-indent {
 <p>Our concerns in data science tend to be about personally identifying information. We have a variety of ways to protect especially private information, such as emails and home addresses. For instance, we can hash those variables. Sometimes we may simulate data and distribute that instead of sharing the actual dataset. More recently, approaches based on differential privacy are being implemented, for instance the US census. The fundamental problem of data privacy is that increased privacy reduces the usefulness of a dataset. The trade-off means the appropriate decision is nuanced and depends on costs and benefits, and we should be especially concerned about differentiated effects on population minorities.</p>
 <p>Just because a dataset is FAIR, it is not necessarily an unbiased representation of the world. Further, it is not necessarily fair in the everyday way that word is used, i.e.&nbsp;impartial and honest <span class="citation" data-cites="deLima2022">(<a href="99-references.html#ref-deLima2022" role="doc-biblioref">Lima et al. 2022</a>)</span>. FAIR reflects whether a dataset is appropriately available, not whether it is appropriate.</p>
 <p>Finally, in this chapter we consider efficiency. As datasets and code bases get larger it becomes more difficult to deal with them, especially if we want them to be shared. We come to concerns around efficiency, not for its own sake, but to enable us to tell stories that could not otherwise be told. This might mean moving beyond CSV files to formats with other properties, or even using databases, such as Postgres, although even as we do so acknowledging that the simplicity of a CSV, as it is text-based which lends itself to human inspection, can be a useful feature.</p>
+<p>The packages that we need in this chapter are:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(devtools)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(diffpriv)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janitor)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(openssl)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tictoc)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 <section id="plan" class="level2" data-number="10.2">
 <h2 data-number="10.2" class="anchored" data-anchor-id="plan"><span class="header-section-number">10.2</span> Plan</h2>
@@ -563,24 +577,22 @@ div.csl-indent {
 </div>
 <p>We can then add that URL as an argument to <code>read_csv()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>data_location <span class="ot">&lt;-</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"https://raw.githubusercontent.com/RohanAlexander/"</span>,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"starter_folder/main/inputs/data/raw_data.csv"</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>starter_data <span class="ot">&lt;-</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(<span class="at">file =</span> data_location,</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">col_types =</span> <span class="fu">cols</span>(</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>             <span class="at">first_col =</span> <span class="fu">col_character</span>(),</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>             <span class="at">second_col =</span> <span class="fu">col_character</span>(),</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>             <span class="at">third_col =</span> <span class="fu">col_character</span>()</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>             )</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>           )</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>starter_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_location <span class="ot">&lt;-</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"https://raw.githubusercontent.com/RohanAlexander/"</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"starter_folder/main/inputs/data/raw_data.csv"</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>starter_data <span class="ot">&lt;-</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(<span class="at">file =</span> data_location,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">col_types =</span> <span class="fu">cols</span>(</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>             <span class="at">first_col =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>             <span class="at">second_col =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>             <span class="at">third_col =</span> <span class="fu">col_character</span>()</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>             )</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>           )</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>starter_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 3
   first_col second_col third_col
@@ -596,67 +608,63 @@ div.csl-indent {
 <p>This will be the first R package that we build, and so we will jump over a number of steps. The key is to just try to get something working. In <a href="28-deploy.html"><span>Appendix&nbsp;I</span></a>, we return to R packages and use them to deploy models. This gives us another chance to further develop experience with them.</p>
 <p>To get started, create a new package (“File” -&gt; “New project” -&gt; “New Directory” -&gt; “R Package”). Give the package a name, such as “favcolordata” and select “Open in new session”. Create a new folder called “data”. We simulate a dataset of people and their favorite colors to include in our R package.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>color_data <span class="ot">&lt;-</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">c</span>(</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Edward"</span>, <span class="st">"Helen"</span>, <span class="st">"Hugo"</span>, <span class="st">"Ian"</span>, <span class="st">"Monica"</span>,</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Myles"</span>, <span class="st">"Patricia"</span>, <span class="st">"Roger"</span>, <span class="st">"Rohan"</span>, <span class="st">"Ruth"</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>      ),</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">fav_color =</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sample</span>(</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="fu">colors</span>(),</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">size =</span> <span class="dv">10</span>,</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">replace =</span> <span class="cn">TRUE</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>color_data <span class="ot">&lt;-</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">c</span>(</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Edward"</span>, <span class="st">"Helen"</span>, <span class="st">"Hugo"</span>, <span class="st">"Ian"</span>, <span class="st">"Monica"</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Myles"</span>, <span class="st">"Patricia"</span>, <span class="st">"Roger"</span>, <span class="st">"Rohan"</span>, <span class="st">"Ruth"</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">fav_color =</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sample</span>(</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="fu">colors</span>(),</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">size =</span> <span class="dv">10</span>,</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">replace =</span> <span class="cn">TRUE</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>To this point we have largely been using CSV files for our datasets. To include our data in this R package, we save our dataset in a different format, “.rda”, using <code>save()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(color_data, <span class="at">file =</span> <span class="st">"data/color_data.rda"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(color_data, <span class="at">file =</span> <span class="st">"data/color_data.rda"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Then we create a R file “data.R” in the “R” folder. This file will only contain documentation using <code>roxygen2</code> comments. These start with <code>#'</code>, and we follow the documentation for <code>troopdata</code> closely.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' Favorite color of various people data</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' @description \code{favcolordata} returns a dataframe</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#' of the favorite color of various people.</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return Returns a dataframe of the favorite color</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#' of various people.</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#' @docType data</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#' @usage data(color_data)</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#' @format A dataframe of individual-level observations</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#' with the following variables:</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#' \describe{</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#' \item{\code{name}}{A character vector of individual names.}</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#' \item{\code{fav_color}}{A character vector of a variety of colors.}</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#' }</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#' @keywords datasets</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#' @source \url{tellingstorieswithdata.com/12-store_and_share.html}</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="st">"color_data"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' Favorite color of various people data</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' @description \code{favcolordata} returns a dataframe</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#' of the favorite color of various people.</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return Returns a dataframe of the favorite color</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#' of various people.</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#' @docType data</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#' @usage data(color_data)</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#' @format A dataframe of individual-level observations</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#' with the following variables:</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#' \describe{</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">#' \item{\code{name}}{A character vector of individual names.}</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">#' \item{\code{fav_color}}{A character vector of a variety of colors.}</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co">#' }</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="co">#' @keywords datasets</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="co">#' @source \url{tellingstorieswithdata.com/12-store_and_share.html}</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="st">"color_data"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Finally, add a README that provides a summary of all of this for someone coming to the project for the first time. Examples of packages with excellent READMEs include <a href="https://github.com/tidyverse/ggplot2#readme"><code>ggplot2</code></a>, <a href="https://github.com/rich-iannone/pointblank#readme"><code>pointblank</code></a>, <a href="https://github.com/vincentarelbundock/modelsummary#readme"><code>modelsummary</code></a>, and <a href="https://github.com/sfirke/janitor#readme"><code>janitor</code></a>.</p>
 <p>We can now go to the “Build” tab and click “Install and Restart”. After this, the package “favcolordata”, will be loaded and the data can be accessed locally using “color_data”. If we were to push this package to GitHub, then anyone would be able to install the package using <code>devtools</code> <span class="citation" data-cites="citeDevtools">(<a href="99-references.html#ref-citeDevtools" role="doc-biblioref">Wickham et al. 2022</a>)</span> and use our dataset. Indeed, the following will work.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(devtools)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">install_github</span>(<span class="st">"RohanAlexander/favcolordata"</span>)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(favcolordata)</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>color_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install_github</span>(<span class="st">"RohanAlexander/favcolordata"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(favcolordata)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>color_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>This has addressed many of the issues that we faced earlier. For instance, we have included a README and a data dictionary, of sorts, in terms of the descriptions that we added. But if we were to try to put this package onto CRAN, then we might face some issues. For instance, the maximum size of a package is 5MB and we would quickly come up against that. We have also largely forced users to use R. While there are benefits of that, we may like to be more language agnostic <span class="citation" data-cites="tierney2020realistic">(<a href="99-references.html#ref-tierney2020realistic" role="doc-biblioref">Tierney and Ram 2020</a>)</span>, especially if we are concerned about the FAIR principles.</p>
 <p>The definitive guide to including data in R packages is <span class="citation" data-cites="rpackages">Wickham (<a href="99-references.html#ref-rpackages" role="doc-biblioref">2022, chap. 8</a>)</span>.</p>
@@ -716,15 +724,13 @@ Shoulders of giants
 <p><span class="citation" data-cites="knuth">Knuth (<a href="99-references.html#ref-knuth" role="doc-biblioref">1998, 514</a>)</span> relates an interesting etymology for “hash”. He first defines “to hash” as relating to chop up or make a mess, and then explaining that hashing relates to scrambling the input and using this partial information to define the output. A collision is when different inputs map to the same output, and one feature of a good hashing algorithm is that collisions are reduced. As mentioned, one simple approach is to rely on the modulo operator. For instance, if we were interested in ten different groupings for the integers 1 through to 10, then modulo would enable this. A better approach would be for the number of groupings to be a larger number, because this would reduce the number of values with this same hash outcome.</p>
 <p>For instance, consider some information that we would like to keep private, such as names and ages of respondents.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>some_private_information <span class="ot">&lt;-</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">c</span>(<span class="st">"Rohan"</span>, <span class="st">"Monica"</span>, <span class="st">"Edward"</span>, <span class="st">"Hugo"</span>),</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">ages =</span> <span class="fu">c</span>(<span class="dv">36</span>, <span class="dv">35</span>, <span class="dv">3</span>, <span class="dv">1</span>)</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>some_private_information</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>some_private_information <span class="ot">&lt;-</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">c</span>(<span class="st">"Rohan"</span>, <span class="st">"Monica"</span>, <span class="st">"Edward"</span>, <span class="st">"Hugo"</span>),</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">ages =</span> <span class="fu">c</span>(<span class="dv">36</span>, <span class="dv">35</span>, <span class="dv">3</span>, <span class="dv">1</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>some_private_information</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 2
   names   ages
@@ -737,11 +743,11 @@ Shoulders of giants
 </div>
 <p>One option for the names would be to use a function that just took the first letter of each name. And one option for the ages would be to convert them to Roman numerals.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>some_private_information <span class="sc">|&gt;</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">substring</span>(names, <span class="dv">1</span>, <span class="dv">1</span>),</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">ages =</span> <span class="fu">as.roman</span>(ages)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>some_private_information <span class="sc">|&gt;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">substring</span>(names, <span class="dv">1</span>, <span class="dv">1</span>),</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">ages =</span> <span class="fu">as.roman</span>(ages)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 2
   names ages   
@@ -790,15 +796,13 @@ Shoulders of giants
 <!--   ) -->
 <!-- hashing -->
 <!-- ``` -->
-<p>Rather than write our own hash functions, we can use cryptographic hash functions such as <code>md5()</code> from <code>openssl</code> <span class="citation" data-cites="openssl">(<a href="99-references.html#ref-openssl" role="doc-biblioref">Ooms 2022</a>)</span>.</p>
+<p>Rather than write our own hash functions, we can use cryptographic hash functions such as <code>md5()</code> from <code>openssl</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(openssl)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>some_private_information <span class="sc">|&gt;</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">md5_names =</span> <span class="fu">md5</span>(names),</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">md5_ages =</span> <span class="fu">md5</span>(ages <span class="sc">|&gt;</span> <span class="fu">as.character</span>())</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>some_private_information <span class="sc">|&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">md5_names =</span> <span class="fu">md5</span>(names),</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">md5_ages =</span> <span class="fu">md5</span>(ages <span class="sc">|&gt;</span> <span class="fu">as.character</span>())</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 4
   names   ages md5_names                        md5_ages                        
@@ -812,11 +816,11 @@ Shoulders of giants
 <p>We could share either of these transformed variables and be comfortable that it would be difficult for someone to use only that information to recover the names of our respondents. That is not to say that it is impossible. Knowledge of the key, which is the term given to the string used to encrypt the data, would allow someone to reverse this. If we made a mistake, such as accidentally pushing the original dataset to GitHub then they could be recovered. And it is likely that various governments can reverse the cryptographic hashes used here.</p>
 <p>One issue that remains is that anyone can take advantage of the key feature of hashes to back out the input. That feature is that the same input always gets the same output, to test various options for inputs. For instance, they could themselves try to hash “Rohan”, and then noticing that the hash is the same as the one that we published in our dataset, know that data relates to that individual. We could try to keep our hashing approach secret, but that is difficult as there are only a few that are widely used. One approach is to add a salt that we keep secret. This slightly changes the input. For instance, we could add the salt “_is_a_person” to all our names and then hash that, although a large random number might be a better option. Provided the salt is not shared, then it would be difficult for most people to reverse our approach in that way.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>some_private_information <span class="sc">|&gt;</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">names =</span> <span class="fu">paste0</span>(names, <span class="st">"_is_a_person"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">md5_of_salt =</span> <span class="fu">md5</span>(names)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>some_private_information <span class="sc">|&gt;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">names =</span> <span class="fu">paste0</span>(names, <span class="st">"_is_a_person"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">md5_of_salt =</span> <span class="fu">md5</span>(names)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 3
   names               ages md5_of_salt                     
@@ -854,12 +858,12 @@ Shoulders of giants
 <p>A dataset is differentially private to different levels of privacy, based on how much it changes when one person’s results are included or excluded. This is the key parameter, because at the same time as deciding how much of an individual’s information we are prepared to give up, or “leak”, we are deciding how much random noise to add, which will impact our output. The choice of this level is a nuanced one and should involve extensive consideration of the costs of undesired disclosures, compared with the benefits of additional research. For public data that will be released under differential privacy, the reasons for the decision should be public because of the costs that are being imposed. Indeed, <span class="citation" data-cites="differentialprivacyatapple">Tang et al. (<a href="99-references.html#ref-differentialprivacyatapple" role="doc-biblioref">2017</a>)</span> argue that even in the case of private companies, such as Apple, users should have a choice about the level of privacy loss.</p>
 <p>Consider a situation in which a professor wants to release the average mark for a particular assignment. The professor wants to ensure that despite that information, no student can work out the grade that another student got. For instance, consider a small class with the following marks.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>grades <span class="ot">&lt;-</span> </span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">problem_set_1 =</span> <span class="fu">sample</span>(<span class="at">x =</span> (<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>), <span class="at">size =</span> <span class="dv">10</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>))</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(grades<span class="sc">$</span>problem_set_1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>grades <span class="ot">&lt;-</span> </span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">problem_set_1 =</span> <span class="fu">sample</span>(<span class="at">x =</span> (<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>), <span class="at">size =</span> <span class="dv">10</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(grades<span class="sc">$</span>problem_set_1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 50.5</code></pre>
 </div>
@@ -867,38 +871,36 @@ Shoulders of giants
 <p>The professor could announce the exact mean, for instance, “The mean for the first problem set was 50.5”. Then theoretically, all-but-one student could let the others know their mark. The result would be that it would be possible to determine the mark of the student who did not agree to make their mark public.</p>
 <p>A non-statistical approach would be for the professor to add the word “roughly”. For instance, the professor could say “The mean for the first problem set was roughly 50.5”. The students could attempt the same strategy, but they would never know with certainty. The professor could implement this by adding noise to the mean.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(grades<span class="sc">$</span>problem_set_1) <span class="sc">+</span> <span class="fu">runif</span>(<span class="at">n =</span> <span class="dv">1</span>, <span class="at">min =</span> <span class="sc">-</span><span class="dv">10</span>, <span class="at">max =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(grades<span class="sc">$</span>problem_set_1) <span class="sc">+</span> <span class="fu">runif</span>(<span class="at">n =</span> <span class="dv">1</span>, <span class="at">min =</span> <span class="sc">-</span><span class="dv">10</span>, <span class="at">max =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 42.57596</code></pre>
 </div>
 </div>
 <p>The professor could then announce this modified mean. This would make the students’ plan more difficult. One thing to notice about that approach is that it would not work with persistent questioning. For instance, eventually the students would be able to back out the distribution of the noise that the professor was adding. One implication is that the professor would need to limit the number of queries that we allow.</p>
-<p>We can implement a differentially private approach using <code>diffpriv</code> <span class="citation" data-cites="diffpriv">(<a href="99-references.html#ref-diffpriv" role="doc-biblioref">Rubinstein and Alda 2017</a>)</span>. This results in a mean that we could announce (<a href="#tbl-diffprivaexample">Table&nbsp;<span>10.1</span></a>).</p>
+<p>We can implement a differentially private approach using <code>diffpriv</code>. This results in a mean that we could announce (<a href="#tbl-diffprivaexample">Table&nbsp;<span>10.1</span></a>).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Code based on the diffpriv example</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(diffpriv)</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>target <span class="ot">&lt;-</span> <span class="cf">function</span>(X) <span class="fu">mean</span>(X)</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>mech <span class="ot">&lt;-</span> <span class="fu">DPMechLaplace</span>(<span class="at">target =</span> target)</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>distr <span class="ot">&lt;-</span> <span class="cf">function</span>(n) <span class="fu">rnorm</span>(n)</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>mech <span class="ot">&lt;-</span> <span class="fu">sensitivitySampler</span>(mech, <span class="at">oracle =</span> distr, <span class="at">n =</span> <span class="dv">5</span>, <span class="at">gamma =</span> <span class="fl">0.1</span>)</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>r <span class="ot">&lt;-</span> <span class="fu">releaseResponse</span>(mech, </span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>                     <span class="at">privacyParams =</span> <span class="fu">DPParamsEps</span>(<span class="at">epsilon =</span> <span class="dv">1</span>), </span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>                     <span class="at">X =</span> grades<span class="sc">$</span>problem_set_1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Code based on the diffpriv example</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>target <span class="ot">&lt;-</span> <span class="cf">function</span>(X) <span class="fu">mean</span>(X)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>mech <span class="ot">&lt;-</span> <span class="fu">DPMechLaplace</span>(<span class="at">target =</span> target)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>distr <span class="ot">&lt;-</span> <span class="cf">function</span>(n) <span class="fu">rnorm</span>(n)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>mech <span class="ot">&lt;-</span> <span class="fu">sensitivitySampler</span>(mech, <span class="at">oracle =</span> distr, <span class="at">n =</span> <span class="dv">5</span>, <span class="at">gamma =</span> <span class="fl">0.1</span>)</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>r <span class="ot">&lt;-</span> <span class="fu">releaseResponse</span>(mech, </span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>                     <span class="at">privacyParams =</span> <span class="fu">DPParamsEps</span>(<span class="at">epsilon =</span> <span class="dv">1</span>), </span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>                     <span class="at">X =</span> grades<span class="sc">$</span>problem_set_1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="cell-output-display">
 <div id="tbl-diffprivaexample" class="anchored">
-<table class="table table-sm table-striped">
+<table data-quarto-postprocess="true" class="table table-sm table-striped">
 <caption>Table&nbsp;10.1: Comparing the actual mean with a differentially private mean</caption>
 <thead>
 <tr class="header">
-<th style="text-align: right;">Actual mean</th>
-<th style="text-align: right;">Announceable mean</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Actual mean</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Announceable mean</th>
 </tr>
 </thead>
 <tbody>
@@ -909,6 +911,8 @@ Shoulders of giants
 </tbody>
 </table>
 </div>
+
+
 </div>
 </div>
 <p>The implementation of differential privacy is a costs and benefits issue <span class="citation" data-cites="hotz2022balancing kennetal22">(<a href="99-references.html#ref-hotz2022balancing" role="doc-biblioref">Hotz et al. 2022</a>; <a href="99-references.html#ref-kennetal22" role="doc-biblioref">Kenny et al. 2022</a>)</span>. Stronger privacy protection fundamentally must mean less information <span class="citation" data-cites="clairemckaybowen">(<a href="99-references.html#ref-clairemckaybowen" role="doc-biblioref">Bowen 2022, 39</a>)</span>, and this affects differently various aspects of society. For instance, <span class="citation" data-cites="Suriyakumar2021">Suriyakumar et al. (<a href="99-references.html#ref-Suriyakumar2021" role="doc-biblioref">2021</a>)</span> found that, in the context of health care, differentially private learning can result in models that are disproportionately affected by large demographic groups.</p>
@@ -923,38 +927,33 @@ Shoulders of giants
 <p>There are several ways to become more efficient with our data, especially as it becomes larger. The first, and most obvious, is to break larger datasets into smaller pieces. For instance, if we have a dataset for a year, then we could break it into months, or even days. To enable this, we need a way of quickly reading in many different files.</p>
 <p>The need to read in multiple files and combine them into the one tibble is a surprisingly common task. For instance, it may be that the data for a year, are saved into individual CSV files for each month. We can use <code>purrr</code> <span class="citation" data-cites="citepurrr">(<a href="99-references.html#ref-citepurrr" role="doc-biblioref">Wickham and Henry 2022</a>)</span> and <code>fs</code> <span class="citation" data-cites="fs">(<a href="99-references.html#ref-fs" role="doc-biblioref">Hester, Wickham, and Csárdi 2021</a>)</span> to do this painlessly. To illustrate this situation we will simulate data from the exponential distribution using <code>rexp()</code>. Such data may reflect, say, comments on a social media platform, where the vast majority of comments are made by a tiny minority of users. We will use <code>dir_create()</code> from <code>fs</code> to create a folder, simulate monthly data, and save it. We will then illustrate reading it in.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dir_create</span>(<span class="at">path =</span> <span class="st">"user_data"</span>)</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>simulate_and_save_data <span class="ot">&lt;-</span> <span class="cf">function</span>(month) {</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  number_of_observations <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  file_name <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"user_data/"</span>, month, <span class="st">".csv"</span>)</span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  user_comments <span class="ot">&lt;-</span></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(</span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">user =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span>number_of_observations),</span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">month =</span> <span class="fu">rep</span>(<span class="at">x =</span> month, <span class="at">times =</span> number_of_observations),</span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">comments =</span> <span class="fu">rexp</span>(<span class="at">n =</span> number_of_observations, <span class="at">rate =</span> <span class="fl">0.3</span>) <span class="sc">|&gt;</span> <span class="fu">round</span>()</span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(</span>
-<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> user_comments,</span>
-<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> file_name</span>
-<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="fu">walk</span>(month.name <span class="sc">|&gt;</span> <span class="fu">tolower</span>(), simulate_and_save_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dir_create</span>(<span class="at">path =</span> <span class="st">"user_data"</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>simulate_and_save_data <span class="ot">&lt;-</span> <span class="cf">function</span>(month) {</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  number_of_observations <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  file_name <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"user_data/"</span>, month, <span class="st">".csv"</span>)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>  user_comments <span class="ot">&lt;-</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">user =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span>number_of_observations),</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">month =</span> <span class="fu">rep</span>(<span class="at">x =</span> month, <span class="at">times =</span> number_of_observations),</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">comments =</span> <span class="fu">rexp</span>(<span class="at">n =</span> number_of_observations, <span class="at">rate =</span> <span class="fl">0.3</span>) <span class="sc">|&gt;</span> <span class="fu">round</span>()</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> user_comments,</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> file_name</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a><span class="fu">walk</span>(month.name <span class="sc">|&gt;</span> <span class="fu">tolower</span>(), simulate_and_save_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Having created our dataset with each month saved to a different CSV, we can now read it in. There are a variety of ways to do this. The first step is that we need to get a list of all the CSV files in the directory. We use the “glob” argument here to specify that we are interested only in the “.csv” files, and that could change to whatever files it is that we are interested in.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>files_of_interest <span class="ot">&lt;-</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir_ls</span>(<span class="at">path =</span> <span class="st">"user_data/"</span>, <span class="at">glob =</span> <span class="st">"*.csv"</span>)</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>files_of_interest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>files_of_interest <span class="ot">&lt;-</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir_ls</span>(<span class="at">path =</span> <span class="st">"user_data/"</span>, <span class="at">glob =</span> <span class="st">"*.csv"</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>files_of_interest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -965,17 +964,17 @@ Shoulders of giants
 </div>
 <p>We can pass this list to <code>read_csv()</code> and it will read them in and combine them.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>year_of_data <span class="ot">&lt;-</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    files_of_interest,</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">col_types =</span> <span class="fu">cols</span>(</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">user =</span> <span class="fu">col_double</span>(),</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">month =</span> <span class="fu">col_character</span>(),</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">comments =</span> <span class="fu">col_double</span>(),</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>year_of_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>year_of_data <span class="ot">&lt;-</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    files_of_interest,</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">col_types =</span> <span class="fu">cols</span>(</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">user =</span> <span class="fu">col_double</span>(),</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">month =</span> <span class="fu">col_character</span>(),</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">comments =</span> <span class="fu">col_double</span>(),</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>year_of_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -998,11 +997,9 @@ Shoulders of giants
 <p>It prints out the first ten days of April, because alphabetically April is the first month of the year and so that was the first CSV that was read.</p>
 <p>This works well when we have CSV files, but we might not always have CSV files and so will need another way, and can use <code>map_dfr()</code> to do this. One nice aspect of this approach is that we can include the name of the file alongside the observation using “.id”. Here we specify that we would like that column to be called “file”, but it could be anything.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>year_of_data_using_purrr <span class="ot">&lt;-</span></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  files_of_interest <span class="sc">|&gt;</span></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dfr</span>(read_csv, <span class="at">.id =</span> <span class="st">"file"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>year_of_data_using_purrr <span class="ot">&lt;-</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  files_of_interest <span class="sc">|&gt;</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dfr</span>(read_csv, <span class="at">.id =</span> <span class="st">"file"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -1046,30 +1043,27 @@ Shoulders of giants
 </ul>
 <p>Having loaded <code>arrow</code>, we can use parquet files in a similar way to CSV files. Anywhere in our code that we used <code>write_csv()</code> and <code>read_csv()</code> we could alternatively, or additionally, use <code>write_parquet()</code> and <code>read_parquet()</code>, respectively. The decision to use parquet needs to consider both costs and benefits, and it is an active area of development.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>number_of_draws <span class="ot">&lt;-</span> <span class="dv">1000000</span></span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Homage to: https://www.rand.org/pubs/monograph_reports/MR1418.html</span></span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>a_million_random_digits <span class="ot">&lt;-</span></span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">numbers =</span> <span class="fu">runif</span>(<span class="at">n =</span> number_of_draws),</span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">letters =</span> <span class="fu">sample</span>(<span class="at">x =</span> letters, <span class="at">size =</span> number_of_draws, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">states =</span> <span class="fu">sample</span>(<span class="at">x =</span> state.name, <span class="at">size =</span> number_of_draws, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(<span class="at">x =</span> a_million_random_digits,</span>
-<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>          <span class="at">file =</span> <span class="st">"a_million_random_digits.csv"</span>)</span>
-<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a><span class="fu">write_parquet</span>(<span class="at">x =</span> a_million_random_digits,</span>
-<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>              <span class="at">sink =</span> <span class="st">"a_million_random_digits.parquet"</span>)</span>
-<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>fs<span class="sc">::</span><span class="fu">file_size</span>(<span class="st">"a_million_random_digits.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>number_of_draws <span class="ot">&lt;-</span> <span class="dv">1000000</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Homage to: https://www.rand.org/pubs/monograph_reports/MR1418.html</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>a_million_random_digits <span class="ot">&lt;-</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">numbers =</span> <span class="fu">runif</span>(<span class="at">n =</span> number_of_draws),</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">letters =</span> <span class="fu">sample</span>(<span class="at">x =</span> letters, <span class="at">size =</span> number_of_draws, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">states =</span> <span class="fu">sample</span>(<span class="at">x =</span> state.name, <span class="at">size =</span> number_of_draws, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(<span class="at">x =</span> a_million_random_digits,</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>          <span class="at">file =</span> <span class="st">"a_million_random_digits.csv"</span>)</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a><span class="fu">write_parquet</span>(<span class="at">x =</span> a_million_random_digits,</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>              <span class="at">sink =</span> <span class="st">"a_million_random_digits.parquet"</span>)</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a><span class="fu">file_size</span>(<span class="st">"a_million_random_digits.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>29.3M</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>fs<span class="sc">::</span><span class="fu">file_size</span>(<span class="st">"a_million_random_digits.parquet"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">file_size</span>(<span class="st">"a_million_random_digits.parquet"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>8.17M</code></pre>
 </div>
@@ -1583,9 +1577,6 @@ Richardson, Neal, Ian Cook, Nic Crane, Dewey Dunnington, Romain François, Jonat
 </div>
 <div id="ref-ibmdataset" class="csl-entry" role="listitem">
 Ross, Casey. 2022. <span>“How a Decades-Old Database Became a Hugely Profitable Dossier on the Health of 270 Million Americans.”</span> <em>Stat</em>, February. <a href="https://www.statnews.com/2022/02/01/ibm-watson-health-marketscan-data/">https://www.statnews.com/2022/02/01/ibm-watson-health-marketscan-data/</a>.
-</div>
-<div id="ref-diffpriv" class="csl-entry" role="listitem">
-Rubinstein, Benjamin, and Francesco Alda. 2017. <span>“Pain-Free Random Differential Privacy with Sensitivity Sampling.”</span> In <em>34th International Conference on Machine Learning (ICML’2017)</em>.
 </div>
 <div id="ref-ruggles2019differential" class="csl-entry" role="listitem">
 Ruggles, Steven, Catherine Fitch, Diana Magnuson, and Jonathan Schroeder. 2019. <span>“Differential Privacy and Census Data: Implications for Social and Economic Research.”</span> <em>AEA Papers and Proceedings</em> 109 (May): 403–8. <a href="https://doi.org/10.1257/pandp.20191107">https://doi.org/10.1257/pandp.20191107</a>.

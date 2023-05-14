@@ -100,6 +100,21 @@ In general, MRP is a good way to accomplish specific aims, but it is not without
 
 In this chapter, we begin with simulating a situation in which we pretend that we know the features of the population. We then consider the famous Xbox poll MRP example in greater depth. We will finally move to examples from the Australian political context, and then the US 2020 presidential election.
 
+The packages that we need in this chapter are:
+```{r}
+#| message: false
+#| warning: false
+
+library(broom.mixed)
+library(gutenbergr)
+library(haven)
+library(knitr)
+library(labelled)
+library(modelsummary)
+library(rstanarm)
+library(tidybayes)
+library(tidyverse)
+```
 
 ## Multilevel modelling
 
@@ -118,25 +133,25 @@ The fundamental insight of multilevel modelling is that a lot of the time our ob
 
 We distinguish between three settings:\index{multilevel modelling!pooling} 1) Complete pooling, where we treat every observation as being from the same group, which is what we have been doing to this point. 2) No pooling, where we treat every group separately, which might happen if we were to run a separate regression for each group. 3) Partial pooling, where we allow group membership to have some influence. As an example, consider we are interested in the relationship between GDP and inflation for each of the countries in the world. Complete pooling would have us put all the countries into the one group; no pooling would have us run separate regressions for each continent. We will now illustrate the partial pooling approach.
 
-In general there are two ways to go about this: 1) enable varying intercepts, or 2) enable varying slopes. We consider only the first, but if the latter is of interest, then @citemcelreath and @bayesrules are the next natural steps. Let us consider a situation in which the probability of support for a particular political party depends on their age-group, and the state that they live in.
+In general there are two ways to go about this: 1) enable varying intercepts, or 2) enable varying slopes. We consider only the first, but if the latter is of interest, then @citemcelreath and @bayesrules are the next natural steps. 
+
+Let us consider a situation in which the probability of support for a particular political party depends on their age-group, and the state that they live in.
 
 $$
 \begin{aligned}
-\mbox{Pr}(y_i=1) & = \mbox{logit}^{-1}\left(\beta_0 + \beta_1 x_i + \beta_2 x_{i[j]} \right)\\
-\beta_0 & \sim \mbox{Normal}(0, 3)\\
-\beta_1 & \sim \mbox{Normal}(0, 3)\\
-\beta_2 & \sim \mbox{Normal}(0, \sigma_{j})\\
-\sigma_{j} & \sim \mbox{Exponential}(1)
+\mbox{Pr}(y_i=1) & = \mbox{logit}^{-1}\left(\alpha_0 + \alpha_{i}^{\mbox{age}} + \alpha_{j[i]}^{\mbox{state}} \right)\\
+\alpha_0 & \sim \mbox{Normal}(0, 3)\\
+\alpha^{\mbox{age}} & \sim \mbox{Normal}(0, 3)\\
+\alpha_{s}^{\mbox{state}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{state}}\right)\mbox{ for }s=1, 2, \dots, S\\
+\sigma_{\mbox{state}} & \sim \mbox{Exponential}(1)
 \end{aligned}
 $$
 
-We include this in the function with "(1 | state)" within `stan_glmer()` from `rstanarm` [@citerstanarm]. This term indicates that we are looking at a group effect by state, which means that the fitted model's intercept is allowed to vary according by state.
+where $S$ is the total number of states. We include this in the function with "(1 | state)" within `stan_glmer()` from `rstanarm` [@citerstanarm]. This term indicates that we are looking at a group effect by state, which means that the fitted model's intercept is allowed to vary according by state.
 
 ```{r}
 #| warning: false
 #| message: false
-
-library(tidyverse)
 
 set.seed(853)
 
@@ -156,8 +171,6 @@ political_support
 #| echo: true
 #| message: false
 #| warning: false
-
-library(rstanarm)
 
 voter_preferences <-
   stan_glmer(
@@ -213,8 +226,6 @@ As an example of multilevel modelling, we consider data from Project Gutenberg o
 ```{r}
 #| eval: false
 #| echo: true
-
-library(gutenbergr)
 
 dups_and_letters_shakespeare <-
   c(
@@ -396,8 +407,6 @@ saveRDS(
 #| warning: false
 #| message: false
 
-library(rstanarm)
-
 author_lines_rstanarm <-
   readRDS(file = "outputs/model/author_lines_rstanarm.rds")
 
@@ -411,9 +420,7 @@ author_lines_rstanarm_multilevel <-
 #| tbl-cap: "Explaining whether Austen or Shakespeare wrote a book based on the number of lines"
 #| warning: false
 
-library(broom.mixed)
-
-modelsummary::modelsummary(
+modelsummary(
   list(
     "Negative binomial" = author_lines_rstanarm,
     "Negative binomial with multilevel" = author_lines_rstanarm_multilevel
@@ -430,8 +437,6 @@ modelsummary::modelsummary(
 #| warning: false
 #| label: fig-multilevelexampleleveldistribution
 #| fig-cap: "Examining the distribution of draws for each of the four authors"
-
-library(tidybayes)
 
 author_lines_rstanarm_multilevel |>
   spread_draws(`(Intercept)`, b[, group]) |>
@@ -483,8 +488,6 @@ To get started we will simulate some population about whether someone prefers co
 #| message: false
 #| warning: false
 
-library(tidyverse)
-
 set.seed(853)
 
 population_size <- 1000000
@@ -510,7 +513,7 @@ We can see that the counts, by group, are fairly similar (tbl-teapreferencecount
 
 simulated_population |>
   count(age, nationality, prefers_tea) |> 
-  knitr::kable(
+  kable(
     col.names = c("Age", "Nationality", "Prefers tea", "Number"),
     format.args = list(big.mark = ",")
     )
@@ -541,7 +544,7 @@ tea_sample <-
 
 tea_sample |>
   count(age, nationality, prefers_tea) |> 
-  knitr::kable(
+  kable(
     col.names = c("Age", "Nationality", "Prefers tea", "Number"),
     format.args = list(big.mark = ",")
     )
@@ -553,19 +556,21 @@ It is clear that our sample has a different average tea preference than the over
 
 ### Model the sample
 
-We now train a model based on the biased survey. We explain tea preferences based on age and nationality. There is nothing that says you have to use a multilevel model, but a lot of situations will have circumstances such that it is not likely to do any worse. To be clear, this means that although we have individual-level data, there is some grouping of the individuals that we will take advantage of.
+We now train a model based on the biased survey. We explain tea preferences based on age and national origin. There is nothing that says you have to use a multilevel model, but a lot of situations will have circumstances such that it is not likely to do any worse. To be clear, this means that although we have individual-level data, there is some grouping of the individuals that we will take advantage of.
 
 $$
 \begin{aligned}
 y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
-\mbox{logit}(\pi_i) & = \left(\beta_0+\beta_1 \times \mbox{age}_i + \beta_2 \times \mbox{nationality}_i\right) \\
-\beta_0 & \sim \mbox{Normal}(0, 2.5)\\
-\beta_1 & \sim \mbox{Normal}(0, 2.5)\\
-\beta_2 & \sim \mbox{Normal}(0, 2.5)
+\mbox{logit}(\pi_i) & = \left(\alpha_0 + \alpha_{a[i]}^{\mbox{age}} + \alpha_{n[i]}^{\mbox{nat}} \right) \\
+\alpha_0 & \sim \mbox{Normal}(0, 2.5)\\
+\alpha_{a}^{\mbox{age}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{age}}\right)\mbox{ for }a = 1, 2, \dots, A\\
+\alpha_{n}^{\mbox{nat}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{nat}}\right)\mbox{ for }n = 1, 2, \dots, N\\
+\sigma_{\mbox{age}} & \sim \mbox{Exponential}(1)\\
+\sigma_{\mbox{nat}} & \sim \mbox{Exponential}(1)
 \end{aligned}
 $$
 
-where $y_i$ is the tea preference of the respondent, $\mbox{age}_i$ is the age of the respondent, and $\mbox{nationality}_i$ is the nationality of the respondent. We will estimate the model using `stan_glm()`. 
+where $y_i$ is the tea preference of the respondent. $\alpha^\mbox{age}$ and $\alpha^\mbox{nat}$ are the effect of age and national origin, respectively. The $a[i]$ and $n[i]$ refer to which age-group and nationality, respectively, the respondent belongs to. $A$ and $N$ are the total number of age-groups and nationalities, respectively. We will estimate the model with `stan_glm()`. 
 
 ```{r}
 #| eval: false
@@ -608,8 +613,6 @@ saveRDS(
 #| warning: false
 #| message: false
 
-library(rstanarm)
-
 tea_preference_model <-
   readRDS(file = "tea_preference_model.rds")
 ```
@@ -619,8 +622,6 @@ tea_preference_model <-
 #| echo: false
 #| warning: false
 #| message: false
-
-library(rstanarm)
 
 tea_preference_model <-
   readRDS(file = "outputs/model/tea_preference_model.rds")
@@ -633,9 +634,7 @@ tea_preference_model <-
 #| label: tbl-teamodelresults
 #| warning: false
 
-library(broom.mixed)
-
-modelsummary::modelsummary(
+modelsummary(
   list(
     "Tea preferences" = tea_preference_model
   )
@@ -651,8 +650,6 @@ modelsummary::modelsummary(
 #| warning: false
 #| label: fig-teamodelresultsplots
 #| fig-cap: "Examining the distribution of draws for each of the groups"
-
-library(tidybayes)
 
 tea_preference_model |>
   spread_draws(`(Intercept)`, b[, group]) |>
@@ -688,7 +685,7 @@ This is an idealized example where we assume individual-level data in our post-s
 ```{r}
 predicted_tea_preference <-
   tea_preference_model |>
-  tidybayes::add_epred_draws(newdata = tea_poststrat_dataset,
+  add_epred_draws(newdata = tea_poststrat_dataset,
                              value = "preference") |>
   ungroup() |>
   summarise(
@@ -735,7 +732,7 @@ comparison <-
   )
 
 comparison |> 
-  knitr::kable(digits = 2)
+  kable(digits = 2)
 ```
 
 In this case, the MRP approach has done a good job of taking a biased sample and resulting in an estimate of tea preferences that did reflect the truth.
@@ -1116,9 +1113,6 @@ As introduced in [Online Appendix -@sec-r-essentials], we can import ".dta" file
 #| eval: false
 #| echo: true
 
-library(haven)
-library(tidyverse)
-
 raw_nationscape_data <-
   read_dta("ns20200625.dta")
 ```
@@ -1126,9 +1120,6 @@ raw_nationscape_data <-
 ```{r}
 #| eval: true
 #| echo: false
-
-library(haven)
-library(tidyverse)
 
 raw_nationscape_data <-
   read_dta("dont_push/ns20200625.dta")
@@ -1138,7 +1129,7 @@ raw_nationscape_data <-
 ```{r}
 # The Stata format separates labels so reunite those
 raw_nationscape_data <-
-  labelled::to_factor(raw_nationscape_data)
+  to_factor(raw_nationscape_data)
 
 # Just keep relevant variables
 nationscape_data <-
@@ -1280,7 +1271,7 @@ raw_poststrat_data <-
 
 ```{r}
 raw_poststrat_data <-
-  labelled::to_factor(raw_poststrat_data)
+  to_factor(raw_poststrat_data)
 
 poststrat_data <-
   raw_poststrat_data |>
@@ -1369,13 +1360,29 @@ poststrat_data_cells
 
 ### Model
 
-We are going to use logistic regression to estimate a model where the binary of support for Biden versus Trump is explained by gender, age-group, education, and state. Following @kennedygabry2020 we will use `rstanarm` [@citerstanarm].
+We are going to use logistic regression to estimate a model where the binary of support for Biden versus Trump is explained by gender, age-group, education, and state. 
+
+$$
+\begin{aligned}
+y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
+\mbox{logit}(\pi_i) & = \left(\alpha_0 + \alpha_{a[i]}^{\mbox{age}} + \alpha_{s[i]}^{\mbox{state}} + \alpha_{e[i]}^{\mbox{edu}} \right) \\
+\alpha_0 & \sim \mbox{Normal}(0, 2.5)\\
+\alpha_{a}^{\mbox{age}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{age}}\right)\mbox{ for }a = 1, 2, \dots, A\\
+\alpha_{s}^{\mbox{state}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{state}}\right)\mbox{ for }s = 1, 2, \dots, S\\
+\alpha_{e}^{\mbox{edu}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{edu}}\right)\mbox{ for }e = 1, 2, \dots, E\\
+\sigma_{\mbox{age}} & \sim \mbox{Exponential}(1)\\
+\sigma_{\mbox{state}} & \sim \mbox{Exponential}(1)\\
+\sigma_{\mbox{edu}} & \sim \mbox{Exponential}(1)
+\end{aligned}
+$$
+
+where $y_i$ is whether a respondent supports Biden. $\alpha^\mbox{age}$, $\alpha^\mbox{state}$, and $\alpha^\mbox{edu}$ are the effect of age, state, and education, respectively. The $a[i]$, $s[i]$, and $e[i]$ refer to which age-group, state, and education level, respectively, the respondent belongs to. $A$, $S$, and $E$ are the total number of age-groups, states, and education levels, respectively. We will estimate the model with `stan_glm()`. 
+
+Following @kennedygabry2020 we use `stan_glmer()` from `rstanarm` to estimate the model.
 
 ```{r}
 #| echo: true
 #| eval: false
-
-library(rstanarm)
 
 us_election_model <-
   stan_glmer(
@@ -1426,9 +1433,7 @@ We might be interested to look at the coefficient estimates (@tbl-modelsummaryus
 #| label: tbl-modelsummaryusamrp
 #| tbl-cap: "Estimating a model of choice between Biden and Trump in the 2020 US election"
 
-library(broom.mixed)
-
-modelsummary::modelsummary(
+modelsummary(
   us_election_model
 )
 ```
@@ -1442,7 +1447,7 @@ We now post-stratify according to the population proportions calculated previous
 
 biden_support_by_state <-
   us_election_model |>
-  tidybayes::add_epred_draws(newdata = poststrat_data_cells) |>
+  add_epred_draws(newdata = poststrat_data_cells) |>
   rename(support_biden_predict = .epred) |>
   mutate(support_biden_predict_prop = support_biden_predict * prop) |>
   ungroup() |> 

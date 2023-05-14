@@ -51,6 +51,20 @@ The general idea here is that we need to know, and allow others to come to trust
 
 In this chapter, we begin by moving our compute from our local computer to the cloud. We then describe the use of R packages and Shiny for sharing models. That works well, but in some settings other users may like to interact with our model in ways that we are not focused on. One way to allow this is to make our results available to other computers, and for that we will want to make an API. Hence, we introduce `plumber` [@plumber], which is a way of creating APIs.
 
+The packages that we need in this chapter are:
+```{r}
+#| message: false
+#| warning: false
+
+library(analogsea)
+library(plumber)
+library(plumberDeploy)
+library(remotes)
+library(ssh)
+library(tidymodels)
+library(tidyverse)
+```
+
 ## Amazon Web Services
 
 Apocryphally the cloud is just another name for someone else's computer. And while that is true to various degrees, for our purposes that is enough. Learning to use someone else's computer can be great for a number of reasons including:
@@ -122,8 +136,6 @@ Just to get something working, let us make a function that returns "Hello Toront
 ```{r}
 #| eval: false
 
-library(plumber)
-
 #* @get /print_toronto
 print_toronto <- function() {
   result <- "Hello Toronto"
@@ -147,7 +159,6 @@ At this point, we should start a new R Project. To get started, let us simulate 
 #| message: false
 #| eval: true
 
-library(tidyverse)
 set.seed(853)
 
 number_of_observations <- 1000
@@ -175,8 +186,6 @@ Let us now use `tidymodels` to quickly make a model.
 #| warning: false
 #| message: false
 #| eval: false
-
-library(tidymodels)
 
 set.seed(853)
 
@@ -253,14 +262,12 @@ Again, after we save the "plumber.R" file we should have an option to "Run API".
 
 To this point, we have got an API working on our own machine, but what we really want to do is to get it working on a computer such that the API can be accessed by anyone. To do this we are going to use [DigitalOcean](https://www.digitalocean.com). It is a charged service, but when you create an account, it will come with $200 in credit, which will be enough to get started.
 
-This set-up process will take some time, but we only need to do it once. Two additional packages that will assist here are `plumberDeploy` [@plumberdeploy] and `analogsea` [@citeanalogsea] (which will need to be installed from GitHub: `remotes::install_github("sckott/analogsea")`).
+This set-up process will take some time, but we only need to do it once. Two additional packages that will assist here are `plumberDeploy` [@plumberdeploy] and `analogsea` [@citeanalogsea] (which will need to be installed from GitHub: `install_github("sckott/analogsea")`).
 
 Now we need to connect the local computer with the DigitalOcean account. 
 
 ```{r}
 #| eval: false
-
-library(analogsea)
 
 account()
 ```
@@ -277,7 +284,6 @@ What you want is to have a ".pub" file on our computer. Then copy the public key
 
 ```{r}
 #| eval: false
-library(ssh)
 
 ssh_key_info()
 ```
@@ -294,7 +300,6 @@ If everything is set up properly, then this will print the information about all
 
 ```{r}
 #| eval: false
-library(plumberDeploy)
 
 id <- do_provision(example = FALSE)
 ```
