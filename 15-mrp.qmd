@@ -105,6 +105,7 @@ The packages that we need in this chapter are:
 #| message: false
 #| warning: false
 
+library(arrow)
 library(broom.mixed)
 library(gutenbergr)
 library(haven)
@@ -1089,13 +1090,9 @@ In this case, the MRP approach has done a good job of taking a biased sample and
 
 
 
+## Forecasting the 2020 United States election
 
-
-
-
-## Forecasting the 2020 US election
-
-US presidential elections have many features that are unique to the US, but the model that we are going to build here will be generalizable, and a variant of the earlier model for the Australian election. We will use survey data from the Democracy Fund Voter Study Group. They conducted polling in the lead-up to the US election and make this publicly available after registration. We will use IPUMS, introduced in @sec-farm-data, to access the 2018 American Community Survey (ACS) as a post-stratification dataset. We will use state, age-group, gender, and education as explanatory variables.\index{United States!2020 election}
+Presidential elections in the United States have many features that are unique to the United States, but the model that we are going to build here will be generalizable to a variety of settings. We will use survey data from the Democracy Fund Voter Study Group.\index{Democracy Fund Voter Study Group} They conducted polling in the lead-up to the US election and make this publicly available after registration. We will use IPUMS,\index{IPUMS} introduced in @sec-farm-data, to access the 2019 American Community Survey (ACS)\index{American Community Survey} as a post-stratification dataset. We will use state, age-group, gender, and education as explanatory variables.\index{United States!2020 election}
 
 ### Survey data
 
@@ -1118,8 +1115,10 @@ raw_nationscape_data <-
 ```
 
 ```{r}
-#| eval: true
+#| eval: false
 #| echo: false
+
+# INTERNAL
 
 raw_nationscape_data <-
   read_dta("dont_push/ns20200625.dta")
@@ -1127,6 +1126,9 @@ raw_nationscape_data <-
 
 
 ```{r}
+#| eval: false
+#| echo: true
+
 # The Stata format separates labels so reunite those
 raw_nationscape_data <-
   to_factor(raw_nationscape_data)
@@ -1154,7 +1156,6 @@ nationscape_data <-
   nationscape_data |>
   mutate(
     age_group = case_when(
-      # case_when works in order and exits when there is a match
       age <= 29 ~ "age_18-29",
       age <= 44 ~ "age_30-44",
       age <= 59 ~ "age_45-59",
@@ -1186,6 +1187,9 @@ nationscape_data <-
 
 
 ```{r}
+#| eval: false
+#| echo: true
+
 stopifnot(all(
   str_detect(nationscape_data$age_group, "Trouble", negate = TRUE)
 ))
@@ -1197,12 +1201,31 @@ stopifnot(all(str_detect(
   "Trouble",
   negate = TRUE
 )))
-
-nationscape_data |>
-  head()
 ```
 
-As we have seen, one of the most difficult aspects with MRP is ensuring consistency between the datasets. In this case, we need to do some work to make the variables consistent.
+```{r}
+#| eval: false
+#| include: false
+
+# INTERNAL
+
+write_parquet(x = nationscape_data,
+              sink = "outputs/data/15-nationscape_data.parquet")
+```
+
+```{r}
+#| eval: true
+#| include: false
+
+nationscape_data <- 
+  read_parquet(file = "outputs/data/15-nationscape_data.parquet")
+```
+
+```{r}
+nationscape_data
+```
+
+One tricky aspect of MRP is ensuring consistency between the datasets. In this case, we need to do some work to make the variables consistent.
 
 ```{r}
 # Format state names to match IPUMS
@@ -1228,25 +1251,34 @@ nationscape_data$stateicp <-
 nationscape_data <-
   nationscape_data |>
   mutate(across(c(gender, stateicp, education_level, age_group), as_factor))
+
+nationscape_data
 ```
 
-Finally, we save the prepared dataset.
+Finally, we save the prepared dataset as a parquet file.
 
 ```{r}
-#| eval: true
-#| echo: true
+#| eval: false
+#| include: false
 
-# Save data
-write_csv(nationscape_data, "outputs/data/polling_data.csv")
+# INTERNAL
 
-nationscape_data |>
-  head()
+write_parquet(x = nationscape_data,
+              sink = "outputs/data/15-nationscape_data_cleaned.parquet")
+```
+
+```{r}
+#| eval: false
+#| include: true
+
+write_parquet(x = nationscape_data,
+              sink = "nationscape_data_cleaned.parquet")
 ```
 
 
 ### Post-stratification data
 
-We have many options for a dataset to post-stratify by and there are various considerations. We are after a dataset that is better quality (however that is to be defined), and likely larger. From a strictly data perspective, the best choice would probably be something like the Cooperative Election Study (CES), as used in @sec-its-just-a-linear-model, however it is only released after the election and so it is not a reasonable choice. @wang2015forecasting use exit poll data, but again that is only available after the election. 
+We have many options for a dataset to post-stratify by and there are various considerations. We are after a dataset that is good quality (however that is to be defined), and likely larger. From a strictly data perspective, the best choice would probably be something like the Cooperative Election Study (CES), as used in @sec-its-just-a-linear-model, but it is only publicly released after the election, which limits the reasonableness of using it for forecasting the election. @wang2015forecasting use exit poll data, but again that is only available after the election.
 
 We will use the 2019 American Community Survey (ACS), and want the following variables: "STATEICP" (in "household"), and "SEX", "AGE", and "EDUC" (in "person"). Instructions for how to get these data are in @sec-farm-data. It is worth briefly checking the dimensions of the request. It should be around one million rows, and ten to twenty columns. If it is much more than 300MB then check whether there are variables accidentally selected that are not needed or reduce the number of observations. Submit the request and within a day IPUMS should send an email with a link to the dataset. We assume the dataset has been saved locally as "usa_00004.dta" (your dataset may have a slightly different filename).
 
@@ -1261,8 +1293,10 @@ raw_poststrat_data <-
 ```
 
 ```{r}
-#| eval: true
+#| eval: false
 #| echo: false
+
+# INTERNAL ONLY
 
 raw_poststrat_data <-
   read_dta("dont_push/usa_00004.dta")
@@ -1270,6 +1304,9 @@ raw_poststrat_data <-
 
 
 ```{r}
+#| eval: false
+#| echo: true
+
 raw_poststrat_data <-
   to_factor(raw_poststrat_data)
 
@@ -1281,7 +1318,6 @@ poststrat_data <-
   mutate(gender = sex) |>
   mutate(
     age_group = case_when(
-      # case_when works in order and exits when there is a match
       age <= 29 ~ "age_18-29",
       age <= 44 ~ "age_30-44",
       age <= 59 ~ "age_45-59",
@@ -1331,11 +1367,37 @@ poststrat_data <-
 poststrat_data <-
   poststrat_data |>
   mutate(across(c(gender, stateicp, education_level, age_group), as_factor))
+```
 
-# Save data
-write_csv(poststrat_data, "outputs/data/us_poststrat.csv")
+```{r}
+#| eval: false
+#| echo: false
 
+# INTERNAL
+
+write_parquet(x = poststrat_data,
+              sink = "outputs/data/15-poststrat_data.parquet")
+```
+
+```{r}
+#| eval: true
+#| echo: false
+
+poststrat_data <- 
+  read_parquet(file = "outputs/data/15-poststrat_data.parquet")
+```
+```{r}
 poststrat_data
+```
+
+We will save our cleaned post-stratification dataset as a parquet file.
+
+```{r}
+#| eval: false
+#| echo: true
+
+write_parquet(x = poststrat_data,
+              sink = "poststrat_data.parquet")
 ```
 
 This dataset is on an individual level. We will create counts of each sub-cell, and then proportions by state.
@@ -1376,9 +1438,27 @@ y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
 \end{aligned}
 $$
 
-where $y_i$ is whether a respondent supports Biden. $\alpha^\mbox{age}$, $\alpha^\mbox{state}$, and $\alpha^\mbox{edu}$ are the effect of age, state, and education, respectively. The $a[i]$, $s[i]$, and $e[i]$ refer to which age-group, state, and education level, respectively, the respondent belongs to. $A$, $S$, and $E$ are the total number of age-groups, states, and education levels, respectively. We will estimate the model with `stan_glm()`. 
+where $y_i$ is whether a respondent supports Biden. $\alpha^\mbox{age}$, $\alpha^\mbox{state}$, and $\alpha^\mbox{edu}$ are the effect of age, state, and education, respectively. The $a[i]$, $s[i]$, and $e[i]$ refer to which age-group, state, and education level, respectively, the respondent belongs to. $A$, $S$, and $E$ are the total number of age-groups, states, and education levels, respectively. 
 
-Following @kennedygabry2020 we use `stan_glmer()` from `rstanarm` to estimate the model.
+
+After reading the data in that we cleaned earlier, following @kennedygabry2020 we use `stan_glmer()` from `rstanarm` to estimate the model.
+
+```{r}
+#| eval: true
+#| echo: false
+
+nationscape_data <- 
+  read_parquet(file = "outputs/data/15-nationscape_data_cleaned.parquet")
+```
+
+```{r}
+#| eval: false
+#| echo: true
+
+nationscape_data <- 
+  read_parquet(file = "nationscape_data_cleaned.parquet")
+```
+
 
 ```{r}
 #| echo: true
@@ -1386,7 +1466,7 @@ Following @kennedygabry2020 we use `stan_glmer()` from `rstanarm` to estimate th
 
 us_election_model <-
   stan_glmer(
-vote_biden ~ factor(gender) + (1|age_group) + (1|stateicp) + (1|education_level),
+vote_biden ~ (1|gender) + (1|age_group) + (1|stateicp) + (1|education_level),
     data = nationscape_data,
     family = binomial(link = "logit"),
     prior = normal(
@@ -1427,6 +1507,26 @@ us_election_model <-
   readRDS(file = "outputs/model/us_election_model_mrp.rds")
 ```
 
+```{r}
+#| echo: true
+#| eval: false
+
+saveRDS(
+  us_election_model,
+  file = "us_election_model_mrp.rds"
+)
+```
+
+ This model will take about 15 minutes to run, so you should be careful to save it afterwards with `saveRDS()`. And you can load it with `readRDS()`.
+
+```{r}
+#| eval: false
+#| echo: true
+
+us_election_model <-
+  readRDS(file = "us_election_model_mrp.rds")
+```
+
 We might be interested to look at the coefficient estimates (@tbl-modelsummaryusamrp).
 
 ```{r}
@@ -1437,6 +1537,54 @@ modelsummary(
   us_election_model
 )
 ```
+
+@fig-politicsmodelresultsplots shows the distribution of draws for age groups, education, and gender. We plot some selected states separately for reasons of space (politicsmodelresultsplotsstates).
+
+```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-politicsmodelresultsplots
+#| fig-cap: "Examining the distribution of draws for each of the groups"
+
+us_election_model |>
+  spread_draws(`(Intercept)`, b[, group]) |>
+  mutate(condition_mean = `(Intercept)` + b) |>
+  separate(col = group, into = c("type", "instance"), sep = ":", remove = FALSE) |> 
+  filter(type != "stateicp") |> 
+  ggplot(aes(y = group, x = condition_mean)) +
+  stat_halfeye() +
+  theme_minimal()
+```
+
+```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-politicsmodelresultsplotsstates
+#| fig-cap: "Examining the distribution of draws for selected states"
+
+us_election_model |>
+  spread_draws(`(Intercept)`, b[, group]) |>
+  mutate(condition_mean = `(Intercept)` + b) |>
+  separate(col = group, into = c("type", "instance"), sep = ":", remove = FALSE) |> 
+  filter(type == "stateicp") |> 
+  filter(instance %in% c("california", 
+                         "florida", 
+                         "michigan",
+                         "new_york", 
+                         "pennsylvania", 
+                         "vermont",
+                         "west_virginia",
+                         "wisconsin")) |> 
+  ggplot(aes(y = group, x = condition_mean)) +
+  stat_halfeye() +
+  theme_minimal()
+```
+
+
 
 ### Post-stratify
 
@@ -1470,9 +1618,10 @@ And we can have a look at our estimates graphically (@fig-estimatyusamrp).
 #| label: fig-estimatyusamrp
 #| fig-cap: "Comparing the MRP estimates with the Nationscape raw data"
 #| message: false
+#| fig-height: 8
 
 biden_support_by_state |>
-  ggplot(aes(y = mean, x = stateicp, color = "MRP estimate")) +
+  ggplot(aes(y = mean, x = fct_reorder(stateicp, mean), color = "MRP estimate")) +
   geom_point() +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0) +
   geom_point(
