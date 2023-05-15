@@ -87,12 +87,12 @@ In total, 750,148 interviews were conducted, with 345,858 unique respondents, ov
 The details do not matter, but essentially they model how likely a respondent is to vote for Obama, given various information such as state, education, sex, etc:
 
 $$
-\mbox{Pr}\left(Y_i = \mbox{Obama}\right) = \mbox{logit}^{-1}\left(\alpha_0 + \alpha_{j[i]}^{\mbox{state}} + \alpha_{j[i]}^{\mbox{edu}} + \alpha_{j[i]}^{\mbox{sex}} + ...\right)
+\mbox{Pr}\left(Y_i = \mbox{Obama}\right) = \mbox{logit}^{-1}\left(\alpha_0 + \alpha_{s[i]}^{\mbox{state}} + \alpha_{e[i]}^{\mbox{edu}} + \dots \right)
 $$
 
 Having a trained model that considers the effect of these various independent variables on support for the candidates, they now post-stratify, where each of these "cell-level estimates are weighted by the proportion of the electorate in each cell and aggregated to the appropriate level (i.e., state or national)."
 
-This means that they need cross-tabulated population data. In general, the census would have worked, or one of the other large surveys available in the US, such as the ACS, which we introduced in @sec-farm-data. The difficulty is that the variables need to be available on a cross-tabulated basis. As such, they use exit polls (not a viable option for most other countries).
+They need cross-tabulated population data which counts the number of people in each combination of variables. In general, the census would have worked, or one of the other large surveys available in the US, such as the ACS, which we introduced in @sec-farm-data. The difficulty is that the variables need to be available on a cross-tabulated basis. As such, they use exit polls, although these are not as widely available in other countries.
 
 They make state-specific estimates by post-stratifying to the features of each state. And they similarly examine demographic-differences. Finally, they convert their estimates into electoral college estimates.
 
@@ -571,7 +571,7 @@ y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
 \end{aligned}
 $$
 
-where $y_i$ is the tea preference of the respondent. $\alpha^\mbox{age}$ and $\alpha^\mbox{nat}$ are the effect of age and national origin, respectively. The $a[i]$ and $n[i]$ refer to which age-group and nationality, respectively, the respondent belongs to. $A$ and $N$ are the total number of age-groups and nationalities, respectively. We will estimate the model with `stan_glm()`. 
+where $y_i$ is the tea preference of the respondent. $\alpha^{\mbox{age}}$ and $\alpha^{\mbox{nat}}$ are the effect of age and national origin, respectively. The $a[i]$ and $n[i]$ refer to which age-group and nationality, respectively, the respondent belongs to. $A$ and $N$ are the total number of age-groups and nationalities, respectively. We will estimate the model with `stan_glm()`. 
 
 ```{r}
 #| eval: false
@@ -665,7 +665,7 @@ tea_preference_model |>
 
 Now we will use a post-stratification dataset to get some estimates of the number in each cell. We typically use a larger dataset that may more closely reflect the population. In the US a popular choice is the American Community Survey (ACS) which we covered in @sec-farm-data, while in other countries we typically have to use the census.
 
-In this simulated example, we will just take a 1 per cent sample from the population and use that as our post-stratification dataset. We want to remove tea preferences from that, because that is what we are pretending we do not know. 
+In this simulated example, we could use the population as our post-stratification dataset. The issue is that at one million observations it is unwieldy, so we take a 10,000 person sample from it. We also remove tea preferences from that, because that is what we are pretending we do not know.
 
 ```{r}
 set.seed(853)
@@ -699,7 +699,6 @@ predicted_tea_preference <-
 predicted_tea_preference |>
   count(age, nationality, average_preference)
 ```
-
 
 @tbl-mrpteammodelcompare compares the MRP estimates, with the raw estimates from the biased sample. In this case, because we know the truth, we can also compare them to the known truth, but that is not something we can do normally.
 
@@ -1225,7 +1224,7 @@ y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
 \end{aligned}
 $$
 
-where $y_i$ is whether a respondent supports Biden. $\alpha^\mbox{gender}$, $\alpha^\mbox{age}$, $\alpha^\mbox{state}$, and $\alpha^\mbox{edu}$ are the effect of gender, age, state, and education, respectively. The $g[i]$, $a[i]$, $s[i]$, and $e[i]$ refer to which gender, age-group, state, and education level, respectively, the respondent belongs to. $G$, $A$, $S$, and $E$ are the total number of genders, age-groups, states, and education levels, respectively. 
+where $y_i$ is whether a respondent supports Biden. $\alpha^{\mbox{gender}}$, $\alpha^{\mbox{age}}$, $\alpha^{\mbox{state}}$, and $\alpha^{\mbox{edu}}$ are the effect of gender, age, state, and education, respectively. The $g[i]$, $a[i]$, $s[i]$, and $e[i]$ refer to which gender, age-group, state, and education level, respectively, the respondent belongs to. $G$, $A$, $S$, and $E$ are the total number of genders, age-groups, states, and education levels, respectively. 
 
 After reading in the data that we cleaned earlier, following @kennedygabry2020 we use `stan_glmer()` from `rstanarm` to estimate the model.
 
@@ -1448,39 +1447,27 @@ The Nationscape dataset is a high-quality survey. But it was weighted to major c
 
 1. Please explain what MRP is, and the strengths and weaknesses, being sure to explain any technical terms that you use (write at least three paragraphs).
 2. What are three aspects that you like about @wang2015forecasting? What are three aspects that do you not? To what extent is it possible to reproduce the paper?
-3. With respect to @wang2015forecasting, what is not a feature they mention election forecasts need (pick one)? 
-    a. Explainable.
-    b. Accurate.
-    c. Cost-effective.
-    d. Relevant.
-    e. Timely.
-4. With respect to @wang2015forecasting, what is a weakness of MRP (pick one)?
-    a. Detailed data requirement. 
-    b. Allows use of biased data. 
-    c. Expensive to conduct.
-5. With respect to @wang2015forecasting, what is concerning about the Xbox sample (pick one)? 
-    a. Non-representative. 
-    b. Small sample size. 
-    c. Multiple responses from the same respondent.
-6. We are interested in studying how voting intentions in the 2020 US presidential election vary by an individual's income. We set up a logistic regression model to study this relationship. In this study, what are some possible independent variables (select all that apply)?
-    a. Whether the respondent is registered to vote (yes/no). 
-    b. Whether the respondent is going to vote for Biden (yes/no). 
-    c. The race of the respondent (white/not white). 
-    d. The respondent's marital status (married/not).
-7. Please think about @cohn2016. Why is this type of exercise not carried out more? Why do you think that different groups, even with the same background and level of quantitative sophistication, could have such different estimates even when they use the same data? (Write at least four paragraphs).
-8. When we think about multilevel regression with post-stratification, what are the key assumptions that we are making? (Write at least four paragraphs).
-9. We train a model based on a survey, and then post-stratify it using the ACS dataset. What are some of the practical considerations that we may have to contend with when doing this? (Write at least four paragraphs).
-10. If we have model output from `stan_glm()` called "my_model_output" how can I use `modelsummary` to display the output (assume the package has been loaded) (select all that apply)?
-    a. `modelsummary(my_model_output)`
-    b. `my_model_output |> modelsummary()`
-    c. `my_model_output |> modelsummary(statistic = NULL)`
-11. Which of the following are examples of linear models (select all)?
-    a. `lm(y ~ x_1 + x_2 + x_3, data = my_data)`
-    b. `lm(y ~ x_1 + x_2^2 + x_3, data = my_data)`
-    c. `lm(y ~ x_1 * x_2 + x_3, data = my_data)`
-    d. `lm(y ~ x_1 + x_1^2 + x_2 + x_3, data = my_data)`
-12. Consider a situation in which we have a survey dataset with these age-groups: 18-29; 30-44; 45- 60; and 60+. And a post-stratification dataset with these age-groups: 18-24; 25-29; 30-34; 35-39; 40-44; 45-49; 50-54; 55-59; and 60+. Please write at least two paragraphs about the approach that you would take to bringing these together.
-13. Consider a situation in which you again have a survey dataset with these age-groups: 18-29; 30-44; 45-60; and 60+. But this time the post-stratification dataset has these age-groups: 18-34; 35-49; 50-64; and 65+. Please write at least two paragraphs about the approach you would take to bringing these together.
+3. With respect to @wang2015forecasting, what is a weakness of MRP (pick one)?
+  a. Detailed data requirement. 
+  b. Allows use of biased data. 
+  c. Expensive to conduct.
+4. With respect to @wang2015forecasting, what is concerning about the Xbox sample (pick one)? 
+  a. Non-representative. 
+  b. Small sample size. 
+  c. Multiple responses from the same respondent.
+5. We are interested in studying how voting intentions in the 2020 US presidential election vary by an individual's income. We set up a logistic regression model to study this relationship. In this study, what are some possible independent variables (select all that apply)?
+  a. Whether the respondent is registered to vote (yes/no). 
+  b. Whether the respondent is going to vote for Biden (yes/no). 
+  c. The race of the respondent (white/not white). 
+  d. The respondent's marital status (married/not).
+6. Please think about @cohn2016. Why is this type of exercise not carried out more? Why do you think that different groups, even with the same background and level of quantitative sophistication, could have such different estimates even when they use the same data?
+7. We train a model based on a survey, and then post-stratify it using the ACS dataset. What are some of the practical considerations that we may have to contend with when doing this?
+8. Which of the following are examples of linear models (select all that apply)?
+  a. `lm(y ~ x_1 + x_2 + x_3, data = my_data)`
+  b. `lm(y ~ x_1 + x_2^2 + x_3, data = my_data)`
+  c. `lm(y ~ x_1 * x_2 + x_3, data = my_data)`
+  d. `lm(y ~ x_1 + x_1^2 + x_2 + x_3, data = my_data)`
+9. Consider a situation in which you have a survey dataset with these age-groups: 18-29; 30-44; 45-60; and 60+. And a post-stratification dataset with these age-groups: 18-34; 35-49; 50-64; and 65+. Please write about the approach you would take to bringing these together.
 
 ### Tutorial {.unnumbered}
 
