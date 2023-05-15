@@ -1096,122 +1096,16 @@ Presidential elections in the United States have many features that are unique t
 
 ### Survey data
 
-First we need to get the survey data. Go to the Democracy Fund Voter Study Group [website](https://www.voterstudygroup.org), then look for "Nationscape" and request access to the data. This is usually quick, but could take a day or two. After getting access, focus on the ".dta" files. Nationscape conducted many surveys in the lead-up to the election, so there are many files. The filename is the reference date, where "ns20200625" refers to 25 June 2020. That is the file that we use here, but many of them are similar. We download and save it as "ns20200625.dta".
-
-::: {.content-visible when-format="pdf"}
-As introduced in the ["R essentials" Online Appendix](https://tellingstorieswithdata.com/20-r_essentials.html), we can import ".dta" files using `haven` [@citehaven]. The code that we use to import and prepare the survey dataset is based on that of @greatstudentwork.
-:::
-
-::: {.content-visible unless-format="pdf"}
-As introduced in [Online Appendix -@sec-r-essentials], we can import ".dta" files using `haven` [@citehaven]. The code that we use to import and prepare the survey dataset is based on that of @greatstudentwork.
-:::
+We will use the Democracy Fund Voter Study Group Nationscape survey dataset introduced in @sec-hunt-data. One tricky aspect of MRP is ensuring consistency between the survey dataset and the post-stratification dataset. In this case, after reading in the dataset that we cleaned up in @sec-hunt-data we need to do some work to make the variables consistent.
 
 ```{r}
 #| eval: false
-#| echo: true
+#| include: true
 
-raw_nationscape_data <-
-  read_dta("ns20200625.dta")
+nationscape_data <- 
+  read_csv(file = "nationscape_data.csv")
 ```
 
-```{r}
-#| eval: false
-#| echo: false
-
-# INTERNAL
-
-raw_nationscape_data <-
-  read_dta("dont_push/ns20200625.dta")
-```
-
-
-```{r}
-#| eval: false
-#| echo: true
-
-# The Stata format separates labels so reunite those
-raw_nationscape_data <-
-  to_factor(raw_nationscape_data)
-
-# Just keep relevant variables
-nationscape_data <-
-  raw_nationscape_data |>
-  select(
-    vote_2020,
-    gender,
-    education,
-    state,
-    age
-  )
-
-# For simplicity, remove anyone not voting for Trump or Biden
-nationscape_data <-
-  nationscape_data |>
-  filter(vote_2020 %in% c("Joe Biden", "Donald Trump")) |>
-  mutate(vote_biden = if_else(vote_2020 == "Joe Biden", 1, 0)) |>
-  select(-vote_2020)
-
-# Create the dependent variables by grouping the existing variables
-nationscape_data <-
-  nationscape_data |>
-  mutate(
-    age_group = case_when(
-      age <= 29 ~ "age_18-29",
-      age <= 44 ~ "age_30-44",
-      age <= 59 ~ "age_45-59",
-      age >= 60 ~ "age_60_or_more",
-      TRUE ~ "Trouble"
-    ),
-    gender = case_when(
-      gender == "Female" ~ "female",
-      gender == "Male" ~ "male",
-      TRUE ~ "Trouble"
-    ),
-    education_level = case_when(
-      education == "3rd Grade or less" ~ "High school or less",
-      education == "Middle School - Grades 4 - 8" ~ "High school or less",
-      education == "Completed some high school" ~ "High school or less",
-      education == "High school graduate" ~ "High school or less",
-      education == "Other post high school vocational training" ~ "Some post sec",
-      education == "Completed some college, but no degree" ~ "Some post sec",
-      education == "Associate Degree" ~ "Post sec +",
-      education == "College Degree (such as B.A., B.S.)" ~ "Post sec +",
-      education == "Completed some graduate, but no degree" ~ "Post sec +",
-      education == "Masters degree" ~ "Grad degree",
-      education == "Doctorate degree" ~ "Grad degree",
-      TRUE ~ "Trouble"
-    )
-  ) |>
-  select(-education, -age)
-```
-
-
-```{r}
-#| eval: false
-#| echo: true
-
-stopifnot(all(
-  str_detect(nationscape_data$age_group, "Trouble", negate = TRUE)
-))
-stopifnot(all(
-  str_detect(nationscape_data$education_level, "Trouble", negate = TRUE)
-))
-stopifnot(all(str_detect(
-  nationscape_data$gender,
-  "Trouble",
-  negate = TRUE
-)))
-```
-
-```{r}
-#| eval: false
-#| include: false
-
-# INTERNAL
-
-write_parquet(x = nationscape_data,
-              sink = "outputs/data/15-nationscape_data.parquet")
-```
 
 ```{r}
 #| eval: true
@@ -1224,8 +1118,6 @@ nationscape_data <-
 ```{r}
 nationscape_data
 ```
-
-One tricky aspect of MRP is ensuring consistency between the datasets. In this case, we need to do some work to make the variables consistent.
 
 ```{r}
 # Format state names to match IPUMS
@@ -1280,124 +1172,18 @@ write_parquet(x = nationscape_data,
 
 We have many options for a dataset to post-stratify by and there are various considerations. We are after a dataset that is good quality (however that is to be defined), and likely larger. From a strictly data perspective, the best choice would probably be something like the Cooperative Election Study (CES), as used in @sec-its-just-a-linear-model, but it is only publicly released after the election, which limits the reasonableness of using it for forecasting the election. @wang2015forecasting use exit poll data, but again that is only available after the election.
 
-We will use the 2019 American Community Survey (ACS), and want the following variables: "STATEICP" (in "household"), and "SEX", "AGE", and "EDUC" (in "person"). Instructions for how to get these data are in @sec-farm-data. It is worth briefly checking the dimensions of the request. It should be around one million rows, and ten to twenty columns. If it is much more than 300MB then check whether there are variables accidentally selected that are not needed or reduce the number of observations. Submit the request and within a day IPUMS should send an email with a link to the dataset. We assume the dataset has been saved locally as "usa_00004.dta" (your dataset may have a slightly different filename).
-
-We will now tidy and prepare the post-stratification dataset, again based on @greatstudentwork.
-
-```{r}
-#| eval: false
-#| echo: true
-
-raw_poststrat_data <-
-  read_dta("usa_00004.dta")
-```
-
-```{r}
-#| eval: false
-#| echo: false
-
-# INTERNAL ONLY
-
-raw_poststrat_data <-
-  read_dta("dont_push/usa_00004.dta")
-```
-
-
-```{r}
-#| eval: false
-#| echo: true
-
-raw_poststrat_data <-
-  to_factor(raw_poststrat_data)
-
-poststrat_data <-
-  raw_poststrat_data |>
-  mutate(age = as.numeric(age)) |>
-  filter(inctot < 9999999) |>
-  filter(age >= 18) |>
-  mutate(gender = sex) |>
-  mutate(
-    age_group = case_when(
-      age <= 29 ~ "age_18-29",
-      age <= 44 ~ "age_30-44",
-      age <= 59 ~ "age_45-59",
-      age >= 60 ~ "age_60_or_more",
-      TRUE ~ "Trouble"
-    ),
-    education_level = case_when(
-      educd == "nursery school, preschool" ~ "High school or less",
-      educd == "kindergarten" ~ "High school or less",
-      educd == "grade 1" ~ "High school or less",
-      educd == "grade 2" ~ "High school or less",
-      educd == "grade 3" ~ "High school or less",
-      educd == "grade 4" ~ "High school or less",
-      educd == "grade 5" ~ "High school or less",
-      educd == "grade 6" ~ "High school or less",
-      educd == "grade 7" ~ "High school or less",
-      educd == "grade 8" ~ "High school or less",
-      educd == "grade 9" ~ "High school or less",
-      educd == "grade 10" ~ "High school or less",
-      educd == "grade 11" ~ "High school or less",
-      educd == "12th grade, no diploma" ~ "High school or less",
-      educd == "regular high school diploma" ~ "High school or less",
-      educd == "ged or alternative credential" ~ "High school or less",
-      educd == "some college, but less than 1 year" ~ "Some post sec",
-      educd == "1 or more years of college credit, no degree" ~ "Some post sec",
-      educd == "associate's degree, type not specified" ~ "Post sec +",
-      educd == "bachelor's degree" ~ "Post sec +",
-      educd == "master's degree" ~ "Grad degree",
-      educd == "professional degree beyond a bachelor's degree" ~ "Grad degree",
-      educd == "doctoral degree" ~ "Grad degree",
-      educd == "no schooling completed" ~ "High school or less",
-      TRUE ~ "Trouble"
-    )
-  )
-
-# Just keep relevant variables
-poststrat_data <-
-  poststrat_data |>
-  select(
-    gender,
-    age_group,
-    education_level,
-    stateicp
-  )
-
-# Tidy the class
-poststrat_data <-
-  poststrat_data |>
-  mutate(across(c(gender, stateicp, education_level, age_group), as_factor))
-```
-
-```{r}
-#| eval: false
-#| echo: false
-
-# INTERNAL
-
-write_parquet(x = poststrat_data,
-              sink = "outputs/data/15-poststrat_data.parquet")
-```
+We will use the 2019 American Community Survey (ACS) dataset that we gathered in @sec-farm-data.
 
 ```{r}
 #| eval: true
 #| echo: false
 
 poststrat_data <- 
-  read_parquet(file = "outputs/data/15-poststrat_data.parquet")
+  read_parquet(file = "outputs/data/cleaned_ipums.parquet")
 ```
+
 ```{r}
 poststrat_data
-```
-
-We will save our cleaned post-stratification dataset as a parquet file.
-
-```{r}
-#| eval: false
-#| echo: true
-
-write_parquet(x = poststrat_data,
-              sink = "poststrat_data.parquet")
 ```
 
 This dataset is on an individual level. We will create counts of each sub-cell, and then proportions by state.
@@ -1427,8 +1213,9 @@ We are going to use logistic regression to estimate a model where the binary of 
 $$
 \begin{aligned}
 y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
-\mbox{logit}(\pi_i) & = \left(\alpha_0 + \alpha_{a[i]}^{\mbox{age}} + \alpha_{s[i]}^{\mbox{state}} + \alpha_{e[i]}^{\mbox{edu}} \right) \\
+\mbox{logit}(\pi_i) & = \left(\alpha_0+ \alpha_{g[i]}^{\mbox{gender}} + \alpha_{a[i]}^{\mbox{age}} + \alpha_{s[i]}^{\mbox{state}} + \alpha_{e[i]}^{\mbox{edu}} \right) \\
 \alpha_0 & \sim \mbox{Normal}(0, 2.5)\\
+\alpha_{g}^{\mbox{gender}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{gender}}\right)\mbox{ for }g = 1, 2, \dots, G\\
 \alpha_{a}^{\mbox{age}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{age}}\right)\mbox{ for }a = 1, 2, \dots, A\\
 \alpha_{s}^{\mbox{state}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{state}}\right)\mbox{ for }s = 1, 2, \dots, S\\
 \alpha_{e}^{\mbox{edu}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{edu}}\right)\mbox{ for }e = 1, 2, \dots, E\\
@@ -1438,10 +1225,9 @@ y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
 \end{aligned}
 $$
 
-where $y_i$ is whether a respondent supports Biden. $\alpha^\mbox{age}$, $\alpha^\mbox{state}$, and $\alpha^\mbox{edu}$ are the effect of age, state, and education, respectively. The $a[i]$, $s[i]$, and $e[i]$ refer to which age-group, state, and education level, respectively, the respondent belongs to. $A$, $S$, and $E$ are the total number of age-groups, states, and education levels, respectively. 
+where $y_i$ is whether a respondent supports Biden. $\alpha^\mbox{gender}$, $\alpha^\mbox{age}$, $\alpha^\mbox{state}$, and $\alpha^\mbox{edu}$ are the effect of gender, age, state, and education, respectively. The $g[i]$, $a[i]$, $s[i]$, and $e[i]$ refer to which gender, age-group, state, and education level, respectively, the respondent belongs to. $G$, $A$, $S$, and $E$ are the total number of genders, age-groups, states, and education levels, respectively. 
 
-
-After reading the data in that we cleaned earlier, following @kennedygabry2020 we use `stan_glmer()` from `rstanarm` to estimate the model.
+After reading in the data that we cleaned earlier, following @kennedygabry2020 we use `stan_glmer()` from `rstanarm` to estimate the model.
 
 ```{r}
 #| eval: true
@@ -1517,7 +1303,7 @@ saveRDS(
 )
 ```
 
- This model will take about 15 minutes to run, so you should be careful to save it afterwards with `saveRDS()`. And you can load it with `readRDS()`.
+This model will take about 15 minutes to run, so you should be careful to save it afterwards with `saveRDS()`. And you can load it with `readRDS()`.
 
 ```{r}
 #| eval: false
@@ -1644,6 +1430,8 @@ biden_support_by_state |>
   scale_color_brewer(palette = "Set1") +
   coord_flip()
 ```
+
+The Nationscape dataset is a high-quality survey. But it was weighted to major census region---the West, the Midwest, the Northeast, and the South---rather than state, which could be one reason we see a difference between the MRP estimates and the raw data. 
 
 
 ## Exercises
