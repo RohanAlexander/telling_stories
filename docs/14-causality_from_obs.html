@@ -1545,30 +1545,34 @@ b-&gt;c
 <span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">free_shipping =</span> <span class="fu">rbinom</span>(<span class="at">n =</span> sample_size, <span class="at">size =</span> <span class="dv">1</span>, <span class="at">prob =</span> softmax_prob),) <span class="sc">|&gt;</span></span>
 <span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>(age_num<span class="sc">:</span>softmax_prob))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Finally, we need to have some measure of a person’s average spend. We want those with free shipping to be slightly higher than those without.</p>
+<p>Finally, we need to have some measure of a person’s average spend. We will assume that this increases with income. We want those with free shipping to be slightly higher than those without.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>purchase_data <span class="ot">&lt;-</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  purchase_data <span class="sc">|&gt;</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">mean_spend =</span> <span class="fu">if_else</span>(free_shipping <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">60</span>, <span class="dv">50</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">spend =</span> <span class="fu">rnorm</span>(<span class="at">n =</span> sample_size, mean_spend, <span class="at">sd =</span> <span class="dv">5</span>) <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>mean_spend) <span class="sc">|&gt;</span></span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(gender, free_shipping), as.factor))</span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>purchase_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">noise =</span> <span class="fu">rnorm</span>(<span class="at">n =</span> <span class="fu">nrow</span>(purchase_data), <span class="at">mean =</span> <span class="dv">5</span>, <span class="at">sd =</span> <span class="dv">2</span>),</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">spend =</span> income <span class="sc">/</span> <span class="dv">1000</span> <span class="sc">+</span> noise,</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">spend =</span> <span class="fu">if_else</span>(free_shipping <span class="sc">==</span> <span class="dv">1</span>, spend <span class="sc">+</span> <span class="dv">10</span>, spend),</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">spend =</span> <span class="fu">as.integer</span>(spend)</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>noise) <span class="sc">|&gt;</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(gender, free_shipping), as.factor))</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>purchase_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10,000 × 6
    unique_person_id   age gender income free_shipping spend
-              &lt;int&gt; &lt;int&gt; &lt;fct&gt;   &lt;dbl&gt; &lt;fct&gt;         &lt;dbl&gt;
- 1                1    26 Male    68637 0              46.6
- 2                2    81 Female  71486 0              41.6
- 3                3    34 Male    75652 0              50.4
- 4                4    46 Male    68068 0              55.2
- 5                5   100 Female  73206 0              51.0
- 6                6    20 Male    41872 0              45.9
- 7                7    50 Female  75957 0              42.9
- 8                8    36 Female  56566 0              52.0
- 9                9    72 Male    54621 0              40.1
-10               10    52 Female  40722 0              53.4
+              &lt;int&gt; &lt;int&gt; &lt;fct&gt;   &lt;dbl&gt; &lt;fct&gt;         &lt;int&gt;
+ 1                1    26 Male    68637 0                72
+ 2                2    81 Female  71486 0                73
+ 3                3    34 Male    75652 0                80
+ 4                4    46 Male    68068 0                75
+ 5                5   100 Female  73206 0                78
+ 6                6    20 Male    41872 0                45
+ 7                7    50 Female  75957 0                78
+ 8                8    36 Female  56566 0                62
+ 9                9    72 Male    54621 0                55
+10               10    52 Female  40722 0                47
 # ℹ 9,990 more rows</code></pre>
 </div>
 </div>
@@ -1593,11 +1597,11 @@ b-&gt;c
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">No</td>
-<td style="text-align: right;">49.81</td>
+<td style="text-align: right;">64.44</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Yes</td>
-<td style="text-align: right;">59.64</td>
+<td style="text-align: right;">86.71</td>
 </tr>
 </tbody>
 </table>
@@ -1632,17 +1636,17 @@ b-&gt;c
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 508 × 9
    unique_person_id   age gender     income free_shipping spend distance weights
-              &lt;int&gt; &lt;int&gt; &lt;fct&gt;       &lt;dbl&gt; &lt;fct&gt;         &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;
- 1               23    28 Female      65685 1              55.9  0.0334        1
- 2               24    67 Male        71150 0              51.9  0.0220        1
- 3               32    22 Female      86071 0              54.2  0.131         1
- 4               48    66 Female     100105 0              58.4  0.0473        1
- 5               59    25 Male        55548 1              55.6  0.0541        1
- 6               82    66 Male        70721 0              49.4  0.0224        1
- 7               83    58 Male        83443 0              50.9  0.0651        1
- 8               87    46 Male        59073 1              59.0  0.0271        1
- 9              119    89 Other/dec…  72284 0              42.3  0.00301       1
-10              125    51 Female      81164 1              60.7  0.0303        1
+              &lt;int&gt; &lt;int&gt; &lt;fct&gt;       &lt;dbl&gt; &lt;fct&gt;         &lt;int&gt;    &lt;dbl&gt;   &lt;dbl&gt;
+ 1               23    28 Female      65685 1                79  0.0334        1
+ 2               24    67 Male        71150 0                76  0.0220        1
+ 3               32    22 Female      86071 0                92  0.131         1
+ 4               48    66 Female     100105 0               108  0.0473        1
+ 5               59    25 Male        55548 1                68  0.0541        1
+ 6               82    66 Male        70721 0                75  0.0224        1
+ 7               83    58 Male        83443 0                88  0.0651        1
+ 8               87    46 Male        59073 1                73  0.0271        1
+ 9              119    89 Other/dec…  72284 0                74  0.00301       1
+10              125    51 Female      81164 1                96  0.0303        1
 # ℹ 498 more rows
 # ℹ 1 more variable: subclass &lt;fct&gt;</code></pre>
 </div>
@@ -1668,39 +1672,39 @@ b-&gt;c
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">(Intercept)</td>
-<td style="text-align: center;">48.516</td>
+<td style="text-align: center;">3.862</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
-<td style="text-align: center;">(1.252)</td>
+<td style="text-align: center;">(0.506)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">age</td>
-<td style="text-align: center;">0.018</td>
+<td style="text-align: center;">0.007</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
-<td style="text-align: center;">(0.011)</td>
+<td style="text-align: center;">(0.005)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">genderMale</td>
-<td style="text-align: center;">0.051</td>
+<td style="text-align: center;">0.013</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
-<td style="text-align: center;">(0.501)</td>
+<td style="text-align: center;">(0.202)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">genderOther/decline</td>
-<td style="text-align: center;">−1.704</td>
+<td style="text-align: center;">−0.509</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
-<td style="text-align: center;">(2.096)</td>
+<td style="text-align: center;">(0.847)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">income</td>
-<td style="text-align: center;">0.000</td>
+<td style="text-align: center;">0.001</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -1708,11 +1712,11 @@ b-&gt;c
 </tr>
 <tr class="odd">
 <td style="text-align: left;">free_shipping1</td>
-<td style="text-align: center;">10.219</td>
+<td style="text-align: center;">10.073</td>
 </tr>
 <tr class="even">
 <td style="text-align: left; box-shadow: 0px 1.5px;"></td>
-<td style="text-align: center; box-shadow: 0px 1.5px;">(0.446)</td>
+<td style="text-align: center; box-shadow: 0px 1.5px;">(0.180)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Num.Obs.</td>
@@ -1720,31 +1724,31 @@ b-&gt;c
 </tr>
 <tr class="even">
 <td style="text-align: left;">R2</td>
-<td style="text-align: center;">0.511</td>
+<td style="text-align: center;">0.983</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">R2 Adj.</td>
-<td style="text-align: center;">0.507</td>
+<td style="text-align: center;">0.983</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">AIC</td>
-<td style="text-align: center;">3088.7</td>
+<td style="text-align: center;">2167.6</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">BIC</td>
-<td style="text-align: center;">3118.3</td>
+<td style="text-align: center;">2197.2</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Log.Lik.</td>
-<td style="text-align: center;">−1537.364</td>
+<td style="text-align: center;">−1076.811</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">F</td>
-<td style="text-align: center;">105.125</td>
+<td style="text-align: center;">5911.747</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">RMSE</td>
-<td style="text-align: center;">4.99</td>
+<td style="text-align: center;">2.02</td>
 </tr>
 </tbody>
 </table>

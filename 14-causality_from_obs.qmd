@@ -905,7 +905,7 @@ One advantage of propensity score matching is that it allows us to easily consid
 
 ```{r}
 #| eval: true
-#| include: true
+#| echo: true
 
 set.seed(853)
 
@@ -962,16 +962,20 @@ purchase_data <-
   select(-(age_num:softmax_prob))
 ```
 
-Finally, we need to have some measure of a person's average spend. We want those with free shipping to be slightly higher than those without.
+Finally, we need to have some measure of a person's average spend. We will assume that this increases with income. We want those with free shipping to be slightly higher than those without.
 
 ```{r}
 #| echo: true
 
 purchase_data <-
   purchase_data |>
-  mutate(mean_spend = if_else(free_shipping == 1, 60, 50)) |>
-  mutate(spend = rnorm(n = sample_size, mean_spend, sd = 5) |> round(2)) |>
-  select(-mean_spend) |>
+  mutate(
+    noise = rnorm(n = nrow(purchase_data), mean = 5, sd = 2),
+    spend = income / 1000 + noise,
+    spend = if_else(free_shipping == 1, spend + 10, spend),
+    spend = as.integer(spend)
+    ) |>
+  select(-noise) |>
   mutate(across(c(gender, free_shipping), as.factor))
 
 purchase_data

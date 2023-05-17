@@ -1231,29 +1231,23 @@ We then want to separate the lines so that each line is an observation. We can d
 
 jane_eyre <-
   separate_rows(jane_eyre, raw_text, sep = "\\n", convert = FALSE)
+
 jane_eyre
 ```
 
-
-
-
-
-
-
 ### United States Total Fertility Rate
 
+The United States Department of Health and Human Services Vital Statistics Report provides information about the total fertility rate (the average number of births per woman if women experience the current age-specific fertility rates throughout their reproductive years) for each state.\index{United States!Vital Statistics Report}\index{United States!Total Fertility Rate} The United States persists in only making this data available in PDFs, which hinders research. But we can use the approaches above to get the data into a dataset.
 
-The United States Department of Health and Human Services Vital Statistics Report provides information about the total fertility rate (the average number of births per woman if women experience the current age-specific fertility rates throughout their reproductive years) for each state for nineteen years.\index{United States!Vital Statistics Report}\index{United States!Total Fertility Rate} The United States persists in only making this data available in PDFs, which hinders research. But we can use the approaches above to get the data into a dataset.
-
-For instance, in the case of the year 2000 the table that we are interested in is on page 40 of a PDF that is available [here](https://www.cdc.gov/nchs/data/nvsr/nvsr50/nvsr50_05.pdf).^[If this link does not work then the PDF can be viewed [here](https://github.com/RohanAlexander/telling_stories/blob/main/inputs/pdfs/dhs/year_2000.pdf).] The column of interest is labelled: "Total fertility rate" (@fig-dhsexample). 
+The table that we are interested in is on page 40 of a PDF that is available [here](https://www.cdc.gov/nchs/data/nvsr/nvsr50/nvsr50_05.pdf).^[If this link does not work then the PDF can be viewed [here](https://github.com/RohanAlexander/telling_stories/blob/main/inputs/pdfs/dhs/year_2000.pdf).] The column of interest is labelled: "Total fertility rate" (@fig-dhsexample). 
 
 ![Example Vital Statistics Report, from 2000](figures/dhs_example.png){#fig-dhsexample width=90% fig-align="center"}
 
 The first step when getting data out of a PDF is to sketch out what we eventually want. A PDF typically contains a lot of information, and so we should be clear about what is needed. This helps keep you focused, and prevents scope creep, but it is also helpful when thinking about data checks. We literally write down on paper what we have in mind. In this case, what is needed is a table with a column for state, year, and total fertility rate (TFR) (@fig-tfrdesired). 
 
-![Planned dataset of TFR for each year and United States state](figures/tfr_dataset_sketch.png){#fig-tfrdesired width=40% fig-align="center"}
+![Planned dataset of TFR for each year and US state](figures/tfr_dataset_sketch.png){#fig-tfrdesired width=40% fig-align="center"}
 
-There are 19 different PDFs, and we are interested in a particular column in a particular table in each of them. Unfortunately, there is nothing magical about what is coming. This first step requires finding each PDF online, working out the link for each, and manually searching for the page and column name that is of interest. In the end, this looks like @tbl-dhslinks.^[To run this code use: `summary_tfr_dataset <- read_csv("https://raw.githubusercontent.com/RohanAlexander/telling_stories/main/inputs/tfr_tables_info.csv")`.]
+We are interested in a particular column in a particular table for this PDF. Unfortunately, there is nothing magical about what is coming. This first step requires finding the PDF online, working out the link for each, and manually searching for the page and column name that is of interest. In the end, this looks like @tbl-dhslinks.^[To run this code use: `summary_tfr_dataset <- read_csv("https://raw.githubusercontent.com/RohanAlexander/telling_stories/main/inputs/tfr_tables_info.csv")`.]
 
 ```{r}
 #| include: true
@@ -1266,15 +1260,14 @@ There are 19 different PDFs, and we are interested in a particular column in a p
 summary_tfr_dataset <- read_csv("inputs/tfr_tables_info.csv")
 
 summary_tfr_dataset |>
-  select(year, page, table, column_name, url) |>
+  select(year, page, table, column_name, url) |> 
+  filter(year == 2000) |> 
   kable(
     col.names = c("Year", "Page", "Table", "Column", "URL")
   )
 ```
 
-The first step is to get some code that works for one of them. We step through the code in a lot more detail than normal because we are going to use these pieces a lot. 
-
-We will choose the year 2000. We first download and save the PDF using `download.file()`.
+We first download and save the PDF using `download.file()`.
 
 ```{r}
 #| echo: true
@@ -1390,8 +1383,6 @@ dhs_2000_separate_columns[18:28, ] |>
   select(state, data)
 ```
 
-<!-- We get the expected warnings about the top and the bottom as they do not have multiple dots. (Another option here is to use `pdf_data()` which would allow us to use location rather than delimiters.) -->
-
 We can now separate the data based on spaces. There is an inconsistent number of spaces, so we first squish any example of more than one space into just one.
 
 ```{r}
@@ -1423,241 +1414,61 @@ This is all looking fairly great. The only thing left is to clean up.
 
 ```{r}
 #| echo: true
-
 dhs_2000_cleaned <-
   dhs_2000_separate_data |>
   select(state, TFR) |>
-  slice(18:71) |>
-  mutate(year = 2000)
-
-dhs_2000_cleaned
-```
-
-And we are done for that year. Now we want to take these pieces, put them into a function, and then run that function over all 19 years. The first part is downloading each of the 19 PDFs that we need. We are going to build on the code that we used before, which was:
-
-```{r}
-#| eval: false
-#| echo: true
-
-download.file(url = summary_tfr_dataset$url[1], 
-              destfile = "year_2000.pdf"
-              )
-```
-
-To modify this we need:
-
-1. To have it iterate through each of the lines in the dataset that contains our CSVs (i.e. where it says 1, we want 1, then 2, then 3, etc.). 
-2. Where it has a filename, we need it to iterate through our desired filenames (i.e. "year_2000", then "year_2001", then "year_2002", etc). 
-3. We would like for it to do all of this in a way that is a little robust to errors. For instance, if one of the URLs is wrong or the internet drops out then we would like it to just move onto the next PDF, and then warn us at the end that it missed one, not to stop. (This does not really matter because it is only 19 files, but it is easy to find oneself doing this for thousands of files.)
-
-We will use `walk2()` from `purrr` for this iteration.
-
-```{r}
-#| eval: false
-#| echo: true
-
-summary_tfr_dataset <-
-  summary_tfr_dataset |>
-  mutate(pdf_name = paste0("dhs/year_", year, ".pdf"))
-```
-
-```{r}
-#| eval: true
-#| echo: false
-
-# INTERNAL
-
-summary_tfr_dataset <-
-  summary_tfr_dataset |>
-  mutate(pdf_name = paste0("inputs/pdfs/dhs/year_", year, ".pdf"))
-```
-
-```{r}
-#| eval: false
-#| echo: true
-
-walk2(
-  summary_tfr_dataset$url,
-  summary_tfr_dataset$pdf_name,
-  safely(~ download.file(.x, .y))
-)
-```
-
-Here we take `download.file()` and pass it two arguments: `.x` and `.y`. Then `walk2()` applies that function to the inputs that we give it, in this case the URLs column is the `.x` and the pdf_names column is the `.y`. Finally, `safely()` means that if there are any failures then it just moves on to the next file instead of throwing an error.
-
-We now have each of the PDFs saved and we can move on to getting the data from them.
-
-Now we need to get the data from the PDFs. As before, we are going to build on the code that we used before:
-
-1. We want to iterate the argument to `pdf_text()` and then the number in `slice()` will also need to change (that is doing the work to get only the page that we are interested in).
-2. Two aspects are hardcoded, and these may need to be updated. In particular: 
-  - `separate()` only works if each of the tables has the same columns in the same order; and 
-  - `slice()` (which restricts the data to just the states) only works in this one case because it references specific lines, which may differ between years. 
-3. Finally, in the code written for the one year, we add the year only at the end, whereas to do it for multiple years we would need to bring that up earlier in the process. 
-
-We will start by writing a function that will go through all the files, grab the data, get the page of interest, and then expand the rows. We will then use `pmap_dfr()` from `purrr` to apply that function to all of the PDFs and to output a tibble.
-
-```{r}
-#| message: false
-#| warning: false
-#| echo: true
-
-get_pdf_convert_to_tibble <- function(pdf_name, page, year) {
-  dhs_table_of_interest <-
-    tibble(raw_data = pdf_text(pdf_name)) |>
-    slice(page) |>
-    separate_rows(raw_data, sep = "\\n", convert = FALSE) |>
-    separate(
-      col = raw_data,
-      into = c("state", "data"),
-      sep = "[�|\\.]\\s+(?=[[:digit:]])",
-      remove = FALSE
-    ) |>
-    mutate(
-      data = str_squish(data),
-      year_of_data = year
-    )
-
-  print(paste("Done with", year))
-
-  return(dhs_table_of_interest)
-}
-
-raw_dhs_data <-
-  pmap_dfr(
-    summary_tfr_dataset |>
-      select(pdf_name, page, year),
-    get_pdf_convert_to_tibble
-  )
-
-head(raw_dhs_data)
-```
-
-Now we need to clean up the state names and then filter them.
-
-```{r}
-#| message: false
-#| warning: false
-#| echo: true
-
-states <- c(state.name, "District of Columbia")
-
-raw_dhs_data <-
-  raw_dhs_data |>
-  mutate(
-    state = str_remove_all(state, "\\."),
-    state = str_remove_all(state, "�"),
-    state = str_remove_all(state, "\u0008"),
-    state = str_replace_all(state, "United States 1", "United States"),
-    state = str_replace_all(state, "United States1", "United States"),
-    state = str_replace_all(state, "United States 2", "United States"),
-    state = str_replace_all(state, "United States2", "United States"),
-    state = str_replace_all(state, "United States²", "United States"),
-  ) |>
-  mutate(state = str_squish(state)) |>
-  filter(state %in% states)
-
-head(raw_dhs_data)
-```
-
-The next step is to separate the data and get the correct column from it. We are going to separate based on spaces once it is cleaned up.
-
-```{r}
-#| message: false
-#| warning: false
-#| echo: true
-
-raw_dhs_data <-
-  raw_dhs_data |>
-  mutate(data = str_remove_all(data, "\\*")) |>
-  separate(
-    data,
-    into = c(
-      "col_1",
-      "col_2",
-      "col_3",
-      "col_4",
-      "col_5",
-      "col_6",
-      "col_7",
-      "col_8",
-      "col_9",
-      "col_10"
-    ),
-    sep = " ",
-    remove = FALSE
-  )
-head(raw_dhs_data)
-```
-
-We can now grab the correct column.
-
-```{r}
-#| echo: true
-
-tfr_data <-
-  raw_dhs_data |>
-  mutate(TFR = if_else(year_of_data < 2008, col_4, col_3)) |>
-  select(state, year_of_data, TFR) |>
-  rename(year = year_of_data)
-
-head(tfr_data)
-```
-
-Finally, we need to convert the case.
-
-```{r}
-#| echo: true
-
-head(tfr_data)
-
-tfr_data <-
-  tfr_data |>
+  slice(18:74) |>
+  drop_na() |> 
   mutate(
     TFR = str_remove_all(TFR, ","),
-    TFR = as.numeric(TFR)
+    TFR = as.numeric(TFR),
+    state = str_trim(state),
+    state = if_else(state == "United States 1", "Total", state)
   )
-
-head(tfr_data)
 ```
-
-And run some checks.
+And run some checks, for instance that we have all the states.
 
 ```{r}
 #| echo: true
 
-tfr_data$state |>
-  unique() |>
-  length() == 51
-tfr_data$year |>
-  unique() |>
-  length() == 19
+all(state.name %in% dhs_2000_cleaned$state)
 ```
 
-In particular we want for there to be 51 states and for there to be 19 years.
-
-And we are done (@tbl-tfrforthewin)!
+And we are done (@tbl-tfrforthewin). We can see that there is quite a wide distribution of TFR by US state (@fig-smalldhsexample).
 
 ```{r}
 #| label: tbl-tfrforthewin
 #| echo: true
 #| tbl-cap: First ten rows of a dataset of TFR by United States state, 2000-2019
 
-tfr_data |>
+dhs_2000_cleaned |>
   slice(1:10) |>
-  mutate(year = as_factor(year)) |> # For formatting reasons
   kable(
-    col.names = c("State", "Year", "TFR"),
+    col.names = c("State", "TFR"),
     digits = 0,
     format.args = list(big.mark = ",")
   )
 ```
 
 ```{r}
+#| fig-cap: "Distribution of TFR by US state in 2000"
+#| label: fig-smalldhsexample
+#| fig-height: 8
+
+dhs_2000_cleaned |> 
+  filter(state != "Total") |> 
+  ggplot(aes(x = TFR, y = fct_reorder(state, TFR))) +
+  geom_point() +
+  theme_classic() +
+  labs(y = "State", x = "Total Fertility Rate")
+```
+
+
+```{r}
 #| eval: true
 #| include: false
 
-write_csv(tfr_data, "outputs/monicas_tfr.csv")
+write_csv(dhs_2000_cleaned, "outputs/notmonicas_tfr.csv")
 ```
 
 @kieransparsing provides another example of using this same approach in a slightly different context.
