@@ -8,10 +8,10 @@ engine: knitr
 
 - Read *Promoting Open Science Through Research Data Management*, [@Borghi2022Promoting]
   - Describes the state of data management, and some strategies for conducting research that is more reproducible.
-- Read *Data Management in Large-Scale Education Research*, Chapter 2 "Research Data Management", [@lewiscrystal]
-  - Provides an overview of data management concerns, workflow, and terminology.
-- Read *Transparent and reproducible social science research*, Chapter 10 "Data Sharing", [@christensen2019transparent]
-  - Specifies ways to share data.
+- Read *Data Management in Large-Scale Education Research*, [@lewiscrystal]
+  - Focus on Chapter 2 "Research Data Management", which provides an overview of data management concerns, workflow, and terminology.
+- Read *Transparent and reproducible social science research*, [@christensen2019transparent]
+  - Focus on Chapter 10 "Data Sharing", which specifies ways to share data.
 - Read *Datasheets for datasets*, [@gebru2021datasheets]
   - Introduces the idea of a datasheet.
 - Read *Data and its (dis)contents: A survey of dataset development and use in machine learning research*, [@Paullada2021]
@@ -24,19 +24,36 @@ engine: knitr
 - At the same time as wanting to share our datasets as widely as possible, we must respect those whose information are contained in them. This means, for instance, protecting, to a reasonable extent, and informed by costs and benefits, personally identifying information through selective disclosure, hashing, data simulation, and differential privacy.
 - Finally, as our data get larger, approaches that were viable when they were smaller start to break down. We need to consider efficiency, and explore other approaches, formats, and languages.
 
-**Key packages and functions**
+**Software and packages**
 
-- Base R
-  - `%%`---"modulo"
+- Base R [@citeR]
 - `arrow` [@arrow]
-  - `read_parquet()`
-  - `write_parquet()`
+- `devtools` [@citeDevtools]
+- `diffpriv` [@diffpriv]
+- `fs` [@fs]
+- `janitor` [@janitor]
+- `kableExtra` [@citekableextra]
+- `knitr` [@citeknitr]
 - `openssl` [@openssl]
-  - `md5()`
-  - `sha512()`
 - `tictoc` [@Izrailev2014]
-  - `tic()`
-  - `toc()`
+- `tidyverse` [@tidyverse]
+
+```{r}
+#| message: false
+#| warning: false
+
+library(arrow)
+library(devtools)
+library(diffpriv)
+library(fs)
+library(janitor)
+library(kableExtra)
+library(knitr)
+library(openssl)
+library(tictoc)
+library(tidyverse)
+```
+
 
 ## Introduction
 
@@ -51,43 +68,25 @@ The FAIR principles\index{FAIR principles} are useful when we come to think more
 
 One reason for the rise of data science is that humans are at the heart of it. And often the data that we are interested in directly concern humans. This means that there can be tension between sharing a dataset to facilitate reproducibility and maintaining privacy.\index{privacy} Medicine developed approaches to this over a long time. And out of that we have seen the Health Insurance Portability and Accountability Act (HIPAA)\index{HIPAA} in the US, the broader General Data Protection Regulation (GDPR)\index{GDPR} in Europe introduced in 2016, and the California Consumer Privacy Act (CCPA)\index{CCPA} introduced in 2018. 
 
-Our concerns in data science tend to be about personally identifying information.\index{personally identifying information} We have a variety of ways to protect especially private information, such as emails and home addresses. For instance, we can hash those variables. Sometimes we may simulate data and distribute that instead of sharing the actual dataset. More recently, approaches based on differential privacy are being implemented, for instance the US census. The fundamental problem of data privacy is that increased privacy reduces the usefulness of a dataset. The trade-off means the appropriate decision is nuanced and depends on costs and benefits, and we should be especially concerned about differentiated effects on population minorities.
+Our concerns in data science tend to be about personally identifying information.\index{personally identifying information} We have a variety of ways to protect especially private information, such as emails and home addresses. For instance, we can hash those variables. Sometimes we may simulate data and distribute that instead of sharing the actual dataset. More recently, approaches based on differential privacy are being implemented, for instance the US census. The fundamental problem of data privacy\index{data privacy!fundamental problem} is that increased privacy reduces the usefulness of a dataset. The trade-off means the appropriate decision is nuanced and depends on costs and benefits, and we should be especially concerned about differentiated effects on population minorities.
 
 Just because a dataset is FAIR, it is not necessarily an unbiased representation of the world. Further, it is not necessarily fair in the everyday way that word is used, i.e. impartial and honest [@deLima2022]. FAIR reflects whether a dataset is appropriately available, not whether it is appropriate.
 
 Finally, in this chapter we consider efficiency. As datasets and code bases get larger it becomes more difficult to deal with them, especially if we want them to be shared. We come to concerns around efficiency, not for its own sake, but to enable us to tell stories that could not otherwise be told. This might mean moving beyond CSV files to formats with other properties, or even using databases, such as Postgres, although even as we do so acknowledging that the simplicity of a CSV, as it is text-based which lends itself to human inspection, can be a useful feature. 
 
-The packages that we need in this chapter are:
-```{r}
-#| message: false
-#| warning: false
-
-library(arrow)
-library(devtools)
-library(diffpriv)
-library(fs)
-library(janitor)
-library(kableExtra)
-library(knitr)
-library(openssl)
-library(purrr)
-library(tictoc)
-library(tidyverse)
-```
-
 ## Plan
 
-The storage and retrieval of information is especially connected with libraries, in the traditional sense of a collection of books. These have existed since antiquity and have well-established protocols for deciding what information to store and what to discard, as well as information retrieval. One of the defining aspects of libraries is deliberate curation and organization.\index{curation} The use of a cataloging system ensures that books on similar topics are located close to each other, and there are typically also deliberate plans for ensuring the collection is up to date. This ensures that information storage and retrieval is appropriate and efficient.
+The storage and retrieval of information is especially connected with libraries,\index{libraries!curation} in the traditional sense of a collection of books. These have existed since antiquity and have well-established protocols for deciding what information to store and what to discard, as well as information retrieval. One of the defining aspects of libraries is deliberate curation and organization.\index{curation} The use of a cataloging system ensures that books on similar topics are located close to each other, and there are typically also deliberate plans for ensuring the collection is up to date. This ensures that information storage and retrieval is appropriate and efficient.
 
-Data science relies heavily on the internet when it comes to storage and retrieval. Vannevar Bush, the twentieth-century engineer, defined a "memex" in 1945 as a device to store books, records, and communications in a way that supplements memory [@vannevarbush]. The key to it was the indexing, or linking together, of items. We see this concept echoed just four decades later in the proposal by Tim Berners-Lee for hypertext [@berners1989information]. This led to the World Wide Web and defines the way that resources are identified. They are then transported over the internet, using Hypertext Transfer Protocol (HTTP).
+Data science relies heavily on the internet\index{internet} when it comes to storage and retrieval. Vannevar Bush,\index{Bush, Vannevar} the twentieth century engineer, defined a "memex" in 1945 as a device to store books, records, and communications in a way that supplements memory [@vannevarbush]. The key to it was the indexing, or linking together, of items. We see this concept echoed just four decades later in the proposal by Tim Berners-Lee\index{Berners-Lee, Tim} for hypertext [@berners1989information]. This led to the World Wide Web and defines the way that resources are identified. They are then transported over the internet, using Hypertext Transfer Protocol (HTTP).
 
-At its most fundamental, the internet is about storing and retrieving data. It is based on making various files on a computer available to others. When we consider the storage and retrieval of our datasets we want to especially contemplate for how long they should be stored and for whom [@michener2015ten]. For instance, if we want some dataset to be available for a decade, and widely available, then it becomes important to store it in open and persistent formats [@hart2016ten]. But if we are just using a dataset as part of an intermediate step, and we have the unedited data and the scripts to create it, then it might be fine to not worry too much about such considerations. It is interesting to consider how the evolution of our own physical storage media has similar complicated issues. For instance, datasets and recordings made on various media such as wax cylinders, magnetic tapes, proprietary optical disks, etc now have a variable ease of reading. Some are practically.
+At its most fundamental, the internet\index{internet} is about storing and retrieving data. It is based on making various files on a computer available to others. When we consider the storage and retrieval of our datasets we want to especially contemplate for how long they should be stored and for whom [@michener2015ten]. For instance, if we want some dataset to be available for a decade, and widely available, then it becomes important to store it in open and persistent formats [@hart2016ten]. But if we are just using a dataset as part of an intermediate step, and we have the unedited data and the scripts to create it, then it might be fine to not worry too much about such considerations. The evolution of our own physical storage media has similar complicated issues. For instance, datasets and recordings made on media such as wax cylinders, magnetic tapes, and proprietary optical disks, now have a variable ease of use.
 
-Storing the original, unedited data is important and there are many cases where unedited data have revealed or hinted at fraud [@simonsohn2013just]. Shared data also enhances the credibility of our work, by enabling others to verify it, and can lead to the generation of new knowledge as others use it to answer different questions [@christensen2019transparent]. @christensen2019study suggest that research that shares its data may be more highly cited, although @Tierney2021 caution that widespread data sharing may require a cultural change.
+Storing the original, unedited data is important and there are many cases where unedited data have revealed or hinted at fraud [@simonsohn2013just]. Shared data\{data!sharing} also enhances the credibility of our work, by enabling others to verify it, and can lead to the generation of new knowledge as others use it to answer different questions [@christensen2019transparent]. @christensen2019study suggest that research that shares its data may be more highly cited, although @Tierney2021 caution that widespread data sharing may require a cultural change.
 
-We invite scrutiny and make it as easy as possible to receive criticism. We do this even when it is the difficult choice and results in discomfort because we know that is the only way to contribute to the stock of lasting knowledge. For instance, @pillerblots details potential fabrication in research about Alzheimer's disease, where one of the issues that researchers face when trying to understand whether the results are legitimate is a lack of access to unpublished images.
+We want to invite scrutiny and make it as easy as possible to receive criticism. We should do this even when it is the difficult choice and results in discomfort because we know that is the only way to contribute to the stock of lasting knowledge. For instance, @pillerblots details potential fabrication in research about Alzheimer's disease. In that case, one of the issues that researchers face when trying to understand whether the results are legitimate is a lack of access to unpublished images.
 
-Data provenance is especially important. This refers to documenting "where a piece of data came from and the process by which it arrived in the database" [@Buneman2001, p. 316]. Documenting and saving the unedited dataset, using scripts to manipulate it to get to the actual dataset that is analyzed, and sharing all of this, as recommended in this book, goes some way to achieving this. In some fields it is common for just a handful of databases to be used by many different teams, for instance, in genetics, the UK BioBank, and in the life sciences a cloud-based platform called ORCESTRA [@Mammoliti2021] has been established to help.
+Data provenance is especially important. This refers to documenting "where a piece of data came from and the process by which it arrived in the database" [@Buneman2001, p. 316]. Documenting and saving the original, unedited dataset, using scripts to manipulate it to get to the actual dataset that is analyzed, and sharing all of this, as recommended in this book, goes some way to achieving this. In some fields it is common for just a handful of databases to be used by many different teams, for instance, in genetics, the United Kingdom BioBank, and in the life sciences a cloud-based platform called ORCESTRA [@Mammoliti2021] has been established to help.
 
 
 
@@ -95,14 +94,14 @@ Data provenance is especially important. This refers to documenting "where a pie
 
 ### GitHub
 
-The easiest place to get started with storing a dataset is GitHub\index{GitHub} because that is already built into our workflow. For instance, if we push a dataset to a public repository, then our dataset becomes available. One benefit of this is that if we have set up our workspace appropriately, then we likely store our unedited data and the tidy data, as well as the scripts that are needed to transform one to the other. We are most of the way to the "bronze" standard of @heil2021reproducibility without changing anything.
+The easiest place for us to get started with storing a dataset is GitHub because that is already built into our workflow.\index{GitHub!data storage} For instance, if we push a dataset to a public repository, then our dataset becomes available. One benefit of this is that if we have set up our workspace appropriately, then we likely store our unedited data and the tidy data, as well as the scripts that are needed to transform one to the other. We are most of the way to the "bronze" standard of @heil2021reproducibility without changing anything.
 
 ::: {.content-visible when-format="pdf"}
-As an example of how we have stored some data, we can access "raw_data.csv" from the ["starter_folder"](https://github.com/RohanAlexander/starter_folder), (which we recommend using for the papers in the ["Papers" Online Appendix](https://tellingstorieswithdata.com/23-assessment.html)). We navigate to the file in GitHub ("inputs" -> "data" -> "raw_data.csv"), and then click "Raw" (@fig-githubraw).
+As an example of how we have stored some data, we can access "raw_data.csv" from the ["starter_folder"](https://github.com/RohanAlexander/starter_folder), (which we recommend using for the papers in the ["Papers" Online Appendix](https://tellingstorieswithdata.com/23-assessment.html)). We navigate to the file in GitHub ("inputs" $\rightarrow$ "data" $\rightarrow$ "raw_data.csv"), and then click "Raw" (@fig-githubraw).
 :::
 
 ::: {.content-visible unless-format="pdf"}
-As an example of how we have stored some data, we can access "raw_data.csv" from the ["starter_folder"](https://github.com/RohanAlexander/starter_folder), (which we recommend using for the papers in [Online Appendix -@sec-papers]). We navigate to the file in GitHub ("inputs" -> "data" -> "raw_data.csv"), and then click "Raw" (@fig-githubraw).
+As an example of how we have stored some data, we can access "raw_data.csv" from the ["starter_folder"](https://github.com/RohanAlexander/starter_folder), (which we recommend using for the papers in [Online Appendix -@sec-papers]). We navigate to the file in GitHub ("inputs" $\rightarrow$ "data" $\rightarrow$ "raw_data.csv"), and then click "Raw" (@fig-githubraw).
 :::
 
 ![Getting the necessary link to be able to read a CSV from a GitHub repository](figures/github_raw_data.png){#fig-githubraw width=95% fig-align="center"}
@@ -136,18 +135,18 @@ While we can store and retrieve a dataset easily in this way, it lacks explanati
 ### R packages for data
 
 ::: {.content-visible when-format="pdf"}
-To this point we have largely used R packages\index{R packages!data} for their code, although we have seen a few that were focused on sharing data, for instance, `troopdata` [@troopdata] and `babynames` [@citebabynames] in the ["Interactive communication" Online Appendix](https://tellingstorieswithdata.com/24-interactive_communication.html). We can build a R package for our dataset and then add it to GitHub and potentially eventually CRAN. This will make it easy to store and retrieve because we can obtain the dataset by loading the package. In contrast to the CSV-based approach, it also means a dataset brings its documentation along with it. 
+To this point we have largely used R packages\index{R packages!data} for their code, although we have seen a few that were focused on sharing data, for instance, `troopdata` and `babynames` in the ["Interactive communication" Online Appendix](https://tellingstorieswithdata.com/24-interactive_communication.html). We can build a R package for our dataset and then add it to GitHub and potentially eventually CRAN. This will make it easy to store and retrieve because we can obtain the dataset by loading the package. In contrast to the CSV-based approach, it also means a dataset brings its documentation along with it. 
 
 This will be the first R package that we build, and so we will jump over a number of steps. The key is to just try to get something working. In ["Production"](https://tellingstorieswithdata.com/27-deploy.html), we return to R packages and use them to deploy models. This gives us another chance to further develop experience with them.
 :::
 
 ::: {.content-visible unless-format="pdf"}
-To this point we have largely used R packages for their code, although we have seen a few that were focused on sharing data, for instance, `troopdata` [@troopdata] and `babynames` [@citebabynames] in @sec-interactive-communication. We can build a R package for our dataset and then add it to GitHub and potentially eventually CRAN. This will make it easy to store and retrieve because we can obtain the dataset by loading the package. In contrast to the CSV-based approach, it also means a dataset brings its documentation along with it. 
+To this point we have largely used R packages for their code, although we have seen a few that were focused on sharing data, for instance, `troopdata` and `babynames` in @sec-interactive-communication. We can build a R package for our dataset and then add it to GitHub and potentially eventually CRAN. This will make it easy to store and retrieve because we can obtain the dataset by loading the package. In contrast to the CSV-based approach, it also means a dataset brings its documentation along with it. 
 
 This will be the first R package that we build, and so we will jump over a number of steps. The key is to just try to get something working. In @sec-production, we return to R packages and use them to deploy models. This gives us another chance to further develop experience with them.
 :::
 
-To get started, create a new package ("File" -> "New project" -> "New Directory" -> "R Package"). Give the package a name, such as "favcolordata" and select "Open in new session". Create a new folder called "data". We simulate a dataset of people and their favorite colors to include in our R package.
+To get started, create a new package ("File" $\rightarrow$ "New project" $\rightarrow$ "New Directory" $\rightarrow$ "R Package"). Give the package a name, such as "favcolordata" and select "Open in new session". Create a new folder called "data". We simulate a dataset of people and their favorite colors to include in our R package.
 
 ```{r}
 #| include: true
@@ -217,7 +216,7 @@ Then we create a R file "data.R" in the "R" folder. This file will only contain 
 
 Finally, add a README that provides a summary of all of this for someone coming to the project for the first time. Examples of packages with excellent READMEs include [`ggplot2`](https://github.com/tidyverse/ggplot2#readme), [`pointblank`](https://github.com/rich-iannone/pointblank#readme), [`modelsummary`](https://github.com/vincentarelbundock/modelsummary#readme), and [`janitor`](https://github.com/sfirke/janitor#readme).
 
-We can now go to the "Build" tab and click "Install and Restart". After this, the package "favcolordata", will be loaded and the data can be accessed locally using "color_data". If we were to push this package to GitHub, then anyone would be able to install the package using `devtools` [@citeDevtools] and use our dataset. Indeed, the following will work.
+We can now go to the "Build" tab and click "Install and Restart". After this, the package "favcolordata", will be loaded and the data can be accessed locally using "color_data". If we were to push this package to GitHub, then anyone would be able to install the package using `devtools` and use our dataset. Indeed, the following will work.
 
 ```{r}
 #| eval: false
@@ -236,9 +235,9 @@ The definitive guide to including data in R packages is @rpackages [Chapter 8].
 
 ### Depositing data
 
-While it is possible that a dataset will be cited if it is available through GitHub or a R package, this becomes more likely if the dataset is deposited somewhere.\index{data!deposit} There are several reasons for this, but one is that it seems a bit more formal. Another is that it is associated with a DOI. [Zenodo](https://zenodo.org) and [Open Science Framework](https://osf.io) (OSF) are two that are commonly used. For instance, @chris_carleton_2021_4550688 uses Zenodo\index{Zenodo} to share the dataset and analysis supporting @carleton2021reassessment, and @geuenich_michael_2021_5156049 use Zenodo to share the dataset that underpins @geuenich2021automated. Similarly, @ryansnewpaper use OSF\index{OSF} to share code and data.
+While it is possible that a dataset will be cited if it is available through GitHub or a R package, this becomes more likely if the dataset is deposited somewhere.\index{data!deposit} There are several reasons for this, but one is that it seems a bit more formal. Another is that it is associated with a DOI. [Zenodo](https://zenodo.org) and the [Open Science Framework](https://osf.io) (OSF) are two that are commonly used. For instance, @chris_carleton_2021_4550688 uses Zenodo\index{Zenodo} to share the dataset and analysis supporting @carleton2021reassessment, and @geuenich_michael_2021_5156049 use Zenodo to share the dataset that underpins @geuenich2021automated. Similarly, @ryansnewpaper use OSF\index{OSF} to share code and data.
 
-Another option is to use a dataverse,\index{dataverse!Harvard Dataverse} such as the [Harvard Dataverse](https://dataverse.harvard.edu) or the [Australian Data Archive](https://ada.edu.au). This is a common requirement for journal publications. One nice aspect of this is that we can use `dataverse` [@dataverse] to retrieve the dataset as part of a reproducible workflow. We have an example of this in @sec-its-just-a-generalized-linear-model.
+Another option is to use a dataverse,\index{dataverse!Harvard Dataverse} such as the [Harvard Dataverse](https://dataverse.harvard.edu) or the [Australian Data Archive](https://ada.edu.au). This is a common requirement for journal publications. One nice aspect of this is that we can use `dataverse` to retrieve the dataset as part of a reproducible workflow. We have an example of this in @sec-its-just-a-generalized-linear-model.
 
 In general, these options are free and provide a DOI that can be useful for citation purposes. The use of data deposits such as these is a critical way to offload responsibility for the continued hosting of the dataset (which in this case is a good thing) and prevent the dataset from being lost. It also establishes a single point of truth, which should act to reduce errors [@byrd2020responsible]. Finally, it makes access to the dataset independent of the original researchers, and results in persistent metadata. That all being said, the viability of these options rests on their underlying institutions. For instance, Zenodo\index{Zenodo} is operated by CERN and many dataverses are operated by universities. While the short- and medium-term viability and good intentions of these institutions is unquestioned, they are nonetheless, as we all are, subject to social and political forces.
 
@@ -253,7 +252,7 @@ Datasheets\index{data!datasheets} [@gebru2021datasheets] are an increasingly cri
 :::{.callout-note}
 ## Shoulders of giants
 
-Timnit Gebru\index{Gebru!Timnit} is the founder of the Distributed Artificial Intelligence Research Institute (DAIR). After earning a PhD in Computer Science from Stanford University, she joined Microsoft and then Google. In addition to @bandy2021addressing, which introduced datasheets, one notable paper is @Bender2021, which discussed the dangers of language models being too large. She has made many other substantial contributions to fairness and accountability, especially @buolamwini2018gender, which demonstrated racial bias in facial analysis algorithms.
+Timnit Gebru\index{Gebru!Timnit} is the founder of the Distributed Artificial Intelligence Research Institute (DAIR). After earning a PhD in Computer Science from Stanford University, Gebru joined Microsoft and then Google. In addition to @bandy2021addressing, which introduced datasheets, one notable paper is @Bender2021, which discussed the dangers of language models being too large. She has made many other substantial contributions to fairness and accountability, especially @buolamwini2018gender, which demonstrated racial bias in facial analysis algorithms.
 :::
 
 
@@ -264,14 +263,14 @@ Instead of telling us how unhealthy various foods are, a datasheet tells us thin
 - How complete is the dataset? (Which is, of course, unanswerable, but detailing the ways in which it is known to be incomplete is valuable.)
 - Which variables are present, and, equally, not present, for particular observations?
 
-Sometimes we have done a lot of work to create a datasheet. In that case, we may like to publish and share it on its own, for instance, @biderman2022datasheet and @bandy2021addressing. But typically a datasheet might live in an appendix to the paper, for instance @zhang2022opt, or be included in a file adjacent to the dataset.
+Sometimes, a lot of work is done to create a datasheet. In that case, we may like to publish and share it on its own, for instance, @biderman2022datasheet and @bandy2021addressing. But typically a datasheet might live in an appendix to the paper, for instance @zhang2022opt, or be included in a file adjacent to the dataset.
 
 ::: {.content-visible when-format="pdf"}
-As an example, a datasheet for the dataset that underpins @citeaustralianpoliticians is included in the ["Datasheet" Online Appendix](https://tellingstorieswithdata.com/25-datasheet.html). The text of the questions directly comes from @gebru2021datasheets. When we create datasheets for a dataset, especially a dataset that we did not put together ourselves, it is possible that the answer to some questions will simply be "Unknown", but we should do what we can to minimize that. 
+As an example, a datasheet for the dataset that underpins @citeaustralianpoliticians is included in the ["Datasheet" Online Appendix](https://tellingstorieswithdata.com/25-datasheet.html). The text of the questions directly comes from @gebru2021datasheets. When creating a datasheet for a dataset, especially a dataset that we did not put together ourselves, it is possible that the answer to some questions will simply be "Unknown", but we should do what we can to minimize that. 
 :::
 
 ::: {.content-visible unless-format="pdf"}
-As an example, a datasheet for the dataset that underpins @citeaustralianpoliticians is included in [Online Appendix -@sec-datasheet]. The text of the questions directly comes from @gebru2021datasheets. When we create datasheets for a dataset, especially a dataset that we did not put together ourselves, it is possible that the answer to some questions will simply be "Unknown", but we should do what we can to minimize that. 
+As an example, a datasheet for the dataset that underpins @citeaustralianpoliticians is included in [Online Appendix -@sec-datasheet]. The text of the questions directly comes from @gebru2021datasheets. When creating a datasheet for a dataset, especially a dataset that we did not put together ourselves, it is possible that the answer to some questions will simply be "Unknown", but we should do what we can to minimize that. 
 :::
 
 The datasheet template created by @gebru2021datasheets is not the final word. It is possible to improve on it, and add additional detail sometimes. For instance, @Miceli2022 argue for the addition of questions to do with power relations.
@@ -280,15 +279,14 @@ The datasheet template created by @gebru2021datasheets is not the final word. It
 
 By way of background, @christensen2019transparent [p. 180] define a variable as "confidential" if the researchers know who is associated with each observation, but the public version of the dataset removes this association. A variable is "anonymous" if even the researchers do not know.\index{personally identifying information} 
 
-Personally identifying information (PII) is that which enables us to link an observation in our dataset with an actual person. This is a significant concern in fields focused on data about people. For instance, email addresses are often PII, as are names and addresses. While some variables may not be PII for many respondents, it could be PII for some. For instance, consider a survey that is representative of the population age distribution. There is not likely to be many respondents aged over 100, and so the variable age may then become PII. The same scenario happens with income, wealth, and many other variables. One response to this is for data to be censored, which was discussed in @sec-farm-data. For instance, we may record age between zero and 90, and then group everyone over that into "90+". Another is to construct age-groups: "18-29", "30-44", .... Notice that with both these solutions we have had to trade-off privacy for usefulness. More concerningly, a variable may be PII, not by itself, but when combined with another variable.
+Personally identifying information (PII) is that which enables us to link an observation in our dataset with an actual person. This is a significant concern in fields focused on data about people. For instance, email addresses are often PII, as are names and addresses. While some variables may not be PII for many respondents, it could be PII for some. For instance, consider a survey that is representative of the population age distribution. There is not likely to be many respondents aged over 100, and so the variable age may then become PII. The same scenario applies to income, wealth, and many other variables. One response to this is for data to be censored, which was discussed in @sec-farm-data. For instance, we may record age between zero and 90, and then group everyone over that into "90+". Another is to construct age-groups: "18-29", "30-44", .... Notice that with both these solutions we have had to trade-off privacy for usefulness. More concerningly, a variable may be PII, not by itself, but when combined with another variable.
 
-Our primary concern should be with ensuring that the privacy of our dataset is appropriate, given the expectations of the reasonable person.\index{personally identifying information}  This requires weighing costs and benefits. In national security settings there has been considerable concern about the over-classification of documents [@overclassification]. The reduced circulation of information because of this may result in unrealized benefits. To avoid this in data science, the test of the need to protect a dataset needs to be made by the reasonable person weighing up costs and benefits. It is easy, but wrong, to say that no data should be released unless it is perfectly anonymized, because the fundamental problem of data privacy would mean such data would have little utility. That approach, possibly motivated by the precautionary principle, would be too conservative and could cause considerable loss in terms of unrealized benefits.
+Our primary concern should be with ensuring that the privacy of our dataset is appropriate, given the expectations of the reasonable person.\index{personally identifying information}  This requires weighing costs and benefits. In national security settings there has been considerable concern about the over-classification of documents [@overclassification]. The reduced circulation of information because of this may result in unrealized benefits. To avoid this in data science, the test of the need to protect a dataset needs to be made by the reasonable person weighing up costs and benefits. It is easy, but incorrect, to argue that data should not be released unless it is perfectly anonymized. The fundamental problem of data privacy implies that such data would have limited utility. That approach, possibly motivated by the precautionary principle, would be too conservative and could cause considerable loss in terms of unrealized benefits.
 
-Randomized response [@randomizedresponse] is a clever way that anonymity can be ensured without much overhead.\index{randomized response}  Each respondent flips a coin before they answer a question and does not show the researcher the outcome of the coin flip. The respondent is instructed to respond truthfully to the question if the coin lands on heads, but to always give some particular (but still plausible) response if tails. The results of the other options can then be re-weighted to provide an estimate, without a researcher ever knowing the truth about any particular respondent. This is especially used in association with snowball sampling, discussed in @sec-farm-data. One issue with randomized response is that the resulting dataset can be only used to answer specific questions. This requires careful planning, and the dataset will be of less general value. 
+Randomized response [@randomizedresponse] is a clever way for anonymity to be ensured without much overhead.\index{randomized response}  Each respondent flips a coin before they answer a question and does not show the researcher the outcome of the coin flip. The respondent is instructed to respond truthfully to the question if the coin lands on heads, but to always give some particular (but still plausible) response if tails. The results of the other options can then be re-weighted to provide an estimate, without a researcher ever knowing the truth about any particular respondent. This is especially used in association with snowball sampling, discussed in @sec-farm-data. One issue with randomized response is that the resulting dataset can be only used to answer specific questions. This requires careful planning, and the dataset will be of less general value. 
 
 @zook2017ten recommend considering whether data even need to be gathered in the first place. For instance, if a phone number is not absolutely required then it might be better to not ask for it, rather than need to worry about protecting it before data dissemination. 
-
-GDPR\index{GDPR} and HIPAA\index{HIPAA} are two legal structures that govern data in Europe and the US, respectively. Due to the influence of these regions, they have a significant effect outside those regions also. GDPR concerns data generally, while HIPAA is focused on healthcare. GDPR applies to all personal data, which is defined as:
+GDPR\index{GDPR} and HIPAA\index{HIPAA} are two legal structures that govern data in Europe, and the United States, respectively. Due to the influence of these regions, they have a significant effect outside those regions also. GDPR concerns data generally, while HIPAA is focused on healthcare. GDPR applies to all personal data, which is defined as:
 
 > ...any information relating to an identified or identifiable natural person ("data subject"); an identifiable natural person is one who can be identified, directly or indirectly, in particular by reference to an identifier such as a name, an identification number, location data, an online identifier or to one or more factors specific to the physical, physiological, genetic, mental, economic, cultural or social identity of that natural person;
 >
@@ -381,6 +379,40 @@ While the approach for the first variable, names, is good because the names cann
 
 Rather than write our own hash functions, we can use cryptographic hash functions such as `md5()` from `openssl`.
 
+::: {.content-visible when-format="pdf"}
+```{r}
+#| message: false
+#| warning: false
+#| eval: false
+#| echo: true
+
+some_private_information |>
+  mutate(
+    md5_names = md5(names),
+    md5_ages = md5(ages |> as.character())
+  )
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| eval: true
+#| echo: false
+
+some_private_information |>
+  mutate(
+    md5_names = md5(names),
+    md5_ages = md5(ages |> as.character())
+  ) |> 
+  mutate(
+    md5_names = str_trunc(md5_names, 20),
+    md5_ages = str_trunc(md5_ages, 20)
+    )
+
+```
+:::
+
+::: {.content-visible unless-format="pdf"}
 ```{r}
 #| message: false
 #| warning: false
@@ -391,6 +423,7 @@ some_private_information |>
     md5_ages = md5(ages |> as.character())
   )
 ```
+:::
 
 We could share either of these transformed variables and be comfortable that it would be difficult for someone to use only that information to recover the names of our respondents. That is not to say that it is impossible. Knowledge of the key, which is the term given to the string used to encrypt the data, would allow someone to reverse this. If we made a mistake, such as accidentally pushing the original dataset to GitHub then they could be recovered. And it is likely that various governments can reverse the cryptographic hashes used here.\index{data privacy!hash}
 
@@ -442,9 +475,9 @@ Consider a situation in which a professor wants to release the average mark for 
 set.seed(853)
 
 grades <- 
-  tibble(problem_set_1 = sample(x = (1:100), size = 10, replace = TRUE))
+  tibble(ps_1 = sample(x = (1:100), size = 10, replace = TRUE))
 
-mean(grades$problem_set_1)
+mean(grades$ps_1)
 ```
 
 The professor could announce the exact mean, for instance, "The mean for the first problem set was 50.5". Then theoretically, all-but-one student could let the others know their mark. The result would be that it would be possible to determine the mark of the student who did not agree to make their mark public.
@@ -452,7 +485,7 @@ The professor could announce the exact mean, for instance, "The mean for the fir
 A non-statistical approach would be for the professor to add the word "roughly". For instance, the professor could say "The mean for the first problem set was roughly 50.5". The students could attempt the same strategy, but they would never know with certainty. The professor could implement this by adding noise to the mean.
 
 ```{r}
-mean(grades$problem_set_1) + runif(n = 1, min = -10, max = 10)
+mean(grades$ps_1) + runif(n = 1, min = -10, max = 10)
 ```
 
 The professor could then announce this modified mean. This would make the students' plan more difficult. One thing to notice about that approach is that it would not work with persistent questioning. For instance, eventually the students would be able to back out the distribution of the noise that the professor was adding. One implication is that the professor would need to limit the number of queries that we allow.
@@ -473,7 +506,7 @@ mech <- sensitivitySampler(mech, oracle = distr, n = 5, gamma = 0.1)
 
 r <- releaseResponse(mech, 
                      privacyParams = DPParamsEps(epsilon = 1), 
-                     X = grades$problem_set_1)
+                     X = grades$ps_1)
 ```
 
 
@@ -485,7 +518,7 @@ r <- releaseResponse(mech,
 #| tbl-cap: "Comparing the actual mean with a differentially private mean"
 
 tibble(
-  actual = mean(grades$problem_set_1),
+  actual = mean(grades$ps_1),
   announce = r$response
 ) |> 
   kable(
@@ -516,7 +549,7 @@ For the most part, done is better than perfect, and unnecessary optimization is 
 
 There are several ways to become more efficient with our data, especially as it becomes larger.\index{efficiency!iteration} The first, and most obvious, is to break larger datasets into smaller pieces. For instance, if we have a dataset for a year, then we could break it into months, or even days. To enable this, we need a way of quickly reading in many different files.
 
-The need to read in multiple files and combine them into the one tibble is a surprisingly common task. For instance, it may be that the data for a year, are saved into individual CSV files for each month. We can use `purrr` [@citepurrr] and `fs` [@fs] to do this painlessly. To illustrate this situation we will simulate data from the exponential distribution using `rexp()`. Such data may reflect, say, comments on a social media platform, where the vast majority of comments are made by a tiny minority of users. We will use `dir_create()` from `fs` to create a folder, simulate monthly data, and save it. We will then illustrate reading it in.
+The need to read in multiple files and combine them into the one tibble is a surprisingly common task. For instance, it may be that the data for a year, are saved into individual CSV files for each month. We can use `purrr` and `fs` to do this painlessly. To illustrate this situation we will simulate data from the exponential distribution using `rexp()`. Such data may reflect, say, comments on a social media platform, where the vast majority of comments are made by a tiny minority of users. We will use `dir_create()` from `fs` to create a folder, simulate monthly data, and save it. We will then illustrate reading it in.
 
 ```{r}
 #| eval: false
@@ -529,13 +562,13 @@ dir_create(path = "inputs/data/user_data")
 set.seed(853)
 
 simulate_and_save_data <- function(month) {
-  number_of_observations <- 1000
+  num_obs <- 1000
   file_name <- paste0("inputs/data/user_data/", month, ".csv")
   user_comments <-
     tibble(
-      user = c(1:number_of_observations),
-      month = rep(x = month, times = number_of_observations),
-      comments = rexp(n = number_of_observations, rate = 0.3) |> round()
+      user = c(1:num_obs),
+      month = rep(x = month, times = num_obs),
+      comments = rexp(n = num_obs, rate = 0.3) |> round()
     )
   write_csv(
     x = user_comments,
@@ -555,13 +588,13 @@ dir_create(path = "user_data")
 set.seed(853)
 
 simulate_and_save_data <- function(month) {
-  number_of_observations <- 1000
+  num_obs <- 1000
   file_name <- paste0("user_data/", month, ".csv")
   user_comments <-
     tibble(
-      user = c(1:number_of_observations),
-      month = rep(x = month, times = number_of_observations),
-      comments = rexp(n = number_of_observations, rate = 0.3) |> round()
+      user = c(1:num_obs),
+      month = rep(x = month, times = num_obs),
+      comments = rexp(n = num_obs, rate = 0.3) |> round()
     )
   write_csv(
     x = user_comments,
@@ -665,7 +698,7 @@ year_of_data_using_purrr
 
 ### Apache Arrow
 
-CSVs are commonly used without much thought in data science. And while CSVs are good because they have little overhead and can be manually inspected, this also means they are quite minimal. This can lead to issues, for instance class is not preserved, and file sizes can become large leading to storage and performance issues. There are various alternatives, including Apache Arrow, which stores data in columns rather than rows like CSV. We focus on the ".parquet" format from Apache Arrow.\index{parquet} Like a CSV, parquet is an open standard. The R package, `arrow` [@arrow], enables us to use this format. The use of parquet has the advantage of requiring little change from us while delivering significant benefits. 
+CSVs are commonly used without much thought in data science. And while CSVs are good because they have little overhead and can be manually inspected, this also means they are quite minimal. This can lead to issues, for instance class is not preserved, and file sizes can become large leading to storage and performance issues. There are various alternatives, including Apache Arrow, which stores data in columns rather than rows like CSV. We focus on the ".parquet" format from Apache Arrow.\index{parquet} Like a CSV, parquet is an open standard. The R package, `arrow`, enables us to use this format. The use of parquet has the advantage of requiring little change from us while delivering significant benefits. 
 
 :::{.callout-note}
 ## Shoulders of giants
@@ -684,14 +717,14 @@ Having loaded `arrow`, we can use parquet files in a similar way to CSV files. A
 #| message: false
 #| warning: false
 
-number_of_draws <- 1000000
+num_draws <- 1000000
 
 # Homage to: https://www.rand.org/pubs/monograph_reports/MR1418.html
 a_million_random_digits <-
   tibble(
-    numbers = runif(n = number_of_draws),
-    letters = sample(x = letters, size = number_of_draws, replace = TRUE),
-    states = sample(x = state.name, size = number_of_draws, replace = TRUE),
+    numbers = runif(n = num_draws),
+    letters = sample(x = letters, size = num_draws, replace = TRUE),
+    states = sample(x = state.name, size = num_draws, replace = TRUE),
   )
 
 write_csv(x = a_million_random_digits,
@@ -733,19 +766,19 @@ draws <- c(100,
            100000000)
 
 file_size_comparison <-
-  map(draws, function(number_of_draws) {
+  map(draws, function(num_draws) {
 
     a_million_random_digits <-
       tibble(
-        numbers = runif(n = number_of_draws),
+        numbers = runif(n = num_draws),
         letters = sample(
           x = letters,
-          size = number_of_draws,
+          size = num_draws,
           replace = TRUE
         ),
         states = sample(
           x = state.name,
-          size = number_of_draws,
+          size = num_draws,
           replace = TRUE
         ),
       )
@@ -763,7 +796,7 @@ file_size_comparison <-
     toc(log = TRUE, quiet = TRUE)
     
     file_size_comparison <- tibble(
-      draws = number_of_draws,
+      draws = num_draws,
       csv_size = file_size("a_million_random_digits.csv"),
       parquet_size = file_size("a_million_random_digits.parquet")
     )
@@ -1077,7 +1110,7 @@ read_csv(
     d.  collection process.
 4. Discuss, with the help of examples and references, whether a person's name is PII (please write at least three paragraphs)? 
 5. Discuss, with the help of examples and references, whether a person's income is PII (please write at least three paragraphs)? 
-6. Using `openssl::md5()` what is the hash of "Monica" (pick one)?
+6. Using `md5()` what is the hash of "Monica" (pick one)?
     a. 243f63354f4c1cc25d50f6269b844369
     b. 09084cc0cda34fd80bfa3cc0ae8fe3dc
     c.  09084cc0cda34fd80bfa3cc0ae8fe3dc
@@ -1099,9 +1132,6 @@ Use Quarto, and include an appropriate title, author, date, link to a GitHub rep
 
 Please identify a dataset you consider interesting and important, that does not have a datasheet [@gebru2021datasheets]. As a reminder, datasheets accompany datasets and document "motivation, composition, collection process, recommended uses," among other aspects. Please put together a datasheet for this dataset. You are welcome to use the template in the [starter folder](https://github.com/RohanAlexander/starter_folder).
 
-
-
-
 ### Paper {.unnumbered}
 
 ::: {.content-visible when-format="pdf"}
@@ -1111,10 +1141,3 @@ At about this point the *Dysart* Paper in the ["Papers" Online Appendix](https:/
 ::: {.content-visible unless-format="pdf"}
 At about this point the *Dysart* Paper from [Online Appendix -@sec-papers] would be appropriate.
 :::
-
-
-
-
-<!-- Look into how IQ tests are conducted and what goes into them. To what extent do you think they measure intelligence? Some aspects that you may like to think about in answering that question include: Who decides what is intelligence? How is this updated? What is missing from that definition? To what extent is this generalisable? You should write a page or two. -->
-
-

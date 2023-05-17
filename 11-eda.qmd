@@ -6,11 +6,12 @@ engine: knitr
 
 **Prerequisites**
 
-- Read *The Future of Data Analysis*, Part 1 "General Considerations", [@tukey1962future]
-  - John Tukey, the twentieth century statistician, made a variety of contributions to statistics, and this chapter was ahead of its time, about the ways in which we ought to learn something from data.
-- Read *Best Practices in Data Cleaning*, Chapter 6 "Dealing with Missing or Incomplete Data", [@bestpracticesindatacleaning]
-- Read *R for Data Science*, Chapter 12 "Exploratory data analysis", [@r4ds]
-  - A written self-contained EDA worked example.
+- Read *The Future of Data Analysis*, [@tukey1962future]
+  - John Tukey, the twentieth century statistician, made a variety of contributions to statistics. Focus on Part 1 "General Considerations", which was ahead of its time about the ways in which we ought to learn something from data.
+- Read *Best Practices in Data Cleaning*, [@bestpracticesindatacleaning]
+  - Focus on Chapter 6 "Dealing with Missing or Incomplete Data".
+- Read *R for Data Science*, [@r4ds]
+  - Focus on Chapter 12 "Exploratory data analysis", which provides a written self-contained EDA worked example.
 - Watch *Whole game*, [@hadleycodes]
   - A video of a self-contained EDA worked example.
 
@@ -22,48 +23,36 @@ engine: knitr
   3) the data that are not there.
 - During the EDA process we want to come to understand the issues and features of the dataset and how this may affect analysis decisions. We are especially concerned about missing values and outliers.
 
-**Key packages and functions**
+**Software and packages**
 
+- Base R [@citeR]
+- `arrow` [@arrow]
 - `janitor` [@janitor]
-  - `adorn_ns()`
-  - `adorn_pct_formatting()`
-  - `adorn_percentages()`
-  - `adorn_title()`
-  - `adorn_totals()`
-  - `clean_names()`
-  - `get_dupes()`
-  - `tabyl()`
+- `knitr` [@citeknitr]
+- `lubridate` [@GrolemundWickham2011]
+- `mice` [@mice]
 - `modelsummary` [@citemodelsummary]
-	- `modelsummary()`
 - `naniar` [@naniar]
-	- `geom_miss_point()`
 - `opendatatoronto` [@citeSharla]
-	- `get_resource()`
-	- `list_package_resources()`
-- `tidyverse` (core) [@tidyverse]
-	- `dplyr` [@citedplyr]
-		`add_count()`
-	- `ggplot2` [@citeggplot]
-		- `geom_bar()`
-		- `geom_col()`
-		- `geom_density()`
-		- `geom_histogram()`
-		- `geom_point()`
-		- `geom_smooth()`
-		- `scale_x_log10()`
-		- `scale_y_log10()`
-	- `stringr` [@citestringr]
-		- `str_detect()`
-		- `str_remove()`
-		- `str_split()`
-		- `str_starts()`
-		- `word()`
-- `tidyverse` (outer) [@tidyverse]
-	- `lubridate` [@GrolemundWickham2011]
-		- `week()`
-- `visdat` [@citevisdat]
-	- `vis_dat()`
-	- `vis_miss()`
+- `skimr` [@skimr]
+- `tidyverse` [@tidyverse]
+
+```{r}
+#| message: false
+#| warning: false
+
+library(arrow)
+library(janitor)
+library(knitr)
+library(lubridate)
+library(mice)
+library(modelsummary)
+library(naniar)
+library(opendatatoronto)
+library(skimr)
+library(tidyverse)
+```
+
 
 
 ## Introduction
@@ -85,23 +74,6 @@ Interestingly, coming to thoroughly understand the data that we have often helps
 - Understand what is not there.
 
 There is no one correct process or set of steps that are required to undertake and complete EDA. Instead, the relevant steps and tools depend on the data and question of interest. As such, in this chapter we will illustrate approaches to EDA through various examples of EDA including US state populations, subway delays in Toronto, and Airbnb listings in London.
-
-The packages that we need in this chapter are:
-```{r}
-#| message: false
-#| warning: false
-
-library(arrow)
-library(janitor)
-library(knitr)
-library(lubridate)
-library(mice)
-library(modelsummary)
-library(naniar)
-library(opendatatoronto)
-library(skimr)
-library(tidyverse)
-```
 
 ## 1975 US states data
 
@@ -279,7 +251,7 @@ We can return to our US states dataset, generate some missing data, and consider
 2) Impute the mean of observations without missing data.
 3) Use multiple imputation, which involves creating many potential datasets, conducting inference, and then bringing them together potentially though averaging [@gelmanandhill, p. 542].
 
-To drop the observations with missing data, we can use `mean()` because by default it will exclude observations with missing values in its calculation. To impute the mean, we construct a second dataset with the observations with missing data removed. We then compute the mean of the population column, and impute that into the missing values in the original dataset. And finally, we can implement multiple imputation with `mice()` from `mice` [@mice].
+To drop the observations with missing data, we can use `mean()` because by default it will exclude observations with missing values in its calculation. To impute the mean, we construct a second dataset with the observations with missing data removed. We then compute the mean of the population column, and impute that into the missing values in the original dataset. And finally, we can implement multiple imputation with `mice()` from `mice`.
 
 ```{r}
 #| message: false
@@ -377,7 +349,7 @@ It is always worth looking explicitly for values that seem like they do not belo
 
 ## TTC subway delays 
 
-As a second, and more involved, example of EDA we use `opendatatoronto` [@citeSharla], introduced in @sec-fire-hose, and the `tidyverse` [@tidyverse] to obtain and explore data about the Toronto\index{Canada!Toronto} subway system\index{Canada!Toronto subway delays}. We are especially interested in getting a sense of the delays that have occurred.
+As a second, and more involved, example of EDA we use `opendatatoronto`, introduced in @sec-fire-hose, and the `tidyverse` to obtain and explore data about the Toronto\index{Canada!Toronto} subway system\index{Canada!Toronto subway delays}. We are especially interested in getting a sense of the delays that have occurred.
 
 To begin, we download the data on Toronto Transit Commission (TTC) subway delays in 2021. The data are available as an Excel file with a separate sheet for each month. We are interested in 2021 so we filter to just that year then download it using `get_resource()` and bring the months together with `bind_rows()`.
 
@@ -502,7 +474,7 @@ Entire careers are spent understanding missing data, and the presence, or lack, 
 
 In this case we have many missing values in "bound" and two in "line". For these known-unknowns, as discussed in @sec-farm-data, we are interested in whether or not they are missing at random. We want to, ideally, show that data happened to just drop out. This is unlikely, and so we are usually trying to look at what is systematic about how our data are missing.
 
-Sometimes data happen to be duplicated. If we did not notice this, then our analysis would be wrong in ways that we would not be able to consistently expect. There are a variety of ways to look for duplicated rows, but `get_dupes()` from `janitor` [@janitor] is especially useful.
+Sometimes data happen to be duplicated. If we did not notice this, then our analysis would be wrong in ways that we would not be able to consistently expect. There are a variety of ways to look for duplicated rows, but `get_dupes()` from `janitor` is especially useful.
 
 ```{r}
 #| eval: true
@@ -693,7 +665,7 @@ all_2021_ttc_data_no_dupes_with_explanation |>
   )
 ```
 
-As discussed in @sec-clean-and-prepare, dates are often difficult to work with because they are so prone to having issues. For this reason, it is especially important to consider them during EDA. Let us create a graph by week, to see if there is any seasonality over the course of a year. When using dates, `lubridate` [@GrolemundWickham2011] is especially useful. For instance, we can look at the average delay, of those that were delayed, by week, using `week()` to construct the weeks (@fig-delaybyweek).
+As discussed in @sec-clean-and-prepare, dates are often difficult to work with because they are so prone to having issues. For this reason, it is especially important to consider them during EDA. Let us create a graph by week, to see if there is any seasonality over the course of a year. When using dates, `lubridate` is especially useful. For instance, we can look at the average delay, of those that were delayed, by week, using `week()` to construct the weeks (@fig-delaybyweek).
 
 ```{r}
 #| eval: true
@@ -1307,7 +1279,7 @@ airbnb_data_has_reviews |>
   )
 ```
 
-Usually missing values are dropped by `ggplot2`. We can use `geom_miss_point()` from `naniar` [@naniar] to include them in the graph (@fig-visualisemissing).
+Usually missing values are dropped by `ggplot2`. We can use `geom_miss_point()` from `naniar` to include them in the graph (@fig-visualisemissing).
 
 ```{r}
 #| eval: true
@@ -1429,7 +1401,7 @@ airbnb_data_selected |>
 ```
 
 Fortunately, it looks like when we removed the reviews rows we removed any NAs from whether they were a superhost, but if we go back and look into that we may need to check again. 
-We could build a table that looks at a hosts response time by whether they are a superhost using `tabyl()` from `janitor` [@janitor]. It is clear that if a host does not respond within an hour then it is unlikely that they are a superhost.
+We could build a table that looks at a hosts response time by whether they are a superhost using `tabyl()` from `janitor`. It is clear that if a host does not respond within an hour then it is unlikely that they are a superhost.
 
 ```{r}
 #| eval: true
@@ -1474,7 +1446,7 @@ We will now run some models on our dataset. We will cover modelling in more deta
 
 $$\mbox{Prob(Is superhost} = 1) = \mbox{logit}^{-1}\left( \beta_0 + \beta_1 \mbox{Response time} + \beta_2 \mbox{Reviews} + \epsilon\right)$$
 
-We estimate the model using `glm` in the R language [@citeR].
+We estimate the model using `glm`.
 
 ```{r}
 #| eval: true
@@ -1490,7 +1462,7 @@ logistic_reg_superhost_response_review <-
   )
 ```
 
-We can have a quick look at the results using `modelsummary()` from `modelsummary` [@citemodelsummary] (@tbl-modelsummarylogisticregressionsuper).
+We can have a quick look at the results using `modelsummary()` from `modelsummary` (@tbl-modelsummarylogisticregressionsuper).
 
 ```{r}
 #| eval: true
@@ -1568,7 +1540,7 @@ Pick one of the following options. Use Quarto, and include an appropriate title,
 
 **Option 1:**
 
-Repeat the missing data exercise conducted for the US states and population, but for the "bill_length_mm" variable in the `penguins()` dataset available from `palmerpenguins` [@palmerpenguins]. Compare the imputed value with the actual value. 
+Repeat the missing data exercise conducted for the US states and population, but for the "bill_length_mm" variable in the `penguins()` dataset available from `palmerpenguins`. Compare the imputed value with the actual value. 
 
 Write at least two pages about what you did and what you found.
 

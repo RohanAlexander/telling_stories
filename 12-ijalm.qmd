@@ -6,10 +6,10 @@ engine: knitr
 
 **Prerequisites**
 
-- Read *Regression and Other Stories*, Chapters 6 "Background on regression modeling", 7 "Linear regression with a single predictor", and 10 "Linear regression with multiple predictors", [@gelmanhillvehtari2020]
-  - A detailed guide to linear models.
-- Read *An Introduction to Statistical Learning with Applications in R*, Chapter 3 "Linear Regression", [@islr]
-  - A complementary treatment of linear models from a different perspective.
+- Read *Regression and Other Stories*, [@gelmanhillvehtari2020]
+  - Focus on Chapters 6 "Background on regression modeling", 7 "Linear regression with a single predictor", and 10 "Linear regression with multiple predictors", which provide a detailed guide to linear models.
+- Read *An Introduction to Statistical Learning with Applications in R*, [@islr]
+  - Focus on Chapter 3 "Linear Regression", which provides a complementary treatment of linear models from a different perspective.
 - Read *Why most published research findings are false*, [@ioannidis2005most]
   - Specifies aspects that can undermine the conclusions drawn from statistical models.
 
@@ -19,34 +19,32 @@ engine: knitr
 - Simple and multiple linear regression model a continuous dependent variable as a function of one, and multiple, independent variables, respectively. 
 - Linear models tend to focus on either inference or prediction. 
 
-**Key packages and functions**
+**Software and packages**
 
 - Base R [@citeR]
-  - `binomial()`
-  - `lm()`
-  - `rnorm()`
-  - `sample()`
-  - `set.seed()`
-  - `summary()`
 - `beepr` [@beepr]
-  - `beep()`
 - `broom` [@broom]
-  - `augment()`
-  - `glance()`
-  - `tidy()`
+- `broom.mixed` [@mixedbroom]
+- `knitr` [@citeknitr]
 - `modelsummary` [@citemodelsummary]
-  - `modelsummary()`
 - `rstanarm` [@citerstanarm]
-	- `default_prior_coef()`
-	- `default_prior_intercept()`
-	- `exponential()`
-	- `gaussian()`
-	- `loo()`
-  - `loo_compare()`
-	- `posterior_vs_prior()`
-	- `pp_check()`
-	- `prior_summary()`
-	- `stan_glm()`
+- `testthat` [@testthat]
+- `tidyverse` [@tidyverse]
+
+```{r}
+#| message: false
+#| warning: false
+
+library(beepr)
+library(broom)
+library(broom.mixed)
+library(knitr)
+library(modelsummary)
+library(rstanarm)
+library(testthat)
+library(tidyverse)
+```
+
 
 ## Introduction
 
@@ -65,27 +63,13 @@ A lot of statistical methods still commonly used today were developed for situat
 Manual statistical checks are widely used in modelling. And an extensive suite of them is available. But automated testing is also important. For instance, @wakefieldestimates built a model of excess deaths in a variety of countries, to estimate the overall death toll from the pandemic. After initially releasing the model, which had been extensively manually checked for statistical issues and reasonableness, some of the results were reexamined and it was found that the estimates for Germany and Sweden were over sensitive. The authors acknowledged this, and addressed the issues, but the integration of automated testing of expected values for the coefficients, in addition to the usual manual statistical checks, would go some way to enabling us to have more faith in the models of others.
 
 ::: {.content-visible when-format="pdf"}
-In this chapter we begin with simple linear regression, and then move to multiple linear regression, the difference being the number of explanatory variables that we allow. We go through two approaches for each of these: base R, in particular the `lm()` and `glm()` functions, which are useful when we want to quickly use the models in EDA; and `rstanarm` [@citerstanarm] for when we are interested in inference. In general, a model is either optimized for inference or prediction. A focus on prediction is one of the hallmarks of machine learning. For historical reasons that has tended to be dominated by Python, although `tidymodels` [@citeTidymodels] has been developed in R, and we devote ["Prediction" Online Appendix](https://tellingstorieswithdata.com/27-prediction.html) to various approaches focused on prediction. Regardless of the approach we use, the important thing to remember that we are just doing something akin to fancy averaging, and our results always reflect the biases and idiosyncrasies of the dataset.
+In this chapter we begin with simple linear regression, and then move to multiple linear regression, the difference being the number of explanatory variables that we allow. We go through two approaches for each of these: base R, in particular the `lm()` and `glm()` functions, which are useful when we want to quickly use the models in EDA; and `rstanarm` for when we are interested in inference. In general, a model is either optimized for inference or prediction. A focus on prediction is one of the hallmarks of machine learning. For historical reasons that has tended to be dominated by Python, although `tidymodels` has been developed in R, and we devote ["Prediction" Online Appendix](https://tellingstorieswithdata.com/27-prediction.html) to various approaches focused on prediction. Regardless of the approach we use, the important thing to remember that we are just doing something akin to fancy averaging, and our results always reflect the biases and idiosyncrasies of the dataset.
 :::
 
 ::: {.content-visible unless-format="pdf"}
-In this chapter we begin with simple linear regression, and then move to multiple linear regression, the difference being the number of explanatory variables that we allow. We go through two approaches for each of these: base R, in particular the `lm()` and `glm()` functions, which are useful when we want to quickly use the models in EDA; and `rstanarm` [@citerstanarm] for when we are interested in inference. In general, a model is either optimized for inference or prediction. A focus on prediction is one of the hallmarks of machine learning. For historical reasons that has tended to be dominated by Python, although `tidymodels` [@citeTidymodels] has been developed in R, and we devote @sec-predictingpythons to various approaches focused on prediction. Regardless of the approach we use, the important thing to remember that we are just doing something akin to fancy averaging, and our results always reflect the biases and idiosyncrasies of the dataset.
+In this chapter we begin with simple linear regression, and then move to multiple linear regression, the difference being the number of explanatory variables that we allow. We go through two approaches for each of these: base R, in particular the `lm()` and `glm()` functions, which are useful when we want to quickly use the models in EDA; and `rstanarm` for when we are interested in inference. In general, a model is either optimized for inference or prediction. A focus on prediction is one of the hallmarks of machine learning. For historical reasons that has tended to be dominated by Python, although `tidymodels` has been developed in R, and we devote @sec-predictingpythons to various approaches focused on prediction. Regardless of the approach we use, the important thing to remember that we are just doing something akin to fancy averaging, and our results always reflect the biases and idiosyncrasies of the dataset.
 :::
 
-The packages that we need in this chapter are:
-```{r}
-#| message: false
-#| warning: false
-
-library(beepr)
-library(broom)
-library(broom.mixed)
-library(knitr)
-library(modelsummary)
-library(rstanarm)
-library(testthat)
-library(tidyverse)
-```
 
 ## Simple linear regression
 
@@ -363,7 +347,7 @@ To quickly see the result of the regression, we can use `summary()`.
 summary(sim_run_data_first_model)
 ```
 
-But we can also use `modelsummary()` from `modelsummary` [@citemodelsummary] (@tbl-modelsummaryfivekmonly). The advantage of that approach is that we get a nicely formatted table. We focus initially on those results in the "Five km only" column.
+But we can also use `modelsummary()` from `modelsummary` (@tbl-modelsummaryfivekmonly). The advantage of that approach is that we get a nicely formatted table. We focus initially on those results in the "Five km only" column.
 
 ```{r}
 sim_run_data <-
@@ -397,7 +381,7 @@ The intercept becomes more interpretable when we run the regression using center
 
 Following @gelmanhillvehtari2020 [p. 84] we recommend considering the coefficients as comparisons, rather than effects.\index{simple linear regression!coefficient interpretation} And to use language that makes it clear these are comparisons, on average, based on one dataset. For instance, we may consider that the coefficient on the five-kilometer run time shows how different individuals compare. When comparing the marathon times of individuals in our dataset whose five-kilometer run time differed by one minute, on average we find their marathon times differ by about eight minutes. This makes sense seeing as a marathon is roughly that many times longer than a five-kilometer run.
 
-We use `augment()` from `broom` [@broom] to add the fitted values and residuals to our original dataset. This allows us to plot the residuals (@fig-fivekmvsmarathonresids).
+We use `augment()` from `broom` to add the fitted values and residuals to our original dataset. This allows us to plot the residuals (@fig-fivekmvsmarathonresids).
 
 ```{r}
 sim_run_data <-
@@ -568,7 +552,7 @@ summary(sim_run_data_rain_model)
 
 The result, in the second column of @tbl-modelsummaryruntimes, shows that when we compare individuals in our dataset who ran in the rain with those who did not, the ones in the rain tended to have a slower time. And this corresponds with what we expect if we look at a plot of the data (@fig-fivekmvsmarathonbinary-1).
 
-We have included two types of tests here. The ones run before `lm()` check inputs, and the ones run after `lm()` check outputs. We may notice that some of the input checks are the same as earlier. One way to avoid having to rewrite tests many times would be to use `testthat` [@testthat] to create a suite of tests of class in say an R file called "class_tests.R", which are then called using `test_file()`.
+We have included two types of tests here. The ones run before `lm()` check inputs, and the ones run after `lm()` check outputs. We may notice that some of the input checks are the same as earlier. One way to avoid having to rewrite tests many times would be to use `testthat` to create a suite of tests of class in say an R file called "class_tests.R", which are then called using `test_file()`.
 
 For instance, we could save the following as "test_class.R" in a dedicated tests folder.
 
@@ -660,7 +644,7 @@ sim_run_data
 
 ```{r}
 #| eval: false
-#| include: false
+#| echo: false
 
 arrow::write_parquet(x = sim_run_data,
                      sink = "outputs/data/running_data.parquet")
@@ -754,11 +738,11 @@ Dr Daniela Witten is the Dorothy Gilford Endowed Chair of Mathematical Statistic
 @breiman2001statistical describes two cultures of statistical modelling: one focused on inference and the other on prediction.\index{model building!two cultures} In general, around the time @breiman2001statistical was published, various disciplines tended to focus on either inference or prediction. For instance, @Jordan2004 describes how statistics and computer science had been separate for some time, but how the goals of each field had become more closely aligned. The rise of data science, and in particular machine learning has meant there is now a need to be comfortable with both [@Neufeld2021]. The two cultures are being brought closer together, and there is an overlap and interaction between prediction\index{model building!prediction} and inference.\index{model building!inference} But their separate evolution means there are still considerable cultural differences.
 
 ::: {.content-visible when-format="pdf"}
-In this book we focus on inference using the probabilistic programming language Stan\index{Stan} to fit models in a Bayesian\index{Bayesian} framework, and interface with it using `rstanarm` [@citerstanarm]. Inference and forecasting have different cultures, especially when it is termed machine learning. It is important to be conversant in both ecosystems and cultures. These different cultures are also revealed in language choice. The primary language in this book is R, and for the sake of consistency we focus on that here. But there is an extensive culture, especially but not exclusively focused on prediction, that uses Python. We recommend focusing on only one language and approach initially, but after developing that initial familiarity it is important to become multilingual and we introduce an approach based on Python in the ["Prediction" Online Appendix](https://tellingstorieswithdata.com/26-prediction.html).
+In this book we focus on inference using the probabilistic programming language Stan\index{Stan} to fit models in a Bayesian\index{Bayesian} framework, and interface with it using `rstanarm`. Inference and forecasting have different cultures, especially when it is termed machine learning. It is important to be conversant in both ecosystems and cultures. These different cultures are also revealed in language choice. The primary language in this book is R, and for the sake of consistency we focus on that here. But there is an extensive culture, especially but not exclusively focused on prediction, that uses Python. We recommend focusing on only one language and approach initially, but after developing that initial familiarity it is important to become multilingual and we introduce an approach based on Python in the ["Prediction" Online Appendix](https://tellingstorieswithdata.com/26-prediction.html).
 :::
 
 ::: {.content-visible unless-format="pdf"}
-In this book we focus on inference using the probabilistic programming language Stan to fit models in a Bayesian framework, and interface with it using `rstanarm` [@citerstanarm]. Inference and forecasting have different cultures, especially when it is termed machine learning. It is important to be conversant in both ecosystems and cultures. These different cultures are also revealed in language choice. The primary language in this book is R, and for the sake of consistency we focus on that here. But there is an extensive culture, especially but not exclusively focused on prediction, that uses Python. We recommend focusing on only one language and approach initially, but after developing that initial familiarity it is important to become multilingual and we introduce an approach based on Python in [Online Appendix -@sec-predictingpythons].
+In this book we focus on inference using the probabilistic programming language Stan to fit models in a Bayesian framework, and interface with it using `rstanarm`. Inference and forecasting have different cultures, especially when it is termed machine learning. It is important to be conversant in both ecosystems and cultures. These different cultures are also revealed in language choice. The primary language in this book is R, and for the sake of consistency we focus on that here. But there is an extensive culture, especially but not exclusively focused on prediction, that uses Python. We recommend focusing on only one language and approach initially, but after developing that initial familiarity it is important to become multilingual and we introduce an approach based on Python in [Online Appendix -@sec-predictingpythons].
 :::
 
 We will again not go into the details, but running a regression in a Bayesian setting is similar to the frequentist approach that underpins `lm()`.\index{Bayesian} The main difference from a regression point of view, is that the parameters involved in the models (i.e. $\beta_0$, $\beta_1$, etc) are considered random variables, and so themselves have associated probability distributions. In contrast, the frequentist paradigm assumes that any randomness from these coefficients comes from a parametric assumption on the distribution of the error term, $\epsilon$.
@@ -777,7 +761,7 @@ $$
 
 We then combine information from the data with the priors to obtain posterior distributions for our parameters. Inference is then carried out based on analyzing posterior distributions.\index{posterior distributions}
 
-Another aspect that is different between Bayesian approaches and the way we have been doing modelling to this point, is that Bayesian models will usually take longer to run. Because of this, it can be useful to run the model, either within the Quarto document or in a separate R script, and then save it with `saveRDS()`. With sensible Quarto chunk options for "eval" and "echo" (see @sec-reproducible-workflows), the model can then be read into the Quarto document with `readRDS()` rather than being run every time the paper is compiled. In this way, the model delay is only imposed once for a given model. It can also be useful to add `beep()` from `beepr` [@beepr] to the end of the model, to get an audio notification when the model is done.
+Another aspect that is different between Bayesian approaches and the way we have been doing modelling to this point, is that Bayesian models will usually take longer to run. Because of this, it can be useful to run the model, either within the Quarto document or in a separate R script, and then save it with `saveRDS()`. With sensible Quarto chunk options for "eval" and "echo" (see @sec-reproducible-workflows), the model can then be read into the Quarto document with `readRDS()` rather than being run every time the paper is compiled. In this way, the model delay is only imposed once for a given model. It can also be useful to add `beep()` from `beepr` to the end of the model, to get an audio notification when the model is done.
 
 ```{r}
 #| echo: true
