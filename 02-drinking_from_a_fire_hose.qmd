@@ -19,50 +19,19 @@ engine: knitr
 - The workflow that we use to approach projects is: plan, simulate, acquire, explore, and share.
 - The way to learn R is to start with a small project and break down what is required to achieve it into tiny steps, look at other people's code, and draw on that to achieve each step. Complete that project and move onto the next project. With each project you will get a little better.
 
-**Packages and key functions**
+**Packages**
 
 - Base R [@citeR]
-  - `<-` "assign"
-    - `|>` "pipe"
-    - `+` "add"
-    - `c()`
-    - `citation()`
-    -   `class()`
-    -   `head()`
-    -   `library()`
-    -   `names()`
-    -   `rep()`
-    -   `rpois()`
-    -   `runif()`
-    -   `sample()`
-    -   `set.seed()`
-    -   `sum()`
-    -   `tail()`
--   Core `tidyverse` [@tidyverse]
-    -   `dplyr` [@citedplyr]
-        -   `arrange()`
-        -   `filter()`
-        -   `mutate()`
-        -   `case_match()`
-        -   `rename()`
-        -   `select()`
-        -   `summarise()`
-    -   `ggplot2` [@citeggplot]
-        -   `geom_bar()`
-        -   `geom_point()`
-        -   `ggplot()`
-    -   `tidyr` [@citetidyr]
-        -   `separate()`
-    -   `stringr` [@citestringr]
-        -   `str_remove()`
-    -   `readr` [@citereadr]
-        -   `read_csv()`
-        -   `write_csv()`
--   `janitor` [@janitor]
-    -   `clean_names()`
--   `opendatatoronto` [@citeSharla]
-    -   `list_package_resources()`
-    -   `get_resource()`
+- Core `tidyverse` [@tidyverse]
+  - `dplyr` [@citedplyr]
+  - `ggplot2` [@citeggplot]
+  - `tidyr` [@citetidyr]
+  - `stringr` [@citestringr]
+  - `readr` [@citereadr]
+- `janitor` [@janitor]
+- `knitr` [@citeknitr]
+- `lubridate` [@GrolemundWickham2011]
+- `opendatatoronto` [@citeSharla]
 
 ## Hello, World!
 
@@ -165,12 +134,12 @@ Remove almost all the default content, and then beneath the heading material cre
 
 In R, lines that start with "\#" are comments. This means that they are not run as code by R, but are instead designed to be read by humans. Each line of this preamble should start with a "\#". Also make it clear that this is the preamble section by surrounding that with "\####". The result should look like @fig-quarto-australian-elections-3.
 
-After this we need to setup the workspace. This involves installing\index{packages!install} and loading any packages that will be needed. A package only needs to be installed once for each computer, but needs to be loaded each time it is to be used. In this case we are going to use the `tidyverse` [@Wickham2017], and `janitor` [@janitor]. They will need to be installed because this is the first time they are being used, and then each will need to be loaded.
+After this we need to setup the workspace. This involves installing\index{packages!install} and loading any packages that will be needed. A package only needs to be installed once for each computer, but needs to be loaded each time it is to be used. In this case we are going to use the `tidyverse` and `janitor`. They will need to be installed because this is the first time they are being used, and then each will need to be loaded.
 
 :::{.callout-note}
 ## Shoulders of giants
 
-Hadley Wickham\index{Wickham, Hadley} is Chief Scientist at RStudio. After earning a PhD in Statistics from Iowa State University in 2008 he was appointed as an assistant professor at Rice University, and became Chief Scientist at RStudio, now Posit, in 2013. He developed the `tidyverse` collection of packages [@tidyverse], and has published many books including @r4ds and @advancedr. He was awarded the COPSS Presidents' Award in 2019.\index{COPSS Presidents' Award}
+Hadley Wickham\index{Wickham, Hadley} is Chief Scientist at RStudio. After earning a PhD in Statistics from Iowa State University in 2008 he was appointed as an assistant professor at Rice University, and became Chief Scientist at RStudio, now Posit, in 2013. He developed the `tidyverse` collection of packages, and has published many books including @r4ds and @advancedr. He was awarded the COPSS Presidents' Award in 2019.\index{COPSS Presidents' Award}
 :::
 
 
@@ -252,7 +221,7 @@ Click "Create public gist". We can then share the URL to this Gist with whoever 
 
 ### Acquire
 
-Now we want to get the actual data. The data we need is from the Australian Electoral Commission (AEC)\index{Australian Electoral Commission}, which is the non-partisan agency that organizes Australian federal elections. We can pass a page of their website to `read_csv()` from `readr` [@citereadr]. We do not need to explicitly load `readr` because it is part of the `tidyverse`. The `<-` or "assignment operator" is allocating the output of `read_csv()` to an object called "raw_elections_data".
+Now we want to get the actual data. The data we need is from the Australian Electoral Commission (AEC)\index{Australian Electoral Commission}, which is the non-partisan agency that organizes Australian federal elections. We can pass a page of their website to `read_csv()` from `readr`. We do not need to explicitly load `readr` because it is part of the `tidyverse`. The `<-` or "assignment operator" is allocating the output of `read_csv()` to an object called "raw_elections_data".
 
 ::: {.content-visible when-format="pdf"}
 ```{r}
@@ -340,7 +309,7 @@ head(raw_elections_data)
 tail(raw_elections_data)
 ```
 
-We need to clean the data so that we can use it. We are trying to make it similar to the dataset that we thought we wanted in the planning stage. While it is fine to move away from the plan, this needs to be a deliberate, reasoned decision. After reading in the dataset that we saved, the first thing that we will do is adjust the names of the variables. We will do this using `clean_names()` from `janitor` [@janitor].
+We need to clean the data so that we can use it. We are trying to make it similar to the dataset that we thought we wanted in the planning stage. While it is fine to move away from the plan, this needs to be a deliberate, reasoned decision. After reading in the dataset that we saved, the first thing that we will do is adjust the names of the variables. We will do this using `clean_names()` from `janitor`.
 
 ```{r}
 #| echo: false
@@ -821,7 +790,7 @@ toronto_shelters_clean |>
   drop_na(occupied_beds) |> # We only want rows that have data
   summarise(number_occupied = mean(occupied_beds),
             .by = occupancy_month) |>
-  knitr::kable()
+  kable()
 ```
 
 As with before, this looks fine, and achieves what we set out to do. But we can make some tweaks to the defaults to make it look even better (@tbl-homelessoccupancy). We can add a caption, make the column names easier to read, and only show an appropriate number of decimal places.
@@ -839,7 +808,7 @@ toronto_shelters_clean |>
   drop_na(occupied_beds) |>
   summarise(number_occupied = mean(occupied_beds),
             .by = occupancy_month) |>
-  knitr::kable(
+  kable(
     col.names = c(
       "Month",
       "Average daily number of occupied beds"
@@ -1319,73 +1288,60 @@ It is also the case that it is not necessary to fully understand everything in t
     c.  The definitions of fairness.
     d.  Lack of social context.
     e.  Disinterest given profit considerations.
-3.  When was the dataset that underpins @chambliss1989mundanity collected (pick one)?
-    a.  August 1983 to August 1984
-    b.  January 1983 to August 1984
-    c.  January 1983 to January 1984
-    d.  August 1983 to January 1984
-4.  When @chambliss1989mundanity talks of stratification, what is he talking about?
-5.  How does @chambliss1989mundanity define "excellence" (pick one)?
+3.  How does @chambliss1989mundanity define "excellence" (pick one)?
     a.  Prolonged performance at world-class level.
     b.  All Olympic medal winners.
     c.  Consistent superiority of performance.
     d.  All national-level athletes.
-6.  Think about the following quote from @chambliss1989mundanity [p.81] and list three small skills or activities that could help you achieve excellence in data science.
+4.  Think about the following quote from @chambliss1989mundanity [p.81] and list three small skills or activities that could help you achieve excellence in data science.
 
 > Excellence is mundane. Superlative performance is really a confluence of dozens of small skills or activities, each one learned or stumbled upon, which have been carefully drilled into habit and then are fitted together in a synthesized whole. There is nothing extraordinary or super-human in any one of those actions; only the fact that they are done consistently and correctly, and all together, produce excellence.
 
-7. What is the first sentence in the help file for the `tidyverse` that you get by running `?tidyverse`?
-7.  Which of the following are arguments for `read_csv()` from `readr` [@citereadr] (select all that apply)? (Hint: You can access the help for the function with `?readr::read_csv()`.) a."all_cols"
+5. What is the first sentence in the help file for the `tidyverse` that you get by running `?tidyverse`?
+6.  Which of the following are arguments for `read_csv()` from `readr` (select all that apply)? (Hint: You can access the help for the function with `?read_csv()`.) a."all_cols"
     b.  "file"
     c.  "show_col_types"
     d.  "number"
-8.  We used `rpois()` and `runif()` to draw from the Poisson and Uniform distributions, respectively. Which of the following can be used to draw from the Normal and Binomial distributions (select all that apply)?
+7.  We used `rpois()` and `runif()` to draw from the Poisson and Uniform distributions, respectively. Which of the following can be used to draw from the Normal and Binomial distributions (select all that apply)?
     a.  `rnormal()` and `rbinom()`
     b.  `rnorm()` and `rbinomial()`
     c.  `rnormal()` and `rbinomial()`
     d.  `rnorm()` and `rbinom()`
-9.  We used `rpois()` and `runif()` to draw from the Poisson and Uniform distributions, respectively. Which of the following can be used to draw from the Exponential and Cauchy distributions (pick one)?
+8.  We used `rpois()` and `runif()` to draw from the Poisson and Uniform distributions, respectively. Which of the following can be used to draw from the Exponential and Cauchy distributions (pick one)?
     a.  `rexp()` and `rcau()`
     b.  `rexpon()` and `rcauchy()`
     c.  `rexp()` and `rcauchy()`
     d.  `rexpon()` and `rcau()`
-10. What is the result of `sample(x = letters, size = 2)` when the seed is set to "853"? What about when the seed is set to "1234" (pick one)?
+9. What is the result of `sample(x = letters, size = 2)` when the seed is set to "853"? What about when the seed is set to "1234" (pick one)?
     a.  '"i" "q"' and '"p" "v"'
     b.  '"e" "l"' and '"e" "r"'
     c.  '"i" "q"' and '"e" "r"'
     d.  '"e" "l"' and '"p" "v"'
-11. Which function provides the recommended citation to cite R (pick one)?
+10. Which function provides the recommended citation to cite R (pick one)?
     a. `cite("R")`.
     b. `cite()`.
     c. `citation("R")`.
     d.  `citation()`.
-12. How do we get the citation information for `opendatatoronto` (pick one)?
+11. How do we get the citation information for `opendatatoronto` (pick one)?
     a.  `cite()`
     b.  `citation()`
     c.  `cite("opendatatoronto")`
     d.  `citation("opendatatoronto")`
-13. Which argument needs to be changed to change the headings in `kable()` from `knitr` [@citeknitr] (pick one)?
-    a.  "booktabs"
-    b.  "col.names"
-    c.  "digits"
-    d.  "linesep"
-    e.  "caption"
-14. Which function is used to update packages (pick one)?
+12. Which function is used to update packages (pick one)?
     a.  `update.packages()`
     b.  `upgrade.packages()`
     c.  `revise.packages()`
     d.  `renovate.packages()`
-15. What are some features that we might typically expect of a column that claimed to be a year (select all that apply)?
+13. What are some features that we might typically expect of a column that claimed to be a year (select all that apply)?
     a.  The class is "character".
     b.  There are no negative numbers.
     c.  There are letters in the column.
     d.  Each entry has four digits.
-16. Please consider @hao2019 and demonstrate a correspondence between the workflow steps and the stages that bias can enter as discussed by @hao2019. Then extend @hao2019 somehow to ensure it is clear that this is not a problem isolated to AI (for instance you may like to link it to @kennedy2020using).
-17. Please consider the following code, add a small mistake to it, and then create a GitHub Gist that contains all of the code, and submit the URL.
+14. Please consider the following code, add a small mistake to it, and then create a GitHub Gist that contains all of the code, and submit the URL.
 
 ```{r}
 #| eval: false
-#| include: true
+#| echo: true
 
 midwest |>
   ggplot(aes(x = poptotal, y = popdensity, color = state)) +
@@ -1393,7 +1349,7 @@ midwest |>
   scale_x_log10() +
   scale_y_log10()
 ```
-18. Why do we simulate a dataset (write at least three dot points)?
+15. Why do we simulate a dataset (write at least three dot points)?
 
 ### Tutorial {.unnumbered}
 

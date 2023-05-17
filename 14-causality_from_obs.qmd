@@ -7,11 +7,11 @@ engine: knitr
 **Prerequisites**
 
 - Read *Causal design patterns for data analysts*, [@riedererdesignpatterns]
-  - Overview of different approaches for making causal claims from observational data.
+  - This blog post provides an overview of different approaches for making causal claims from observational data.
 - Read *BNT162b2 mRNA Covid-19 Vaccine in a Nationwide Mass Vaccination Setting*, [@dagan2021bnt162b2]
-  - Compares causal conclusions drawn from observational data with those of a randomized trial.
-- Read *The Effect: An Introduction to Research Design and Causality*, Chapters 18 "Difference-in-Differences", 19 "Instrumental Variables", and 20 "Regression Discontinuity", [@theeffect]
-  - Overview of three key approaches for making causal claims from observational data.
+  - This paper compares causal conclusions drawn from observational data with those of a randomized trial.
+- Read *The Effect: An Introduction to Research Design and Causality*, [@theeffect]
+  - Focus on Chapters 18 "Difference-in-Differences", 19 "Instrumental Variables", and 20 "Regression Discontinuity", which provide an overview of three key approaches for making causal claims from observational data.
 - Read *Understanding regression discontinuity designs as observational studies*, [@sekhon2017understanding]
   - Discusses some concerns with the use of regression discontinuity.
 
@@ -22,37 +22,22 @@ engine: knitr
 - We can use difference-in-differences when we have data on both treated and untreated units at both time periods. Regression discontinuity is useful when a group is either treated or not, but the two groups are very similar apart from the treatment. And instrumental variables is an approach used to estimate causality indirectly through another variable.
 - In general, these approaches need to be used with humility and concern for weaknesses and assumptions, both those that we can test and those that we cannot.
 
-**Key packages and functions**
+**Key packages**
 
 - Base R [@citeR]
-  - `poly()`
 - `broom` [@broom]
-- `DiagrammeR` [@citeDiagrammeR]
-  - `grViz()`
+- `broom.mixed` [@mixedbroom]
 - `estimatr` [@estimatr]
-  - `iv_robust()`
 - `haven` [@citehaven]
-  - `read_dta()`
+- `knitr` [@citeknitr]
 - `MatchIt` [@MatchIt]
-  - `matchit()`
 - `modelsummary` [@citemodelsummary]
-  - `datasummary_skim()`
-  - `modelsummary()`
+- `palmerpenguins` [@palmerpenguins]
 - `rdrobust` [@rdrobust]
-  - `rdrobust()`
+- `rstanarm` [@citerstanarm]
 - `scales` [@scales]
-  - `dollar_format()`
-- `tidyverse` [@Wickham2017]
+- `tidyverse` [@tidyverse]
 
-## Introduction
-
-Life is grand when we can conduct experiments to be able to speak to causality.\index{causality} But there are circumstances in which we cannot run an experiment, yet nonetheless want to be able to make causal claims. And data from outside experiments have value that experiments do not have. In this chapter we discuss the circumstances and methods that allow us to speak to causality using observational data. We use relatively simple methods, in sophisticated ways, drawing from statistics, but also a variety of social sciences, including economics and political science, as well as epidemiology.
-
-For instance, @dagan2021bnt162b2 use observational data to confirm the effectiveness of the Pfizer-BioNTech vaccine.\index{causality!observational data} They discuss how one concern with using observational data in this way is confounding, which is where we are concerned that there is some variable that affects both the explanatory and dependent variables and can lead to spurious relationships. @dagan2021bnt162b2 adjust for this by first making a list of potential confounders, such as age, sex, geographic location, and healthcare usage and then adjusting for each of them, by matching one-to-one between people that were vaccinated and those that were not. The experimental data guided the use of observational data, and the larger size of the latter enabled a focus on specific age-groups and extent of disease.
-
-This chapter is about using observational data in sophisticated ways. How we can nonetheless be comfortable making causal statements, even when we cannot run A/B tests or RCTs. Indeed, in what circumstances may we prefer to not run those or to run observational-based approaches in addition to them. We cover three of the major methods: difference-in-differences, regression discontinuity, and instrumental variables.
-
-The packages that we need in this chapter are:
 ```{r}
 #| message: false
 #| warning: false
@@ -70,6 +55,14 @@ library(rstanarm)
 library(scales)
 library(tidyverse)
 ```
+
+## Introduction
+
+Life is grand when we can conduct experiments to be able to speak to causality.\index{causality} But there are circumstances in which we cannot run an experiment, yet nonetheless want to be able to make causal claims. And data from outside experiments have value that experiments do not have. In this chapter we discuss the circumstances and methods that allow us to speak to causality using observational data. We use relatively simple methods, in sophisticated ways, drawing from statistics, but also a variety of social sciences, including economics and political science, as well as epidemiology.
+
+For instance, @dagan2021bnt162b2 use observational data to confirm the effectiveness of the Pfizer-BioNTech vaccine.\index{causality!observational data} They discuss how one concern with using observational data in this way is confounding, which is where we are concerned that there is some variable that affects both the explanatory and dependent variables and can lead to spurious relationships. @dagan2021bnt162b2 adjust for this by first making a list of potential confounders, such as age, sex, geographic location, and healthcare usage and then adjusting for each of them, by matching one-to-one between people that were vaccinated and those that were not. The experimental data guided the use of observational data, and the larger size of the latter enabled a focus on specific age-groups and extent of disease.
+
+This chapter is about using observational data in sophisticated ways. How we can nonetheless be comfortable making causal statements, even when we cannot run A/B tests or RCTs. Indeed, in what circumstances may we prefer to not run those or to run observational-based approaches in addition to them. We cover three of the major methods: difference-in-differences, regression discontinuity, and instrumental variables.
 
 ## Directed acyclic graphs
 
@@ -337,7 +330,7 @@ both_departments |>
 
 Simpson's paradox is often illustrated using real-world data from University of California, Berkeley, on graduate admissions [@bickel1975sex]. This paper was mentioned in @sec-on-writing as having one of the greatest sub-titles ever published. @Hernn2011 create DAGs that further illuminate the relationship and the cause of the paradox.
 
-More recently, as mentioned in its documentation, the "penguins" dataset from `palmerpenguins` [@palmerpenguins] provides an example of Simpson's paradox, using real-world data on the relationship between body mass and bill depth in different species of penguins (@fig-simpsonsparadoxinpenguins). The overall negative trend occurs because Gentoo penguins tend to be heavier but with shorter bills compared to Adelie and Chinstrap penguins. 
+More recently, as mentioned in its documentation, the "penguins" dataset from `palmerpenguins` provides an example of Simpson's paradox, using real-world data on the relationship between body mass and bill depth in different species of penguins (@fig-simpsonsparadoxinpenguins). The overall negative trend occurs because Gentoo penguins tend to be heavier but with shorter bills compared to Adelie and Chinstrap penguins. 
 
 ```{r}
 #| eval: true
@@ -639,7 +632,7 @@ In this case study we introduce @angelucci2019newspapers, and replicate one of t
 
 The business model of newspapers has been challenged by the internet and many local newspapers have closed. And this issue is not new. When television was introduced, there were similar concerns. @angelucci2019newspapers use the introduction of television advertising in France, announced in 1967, to examine the effect of decreased advertising revenue on newspapers. They create a dataset of French newspapers from 1960 to 1974 and then use difference-in-differences to examine the effect of the reduction in advertising revenues on newspapers' content and prices. The change that they focus on is the introduction of television advertising, which they argue affected national newspapers more than local newspapers. They find that this change results in both less journalism content in the newspapers and lower newspaper prices. Focusing on this change, and analyzing it using difference-in-differences, is important because it allows us to disentangle a few competing effects. For instance, did newspapers become redundant because they could no longer charge high prices for their advertisements, or because consumers preferred to get their news from the television?
 
-We can get free access to the [data](https://www.openicpsr.org/openicpsr/project/116438/version/V1/view) that underpins @angelucci2019newspapers after registration. The dataset is in the Stata data format, ".dta", which we can read with `read_dta()` from `haven` [@citehaven]. The file that we are interested in is "Angelucci_Cage_AEJMicro_dataset.dta", which is the "dta" folder.
+We can get free access to the [data](https://www.openicpsr.org/openicpsr/project/116438/version/V1/view) that underpins @angelucci2019newspapers after registration. The dataset is in the Stata data format, ".dta", which we can read with `read_dta()` from `haven`. The file that we are interested in is "Angelucci_Cage_AEJMicro_dataset.dta", which is the "dta" folder.
 
 ```{r}
 #| eval: false
@@ -691,7 +684,7 @@ newspapers <-
 newspapers
 ```
 
-We are interested in what happened from 1967 onward, especially in terms of advertising revenue, and whether that was different for national, compared with local newspapers (@fig-frenchnewspapersrevenue). We use `scales` to adjust the y-axis [@scales].
+We are interested in what happened from 1967 onward, especially in terms of advertising revenue, and whether that was different for national, compared with local newspapers (@fig-frenchnewspapersrevenue). We use `scales` to adjust the y-axis.
 
 ```{r}
 #| eval: true
@@ -999,7 +992,7 @@ purchase_data |>
 ```
 
 
-We use `matchit()` from `MatchIt` [@MatchIt] to implement logistic regression and create matched groups. We then use `match.data()` to get the data of matches containing both all 254 people who were actually treated with free shipping and the untreated person who is considered as similar to them, based on propensity score, as possible. The result is a dataset of 508 observations.
+We use `matchit()` from `MatchIt` to implement logistic regression and create matched groups. We then use `match.data()` to get the data of matches containing both all 254 people who were actually treated with free shipping and the untreated person who is considered as similar to them, based on propensity score, as possible. The result is a dataset of 508 observations.
 
 ```{r}
 #| message: false
@@ -1190,7 +1183,7 @@ modelsummary(
 
 There are various caveats to this estimate that we will discuss, but the essentials of RDD are here. Given an appropriate set-up, and model, a RDD can compare favorably to randomized trials [@bloombellreiman2020].
 
-We could also implement RDD using `rdrobust` [@rdrobust]. The advantage of this approach is that many common extensions are easily available. 
+We could also implement RDD using `rdrobust`. The advantage of this approach is that many common extensions are easily available. 
 
 ```{r}
 rdrobust(
@@ -1619,7 +1612,7 @@ second_stage <- lm(health ~ health_hat, data = iv_example_data)
 modelsummary(second_stage)
 ```
 
-We can use `iv_robust()` from `estimatr` [@estimatr] to estimate IV (@tbl-ivexamplesmoker). One nice reason for doing this is that it can help to keep everything organized and adjust the standard errors.
+We can use `iv_robust()` from `estimatr` to estimate IV (@tbl-ivexamplesmoker). One nice reason for doing this is that it can help to keep everything organized and adjust the standard errors.
 
 ```{r}
 #| label: tbl-ivexamplesmoker
