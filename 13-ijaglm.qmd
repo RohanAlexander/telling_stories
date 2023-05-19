@@ -53,23 +53,23 @@ library(tidyverse)
 
 ## Introduction
 
-Linear models, covered in @sec-its-just-a-linear-model, have evolved substantially over the past century. Francis Galton,\index{Galton, Francis} mentioned in @sec-hunt-data, and others of his generation used linear regression in earnest in the late 1800s and early 1900s. Binary outcomes quickly became of interest and needed special treatment, leading to the development and wide adaption of logistic regression and similar methods in the mid-1900s [@cramer2002origins]. The generalized linear model framework came into being, in a formal sense, in the 1970s with @nelder1972generalized. Generalized linear models (GLMs)\index{generalized linear models} broaden the types of outcomes that are allowed. We still model outcomes as a linear function, but we are less constrained. The outcome can be anything in the exponential family, and popular choices include the logistic distribution and the Poisson distribution. A further generalization of GLMs is generalized additive models (GAMs) where we broaden the structure of the explanatory side. We still explain the dependent variable as an additive function of various bits and pieces, but those bits and pieces can be functions. This framework was proposed in the 1990s by @hastie1990generalized.
+Linear models, covered in @sec-its-just-a-linear-model, have evolved substantially over the past century.\index{statistics!history of} Francis Galton,\index{Galton, Francis} mentioned in @sec-hunt-data, and others of his generation used linear regression in earnest in the late 1800s and early 1900s. Binary outcomes quickly became of interest and needed special treatment, leading to the development and wide adaption of logistic regression and similar methods in the mid-1900s [@cramer2002origins]. The generalized linear model framework came into being, in a formal sense, in the 1970s with @nelder1972generalized. Generalized linear models (GLMs)\index{generalized linear models} broaden the types of outcomes that are allowed. We still model outcomes as a linear function, but we are less constrained. The outcome can be anything in the exponential family, and popular choices include the logistic distribution and the Poisson distribution. A further generalization of GLMs is generalized additive models (GAMs) where we broaden the structure of the explanatory side. We still explain the dependent variable as an additive function of various bits and pieces, but those bits and pieces can be functions. This framework was proposed in the 1990s by @hastie1990generalized.
 
 :::{.callout-note}
 ## Shoulders of giants
 
-Dr Robert Tibshirani\index{Tibshirani, Robert} is Professor in the Departments of Statistics and Biomedical Data Science at Stanford University. After earning a PhD in Statistics from Stanford University in 1981, he joined the University of Toronto as an assistant professor. He was promoted to full professor in 1994 and moved to Stanford in 1998. He made fundamental contributions including GAMs, mentioned above, and lasso regression, which is a way of automated variable selection. He is an author of @islr. He was awarded the COPSS Presidents' Award in 1996 and was appointed a Fellow of the Royal Society in 2019.\index{COPSS Presidents' Award}
+Dr Robert Tibshirani\index{Tibshirani, Robert} is Professor in the Departments of Statistics and Biomedical Data Science at Stanford University.\index{statistics} After earning a PhD in Statistics from Stanford University in 1981, he joined the University of Toronto as an assistant professor.\index{University of Toronto} He was promoted to full professor in 1994 and moved to Stanford in 1998. He made fundamental contributions including GAMs, mentioned above, and lasso regression, which is a way of automated variable selection. He is an author of @islr. He was awarded the COPSS Presidents' Award in 1996 and was appointed a Fellow of the Royal Society in 2019.\index{COPSS Presidents' Award}
 :::
 
 In this chapter we consider logistic, Poisson, and negative binomial regression. 
 
 ## Logistic regression
 
-Linear regression is a useful way to better understand our data. But it assumes a continuous outcome variable that can take any number on the real line. We would like some way to use this same machinery when we cannot satisfy this condition. We turn to logistic and Poisson regression for binary and count outcome variables, respectively. They are still linear models, because the independent variables enter in a linear fashion.
+Linear regression\index{regression!logistic}\index{logistic regression} is a useful way to better understand our data. But it assumes a continuous outcome variable that can take any number on the real line. We would like some way to use this same machinery when we cannot satisfy this condition. We turn to logistic and Poisson regression for binary and count outcome variables, respectively. They are still linear models, because the independent variables enter in a linear fashion.
 
 Logistic regression\index{logistic regression}, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable\index{binary outcome} may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it. For instance, win or lose, available or not available, support or not.
 
-The foundation of this is the Bernoulli distribution\index{distribution!Bernoulli} where there is a certain probability, $p$, of outcome "1" and the remainder, $1-p$, for outcome "0". We can use `rbinom()` with one trial to simulate data from the Bernoulli distribution. 
+The foundation of this is the Bernoulli distribution\index{distribution!Bernoulli} where there is a certain probability, $p$, of outcome "1" and the remainder, $1-p$, for outcome "0". We can use `rbinom()` with one trial to simulate data from the Bernoulli distribution.\index{simulation} 
 
 ```{r}
 #| message: false
@@ -109,7 +109,7 @@ tibble(values = seq(from = 0, to = 1, by = 0.001),
        y = "logit(x)")
 ```
 
-To illustrate logistic regression\index{logistic regression}, we will simulate data on whether it is a weekday or weekend, based on the number of cars on the road. We will assume that on weekdays the road is busier.
+To illustrate logistic regression\index{logistic regression}, we will simulate data on whether it is a weekday or weekend, based on the number of cars on the road.\index{simulation} We will assume that on weekdays the road is busier.\index{distribution!Normal}
 
 ```{r}
 #| message: false
@@ -119,9 +119,9 @@ set.seed(853)
 
 week_or_weekday <-
   tibble(
-    number_of_cars = sample.int(n = 100, size = 1000, replace = TRUE),
+    num_cars = sample.int(n = 100, size = 1000, replace = TRUE),
     noise = rnorm(n = 1000, mean = 0, sd = 10),
-    is_weekday = if_else(number_of_cars + noise > 50, 1, 0)
+    is_weekday = if_else(num_cars + noise > 50, 1, 0)
   ) |>
   select(-noise)
 
@@ -148,7 +148,7 @@ where $y_i$ is whether it is a weekday and $x_i$ is the number of cars on the ro
 ```{r}
 week_or_weekday_model <-
   glm(
-    is_weekday ~ number_of_cars,
+    is_weekday ~ num_cars,
     data = week_or_weekday,
     family = "binomial"
   )
@@ -181,7 +181,7 @@ And we can then graph the probability that our model implies, for each observati
 week_or_weekday_predictions |>
   mutate(is_weekday = factor(is_weekday)) |>
   ggplot(aes(
-    x = number_of_cars,
+    x = num_cars,
     y = estimate,
     color = is_weekday
   )) +
@@ -230,7 +230,7 @@ where $y_i$ is whether it is a weekday (actually 0 or 1), $x_i$ is the number of
 
 week_or_weekday_rstanarm <-
   stan_glm(
-    is_weekday ~ number_of_cars,
+    is_weekday ~ num_cars,
     data = week_or_weekday,
     family = binomial(link = "logit"),
     prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
@@ -271,13 +271,13 @@ The results of our Bayesian model are similar to the quick model we built using 
 
 ```{r}
 #| label: tbl-modelsummarylogistic
-#| tbl-cap: "Forecasting and explanatory models of whether it is day or night, based on the number of cars on the road"
+#| tbl-cap: "Explaining whether it is day or night, based on the number of cars on the road"
 #| message: false
 #| warning: false
 
 modelsummary(
   list(
-    "rstanarm" = week_or_weekday_rstanarm
+    "Day or night" = week_or_weekday_rstanarm
   )
 )
 ```
@@ -287,9 +287,9 @@ modelsummary(
 
 ### Political support in the United States
 
-One area where logistic regression is often used is political polling\index{United States!political polling}. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to "support" or "not support".
+One area where logistic regression is often used is political polling\index{United States!political polling}. In many cases voting implies the need for one preference ranking, and so issues are reduced, whether appropriately or not, to "support" or "not support".\index{elections!US 2020 Presidential Election}
 
-As a reminder, the workflow we advocate in this book is: 
+As a reminder, the workflow we advocate in this book is:\index{workflow} 
 
 $$\mbox{Plan} \rightarrow \mbox{Simulate} \rightarrow \mbox{Acquire} \rightarrow \mbox{Explore} \rightarrow \mbox{Share}$$
 
@@ -304,38 +304,30 @@ While the focus here is the exploration of data using models, we still need to d
 Sketches of the expected dataset and analysis focus and clarify our thinking even if they will be updated later
 :::
 
-We will simulate a dataset where the chance that a person supports Biden depends on their gender and education.
+We will simulate a dataset where the chance that a person supports Biden depends on their gender and education.\index{simulation}
 
 ```{r}
-number_of_observations <- 1000
+set.seed(853)
 
-us_political_preferences <-
-  tibble(
-    education = sample(1:5, size = number_of_observations, replace = TRUE),
-    gender = sample(1:2, size = number_of_observations, replace = TRUE),
-    support_prob = 1 - 1 / (education + gender)
+num_obs <- 1000
+
+us_political_preferences <- tibble(
+  education = sample(0:4, size = num_obs, replace = TRUE),
+  gender = sample(0:1, size = num_obs, replace = TRUE),
+  support_prob = ((education + gender) / 5),
+) |>
+  mutate(
+    supports_biden = if_else(runif(n = num_obs) < support_prob, "yes", "no"),
+    education = case_when(
+      education == 0 ~ "< High school",
+      education == 1 ~ "High school",
+      education == 2 ~ "Some college",
+      education == 3 ~ "College",
+      education == 4 ~ "Post-grad"
+    ),
+    gender = if_else(gender == 0, "Male", "Female")
   ) |>
-  rowwise() |>
-  mutate(supports_biden = sample(
-    c("yes", "no"),
-    size = 1,
-    replace = TRUE,
-    prob = c(support_prob, 1 - support_prob)
-  )) |>
-  ungroup() |>
-  select(-support_prob, supports_biden, gender, education) |> 
-  mutate(education = 
-           case_when(
-             education == 1 ~ "< High school",
-             education == 2 ~ "High school",
-             education == 3 ~ "Some college",
-             education == 4 ~ "College",
-             education == 5 ~ "Post-grad"
-             ),
-         gender = if_else(gender == 1, "Male", "Female")
-         )
-
-us_political_preferences
+  select(-support_prob, supports_biden, gender, education)
 ```
 
 For the actual data we can use the 2020 Cooperative Election Study\index{Cooperative Election Study} (CES) [@cooperativeelectionstudyus], which is a long-standing annual survey of US political opinion. In 2020, there were 61,000 respondents who completed the post-election survey. While the sampling methodology, detailed in @guidetothe2020ces [p. 13], is not a perfect random sample and relies on matching, it is a widely used and accepted approach that balances sampling concerns and cost.
@@ -412,10 +404,8 @@ When we look at the actual data, there are concerns that we did not anticipate i
 ```{r}
 ces2020 <-
   ces2020 |>
-  filter(
-    votereg == 1,
-    CC20_410 %in% c(1, 2)
-  ) |>
+  filter(votereg == 1,
+         CC20_410 %in% c(1, 2)) |>
   mutate(
     voted_for = if_else(CC20_410 == 1, "Biden", "Trump"),
     voted_for = as_factor(voted_for),
@@ -508,7 +498,8 @@ political_preferences <-
     data = ces2020_reduced,
     family = binomial(link = "logit"),
     prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
-    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = 
+      normal(location = 0, scale = 2.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -540,11 +531,11 @@ political_preferences <-
   readRDS(file = "outputs/model/political_preferences.rds")
 ```
 
-The results of our Bayesian model are interesting. They suggest males were less likely to vote for Biden, and that there is a considerable effect of education (@tbl-modelsummarylogisticpolitical).
+The results of our model are interesting. They suggest males were less likely to vote for Biden, and that there is a considerable effect of education (@tbl-modelsummarylogisticpolitical).
 
 ```{r}
 #| label: tbl-modelsummarylogisticpolitical
-#| tbl-cap: "Whether a respondent is likely to vote for either Biden or Trump based on their gender and education"
+#| tbl-cap: "Whether a respondent is likely to vote for Biden based on their gender and education"
 #| message: false
 #| warning: false
 
@@ -559,15 +550,16 @@ modelsummary(
 
 ## Poisson regression
 
-When we have count data we should initially think to take advantage of the Poisson distribution.\index{distribution!Poisson}\index{Poisson regression} One fun application of Poisson regression is in modelling the outcomes of sports. For instance @Burch2023 builds a Poisson model of hockey outcomes, and their model follows @Baio2010 who build a Poisson model of football outcomes. The Poisson distribution is governed by one parameter, $\lambda$. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. As such, the Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. The Poisson probability mass function is [@pitman, p. 121]: 
+When we have count data we should initially think to take advantage of the Poisson distribution.\index{distribution!Poisson}\index{regression!Poisson} One fun application of Poisson regression is in modelling the outcomes of sports. For instance @Burch2023 builds a Poisson model of hockey outcomes, and their model follows @Baio2010 who build a Poisson model of football outcomes. The Poisson distribution is governed by one parameter, $\lambda$. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. As such, the Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. The Poisson probability mass function is [@pitman, p. 121]: 
+
 $$P_{\lambda}(k) = e^{-\lambda}\lambda^k/k!\mbox{, for }k=0,1,2,...$$
-We can simulate $n=20$ draws from the Poisson distribution\index{distribution!Poisson} with `rpois()`, where $\lambda$ here is equal to three. 
+We can simulate $n=20$ draws from the Poisson distribution\index{distribution!Poisson} with `rpois()`, where $\lambda$ here is equal to three.\index{simulation}
 
 ```{r}
 rpois(n = 20, lambda = 3)
 ```
 
-We can also look at what happens to the distribution as we change the value of $\lambda$ (@fig-poissondistributiontakingshape).
+We can also look at what happens to the distribution as we change the value of $\lambda$ (@fig-poissondistributiontakingshape).\index{distribution!Poisson}
 
 ```{r}
 #| eval: true
@@ -600,7 +592,7 @@ ggplot(poisson_takes_shape, aes(x = draw)) +
   labs(x = "Integer", y = "Density")
 ```
 
-To illustrate the situation, we could simulate data about the number of As that are awarded in each university course. In this simulated example, we consider three departments, each of which has many courses. Each course will award a different number of As.
+To illustrate the situation, we could simulate data about the number of As that are awarded in each university course.\index{simulation} In this simulated example, we consider three departments, each of which has many courses. Each course will award a different number of As.\index{distribution!Poisson}
 
 ```{r}
 set.seed(853)
@@ -610,7 +602,8 @@ class_size <- 26
 count_of_A <-
   tibble(
     # From Chris DuBois: https://stackoverflow.com/a/1439843
-    department = c(rep.int("1", 26), rep.int("2", 26), rep.int("3", 26)),
+    department = 
+      c(rep.int("1", 26), rep.int("2", 26), rep.int("3", 26)),
     course = c(
       paste0("DEP_1_", letters),
       paste0("DEP_2_", letters),
@@ -679,7 +672,7 @@ grades_base <-
 summary(grades_base)
 ```
 
-As with logistic regression, the interpretation of the coefficients from Poisson regression\index{Poisson regression} can be difficult. The interpretation of the coefficient on "department2" is that it is the log of the expected difference between departments. We expect $e^{0.883} \approx 2.4$ and $e^{1.703} \approx 5.5$ as many A grades in departments 2 and 3, respectively, compared with department 1 (@tbl-modelsummarypoisson).
+As with logistic regression, the interpretation of the coefficients from Poisson regression\index{regression!Poisson} can be difficult. The interpretation of the coefficient on "department2" is that it is the log of the expected difference between departments. We expect $e^{0.883} \approx 2.4$ and $e^{1.703} \approx 5.5$ as many A grades in departments 2 and 3, respectively, compared with department 1 (@tbl-modelsummarypoisson).
 
 We could build a Bayesian model and estimate it with `rstanarm` (@tbl-modelsummarypoisson).
 
@@ -705,7 +698,8 @@ grades_rstanarm <-
     data = count_of_A,
     family = poisson(link = "log"),
     prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
-    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = 
+      normal(location = 0, scale = 2.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -762,16 +756,16 @@ slopes(grades_rstanarm) |>
   select(-term) |>
   kable(
     digits = 2,
-    col.names = c("Departmental comparison", "Estimate", "2.5%", "97.5%")
+    col.names = c("Compare department", "Estimate", "2.5%", "97.5%")
   )
 ```
 
 
 ### Letters used in *Jane Eyre* 
 
-In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@Stigler1978 [p. 301] provides helpful background and the dataset is available using `Dactyl` from `HistData` [@HistData]). Inspired by this we could use `gutenbergr` to get the text of *Jane Eyre* by Charlotte Brontë\index{Brontë, Charlotte!Jane Eyre}. (Recall that in @sec-gather-data we converted PDFs of *Jane Eyre* into a dataset.) We could then consider the first ten lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/Es increases as more words are used. If not, it could suggest that the distribution of e/Es is not consistent, which could be of interest to linguists.\index{Poisson regression}
+In an earlier age, @edgeworth1885methods made\index{Edgeworth, Francis} counts of the dactyls in Virgil's *Aeneid* (@Stigler1978 [p. 301] provides helpful background and the dataset is available using `Dactyl` from `HistData` [@HistData]). Inspired by this we could use `gutenbergr` to get the text of *Jane Eyre* by Charlotte Brontë\index{Brontë, Charlotte!Jane Eyre}.\index{text!analysis} (Recall that in @sec-gather-data we converted PDFs of *Jane Eyre* into a dataset.) We could then consider the first ten lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/Es increases as more words are used. If not, it could suggest that the distribution of e/Es is not consistent, which could be of interest to linguists.\index{regression!Poisson}
 
-Following the workflow advocated in this book, we first sketch our dataset and model. A quick sketch of what the dataset could look like is @fig-letterssketch, and a quick sketch of our model is @fig-lettersmodel.
+Following the workflow advocated in this book, we first sketch our dataset and model.\index{workflow} A quick sketch of what the dataset could look like is @fig-letterssketch, and a quick sketch of our model is @fig-lettersmodel.
 
 ::: {#fig-letterss layout-ncol=2 layout-valign="bottom" layout="[[50,10,50]]"}
 
@@ -782,7 +776,7 @@ Following the workflow advocated in this book, we first sketch our dataset and m
 Sketches of the expected dataset and analysis force us to consider what we are interested in
 :::
 
-We simulate a dataset of how the number of e/Es could be distributed following the Poisson distribution (@fig-simenum).
+We simulate a dataset of how the number of e/Es could be distributed following the Poisson distribution (@fig-simenum).\index{simulation}\index{distribution!Poisson}\index{distribution!uniform}
 
 ```{r}
 #| echo: true
@@ -811,7 +805,7 @@ count_of_e_simulation |>
   scale_fill_brewer(palette = "Set1")
 ```
 
-We can now gather and prepare our data. We download the text of the book from Project Gutenberg using `gutenberg_download()`.
+We can now gather and prepare our data. We download the text of the book from Project Gutenberg using `gutenberg_download()`.\index{text!gathering}\index{Project Gutenberg}
 
 ```{r}
 #| eval: false
@@ -873,7 +867,7 @@ jane_eyre <- read_csv(
 jane_eyre
 ```
 
-We are interested in only those lines that have content, so we remove those empty lines that are just there for spacing. Then we can create counts of the number of e/Es in that line, for the first ten lines of each chapter. For instance, we can look at the first few lines and see that there are five e/Es in the first line and eight in the second.
+We are interested in only those lines that have content, so we remove those empty lines that are just there for spacing.\index{text!cleaning} Then we can create counts of the number of e/Es in that line, for the first ten lines of each chapter. For instance, we can look at the first few lines and see that there are five e/Es in the first line and eight in the second.
 
 ```{r}
 jane_eyre_reduced <-
@@ -882,9 +876,11 @@ jane_eyre_reduced <-
   mutate(chapter = if_else(str_detect(text, "CHAPTER") == TRUE,
                            text,
                            NA_character_)) |> # Find start of chapter
-  fill(chapter, .direction = "down") |> # Add chapter number to each line
-  mutate(chapter_line = row_number(), .by = chapter) |> # Add line number to each chapter
-  filter(!is.na(chapter), chapter_line %in% c(2:11)) |> # Start at 2 to get rid of text "CHAPTER I" etc
+  fill(chapter, .direction = "down") |> 
+  mutate(chapter_line = row_number(), 
+         .by = chapter) |> # Add line number to each chapter
+  filter(!is.na(chapter), 
+         chapter_line %in% c(2:11)) |> # Remove "CHAPTER I" etc
   select(text, chapter) |>
   mutate(
     chapter = str_remove(chapter, "CHAPTER "),
@@ -892,7 +888,9 @@ jane_eyre_reduced <-
     chapter = as.integer(as.roman(chapter))
   ) |> # Change chapters to integers
   mutate(count_e = str_count(text, "e|E"),
-         word_count = str_count(text, "\\w+")) # From: https://stackoverflow.com/a/38058033
+         word_count = str_count(text, "\\w+")
+         # From: https://stackoverflow.com/a/38058033
+         ) 
 ```
 
 
@@ -920,8 +918,12 @@ variance_e <- var(jane_eyre_reduced$count_e)
 jane_eyre_reduced |>
   ggplot(aes(x = count_e)) +
   geom_histogram() +
-  geom_vline(xintercept = mean_e, linetype = "dashed", color = "#C64191") +
-  geom_vline(xintercept = variance_e, linetype = "dashed", color = "#0ABAB5") +
+  geom_vline(xintercept = mean_e, 
+             linetype = "dashed", 
+             color = "#C64191") +
+  geom_vline(xintercept = variance_e, 
+             linetype = "dashed", 
+             color = "#0ABAB5") +
   theme_minimal() +
   labs(
     y = "Count",
@@ -949,7 +951,7 @@ y_i|\lambda_i &\sim \mbox{Poisson}(\lambda_i)\\
 \beta_1 & \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
 $$
-where $y_i$ is the number of e/Es in the line and the explanatory variable is the number of words in the line. We could estimate the parameters using `stan_glm()`. 
+where $y_i$ is the number of e/Es in the line and the explanatory variable is the number of words in the line. We could estimate the model using `stan_glm()`. 
 
 ```{r}
 #| eval: false
@@ -963,7 +965,8 @@ jane_e_counts <-
     data = jane_eyre_reduced,
     family = poisson(link = "log"),
     prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
-    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = 
+      normal(location = 0, scale = 2.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -1023,7 +1026,7 @@ plot_predictions(jane_e_counts, condition = "word_count") +
 
 ## Negative binomial regression
 
-One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion by using a close variant, negative binomial regression\index{negative binomial regression}. 
+One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion by using a close variant, negative binomial regression\index{regression!negative binomial}. 
 
 Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance: 
 
@@ -1082,7 +1085,7 @@ As always we first sketch our dataset and model. A quick sketch of what the data
 Sketches of the expected dataset and analysis for cause of death in Alberta
 :::
 
-We will simulate a dataset of cause of death distributed following the negative binomial distribution.
+We will simulate a dataset of cause of death distributed following the negative binomial distribution.\index{simulation}\index{distribution!binomial}
 
 ```{r}
 alberta_death_simulation <-
@@ -1096,12 +1099,6 @@ alberta_death_simulation
 ```
 
 We can look at the distribution of these deaths, by year and cause (@fig-albertacod). We have truncated the full cause of death because some are quite long. As some causes are not always in the top 30 each year, not all causes have the same number of occurrences.
-
-<!-- :::{.callout-note} -->
-<!-- ## Oh, you think we have good data on that! -->
-
-<!-- Cause of death -->
-<!-- ::: -->
 
 ::: {.content-visible when-format="pdf"}
 ```{r}
@@ -1185,8 +1182,8 @@ alberta_cod |>
       "Year",
       "Cause",
       "Ranking",
-      "Total deaths",
-      "Number of years"
+      "Deaths",
+      "Years"
     ),
     digits = 0,
     align = c("l", "r", "r", "r", "r")
@@ -1226,7 +1223,8 @@ alberta_cod |>
     x = "Year",
     y = "Annual number of deaths in Alberta",
     color = "Cause"
-  )
+  ) +
+  theme(legend.position = "bottom")
 ```
 
 One thing that we notice is that the mean, 1,273, is different to the variance, 182,378 (@tbl-ohboyalberta).
@@ -1244,7 +1242,7 @@ datasummary(
 )
 ```
 
-We can implement negative binomial regression\index{negative binomial regression} when using `stan_glm()` by specifying the negative binomial distribution in "family". In this case, we run both Poisson and negative binomial.
+We can implement negative binomial regression\index{regression!negative binomial} when using `stan_glm()` by specifying the negative binomial distribution in "family". In this case, we run both Poisson and negative binomial.
 
 ```{r}
 #| echo: true
@@ -1324,7 +1322,7 @@ modelsummary(
 )
 ```
 
-We could use posterior predictive checks\index{posterior predictive checks}, introduced in @sec-inferencewithbayesianmethods, to show that the negative binomial approach is a better choice for this circumstance (@fig-ppcheckpoissonvsbinomial).
+We could use posterior predictive checks\index{Bayesian!posterior predictive check}, introduced in @sec-inferencewithbayesianmethods, to show that the negative binomial approach is a better choice for this circumstance (@fig-ppcheckpoissonvsbinomial).
 
 ```{r}
 #| echo: true

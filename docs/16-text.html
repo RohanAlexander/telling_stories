@@ -520,7 +520,7 @@ div.csl-indent {
 <li>analysis of US congressional records indicates just how often women legislators are interrupted by men <span class="citation" data-cites="millersutherland2022">(<a href="99-references.html#ref-millersutherland2022" role="doc-biblioref">Miller and Sutherland 2022</a>)</span>.</li>
 </ul>
 <p>Earlier approaches to the analysis of text tend to convert words into numbers, divorced of context. They could then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text, which can bring additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, it is useful to know that a crocodile could eat you while a tree probably would not.</p>
-<p>Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with wide data, insofar as often each variable is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with one variable of words and another of the counts. Considering text as data naturally requires some abstraction from its context. But this should not be entirely separated as this can perpetuate historical inequities. For instance, <span class="citation" data-cites="koenecke2020">Koenecke et al. (<a href="99-references.html#ref-koenecke2020" role="doc-biblioref">2020</a>)</span> find that automated speech recognition systems perform much worse for Black compared with White speakers, and <span class="citation" data-cites="davidson2019racial">Davidson, Bhattacharya, and Weber (<a href="99-references.html#ref-davidson2019racial" role="doc-biblioref">2019</a>)</span> find that tweets that use Black American English, which is a specifically defined technical term, are classified at hate speech at higher rates than similar tweets in Standard American English, which again is a technical term.</p>
+<p>Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with wide data, insofar as often each variable is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with one variable of words and another of the counts. Considering text as data naturally requires some abstraction from its context. But this should not be entirely separated as this can perpetuate historical inequities. For instance, <span class="citation" data-cites="koenecke2020">Koenecke et al. (<a href="99-references.html#ref-koenecke2020" role="doc-biblioref">2020</a>)</span> find that automated speech recognition systems perform much worse for Black compared with White speakers, and <span class="citation" data-cites="davidson2019racial">Davidson, Bhattacharya, and Weber (<a href="99-references.html#ref-davidson2019racial" role="doc-biblioref">2019</a>)</span> find that tweets that use Black American, which is a specifically defined technical term, are classified at hate speech at higher rates than similar tweets in Standard American English, which again is a technical term.</p>
 <p>One exciting aspect of text data is that it is typically not generated for the purposes of our analysis. The trade-off is that we typically must do a bunch more work to get it into a form that we can work with. There are a lot of decisions to be made in the data cleaning and preparation stages.</p>
 <p>The larger size of text datasets means that it is especially important to simulate, and start small, when it comes to their analysis. Using text as data is exciting because of the quantity and variety of text that is available to us. But in general, dealing with text datasets is messy. There is a lot of cleaning and preparation that is typically required. Often, text datasets are large. As such having a reproducible workflow in place and then clearly communicating your findings, becomes critical. Nonetheless, it is an exciting area.</p>
 <p>In this chapter we first consider preparing text datasets. We then consider Term Frequency-Inverse Document Frequency (TF-IDF) and topic models.</p>
@@ -562,9 +562,11 @@ div.csl-indent {
 <p>We typically want to construct a document-feature matrix, which has documents in each observation, words in each column, and a count for each combination, along with associated metadata. For instance, if our corpus was the text from Airbnb reviews, then each document may be a review, and typical features could include “The”, “Airbnb”, “was”, “great”. Notice here that the sentence has been split into different words. We typically talk of “tokens” to generalize away from words, because of the variety of aspects we may be interested in, but words are commonly used.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>books_corpus <span class="ot">&lt;-</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corpus</span>(bookshelf, <span class="at">docid_field =</span> <span class="st">"book"</span>, <span class="at">text_field =</span> <span class="st">"first_sentence"</span>)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>books_corpus</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corpus</span>(bookshelf, </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">docid_field =</span> <span class="st">"book"</span>, </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">text_field =</span> <span class="st">"first_sentence"</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>books_corpus</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Corpus consisting of 3 documents.
 Last Samurai :
@@ -1088,161 +1090,6 @@ docs           my father was a methodist minist spite full of babi
 </div>
 </div>
 </div>
-<!-- ## Lasso regression -->
-<!-- One of the nice aspects of text is that we can adapt our existing methods to use it as an input. Here we are going to use a variant of logistic regression, along with text inputs, to forecast. Inspired by @silge2018 we are going to have two different text inputs, train a model on a sample of text from each of them, and then try to use that model to forecast the text in a training set. Although this is an arbitrary example, we could imagine many real-world applications. For instance, we may be interested in whether some text was likely written by a bot or a human. -->
-<!-- First we need to get some data. We use books from Project Gutenberg using `gutenberg_download()` from `gutenbergr` [@gutenbergr]. We consider *Jane Eyre* [@janeeyre] and *Alice's Adventures in Wonderland* [@citealice]. -->
-<!-- ```{r} -->
-<!-- #| include: true -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-<!-- #| eval: false -->
-<!-- library(gutenbergr) -->
-<!-- library(tidyverse) -->
-<!-- # The books that we are interested in have the keys of 1260 and 11, respectively. -->
-<!-- alice_and_jane <- -->
-<!--   gutenberg_download( -->
-<!--     gutenberg_id = c(1260, 11), -->
-<!--     meta_fields = "title" -->
-<!--   ) -->
-<!-- write_csv(alice_and_jane, "alice_and_jane.csv") -->
-<!-- head(alice_and_jane) -->
-<!-- ``` -->
-<!-- ```{r} -->
-<!-- #| include: false -->
-<!-- #| eval: true -->
-<!-- #| warning: false -->
-<!-- #| message: false -->
-<!-- library(gutenbergr) -->
-<!-- library(tidyverse) -->
-<!-- alice_and_jane <- read_csv("inputs/books/alice_and_jane.csv") -->
-<!-- head(alice_and_jane) -->
-<!-- ``` -->
-<!-- One of the great things about this is that the dataset is a tibble. So we can work with all our familiar skills. Each line of the book is read in as a different row in the dataset. Notice that we have downloaded two books here at once, and so we added the title. The two books are one after each other.  -->
-<!-- By looking at the number of lines in each, it looks like *Jane Eyre* is much longer than *Alice in Wonderland*. We start by getting rid of blank lines using `remove_empty()` from `janitor` [@janitor]. -->
-<!-- ```{r} -->
-<!-- library(janitor) -->
-<!-- alice_and_jane <- -->
-<!--   alice_and_jane |> -->
-<!--   mutate(blank_line = if_else(text == "", 1, 0)) |> -->
-<!--   filter(blank_line == 0) |> -->
-<!--   select(-blank_line) -->
-
-<!-- table(alice_and_jane$title) -->
-<!-- ``` -->
-<!-- There is still an overwhelming amount of *Jane Eyre*, compared with *Alice in Wonderland*, so we sample from *Jane Eyre* to make it more equal. -->
-<!-- ```{r} -->
-<!-- set.seed(853) -->
-<!-- alice_and_jane$rows <- c(1:nrow(alice_and_jane)) -->
-<!-- sample_from_me <- alice_and_jane |> filter(title == "Jane Eyre: An Autobiography") -->
-<!-- keep_me <- sample(x = sample_from_me$rows, size = 2481, replace = FALSE) -->
-<!-- alice_and_jane <- -->
-<!--   alice_and_jane |> -->
-<!--   filter(title == "Alice's Adventures in Wonderland" | rows %in% keep_me) |> -->
-<!--   select(-rows) -->
-
-<!-- table(alice_and_jane$title) -->
-<!-- ``` -->
-<!-- There are a variety of issues here, for instance, we have the whole of Alice, but we only have random bits of Jane, but nonetheless we continue and add a counter with the line number for each book. -->
-<!-- ```{r} -->
-<!-- alice_and_jane <- -->
-<!--   alice_and_jane |> -->
-<!--   group_by(title) |> -->
-<!--   mutate(line_number = paste(gutenberg_id, row_number(), sep = "_")) |> -->
-<!--   ungroup() -->
-<!-- ``` -->
-<!-- We now want to unnest the tokes. We use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016]. -->
-<!-- ```{r} -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-<!-- library(tidytext) -->
-<!-- alice_and_jane_by_word <- -->
-<!--   alice_and_jane |> -->
-<!--   unnest_tokens(word, text) |> -->
-<!--   group_by(word) |> -->
-<!--   filter(n() > 10) |> -->
-<!--   ungroup() -->
-<!-- ``` -->
-<!-- We remove any word that was not used more than 10 times. Nonetheless we still have more than 500 unique words. (If we did not require that the word be used by the author at least 10 times then we end up with more than 6,000 words.) -->
-<!-- The reason this is relevant is because these are our independent variables. So where we may be used to having something less than 10 explanatory variables, in this case we are going to have 585 As such, we need a model that can handle this. -->
-<!-- However, as mentioned before, we are going to have some rows that essentially just had one word. And so we filter for that also, which ensures that the model will have at least some words to work with. -->
-<!-- ```{r} -->
-<!-- alice_and_jane_by_word <- -->
-<!--   alice_and_jane_by_word |> -->
-<!--   group_by(title, line_number) |> -->
-<!--   mutate(number_of_words_in_line = n()) |> -->
-<!--   ungroup() |> -->
-<!--   filter(number_of_words_in_line > 2) |> -->
-<!--   select(-number_of_words_in_line) -->
-<!-- ``` -->
-<!-- We create a test/training split, and load in `tidymodels`. -->
-<!-- ```{r} -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-<!-- library(tidymodels) -->
-<!-- set.seed(853) -->
-<!-- alice_and_jane_by_word_split <- -->
-<!--   alice_and_jane_by_word |> -->
-<!--   select(title, line_number) |> -->
-<!--   distinct() |> -->
-<!--   initial_split(prop = 3 / 4, strata = title) -->
-<!-- ``` -->
-<!-- Then we can use `cast_dtm()` to create a document-term matrix. This provides a count of how many times each word is used. -->
-<!-- ```{r} -->
-<!-- alice_and_jane_dtm_training <- -->
-<!--   alice_and_jane_by_word |> -->
-<!--   count(line_number, word) |> -->
-<!--   inner_join(training(alice_and_jane_by_word_split) |> select(line_number)) |> -->
-<!--   cast_dtm(term = word, document = line_number, value = n) -->
-<!-- dim(alice_and_jane_dtm_training) -->
-<!-- ``` -->
-<!-- So we have our independent variables sorted, now we need our binary dependent variable, which is whether the book is Alice in Wonderland or Jane Eyre. -->
-<!-- ```{r} -->
-<!-- response <- -->
-<!--   data.frame(id = dimnames(alice_and_jane_dtm_training)[[1]]) |> -->
-<!--   separate(id, into = c("book", "line", sep = "_")) |> -->
-<!--   mutate(is_alice = if_else(book == 11, 1, 0)) -->
-<!-- predictor <- alice_and_jane_dtm_training[] |> as.matrix() -->
-<!-- ``` -->
-<!-- Now we can run our model. -->
-<!-- ```{r} -->
-<!-- #| eval: false -->
-<!-- library(glmnet) -->
-<!-- model <- cv.glmnet( -->
-<!--   x = predictor, -->
-<!--   y = response$is_alice, -->
-<!--   family = "binomial", -->
-<!--   keep = TRUE -->
-<!-- ) -->
-<!-- save(model, file = "alice_vs_jane.rda") -->
-<!-- ``` -->
-<!-- ```{r}  -->
-<!-- #| echo: false -->
-<!-- load("outputs/model/alice_vs_jane.rda") -->
-<!-- ``` -->
-<!-- ```{r} -->
-<!-- library(glmnet) -->
-<!-- library(broom) -->
-<!-- coefs <- model$glmnet.fit |> -->
-<!--   tidy() |> -->
-<!--   filter(lambda == model$lambda.1se) -->
-<!-- coefs |> head() -->
-<!-- ``` -->
-<!-- ```{r} -->
-<!-- coefs |> -->
-<!--   group_by(estimate > 0) |> -->
-<!--   top_n(10, abs(estimate)) |> -->
-<!--   ungroup() |> -->
-<!--   ggplot(aes(fct_reorder(term, estimate), estimate, fill = estimate > 0)) + -->
-<!--   geom_col(alpha = 0.8, show.legend = FALSE) + -->
-<!--   coord_flip() + -->
-<!--   theme_minimal() + -->
-<!--   labs( -->
-<!--     x = "Coefficient", -->
-<!--     y = "Word" -->
-<!--   ) + -->
-<!--   scale_fill_brewer(palette = "Set1") -->
-<!-- ``` -->
-<!-- Perhaps unsurprisingly, if a line mentions Alice then it is likely to be a Alice in Wonderland and if it mention Jane then it is likely to be Jane Eyre. -->
 </section>
 <section id="topic-models" class="level2" data-number="16.4">
 <h2 data-number="16.4" class="anchored" data-anchor-id="topic-models"><span class="header-section-number">16.4</span> Topic models</h2>
@@ -1373,7 +1220,9 @@ docs           my father was a methodist minist spite full of babi
 <p>The use of <code>filter()</code> at the end is needed because sometimes aspects such as “directions” and similar non-speech aspects are included in the Hansard. For instance, if we do not include that <code>filter()</code> then the first line is “The House resumed from November 9, 2017, consideration of the motion.” We can then construct a corpus.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>hansard_canada_2018_corpus <span class="ot">&lt;-</span></span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corpus</span>(hansard_canada_2018, <span class="at">docid_field =</span> <span class="st">"basepk"</span>, <span class="at">text_field =</span> <span class="st">"speechtext"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corpus</span>(hansard_canada_2018, </span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">docid_field =</span> <span class="st">"basepk"</span>, </span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">text_field =</span> <span class="st">"speechtext"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: NA is replaced by empty string</code></pre>
 </div>

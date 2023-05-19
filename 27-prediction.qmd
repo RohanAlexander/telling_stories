@@ -312,6 +312,221 @@ The results of this estimation are in the second column of @tbl-modelsummarypois
 
 
 
+
+<!-- ## Lasso regression -->
+
+<!-- One of the nice aspects of text is that we can adapt our existing methods to use it as an input. Here we are going to use a variant of logistic regression, along with text inputs, to forecast. Inspired by @silge2018 we are going to have two different text inputs, train a model on a sample of text from each of them, and then try to use that model to forecast the text in a training set. Although this is an arbitrary example, we could imagine many real-world applications. For instance, we may be interested in whether some text was likely written by a bot or a human. -->
+
+
+<!-- First we need to get some data. We use books from Project Gutenberg using `gutenberg_download()` from `gutenbergr` [@gutenbergr]. We consider *Jane Eyre* [@janeeyre] and *Alice's Adventures in Wonderland* [@citealice]. -->
+
+<!-- ```{r} -->
+<!-- #| include: true -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+<!-- #| eval: false -->
+
+<!-- library(gutenbergr) -->
+<!-- library(tidyverse) -->
+
+<!-- # The books that we are interested in have the keys of 1260 and 11, respectively. -->
+<!-- alice_and_jane <- -->
+<!--   gutenberg_download( -->
+<!--     gutenberg_id = c(1260, 11), -->
+<!--     meta_fields = "title" -->
+<!--   ) -->
+
+<!-- write_csv(alice_and_jane, "alice_and_jane.csv") -->
+
+<!-- head(alice_and_jane) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| include: false -->
+<!-- #| eval: true -->
+<!-- #| warning: false -->
+<!-- #| message: false -->
+
+<!-- library(gutenbergr) -->
+<!-- library(tidyverse) -->
+
+<!-- alice_and_jane <- read_csv("inputs/books/alice_and_jane.csv") -->
+
+<!-- head(alice_and_jane) -->
+<!-- ``` -->
+
+<!-- One of the great things about this is that the dataset is a tibble. So we can work with all our familiar skills. Each line of the book is read in as a different row in the dataset. Notice that we have downloaded two books here at once, and so we added the title. The two books are one after each other.  -->
+
+<!-- By looking at the number of lines in each, it looks like *Jane Eyre* is much longer than *Alice in Wonderland*. We start by getting rid of blank lines using `remove_empty()` from `janitor` [@janitor]. -->
+
+<!-- ```{r} -->
+<!-- library(janitor) -->
+
+<!-- alice_and_jane <- -->
+<!--   alice_and_jane |> -->
+<!--   mutate(blank_line = if_else(text == "", 1, 0)) |> -->
+<!--   filter(blank_line == 0) |> -->
+<!--   select(-blank_line) -->
+
+<!-- table(alice_and_jane$title) -->
+<!-- ``` -->
+
+<!-- There is still an overwhelming amount of *Jane Eyre*, compared with *Alice in Wonderland*, so we sample from *Jane Eyre* to make it more equal. -->
+
+<!-- ```{r} -->
+<!-- set.seed(853) -->
+
+<!-- alice_and_jane$rows <- c(1:nrow(alice_and_jane)) -->
+<!-- sample_from_me <- alice_and_jane |> filter(title == "Jane Eyre: An Autobiography") -->
+<!-- keep_me <- sample(x = sample_from_me$rows, size = 2481, replace = FALSE) -->
+
+<!-- alice_and_jane <- -->
+<!--   alice_and_jane |> -->
+<!--   filter(title == "Alice's Adventures in Wonderland" | rows %in% keep_me) |> -->
+<!--   select(-rows) -->
+
+<!-- table(alice_and_jane$title) -->
+<!-- ``` -->
+
+<!-- There are a variety of issues here, for instance, we have the whole of Alice, but we only have random bits of Jane, but nonetheless we continue and add a counter with the line number for each book. -->
+
+<!-- ```{r} -->
+<!-- alice_and_jane <- -->
+<!--   alice_and_jane |> -->
+<!--   group_by(title) |> -->
+<!--   mutate(line_number = paste(gutenberg_id, row_number(), sep = "_")) |> -->
+<!--   ungroup() -->
+<!-- ``` -->
+
+<!-- We now want to unnest the tokes. We use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016]. -->
+
+<!-- ```{r} -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+
+<!-- library(tidytext) -->
+
+<!-- alice_and_jane_by_word <- -->
+<!--   alice_and_jane |> -->
+<!--   unnest_tokens(word, text) |> -->
+<!--   group_by(word) |> -->
+<!--   filter(n() > 10) |> -->
+<!--   ungroup() -->
+<!-- ``` -->
+
+<!-- We remove any word that was not used more than 10 times. Nonetheless we still have more than 500 unique words. (If we did not require that the word be used by the author at least 10 times then we end up with more than 6,000 words.) -->
+
+<!-- The reason this is relevant is because these are our independent variables. So where we may be used to having something less than 10 explanatory variables, in this case we are going to have 585 As such, we need a model that can handle this. -->
+
+<!-- However, as mentioned before, we are going to have some rows that essentially just had one word. And so we filter for that also, which ensures that the model will have at least some words to work with. -->
+
+<!-- ```{r} -->
+<!-- alice_and_jane_by_word <- -->
+<!--   alice_and_jane_by_word |> -->
+<!--   group_by(title, line_number) |> -->
+<!--   mutate(number_of_words_in_line = n()) |> -->
+<!--   ungroup() |> -->
+<!--   filter(number_of_words_in_line > 2) |> -->
+<!--   select(-number_of_words_in_line) -->
+<!-- ``` -->
+
+<!-- We create a test/training split, and load in `tidymodels`. -->
+
+<!-- ```{r} -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+
+<!-- library(tidymodels) -->
+
+<!-- set.seed(853) -->
+
+<!-- alice_and_jane_by_word_split <- -->
+<!--   alice_and_jane_by_word |> -->
+<!--   select(title, line_number) |> -->
+<!--   distinct() |> -->
+<!--   initial_split(prop = 3 / 4, strata = title) -->
+<!-- ``` -->
+
+<!-- Then we can use `cast_dtm()` to create a document-term matrix. This provides a count of how many times each word is used. -->
+
+<!-- ```{r} -->
+<!-- alice_and_jane_dtm_training <- -->
+<!--   alice_and_jane_by_word |> -->
+<!--   count(line_number, word) |> -->
+<!--   inner_join(training(alice_and_jane_by_word_split) |> select(line_number)) |> -->
+<!--   cast_dtm(term = word, document = line_number, value = n) -->
+
+<!-- dim(alice_and_jane_dtm_training) -->
+<!-- ``` -->
+
+<!-- So we have our independent variables sorted, now we need our binary dependent variable, which is whether the book is Alice in Wonderland or Jane Eyre. -->
+
+<!-- ```{r} -->
+<!-- response <- -->
+<!--   data.frame(id = dimnames(alice_and_jane_dtm_training)[[1]]) |> -->
+<!--   separate(id, into = c("book", "line", sep = "_")) |> -->
+<!--   mutate(is_alice = if_else(book == 11, 1, 0)) -->
+
+<!-- predictor <- alice_and_jane_dtm_training[] |> as.matrix() -->
+<!-- ``` -->
+
+
+<!-- Now we can run our model. -->
+
+<!-- ```{r} -->
+<!-- #| eval: false -->
+
+<!-- library(glmnet) -->
+
+<!-- model <- cv.glmnet( -->
+<!--   x = predictor, -->
+<!--   y = response$is_alice, -->
+<!--   family = "binomial", -->
+<!--   keep = TRUE -->
+<!-- ) -->
+
+<!-- save(model, file = "alice_vs_jane.rda") -->
+<!-- ``` -->
+
+<!-- ```{r}  -->
+<!-- #| echo: false -->
+
+<!-- load("outputs/model/alice_vs_jane.rda") -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- library(glmnet) -->
+<!-- library(broom) -->
+
+<!-- coefs <- model$glmnet.fit |> -->
+<!--   tidy() |> -->
+<!--   filter(lambda == model$lambda.1se) -->
+
+<!-- coefs |> head() -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- coefs |> -->
+<!--   group_by(estimate > 0) |> -->
+<!--   top_n(10, abs(estimate)) |> -->
+<!--   ungroup() |> -->
+<!--   ggplot(aes(fct_reorder(term, estimate), estimate, fill = estimate > 0)) + -->
+<!--   geom_col(alpha = 0.8, show.legend = FALSE) + -->
+<!--   coord_flip() + -->
+<!--   theme_minimal() + -->
+<!--   labs( -->
+<!--     x = "Coefficient", -->
+<!--     y = "Word" -->
+<!--   ) + -->
+<!--   scale_fill_brewer(palette = "Set1") -->
+<!-- ``` -->
+
+<!-- Perhaps unsurprisingly, if a line mentions Alice then it is likely to be a Alice in Wonderland and if it mention Jane then it is likely to be Jane Eyre. -->
+
+
+
+
 ## Prediction with Python
 
 ### Setup

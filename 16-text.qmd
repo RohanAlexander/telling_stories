@@ -48,26 +48,26 @@ library(tidyverse)
 
 ## Introduction
 
-Text is all around us.\index{text as data} In many cases, text is the earliest type of data that we are exposed to. Increases in computational power, the development of new methods, and the enormous availability of text means that there has been a great deal of interest in using text as data. Using text as data opens up a wide opportunity for unique analyses. For instance:
+Text is all around us.\index{text!data} In many cases, text is the earliest type of data that we are exposed to. Increases in computational power, the development of new methods, and the enormous availability of text means that there has been a great deal of interest in using text as data. Using text as data opens up a wide opportunity for unique analyses. For instance:
 
 - text analysis of state-run newspapers in African countries can identify manipulation by governments [@Hassan2022]; 
 - the text from UK daily newspapers can be used to generate better forecasts of GDP and inflation [@Kalamara2022], and similarly, the New York Times\index{New York Times} can be used to create an uncertainty index which correlates with US economic activity [@Alexopoulos2015]; 
 - the analysis of notes in Electronic Health Records (EHR)\index{Electronic Health Records (EHR)} can improve the efficiency of disease prediction [@jessgronsbell]; and 
 - analysis of US congressional records indicates just how often women legislators are interrupted by men [@millersutherland2022].
 
-Earlier approaches to the analysis of text tend to convert words into numbers, divorced of context. They could then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text, which can bring additional meaning. The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, it is useful to know that a crocodile could eat you while a tree probably would not.
+Earlier approaches to the analysis of text tend to convert words into numbers, divorced of context.\index{text!context} They could then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text, which can bring additional meaning.\index{text!structure} The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, it is useful to know that a crocodile could eat you while a tree probably would not.
 
-Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with wide data, insofar as often each variable is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with one variable of words and another of the counts. Considering text as data naturally requires some abstraction from its context. But this should not be entirely separated as this can perpetuate historical inequities. For instance, @koenecke2020 find that automated speech recognition systems perform much worse for Black compared with White speakers, and @davidson2019racial find that tweets that use Black American\index{Black American} English, which is a specifically defined technical term, are classified at hate speech at higher rates than similar tweets in Standard American English, which again is a technical term.
+Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with wide data, insofar as often each variable is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with one variable of words and another of the counts. Considering text as data naturally requires some abstraction from its context. But this should not be entirely separated as this can perpetuate historical inequities. For instance, @koenecke2020 find that automated speech recognition systems perform much worse for Black compared with White speakers, and @davidson2019racial find that tweets that use Black American\index{Black American!English}, which is a specifically defined technical term, are classified at hate speech at higher rates than similar tweets in Standard American English, which again is a technical term.
 
-One exciting aspect of text data is that it is typically not generated for the purposes of our analysis. The trade-off is that we typically must do a bunch more work to get it into a form that we can work with. There are a lot of decisions to be made in the data cleaning and preparation stages.\index{data cleaning and preparation}
+One exciting aspect of text data is that it is typically not generated for the purposes of our analysis. The trade-off is that we typically must do a bunch more work to get it into a form that we can work with. There are a lot of decisions to be made in the data cleaning and preparation stages.\index{data cleaning}
 
-The larger size of text datasets means that it is especially important to simulate, and start small, when it comes to their analysis. Using text as data is exciting because of the quantity and variety of text that is available to us. But in general, dealing with text datasets is messy. There is a lot of cleaning and preparation that is typically required. Often, text datasets are large. As such having a reproducible workflow in place and then clearly communicating your findings, becomes critical.\index{reproducibility}\index{workflow} Nonetheless, it is an exciting area.
+The larger size of text datasets means that it is especially important to simulate, and start small, when it comes to their analysis.\index{simulation} Using text as data is exciting because of the quantity and variety of text that is available to us. But in general, dealing with text datasets is messy. There is a lot of cleaning and preparation that is typically required. Often, text datasets are large. As such having a reproducible workflow in place and then clearly communicating your findings, becomes critical.\index{reproducibility}\index{workflow} Nonetheless, it is an exciting area.
 
 In this chapter we first consider preparing text datasets. We then consider Term Frequency-Inverse Document Frequency (TF-IDF) and topic models.
 
 ## Text cleaning and preparation
 
-Text modelling is an exciting area of research.\index{text!cleaning and preparation} But, and this is true more generally, the cleaning and preparation aspect is often at least as difficult as the modelling.\index{data cleaning and preparation} We will cover some essentials and provide a foundation that can be built on.
+Text modelling is an exciting area of research.\index{text!cleaning} But, and this is true more generally, the cleaning and preparation aspect is often at least as difficult as the modelling.\index{data cleaning} We will cover some essentials and provide a foundation that can be built on.
 
 The first step is to get some data. We discussed data gathering in @sec-gather-data and mentioned in passing many sources including:
 
@@ -98,16 +98,18 @@ bookshelf <-
 bookshelf
 ```
 
-We typically want to construct a document-feature matrix, which has documents in each observation, words in each column, and a count for each combination, along with associated metadata.\index{document-feature matrix} For instance, if our corpus was the text from Airbnb\index{Airbnb} reviews, then each document may be a review, and typical features could include "The", "Airbnb", "was", "great". Notice here that the sentence has been split into different words. We typically talk of "tokens" to generalize away from words, because of the variety of aspects we may be interested in, but words are commonly used.\index{tokens}
+We typically want to construct a document-feature matrix, which has documents in each observation, words in each column, and a count for each combination, along with associated metadata.\index{text!document-feature matrix} For instance, if our corpus was the text from Airbnb\index{Airbnb} reviews, then each document may be a review, and typical features could include "The", "Airbnb", "was", "great". Notice here that the sentence has been split into different words. We typically talk of "tokens" to generalize away from words, because of the variety of aspects we may be interested in, but words are commonly used.\index{text!tokens}
 
 ```{r}
 books_corpus <-
-  corpus(bookshelf, docid_field = "book", text_field = "first_sentence")
+  corpus(bookshelf, 
+         docid_field = "book", 
+         text_field = "first_sentence")
 
 books_corpus
 ```
 
-We use the tokens in the corpus to construct a document-feature matrix (DFM) using `dfm()` from `quanteda` [@quanteda].\index{document-feature matrix}
+We use the tokens in the corpus to construct a document-feature matrix (DFM) using `dfm()` from `quanteda` [@quanteda].\index{text!document-feature matrix}
 
 ```{r}
 books_dfm <-
@@ -145,7 +147,7 @@ bookshelf |>
   select(no_stops, first_sentence)
 ```
 
-There are many different lists of stop words that have been put together by others. For instance, `stopwords()` can use lists including: "snowball", "stopwords-iso", "smart", "marimo", "ancient", and "nltk". More generally, if we decide to use stop words then we often need to augment such lists with project-specific words. We can do this by creating a count of individual words in the corpus, and then sorting by the most common and adding those to the stop words list as appropriate.
+There are many different lists of stop words that have been put together by others.\index{text!stop words} For instance, `stopwords()` can use lists including: "snowball", "stopwords-iso", "smart", "marimo", "ancient", and "nltk". More generally, if we decide to use stop words then we often need to augment such lists with project-specific words. We can do this by creating a count of individual words in the corpus, and then sorting by the most common and adding those to the stop words list as appropriate.
 
 ```{r}
 stop_word_list_updated <-
@@ -173,11 +175,11 @@ books_dfm |>
   dfm_remove(stopwords(source = "snowball"))
 ```
 
-When we remove stop words we artificially adjust our dataset. Sometimes there may be a good reason to do that. But it must not be done unthinkingly. For instance, in @sec-farm-data and @sec-store-and-share we discussed how sometimes datasets may need to be censored, truncated, or manipulated in other similar ways, to preserve the privacy of respondents. It is possible that the integration of the removal of stop words as a default step in natural language processing was due to computational power, which may have been more limited when these methods were developed. In any case, @jurafskymartin [p. 62] conclude that removing stop words does not improve performance for text classification. Relatedly, @schofield2017 find that inference from topic models is not improved by the removal of anything other than the most frequent words. If stop words are to be removed, then they recommend doing this after topics are constructed.
+When we remove stop words we artificially adjust our dataset.\index{text!stop words} Sometimes there may be a good reason to do that. But it must not be done unthinkingly. For instance, in @sec-farm-data and @sec-store-and-share we discussed how sometimes datasets may need to be censored, truncated, or manipulated in other similar ways, to preserve the privacy of respondents. It is possible that the integration of the removal of stop words as a default step in natural language processing was due to computational power, which may have been more limited when these methods were developed. In any case, @jurafskymartin [p. 62] conclude that removing stop words does not improve performance for text classification. Relatedly, @schofield2017 find that inference from topic models is not improved by the removal of anything other than the most frequent words. If stop words are to be removed, then they recommend doing this after topics are constructed.
 
 ### Case, numbers, and punctuation
 
-There are times when all we care about is the word, not the case or punctuation.\index{text!case}\index{text!numbers}\index{text!punctuation} For instance, if the text corpus was particularly messy or the existence of particular words was informative. We trade-off the loss of information for the benefit of making things simpler. We can convert to lower case with `str_to_lower()`, and use `str_replace_all()` to remove punctuation with "[:punct:]", and numbers with "[:digit:]".
+There are times when all we care about is the word, not the case or punctuation.\index{text!case}\index{text!numbers}\index{text!punctuation}\index{text!cleaning} For instance, if the text corpus was particularly messy or the existence of particular words was informative. We trade-off the loss of information for the benefit of making things simpler. We can convert to lower case with `str_to_lower()`, and use `str_replace_all()` to remove punctuation with "[:punct:]", and numbers with "[:digit:]".
 
 ```{r}
 bookshelf |>
@@ -232,7 +234,7 @@ books_corpus |>
 
 ### Typos and uncommon words
 
-Then we need to decide what to do about typos and other minor issues.\index{text!typos} Every real-world text has typos. Sometimes these should clearly be fixed. But if they are made in a systematic way, for instance, a certain writer always makes the same mistakes, then they could have value if we were interested in grouping by the writer. The use of OCR\index{Optical Character Recognition} will introduce common issues as well, as was seen in @sec-gather-data. For instance, "the" is commonly incorrectly recognized as "thc".
+Then we need to decide what to do about typos and other minor issues.\index{text!typos}\index{text!cleaning} Every real-world text has typos. Sometimes these should clearly be fixed. But if they are made in a systematic way, for instance, a certain writer always makes the same mistakes, then they could have value if we were interested in grouping by the writer. The use of OCR\index{Optical Character Recognition} will introduce common issues as well, as was seen in @sec-gather-data. For instance, "the" is commonly incorrectly recognized as "thc".
 
 We could fix typos in the same way that we fixed stop words, i.e. with lists of corrections. When it comes to uncommon words, we can build this into our document-feature matrix creation with `dfm_trim()`. For instance, we could use "min_termfreq = 2" to remove any word that does not occur at least twice, or "min_docfreq = 0.05" to remove any word that is not in at least five per cent of documents or "max_docfreq = 0.90" to remove any word that is in at least 90 per cent of documents.
 
@@ -347,7 +349,7 @@ While this is a common step in using text as data, @schofield2017understanding f
 
 ### Duplication
 
-Duplication is a major concern with text datasets because of their size.\index{text!duplication} For instance, @bandy2021addressing showed that around 30 per cent of the data were inappropriately duplicated in a large text dataset commonly used in computer science, and @schofield2017quantifying show that this is a major concern and could substantially affect results. However, it can be a subtle and difficult to diagnose problem. For instance, in @sec-its-just-a-linear-model when we considered counts of page numbers for various authors in the context of Poisson regression, we could easily have accidentally included each Shakespeare\index{Shakespeare} entry twice because not only are there entries for each play, but also many anthologies that contained all of them. Careful consideration of our dataset identified the issue, but that would be difficult at scale.
+Duplication is a major concern with text datasets because of their size.\index{text!duplication} For instance, @bandy2021addressing showed that around 30 per cent of the data were inappropriately duplicated in a large text dataset commonly used in computer science,\index{computer science} and @schofield2017quantifying show that this is a major concern and could substantially affect results. However, it can be a subtle and difficult to diagnose problem. For instance, in @sec-its-just-a-linear-model when we considered counts of page numbers for various authors in the context of Poisson regression, we could easily have accidentally included each Shakespeare\index{Shakespeare, William} entry twice because not only are there entries for each play, but also many anthologies that contained all of them. Careful consideration of our dataset identified the issue, but that would be difficult at scale.
 
 ## Term Frequency-Inverse Document Frequency (TF-IDF)
 
@@ -418,231 +420,9 @@ horoscopes_counts_by_word_tf_idf |>
                              "Most common words unique to that sign"))
 ```
 
-
-<!-- ## Lasso regression -->
-
-<!-- One of the nice aspects of text is that we can adapt our existing methods to use it as an input. Here we are going to use a variant of logistic regression, along with text inputs, to forecast. Inspired by @silge2018 we are going to have two different text inputs, train a model on a sample of text from each of them, and then try to use that model to forecast the text in a training set. Although this is an arbitrary example, we could imagine many real-world applications. For instance, we may be interested in whether some text was likely written by a bot or a human. -->
-
-
-<!-- First we need to get some data. We use books from Project Gutenberg using `gutenberg_download()` from `gutenbergr` [@gutenbergr]. We consider *Jane Eyre* [@janeeyre] and *Alice's Adventures in Wonderland* [@citealice]. -->
-
-<!-- ```{r} -->
-<!-- #| include: true -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-<!-- #| eval: false -->
-
-<!-- library(gutenbergr) -->
-<!-- library(tidyverse) -->
-
-<!-- # The books that we are interested in have the keys of 1260 and 11, respectively. -->
-<!-- alice_and_jane <- -->
-<!--   gutenberg_download( -->
-<!--     gutenberg_id = c(1260, 11), -->
-<!--     meta_fields = "title" -->
-<!--   ) -->
-
-<!-- write_csv(alice_and_jane, "alice_and_jane.csv") -->
-
-<!-- head(alice_and_jane) -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- #| include: false -->
-<!-- #| eval: true -->
-<!-- #| warning: false -->
-<!-- #| message: false -->
-
-<!-- library(gutenbergr) -->
-<!-- library(tidyverse) -->
-
-<!-- alice_and_jane <- read_csv("inputs/books/alice_and_jane.csv") -->
-
-<!-- head(alice_and_jane) -->
-<!-- ``` -->
-
-<!-- One of the great things about this is that the dataset is a tibble. So we can work with all our familiar skills. Each line of the book is read in as a different row in the dataset. Notice that we have downloaded two books here at once, and so we added the title. The two books are one after each other.  -->
-
-<!-- By looking at the number of lines in each, it looks like *Jane Eyre* is much longer than *Alice in Wonderland*. We start by getting rid of blank lines using `remove_empty()` from `janitor` [@janitor]. -->
-
-<!-- ```{r} -->
-<!-- library(janitor) -->
-
-<!-- alice_and_jane <- -->
-<!--   alice_and_jane |> -->
-<!--   mutate(blank_line = if_else(text == "", 1, 0)) |> -->
-<!--   filter(blank_line == 0) |> -->
-<!--   select(-blank_line) -->
-
-<!-- table(alice_and_jane$title) -->
-<!-- ``` -->
-
-<!-- There is still an overwhelming amount of *Jane Eyre*, compared with *Alice in Wonderland*, so we sample from *Jane Eyre* to make it more equal. -->
-
-<!-- ```{r} -->
-<!-- set.seed(853) -->
-
-<!-- alice_and_jane$rows <- c(1:nrow(alice_and_jane)) -->
-<!-- sample_from_me <- alice_and_jane |> filter(title == "Jane Eyre: An Autobiography") -->
-<!-- keep_me <- sample(x = sample_from_me$rows, size = 2481, replace = FALSE) -->
-
-<!-- alice_and_jane <- -->
-<!--   alice_and_jane |> -->
-<!--   filter(title == "Alice's Adventures in Wonderland" | rows %in% keep_me) |> -->
-<!--   select(-rows) -->
-
-<!-- table(alice_and_jane$title) -->
-<!-- ``` -->
-
-<!-- There are a variety of issues here, for instance, we have the whole of Alice, but we only have random bits of Jane, but nonetheless we continue and add a counter with the line number for each book. -->
-
-<!-- ```{r} -->
-<!-- alice_and_jane <- -->
-<!--   alice_and_jane |> -->
-<!--   group_by(title) |> -->
-<!--   mutate(line_number = paste(gutenberg_id, row_number(), sep = "_")) |> -->
-<!--   ungroup() -->
-<!-- ``` -->
-
-<!-- We now want to unnest the tokes. We use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016]. -->
-
-<!-- ```{r} -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-
-<!-- library(tidytext) -->
-
-<!-- alice_and_jane_by_word <- -->
-<!--   alice_and_jane |> -->
-<!--   unnest_tokens(word, text) |> -->
-<!--   group_by(word) |> -->
-<!--   filter(n() > 10) |> -->
-<!--   ungroup() -->
-<!-- ``` -->
-
-<!-- We remove any word that was not used more than 10 times. Nonetheless we still have more than 500 unique words. (If we did not require that the word be used by the author at least 10 times then we end up with more than 6,000 words.) -->
-
-<!-- The reason this is relevant is because these are our independent variables. So where we may be used to having something less than 10 explanatory variables, in this case we are going to have 585 As such, we need a model that can handle this. -->
-
-<!-- However, as mentioned before, we are going to have some rows that essentially just had one word. And so we filter for that also, which ensures that the model will have at least some words to work with. -->
-
-<!-- ```{r} -->
-<!-- alice_and_jane_by_word <- -->
-<!--   alice_and_jane_by_word |> -->
-<!--   group_by(title, line_number) |> -->
-<!--   mutate(number_of_words_in_line = n()) |> -->
-<!--   ungroup() |> -->
-<!--   filter(number_of_words_in_line > 2) |> -->
-<!--   select(-number_of_words_in_line) -->
-<!-- ``` -->
-
-<!-- We create a test/training split, and load in `tidymodels`. -->
-
-<!-- ```{r} -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-
-<!-- library(tidymodels) -->
-
-<!-- set.seed(853) -->
-
-<!-- alice_and_jane_by_word_split <- -->
-<!--   alice_and_jane_by_word |> -->
-<!--   select(title, line_number) |> -->
-<!--   distinct() |> -->
-<!--   initial_split(prop = 3 / 4, strata = title) -->
-<!-- ``` -->
-
-<!-- Then we can use `cast_dtm()` to create a document-term matrix. This provides a count of how many times each word is used. -->
-
-<!-- ```{r} -->
-<!-- alice_and_jane_dtm_training <- -->
-<!--   alice_and_jane_by_word |> -->
-<!--   count(line_number, word) |> -->
-<!--   inner_join(training(alice_and_jane_by_word_split) |> select(line_number)) |> -->
-<!--   cast_dtm(term = word, document = line_number, value = n) -->
-
-<!-- dim(alice_and_jane_dtm_training) -->
-<!-- ``` -->
-
-<!-- So we have our independent variables sorted, now we need our binary dependent variable, which is whether the book is Alice in Wonderland or Jane Eyre. -->
-
-<!-- ```{r} -->
-<!-- response <- -->
-<!--   data.frame(id = dimnames(alice_and_jane_dtm_training)[[1]]) |> -->
-<!--   separate(id, into = c("book", "line", sep = "_")) |> -->
-<!--   mutate(is_alice = if_else(book == 11, 1, 0)) -->
-
-<!-- predictor <- alice_and_jane_dtm_training[] |> as.matrix() -->
-<!-- ``` -->
-
-
-<!-- Now we can run our model. -->
-
-<!-- ```{r} -->
-<!-- #| eval: false -->
-
-<!-- library(glmnet) -->
-
-<!-- model <- cv.glmnet( -->
-<!--   x = predictor, -->
-<!--   y = response$is_alice, -->
-<!--   family = "binomial", -->
-<!--   keep = TRUE -->
-<!-- ) -->
-
-<!-- save(model, file = "alice_vs_jane.rda") -->
-<!-- ``` -->
-
-<!-- ```{r}  -->
-<!-- #| echo: false -->
-
-<!-- load("outputs/model/alice_vs_jane.rda") -->
-<!-- ``` -->
-
-
-<!-- ```{r} -->
-<!-- library(glmnet) -->
-<!-- library(broom) -->
-
-<!-- coefs <- model$glmnet.fit |> -->
-<!--   tidy() |> -->
-<!--   filter(lambda == model$lambda.1se) -->
-
-<!-- coefs |> head() -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- coefs |> -->
-<!--   group_by(estimate > 0) |> -->
-<!--   top_n(10, abs(estimate)) |> -->
-<!--   ungroup() |> -->
-<!--   ggplot(aes(fct_reorder(term, estimate), estimate, fill = estimate > 0)) + -->
-<!--   geom_col(alpha = 0.8, show.legend = FALSE) + -->
-<!--   coord_flip() + -->
-<!--   theme_minimal() + -->
-<!--   labs( -->
-<!--     x = "Coefficient", -->
-<!--     y = "Word" -->
-<!--   ) + -->
-<!--   scale_fill_brewer(palette = "Set1") -->
-<!-- ``` -->
-
-<!-- Perhaps unsurprisingly, if a line mentions Alice then it is likely to be a Alice in Wonderland and if it mention Jane then it is likely to be Jane Eyre. -->
-
-
-
-
-
-
-
-
-
-
-
 ## Topic models
 
-Topic models\index{topic models} are useful when we have many statements and we want to create groups based on which sentences that use similar words. We consider those groups of similar words to define topics. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA)\index{latent Dirichlet allocation} method of @Blei2003latent, as implemented by `stm`. For clarity, in the context of this chapter, LDA refers to latent Dirichlet allocation and not Linear Discriminant Analysis, although this is another common subject associated with the acronym LDA.
+Topic models\index{text!topic models} are useful when we have many statements and we want to create groups based on which sentences that use similar words. We consider those groups of similar words to define topics. One way to get consistent estimates of the topics of each statement is to use topic models. While there are many variants, one way is to use the latent Dirichlet allocation (LDA)\index{latent Dirichlet allocation} method of @Blei2003latent, as implemented by `stm`. For clarity, in the context of this chapter, LDA refers to latent Dirichlet allocation and not Linear Discriminant Analysis, although this is another common subject associated with the acronym LDA.
 
 The key assumption behind the LDA method is that for each statement, a document, is made by a person who decides the topics they would like to talk about in that document, and who then chooses words, terms, that are appropriate to those topics. A topic could be thought of as a collection of terms, and a document as a collection of topics. The topics are not specified *ex ante*; they are an outcome of the method. Terms are not necessarily unique to a particular topic, and a document could be about more than one topic. This provides more flexibility than other approaches such as a strict word count method. The goal is to have the words found in documents group themselves to define topics.
 
@@ -719,7 +499,7 @@ ggplot(topic_2, aes(Terms, Probability)) +
 <!--     a. Randomly choose a topic for that term $n$, in that document $d$, $z_{d,n}$, from the multinomial distribution over topics in that document, $z_{d,n} \sim \mbox{Multinomial}(\theta_d)$.  -->
 <!--     b. Randomly choose a term from the relevant multinomial distribution over the terms for that topic, $w_{d,n} \sim \mbox{Multinomial}(\beta_{z_{d,n}})$. -->
     
-By way of background, the Dirichlet distribution\index{distribution!Dirichlet} is a variation of the beta distribution that is commonly used as a prior for categorical and multinomial variables. If there are just two categories, then the Dirichlet and the beta distributions are the same. In the special case of a symmetric Dirichlet distribution, $\eta=1$, it is equivalent to a uniform distribution. If $\eta<1$, then the distribution is sparse and concentrated on a smaller number of the values, and this number decreases as $\eta$ decreases. A hyperparameter, in this usage, is a parameter of a prior distribution.
+By way of background, the Dirichlet distribution\index{distribution!Dirichlet} is a variation of the beta distribution that is commonly used as a prior for categorical and multinomial variables.\index{distribution!beta} If there are just two categories, then the Dirichlet and the beta distributions are the same. In the special case of a symmetric Dirichlet distribution, $\eta=1$, it is equivalent to a uniform distribution. If $\eta<1$, then the distribution is sparse and concentrated on a smaller number of the values, and this number decreases as $\eta$ decreases. A hyperparameter, in this usage, is a parameter of a prior distribution.
 
 <!-- Given this set-up, the joint distribution for the variables is [@blei2012, p.6]: -->
 <!-- $$p(\beta_{1:K}, \theta_{1:D}, z_{1:D, 1:N}, w_{1:D, 1:N}) = \prod^{K}_{i=1}p(\beta_i) \prod^{D}_{d=1}p(\theta_d) \left(\prod^N_{n=1}p(z_{d,n}|\theta_d)p\left(w_{d,n}|\beta_{1:K},z_{d,n}\right) \right).$$ -->
@@ -832,7 +612,9 @@ The use of `filter()` at the end is needed because sometimes aspects such as "di
 
 ```{r}
 hansard_canada_2018_corpus <-
-  corpus(hansard_canada_2018, docid_field = "basepk", text_field = "speechtext")
+  corpus(hansard_canada_2018, 
+         docid_field = "basepk", 
+         text_field = "speechtext")
 
 hansard_canada_2018_corpus
 ```
