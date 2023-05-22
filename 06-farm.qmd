@@ -7,11 +7,11 @@ engine: knitr
 **Prerequisites**
 
 - Watch *Introduction to Sampling and Randomization*, [@register2020sampling]
-  - This short video provides an overview of sampling approaches with helpful examples.
+  - This video provides an overview of sampling approaches with helpful examples.
 - Read *Working-Class Households in Reading*, [@bowley1913working]
   - This historical paper discusses a survey conducted in the United Kingdom in the early 1900s, including a particularly informative discussion of systematic sampling.
 - Read *On the Two Different Aspects of the Representative Method*, [@neyman1934two]
-  - This paper provides an overview of stratified sampling and you should go through the following parts: Parts I "Introduction", III "Different Aspects of the Representative Method", V "Conclusion" and Bowley's discussion.
+  - This paper provides an overview of stratified sampling. You should focus on the following parts: I "Introduction", III "Different Aspects of the Representative Method", V "Conclusion", and Bowley's discussion.
 - Read *Guide to the Census of Population*, [@statcanhistory]
   - Focus on Chapter 10 "Data quality assessment". Despite being written by the Canadian government about a particular census, this chapter describes and addresses concerns that are relevant to almost any survey.
 - Read *He, she, they: Using sex and gender in survey adjustment*, [@kennedy2020using]
@@ -19,15 +19,14 @@ engine: knitr
 
 **Key concepts and skills**
 
-- Before there is a dataset, there must be measurement, and this brings a host of challenges and concerns. One dataset that is designed to be complete in certain respects is a census. While not perfect, governments spend a lot of money on censuses and other official statistics, and they are a great foundational data source.
+- Before there is a dataset, there must be measurement, and this brings many challenges and concerns. One dataset that is designed to be complete in certain respects is a census. While not perfect, governments spend a lot of money on censuses and other official statistics, and they are a great foundational data source.
 - Even when we cannot obtain such a dataset, we can use sampling to ensure that we can still make sensible claims. There are two varieties of this---probability and non-probability. Both have an important role. Key terminology and concepts include: target population, sampling frame, sample, simple random sampling, systematic sampling, stratified sampling, and cluster sampling.
 
 **Key packages and functions**
 
 - Base R [@citeR]
 - `cancensus` [@citecancensus] 
-- `canlang` [@canlang] (not on CRAN so install with: `devtools::install_github("ttimbers/canlang")`)
-- `devtools` [@citeDevtools]
+- `canlang` [@canlang] (this package is not on CRAN so install it with: `install.packages("devtools")` then `devtools::install_github("ttimbers/canlang")`)
 - `knitr` [@citeknitr]
 - `maps` [@citemaps]
 - `tidycensus` [@tidycensus]
@@ -39,7 +38,6 @@ engine: knitr
 
 library(cancensus)
 library(canlang)
-library(devtools)
 library(knitr)
 library(maps)
 library(tidycensus)
@@ -48,23 +46,23 @@ library(tidyverse)
 
 ## Introduction
 
-As we think of our world, and telling stories about it, one of the most difficult aspects is to reduce the beautiful complexity of it into a dataset that we can use. We need to know what we give up when we do this. And be deliberate and thoughtful as we proceed. Some datasets are so large that one specific data point does not matter---it could be swapped for another without any effect [@crawford p. 94]; but this is not always reasonable: how different would your life be if you had a different mother?
+As we think of our world, and telling stories about it, one of the most difficult aspects is to reduce the beautiful complexity of it into a dataset that we can use. We need to know what we give up when we do this. And be deliberate and thoughtful as we proceed. Some datasets are so large that one specific data point does not matter---it could be swapped for another without any effect [@crawford p. 94]. But this is not always reasonable: how different would your life be if you had a different mother?
 
-We are often interested in understanding the implications of some dataset; making forecasts based on it or using that dataset to make claims about a broader phenomena. Regardless of how we turn our world into data, we will usually only ever have a sample of the data that we need. Statistics provides formal approaches that we use to keep these issues front of mind and understand the implications.\index{statistics} But it does not provide definitive guidance about broader issues, such as considering who profits from the data that were collected, and whose power it reflects.\index{data!power}
+We are often interested in understanding the implications of some dataset; making forecasts based on it or using that dataset to make claims about broader phenomena. Regardless of how we turn our world into data, we will usually only ever have a sample of the data that we need. Statistics provides formal approaches that we use to keep these issues front of mind and understand the implications.\index{statistics} But it does not provide definitive guidance about broader issues, such as considering who profits from the data that were collected, and whose power it reflects.\index{data!power}
 
 In this chapter we first discuss measurement, and some of the concerns that it brings. We then turn to censuses, in which we typically try to obtain data about an entire population. We also discuss other government official statistics,\index{statistics!official} and long-standing surveys. We describe datasets of this type as "farmed data".
 <!-- We use this term because, in the same way that farms do much of the work for food production and largely all a consumer needs to do is cook and eat, much of the work of data preparation will have been done for us and all we will need to worry about is data analysis.  -->
-Farmed datasets are typically well put together, thoroughly documented, and the work of collecting, preparing, and cleaning these datasets is mostly done for us. They are also, usually, conducted on a known release cycle. For instance, most developed countries release unemployment and inflation datasets monthly, GDP quarterly, and a census every five to ten years.
+Farmed datasets are typically well put together, thoroughly documented, and the work of collecting, preparing, and cleaning these datasets is mostly done for us. They are also, usually, conducted on a known release cycle. For instance, many countries release unemployment and inflation datasets monthly, GDP quarterly, and a census every five to ten years.
 
 We then introduce statistical notions around sampling to provide a foundation that we will continually return to. Over the past one hundred years or so, statisticians have developed considerable sophistication for thinking about samples, and dealt with many controversies [@brewer2013three]. In this chapter we consider probability and non-probability sampling and introduce certain key terminology and concepts.
 
 This chapter is about data that are made available for us. Data are not neutral.\index{data!not neutral}\index{ethics} For instance, archivists are now careful to consider archives\index{archives} not only as a source of fact, but also as part of the production of fact which occurred within a particular context especially constructed by the state [@Stoler2002].\index{archives} Thinking clearly about who is included in the dataset, and who is systematically excluded, is critical. Understanding, capturing, classifying, and naming data is an exercise in building a world and reflects power [@crawford, p. 121], be that social, historical, financial, or legal.\index{data!power}
 
-For instance, we can consider the role of sex and gender in survey research.\index{surveys!sex}\index{surveys!gender} Sex is based on biological attributes and is assigned at birth, while gender is socially constructed and has both biological and cultural aspects [@sexandgender, p. 7].\index{gender!surveys} Social sciences are likely interested in the relationship between gender, rather than sex, and the dependent variable. But the move toward a nuanced concept of gender in official statistics\index{statistics!official} has only happened recently. Surveys that insist on a binary gender variable that is the same as sex, will not reflect those respondents who do not identify as such. @kennedy2020using provide a variety of aspects to consider when deciding what to do with gender responses, including: ethics, accuracy, practicality, and flexibility. But there is no universal best solution. Ensuring respect for the survey respondent should be the highest priority [@kennedy2020using p. 16].
+For instance, we can consider the role of sex and gender in survey research.\index{surveys!sex}\index{surveys!gender} Sex is based on biological attributes and is assigned at birth, while gender is socially constructed and has both biological and cultural aspects [@sexandgender, p. 7].\index{gender!surveys} We may be interested in the relationship between gender, rather than sex, and some dependent variable. But the move toward a nuanced concept of gender in official statistics\index{statistics!official} has only happened recently. Surveys that insist on a binary gender variable that is the same as sex, will not reflect those respondents who do not identify as such. @kennedy2020using provide a variety of aspects to consider when deciding what to do with gender responses, including: ethics, accuracy, practicality, and flexibility. But there is no universal best solution. Ensuring respect for the survey respondent should be the highest priority [@kennedy2020using p. 16].
 
-Why do we even need classifications and groupings if it causes such concerns?\index{classification} @scott1998seeing positions much of this as an outcome of the state, for its own purposes, wanting to make society legible and considers this a defining feature of modern states. For instance, @scott1998seeing sees the use of surnames as arising because of the state's desire for legible lists to use for taxation, property ownership, conscription, and censuses. The state's desire for legibility also required imposing consistency on measurement. The modern form of metrology, which is "the study of how measurements are made, and how data are compared" [@Plant2020Reproducibility], began in the French Revolution when various measurements were standardized and this later further developed as part of Napoleonic state building [@scott1998seeing p. 30]. @prevost2015statistics [p. 154] describe the essence of the change as one where knowledge went from being "singular, local, idiosyncratic... and often couched in literary form" to generalized, standardized, and numeric. That all said, it would be difficult to collect data without categorizable, measurable scales. A further concern is reification, where we forget that these measures have to be constructed.
+Why do we even need classifications and groupings if it causes such concerns?\index{classification} @scott1998seeing positions much of this as an outcome of the state, for its own purposes, wanting to make society legible and considers this a defining feature of modern states. For instance, @scott1998seeing sees the use of surnames as arising because of the state's desire for legible lists to use for taxation, property ownership, conscription, and censuses. The state's desire for legibility also required imposing consistency on measurement. The modern form of metrology, which is "the study of how measurements are made, and how data are compared" [@Plant2020Reproducibility], began in the French Revolution when various measurements were standardized. This later further developed as part of Napoleonic state building [@scott1998seeing p. 30]. @prevost2015statistics [p. 154] describe the essence of the change as one where knowledge went from being "singular, local, idiosyncratic... and often couched in literary form" to generalized, standardized, and numeric. That all said, it would be difficult to collect data without categorizable, measurable scales. A further concern is reification, where we forget that these measures must be constructed.
 
-All datasets have shortcomings. But, as Dr Laura Bronner,\index{Bronner, Laura} a data scientist at ETH Zürich, describes, there is considerable difference between datasets that are developed for the purpose of being used as datasets, and those that we gather ourselves and use as data even if they were not designed for this. For instance, there are special concerns around measurement and consistency. In this chapter we develop comfort with "farmed data"---those data where some of those concerns have been taken care of for us---where a dataset has been developed specifically for the purpose of being analyzed.
+All datasets have shortcomings. In this chapter we develop comfort with "farmed data". We use that term to refer to a dataset that has been developed specifically for the purpose of being used as data.
 
 Even though these farmed datasets are put together for us to use, and can generally be easily obtained, it is nonetheless especially important for us to develop a thorough understanding of their construction. James Mill, the nineteenth century Scottish author, famously wrote *The History of British India* without having set foot in the country. He claimed: 
 
@@ -72,11 +70,13 @@ Even though these farmed datasets are put together for us to use, and can genera
 > 
 > @thehistoryofbritishindia [p. xv]
 
-It may seem remarkable that he was considered an expert and his views had influence. Yet today, many will, say, use inflation statistics without ever having tried to track a few prices, use the responses from political surveys without themselves ever having asked a respondent a question, or use ImageNet without the experience of hand-labeling some of the images. We must always throw ourselves into the details of the data.
+It may seem remarkable that he was considered an expert and his views had influence. Yet today, many will, say, use inflation statistics without ever having tried to track a few prices, use the responses from political surveys without themselves ever having asked a respondent a question, or use ImageNet without the experience of hand-labeling some of the images. We should always throw ourselves into the details of the data.
 
 ## Measurement
 
-Measurement\index{measurement} is an old concern. Even Aristotle distinguished between quantities and qualities [@sepmeasurementscience]. Measurement, and especially, the comparison of measurements, underpins all quantitative analysis. But deciding what to measure, and how to do it, is especially challenging. Measurement is trickier than it seems. For instance, in music, what makes a one-hit wonder? A surprising number of artists that may immediately come to mind, turn out to have at least one or two other songs that did reasonably well in terms of making it onto charts [@molophany]. Should an analysis of all one-term governments include those that did not make it through a full term? How about those that only lasted a month, or even a week? How do we even begin to measure the extent of government transfers when so much of these are in-kind benefits [@garfinkel2006re]? How can we measure how well represented a person is in a democracy despite that being the fundamental concern [@Achen1978]? And why should the standard definition used by the World Health Organization (WHO) of pregnancy-related and maternal deaths only include those that occur within 42 days of delivery, termination, or abortion when this has a substantial effect on the estimate [@Gazeley2022]?\index{World Health Organization}
+Measurement\index{measurement} is an old concern. Even Aristotle distinguished between quantities and qualities [@sepmeasurementscience]. Measurement, and especially, the comparison of measurements, underpins all quantitative analysis. But deciding what to measure, and how to do it, is challenging. 
+
+Measurement is trickier than it seems. For instance, in music, David Peterson, Professor of Political Science, Iowa State University, make it clear how difficult it is to define a one-hit wonder. A surprising number of artists that may immediately come to mind, turn out to have at least one or two other songs that did reasonably well in terms of making it onto charts [@molophany]. Should an analysis of all one-term governments include those that did not make it through a full term? How about those that only lasted a month, or even a week? How do we even begin to measure the extent of government transfers when so much of these are in-kind benefits [@garfinkel2006re]? How can we measure how well represented a person is in a democracy despite that being the fundamental concern [@Achen1978]? And why should the standard definition used by the World Health Organization (WHO) of pregnancy-related and maternal deaths only include those that occur within 42 days of delivery, termination, or abortion when this has a substantial effect on the estimate [@Gazeley2022]?\index{World Health Organization}
 
 Philosophy\index{measurement!philosophy} brings more nuance and depth to their definitions of measurement [@sepmeasurementscience], but the @metrology [p. 44] define measurement as the "process of experimentally obtaining one or more quantity values that can reasonably be attributed to a quantity", where a quantity is a "number and reference together".\index{measurement!metrology} It implies "comparison of quantities, including counting of entities", and "presupposes a description of the quantity commensurate with the intended use of a measurement result, a measurement procedure, and a calibrated measuring system...". This definition of measurement makes clear that we have a variety of concerns including instrumentation and units, and that we are interested in measurements that are valid\index{measurement!valid} and reliable\index{measurement!reliable}.
 
@@ -86,44 +86,46 @@ Instrumentation\index{measurement!instrumentation}\index{instrumentation} refers
 :::{.callout-note}
 ## Oh, you think we have good data on that!
 
-Knowing the time\index{measurement!time} is a critical aspect of running experiments on the internet.\index{internet!clock synchronization} It is also critical in sports, for instance Formula 1 times laps to the thousandth of a second. And Michael Phelps, the American swimmer, won his seventh gold medal at the Beijing Olympics by only one-hundredth of a second. Timing allows us to distinguish between outcomes even when the event does not happen concurrently. For instance, think back to the discussion of swimmers by @chambliss1989mundanity introduced in @sec-fire-hose, and how this would be impossible without knowing how long each event took each swimmer. It is also critical in finance where we need market participants to agree on whether an asset is available for sale. But the answer to "What time is it?" is a difficult one to answer. The time, according to some individual, can be set to different sources, and so will be different depending on who you ask. Since the 1970s the definitive answer has been to use atomic time, which is consistent. A caesium second is defined by "9192 631 770 cycles of the hyperfine transition frequency in the ground state of caesium 133" [@Levine2023, p. 4]. But the problem of clock synchronization---how to have all the non-atomic clocks roughly match atomic time and each other---remains. @hopper2022 provides an overview of how the Network Time Protocol (NTP) [@mills1991internet] enables clock synchronization and some of the difficulties that exist for computer networks to discover atomic time. Another measure of time is astronomical time, which is based on the rotation of the Earth. But because the Earth spins inconsistently and other issues, adjustments have been made to ensure atomic and astronomical time match. This has resulted in the inclusions of positive leap seconds, and the possibility of a negative leap second, which have created problems [@Levine2023]. As a result, at some point in the future astronomical and atomic time will be allowed to diverge [@Gibney2022; @mitchell2022again].
+Knowing the time\index{measurement!time} is a critical measurement. For instance, Formula 1 times laps to the thousandth of a second. And Michael Phelps, the American swimmer, won his seventh gold medal at the Beijing Olympics by only one-hundredth of a second. Timing allows us to distinguish between outcomes even when the event does not happen concurrently. For instance, think back to the discussion of swimmers by @chambliss1989mundanity and how this would be impossible without knowing how long each event took each swimmer. Timing is also critical in finance where we need market participants to agree on whether an asset is available for sale. But the answer to "What time is it?" can be difficult to answer. The time, according to some individual, can be set to different sources, and so will differ depending on who you ask. Since the 1970s the definitive answer has been to use atomic time. A cesium second is defined by "9192 631 770 cycles of the hyperfine transition frequency in the ground state of cesium 133" [@Levine2023, p. 4]. But the problem of clock synchronization---how to have all the non-atomic clocks match atomic time and each other---remains.\index{internet!clock synchronization} @hopper2022 provides an overview of how the Network Time Protocol (NTP) of @mills1991internet enables clock synchronization and some of the difficulties that exist for computer networks to discover atomic time. Another measure of time is astronomical time, which is based on the rotation of the Earth. But because the Earth spins inconsistently and other issues, adjustments have been made to ensure atomic and astronomical time match. This has resulted in the inclusions of positive leap seconds, and the possibility of a negative leap second, which have created problems [@Levine2023]. As a result, at some point in the future astronomical and atomic time will be allowed to diverge [@Gibney2022; @mitchell2022again].
 :::
 
-A common instrument of measurement is a survey, and we discuss these further in @sec-hunt-data. Another commonly-used instrument is sensors.\index{measurement!sensors} For instance, climate scientists may be interested in temperature, humidity, or pressure. Much analysis of animal movement, such as @LeosBarajas2016, uses accelerometers.\index{measurement!accelerometer} Sensors placed on satellites may be particularly concerned with images, and such data are easily available from the Landsat Program.\index{measurement!satellites} And in @sec-hunt-data we will consider how sensors enable A/B testing.\index{A/B test!sensors} Interestingly, physicists are very concerned with measurement, and are constrained not only by their instrumentation, but also storage capacity. For instance, the ATLAS detector at CERN\index{CERN} is focused on the collision of particles, but not all of the measurements can be saved because that would result in 80TB per second [@Colombo2016]! 
+A common instrument of measurement is a survey, and we discuss these further in @sec-hunt-data. Another commonly-used instrument is sensors.\index{measurement!sensors} For instance, climate scientists may be interested in temperature, humidity, or pressure. Much analysis of animal movement, such as @LeosBarajas2016, uses accelerometers.\index{measurement!accelerometer} Sensors placed on satellites may be particularly concerned with images, and such data are available from the Landsat Program.\index{measurement!satellites} Physicists are very concerned with measurement, and can be constrained not only by their instrumentation, but also storage capacity. For instance, the ATLAS detector at CERN\index{CERN} is focused on the collision of particles, but not all of the measurements can be saved because that would result in 80TB per second [@Colombo2016]! 
 And in the case of A/B testing,\index{A/B test} which we discuss in @sec-hunt-data, extensive use is made of cookies, beacons, system settings, and behavioral patterns. Another aspect of instrumentation is delivery.\index{instrumentation!delivery} For instance, if using surveys, then should they be mailed or online? Should they be filled out by the respondent or by an enumerator?
 
-The definition of measurement, provided by metrology, makes it clear that the second fundamental concern is a reference, which we refer to as units.\index{measurement!units} The choice of units is related to both the research question of interest and available instrumentation. For instance, in the Tutorial in @sec-introduction we were concerned with measuring the growth of plants. Neither of these would be well served by using kilometers or miles as a unit. If we were using a ruler, then we may be able to measure millimeters, but with calipers, we might be able to consider tens of micrometers.
+The definition of measurement, provided by metrology, makes it clear that the second fundamental concern is a reference, which we refer to as units.\index{measurement!units} The choice of units is related to both the research question of interest and available instrumentation. For instance, in the Tutorial in @sec-introduction we were concerned with measuring the growth of plants. This would not be well served by using kilometers or miles as a unit. If we were using a ruler, then we may be able to measure millimeters, but with calipers, we might be able to consider tens of micrometers.
 
 ### Properties of measurements
 
-Valid measurements are those where the quantity that we are measuring is actually related to the estimand and research question of interest.\index{measurement!valid} It speaks to appropriateness. Recall, from @sec-on-writing, that an estimand\index{estimand} is the actual effect, such as the (unknowable) actual effect of smoking on life expectancy. It can be useful to think about estimands as just the parameters of interest. This means that we need to ensure that we are measuring relevant aspects of an individual. For instance, the number of cigarettes that they smoked, and the number of years they lived, rather than, say, their opinion about smoking. We would find that measuring opinion about smoking would not help us answer the relationship between smoking and life expectancy\index{life expectancy} and so it would not be a valid measure.
+Valid measurements are those where the quantity that we are measuring is related to the estimand and research question of interest.\index{measurement!valid} It speaks to appropriateness. Recall, from @sec-on-writing, that an estimand\index{estimand} is the actual effect, such as the (unknowable) actual effect of smoking on life expectancy. It can be useful to think about estimands as what is actually of interest. This means that we need to ensure that we are measuring relevant aspects of an individual. For instance, the number of cigarettes that they smoked, and the number of years they lived, rather than, say, their opinion about smoking.
 
-For some units, such as a meter or a second, there is a clear definition. And while that definition evolves it is widely agreed on [@mitchell2022]. But for other aspects that we may wish to measure it is less clear and so the validity of the measurement becomes critical. At one point in the fourteenth century attempts were made to measure grace and virtue [@crosby1997measure, p. 14]! More recently, we try to measure intelligence or even the quality of a university. That is not to say there are not people with more or less grace, virtue, and intelligence than others, and there are certainly better and worse universities. But the measurement of these is difficult. 
+For some units, such as a meter or a second, there is a clear definition. And when that definition evolves it is widely agreed on [@mitchell2022]. But for other aspects that we may wish to measure it is less clear and so the validity of the measurement becomes critical. At one point in the fourteenth century attempts were made to measure grace and virtue [@crosby1997measure, p. 14]! More recently, we try to measure intelligence or even the quality of a university. That is not to say there are not people with more or less grace, virtue, and intelligence than others, and there are certainly better and worse universities. But the measurement of these is difficult. 
 
-The *U.S. News and World Report*\index{U.S. News and World Report} tries to quantify university quality based on aspects such as class size, number of faculty with a PhD, number of faculty who are full-time, and other factors. But an issue with such constructed measures, especially in social settings, is that it changes the incentives of those being measured. For instance, Columbia University increased from 18 in 1988 to two in 2022. But Michael Thaddeus, Professor of Mathematics, Columbia University, showed how there was a difference, in Columbia's favor, between what Columbia reported to *U.S. News and World Report* and what was available through other sources [@hartocollis2022]. 
+The *U.S. News and World Report*\index{U.S. News and World Report} tries to quantify university quality based on aspects such as class size, number of faculty with a PhD, and number of full-time faculty. But an issue with such constructed measures, especially in social settings, is that it changes the incentives of those being measured. For instance, Columbia University increased from 18th in 1988 to 2nd in 2022. But Michael Thaddeus, Professor of Mathematics, Columbia University, showed how there was a difference, in Columbia's favor, between what Columbia reported to *U.S. News and World Report* and what was available through other sources [@hartocollis2022]. 
 
-Such concerns are of special importance in psychology\index{measurement!psychology} because there is no clear measure of many fundamental concepts. @Fried2022 review the measurement of depression and find many concerns including a lack of validity and reliability. This is not to say that we should not try to measure such things, but we must ensure transparency about measurement decisions.\index{measurement!transparency} For instance, @Flake2020 recommend answering various questions, designed to bring clarity, whenever measurements have to be constructed. These include specifying the underlying construct of interest, the decision process that led to the measure and what alternatives were considered, the quantification process, and detailing the scale. These questions are especially important when the measure is being constructed for a particular purpose, rather than being adopted from elsewhere. This is because of the concern that the measure will be constructed in a way that provides a pre-ordained outcome.
+Such concerns are of special importance in psychology\index{measurement!psychology} because there is no clear measure of many fundamental concepts. @Fried2022 review the measurement of depression and find many concerns including a lack of validity and reliability. This is not to say that we should not try to measure such things, but we should ensure transparency about measurement decisions.\index{measurement!transparency} For instance, @Flake2020 recommend answering various clarifying questions whenever measurements have to be constructed. These include questioning the underlying construct of interest, the decision process that led to the measure, what alternatives were considered, the quantification process, and the scale. These questions are especially important when the measure is being constructed for a particular purpose, rather than being adopted from elsewhere. This is because of the concern that the measure will be constructed in a way that provides a pre-ordained outcome.
 
-Reliability draws on what is implied by the part of the definition of measurement that reads "process of experimentally obtaining...".\index{measurement!reliability} It implies some degree of consistency and means that multiple measurements of one particular aspect, at one particular time, should be essentially the same. If two enumerators independently count the number of shops on a street, then we would hope that their counts are the same. And if they were different then we would hope we could understand the reason for the difference. For instance, perhaps one enumerator misunderstood the instructions and incorrectly considered only shops that were open. To consider another example, demographers are often concerned with the migration of people between countries, and economists are often concerned with international trade. It is concerning the number of times that the in-migration or imports data of Country A from Country B do not match the out-migration or exports data of Country B to Country A.
+Reliability draws on the part of the definition of measurement that reads "process of experimentally obtaining...".\index{measurement!reliability} It implies some degree of consistency and means that multiple measurements of one particular aspect, at one particular time, should be essentially the same. If two enumerators count the number of shops on a street, then we would hope that their counts are the same. And if they were different then we would hope we could understand the reason for the difference. For instance, perhaps one enumerator misunderstood the instructions and incorrectly counted only shops that were open. To consider another example, demographers are often concerned with the migration of people between countries, and economists are often concerned with international trade. It is concerning the number of times that the in-migration or imports data of Country A from Country B do not match the out-migration or exports data of Country B to Country A.
 
 
 :::{.callout-note}
 ## Oh, you think we have good data on that!
 
-It is common for the pilot of a plane to announce the altitude to their passengers.\index{measurement!altitude} But the notion and measurement of altitude is deceptively complicated, and underscores the fact that measurement occurs within a broader context [@skyfaring]. For instance, if we are interested in how many meters there are between the plane and the ground, then should we measure the difference between the ground and where the pilot is sitting, which would be useful for the announcement, or to the bottom of the wheels, which would be useful for landing? What happens if we go over a mountain? Even if the plane has not descended, such a measure---the number of meters between the plane and the ground---would claim a reduction in altitude and make it hard to vertically separate multiple planes. We may be interested in a comparison to sea level. But sea level changes because of the tide, and is different at different locations. As such, a common measure of altitude is flight level, which is determined by the amount of air pressure. And because air pressure is affected by weather, season, and location, the one flight level may be associated with very different numbers of meters to the ground over the course of a flight! Despite this, the measures of altitude used by planes serve their purpose of enabling relatively safe air travel.
+It is common for the pilot of a plane to announce the altitude to their passengers.\index{measurement!altitude} But the notion and measurement of altitude is deceptively complicated, and underscores the fact that measurement occurs within a broader context [@skyfaring]. For instance, if we are interested in how many meters there are between the plane and the ground, then should we measure the difference between the ground and where the pilot is sitting, which would be most relevant for the announcement, or to the bottom of the wheels, which would be most relevant for landing? What happens if we go over a mountain? Even if the plane has not descended, such a measure---the number of meters between the plane and the ground---would claim a reduction in altitude and make it hard to vertically separate multiple planes. We may be interested in a comparison to sea level. But sea level changes because of the tide, and is different at different locations. As such, a common measure of altitude is flight level, which is determined by the amount of air pressure. And because air pressure is affected by weather, season, and location, the one flight level may be associated with very different numbers of meters to the ground over the course of a flight. The measures of altitude used by planes serve their purpose of enabling relatively safe air travel.
 :::
 
 ### Measurement error
 
-Measurement error\index{measurement!error} is the difference between the value we observe and the actual value. Sometimes it is possible to verify certain responses. If the difference is consistent between those responses that we can verify and those that we cannot, then we are able to estimate the extent of overall measurement error. For instance, @Sakshaug2010 considered a survey of university alumni and compared responses about a respondent's grades with university records. They find that the mode of the survey (telephone interview conducted by a human, telephone interview conducted by a computer, and an internet survey) affected the extent of the measurement error.
+Measurement error\index{measurement!error} is the difference between the value we observe and the actual value. Sometimes it is possible to verify certain responses. If the difference is consistent between the responses that we can verify and those that we cannot, then we are able to estimate the extent of overall measurement error. For instance, @Sakshaug2010 considered a survey of university alumni and compared replies about a respondent's grades with their university record. They find that the mode of the survey---telephone interview conducted by a human, telephone interview conducted by a computer, or an internet survey---affected the extent of the measurement error.
 
-Such error can be particularly pervasive when an enumerator fills out the survey form on behalf of the respondent. This is especially of concern around race.\index{measurement!race} For instance, @davis1997nonrandom [p. 177] describes how Black people in the United States\index{United States} may limit the extent to which they describe their political and racial belief to White interviewers.
+Such error can be particularly pervasive when an enumerator fills out the survey form on behalf of the respondent. This is especially of concern around race.\index{measurement!race} For instance, @davis1997nonrandom [p. 177] describes how Black people in the United States\index{United States} may limit the extent to which they describe their political and racial belief to white interviewers.
 
-Another example is censored data, which is when we have some partial knowledge of the actual value.\index{data!censored} Right-censored data is when we know that the actual value is above some observed value, but we do not know by how much. For instance, immediately following the Chernobyl disaster in 1986, the only available instruments to measure radiation had a certain maximum limit. While the radiation was measured as being at that (maximum) level, the implication that the actual value was much higher.
+Another example is censored data, which is when we have some partial knowledge of the actual value.\index{data!censored} Right-censored data is when we know that the actual value is above some observed value, but we do not know by how much. For instance, immediately following the Chernobyl disaster in 1986, the only available instruments to measure radiation had a certain maximum limit. While the radiation was measured as being at that (maximum) level, the implication was that the actual value was much higher.
 
-Right-censored data are often seen in medical studies. For instance, say some experiment is conducted, and then patients are followed for ten years. At the end of that ten-year period all we know is whether a patient lived at least ten years, not the exact length of their life. Left-censored data is the opposite situation. For instance, consider a thermometer that only went down to freezing. Even when the actual temperature was less than that, the thermometer would still register as freezing. A slight variation of censored data is winsorizing data. This occurs when we do observe the actual value, but we change it to a less extreme one. For instance, if we were considering age then we may change the age of anyone older than 100 to be 100. We may do this if we are worried that values that were too large would have too significant of an effect.
+Right-censored data are often seen in medical studies. For instance, say some experiment is conducted, and then patients are followed for ten years. At the end of that ten-year period all we know is whether a patient lived at least ten years, not the exact length of their life. Left-censored data is the opposite situation. For instance, consider a thermometer that only went down to freezing. Even when the actual temperature was less, the thermometer would still register that as freezing.
 
-Truncated data is a slightly different situation in which we do not even record those values.\index{data!truncated} For instance, consider a situation in which we were interested in the relationship between a child's age and height. Our first question might be "what is your age?" and if it turns out the respondent is an adult, then we would not continue to ask height. Truncated data are especially closely related to selection bias.\index{bias!selection} For instance, consider a student who drops a course -- their opinion is not measured on course evaluations.
+A slight variation of censored data is winsorizing data. This occurs when we observe the actual value, but we change it to a less extreme one. For instance, if we were considering age then we may change the age of anyone older than 100 to be 100. We may do this if we are worried that values that were too large would have too significant of an effect.
+
+Truncated data is a slightly different situation in which we do not even record those values.\index{data!truncated} For instance, consider a situation in which we were interested in the relationship between a child's age and height. Our first question might be "what is your age?" and if it turns out the respondent is an adult, then we would not continue to ask height. Truncated data are especially closely related to selection bias.\index{bias!selection} For instance, consider a student who drops a course---their opinion is not measured on course evaluations.
 
 To illustrate the difference between these concepts, consider a situation in which the actual distribution of newborn baby weight has a normal distribution, centered around 3.5kg.\index{measurement!baby weights} Imagine there is some defect with the scale, such that any value less than or equal to 2.75kg is assigned 2.75kg.\index{measurement!scales} And imagine there is some rule such that any baby expected to weigh more than 4.25kg is transferred to a different hospital to be born. These three scenarios are illustrated in @fig-babyweights. We may also be interested in considering the mean weight, which highlights the bias (@tbl-meansofscenarios).\index{distribution!Normal}
 
@@ -137,34 +139,21 @@ set.seed(853)
 
 newborn_weight <-
   tibble(
-    weight =
-      rep(
-        x = rnorm(
-          n = 1000,
-          mean = 3.5,
-          sd = 0.5
-        ),
-        times = 3
-      ),
-    measurement = c(
-      rep("Actual", 1000),
-      rep("Censored", 1000),
-      rep("Truncated", 1000)
+    weight = rep(
+      x = rnorm(n = 1000, mean = 3.5, sd = 0.5), 
+      times = 3),
+    measurement = rep(
+      x = c("Actual", "Censored", "Truncated"),
+      each = 1000)
     )
-  )
 
 newborn_weight <-
   newborn_weight |>
   mutate(
-    weight = if_else(
-      weight <= 2.75 & measurement == "Censored",
-      2.75,
-      weight
-    ),
-    weight = if_else(
-      weight >= 4.25 & measurement == "Truncated",
-      NA_real_,
-      weight
+    weight = case_when(
+      weight <= 2.75 & measurement == "Censored" ~ 2.75,
+      weight >= 4.25 & measurement == "Truncated" ~ NA_real_,
+      TRUE ~ weight
     )
   )
 
@@ -192,37 +181,41 @@ newborn_weight |>
 
 ### Missing data
 
-Regardless of how good our data acquisition process is, there will be missing data.\index{missing data} That is, observations that we know we do not have. But a variable has to be measured, or at least thought about and considered, in order to be missing; that is, with insufficient consideration, there is the danger of missing data that we do not even know are missing because the variables were never considered. They are missing in a "dog that did not bark" sense. This is why it is so important to really think about the situation, and work with subject-matter experts. We will return to missing data again in @sec-exploratory-data-analysis.
+Regardless of how good our data acquisition process is, there will be missing data.\index{missing data} That is, observations that we know we do not have. But a variable must be measured, or at least thought about and considered, in order to be missing. With insufficient consideration, there is the danger of missing data that we do not even know are missing because the variables were never considered. They are missing in a "dog that did not bark" sense. This is why it is so important to think about the situation, sketch and simulate, and work with subject-matter experts.
 
-Non-response could be considered a variant of measurement error\index{measurement!error} whereby we observe a null, even though there must be an actual value.\index{missing data!non-response} But it is usually considered in its own right. And there are different extents of non-response: from refusing to even respond to the survey, through to just missing one question. Non-response is a key issue, especially with non-probability samples, because there is usually good reason to consider that people who do not respond are systematically different to those who do.\index{non-probability samples} And this serves to limit the extent to which the survey can be used to speak to more than just survey respondents. For instance, @gelman2016mythical go so far as to say that much of the changes in public opinion that are reported in the lead-up to an election are not people changing their mind, but differential non-response; that is, individual choosing whether to respond to a survey at all depending on the circumstances, not just choosing which survey response to choose. The use of pre-notification and reminders may help address non-response in some circumstances [@koitsalu2018effects; @frandell2021effects].
+Non-response could be considered a variant of measurement error\index{measurement!error} whereby we observe a null, even though there should be an actual value.\index{missing data!non-response} But it is usually considered in its own right. And there are different extents of non-response: from refusing to even respond to the survey, through to just missing one question. Non-response is a key issue, especially with non-probability samples, because there is usually good reason to consider that people who do not respond are systematically different to those who do.\index{non-probability samples} And this serves to limit the extent to which the survey can be used to speak to more than just survey respondents. @gelman2016mythical go so far as to say that much of the changes in public opinion that are reported in the lead-up to an election are not people changing their mind, but differential non-response. That is, individual choosing whether to respond to a survey at all depending on the circumstances, not just choosing which survey response to choose. The use of pre-notification and reminders may help address non-response in some circumstances [@koitsalu2018effects; @frandell2021effects].
 
-Data might be missing because a respondent did not want to respond to one particular question, a particular collection of related questions, or the entire survey, although these are not mutually exclusive nor collectively exhaustive [@missingdatatypes].\index{missing data!reasons} In an ideal situation data are missing completely at random.\index{missing data!types} This rarely occurs, but if it does, then the missing data can just be ignored with little concern because the sample should still be reflective of the broader population. It is more likely that data are missing at random and the extent to which we have to worry about that differs. For instance, if we are interested in the effect of gender on political support, then it may be that men are less likely to respond to surveys, but this is not related to who they will support. If that differential response is only due to being a man, and not related to political support, then we may be able to continue, provided we include gender in the regression, or are able to post-stratify based on gender. That said, the likelihood of this independence holding is low, and it is more likely, as in @gelman2016mythical, that there is a relationship between responding to the survey and political support. In that more likely case, we have a more significant issue. One approach would be to consider additional explanatory variables. It is tempting to drop incomplete cases, but this may further bias the sample, and requires extensive justification. Data imputation\index{data!imputation} should be considered only as a last resort, and again is likely to further bias the sample. Far better than either option is to rethink, and improve, the data collection process.
+Data might be missing because a respondent did not want to respond to one particular question, a particular collection of related questions, or the entire survey, although these are not mutually exclusive nor collectively exhaustive [@missingdatatypes].\index{missing data!reasons} In an ideal situation data are Missing Completely At Random (MCAR).\index{missing data!types} This rarely occurs, but if it does, then inference should still be reflective of the broader population. It is more likely that data are Missing At Random (MAR) or Missing Not At Random (MNAR). The extent to which we must worry about that differs. For instance, if we are interested in the effect of gender on political support, then it may be that men are less likely to respond to surveys, but this is not related to who they will support. If that differential response is only due to being a man, and not related to political support, then we may be able to continue, provided we include gender in the regression, or are able to post-stratify based on gender. That said, the likelihood of this independence holding is low, and it is more likely, as in @gelman2016mythical, that there is a relationship between responding to the survey and political support. In that more likely case, we may have a more significant issue. One approach would be to consider additional explanatory variables. It is tempting to drop incomplete cases, but this may further bias the sample, and requires justification and the support of simulation. Data imputation\index{data!imputation} could be considered, but again may bias the sample. Ideally we could rethink, and improve, the data collection process.
+
+We return to missing data in @sec-exploratory-data-analysis.
 
 ## Censuses and other government data
 
-There are a variety of sources of data that have been produced for the purposes of being used as datasets. One thinks here especially of censuses of population.\index{census} @whitby [p. 30-31] describes how the earliest censuses for which we have written record are from China's Yellow River Valley.\index{census!China} One motivation for censuses was taxation, and @jones1953census describes census records from the late third or early fourth century A.D. which enabled a new system of taxation. Detailed records, such as censuses, have also been abused. For instance, @luebke1994locating set out how the Nazis\index{census!Nazis} used censuses and police registration for data gathering to support their eugenic agenda. The Allies also used census records, with @clairemckaybowen [p. 17] describing how the United States Census Bureau provided information that contributed to the internship of Japanese Americans; an event for which President Clinton\index{Clinton, Bill} would apologize in the 1990s.\index{census!Japanese American internship}
+There are a variety of sources of data that have been produced for the purposes of being used as datasets. One thinks here especially of censuses of population.\index{census} @whitby [p. 30-31] describes how the earliest censuses for which we have written record are from China's Yellow River Valley.\index{census!China} One motivation for censuses was taxation, and @jones1953census describes census records from the late third or early fourth century A.D. which enabled a new system of taxation. Detailed records, such as censuses, have also been abused. For instance, @luebke1994locating [p. 25] set out how the Nazis\index{census!Nazis} used censuses and police registration datasets to "locate groups eventually slated for deportation and death". And @clairemckaybowen [p. 17] describes how the United States Census Bureau provided information that contributed to the internship of Japanese Americans. President Clinton\index{Clinton, Bill} apologized for this in the 1990s.\index{census!Japanese American internship}
 
-Another source of data deliberately put together to be a dataset include official statistics\index{statistics!official} like surveys of economic conditions such as unemployment, inflation, and GDP.\index{Gross Domestic Product} Interestingly, @rockoff2019controversies describes how these economic statistics were not actually developed by the federal government, even though governments typically eventually took over that role. Censuses and other government-run surveys have the power, and financial resources, of the state behind them, which enables them to be thorough in a way that other datasets cannot be. For instance, the 2020 United States Census is estimated to have cost US$15.6 billion [@Hawes2020Implementing] and the annual Point-in-Time Count enables a unique count of the number of people experiencing homelessness in the United States [@newwoyktimescountshomeless]. But this similarly brings a specific perspective. Census data, like all surveys, are not unimpeachable, and common errors include under- and over-enumeration, as well as misreporting [@steckel1991quality], and there are various measures and approaches used to assess quality [@statcanhistory].\index{census!United States}
+Another source of data deliberately put together to be a dataset include official statistics\index{statistics!official} like surveys of economic conditions such as unemployment, inflation, and GDP.\index{Gross Domestic Product} Interestingly, @rockoff2019controversies describes how these economic statistics were not actually developed by the federal government, even though governments typically eventually took over that role. Censuses and other government-run surveys have the power, and financial resources, of the state behind them, which enables them to be thorough in a way that other datasets cannot be. For instance, the 2020 United States Census is estimated to have cost US$15.6 billion [@Hawes2020Implementing]. But this similarly brings a specific perspective. Census data, like all data, are not unimpeachable. Common errors include under- and over-enumeration, as well as misreporting [@steckel1991quality]. There are various measures and approaches used to assess quality [@statcanhistory].\index{census!United States}
 
 :::{.callout-note}
 ## Oh, you think we have good data on that!
 
-Censuses of population are critical, but not unimpeachable. @anderson1999counts describe how the history of the United States census is one of undercount, and that even George Washington\index{census!George Washington} complained about this in the 1790s.\index{census!undercount} The extent of the undercount was able to be estimated due to the Selective Service registration system used for conscription in World War II. These records were compared with census records, and it was found that there were about half a million more men recorded for conscription purposes than in the census. This was race-specific, with an average undercount of around 3 per cent, but an undercount of Black men of draft age of around 13 per cent [@anderson1999counts, p. 29].\index{census!race}\index{bias!race} This became a political issue in the 1960s, and race and ethnicity related questions were of special concern in the 1990s. @nobles2002racial [p. 47] discusses how counting by race first requires that race exists, but that this may be biologically difficult to establish.\index{bias!race} And it is certainly not something that is "fixed" and "objective" but instead due to class, social legal, structural, and political constructs [@nobles2002racial, p. 48], despite it being fundamental to the United States census.
+Censuses of population are critical, but not unimpeachable. @anderson1999counts describe how the history of the census in the United States is one of undercount, and that even George Washington\index{census!George Washington} complained about this in the 1790s.\index{census!undercount} The extent of the undercount was estimated due to the Selective Service registration system used for conscription in World War II. Those records were compared with census records, and it was found that there were about half a million more men recorded for conscription purposes than in the census. This was race-specific, with an average undercount of around 3 per cent, but an undercount of Black men of draft age of around 13 per cent [@anderson1999counts, p. 29].\index{census!race}\index{bias!race} This became a political issue in the 1960s, and race and ethnicity related questions were of special concern in the 1990s. @nobles2002racial [p. 47] discusses how counting by race first requires that race exists, but that this may be biologically difficult to establish.\index{bias!race} Despite how fundamental race is to the United States census it is not something that is "fixed" and "objective" but instead has influences from class, social, legal, structural, and political aspects [@nobles2002racial, p. 48].
 :::
 
-Another similarly large and established source of data are from long-running large surveys. These are conducted on a regular basis, and while not usually directly conducted by the government, they are usually funded, one way or another, by the government. For instance, here we often think of electoral surveys, such as the Canadian Election Study, which has run in association with every federal election since 1965, and similarly the British Election Study which has been associated with every general election since 1964. More recently there has been a large push toward open data in government. The underlying principle---that the government should make available the data that is has---is undeniable. But the term has become a little contentious because of how it has occurred in practice; the government is only providing data that it wants to provide, and will not make it look bad. We may even sometimes see manipulation of data to suit a government's narrative [@Kalgin2014; @Zhang2019; @Berdine2018]. One excellent source of data that the government has, but does not necessarily want to provide is that gathered through Freedom of Information (FOI) requests [@walby2019freedom]. And these are used to excellent effect by @biasbehindbars, who suggests systematic racism is likely in the Canadian prison system.
+Another similarly large and established source of data are from long-running large surveys. These are conducted on a regular basis, and while not usually directly conducted by the government, they are usually funded, one way or another, by the government. For instance, here we often think of electoral surveys, such as the Canadian Election Study, which has run in association with every federal election since 1965, and similarly the British Election Study which has been associated with every general election since 1964. 
 
-While farmed datasets have always been useful, they were developed for a time when much analysis was conducted without the use of scripts and programming languages. Many R packages have been developed to make it easier to get these datasets into R. Here we cover a few that are especially useful. 
+More recently there has been a large push toward open data in government. The underlying principle---that the government should make available the data that it has---is undeniable. But the term has become a little contentious because of how it has occurred in practice. Governments only provide data that they want to provide. We may even sometimes see manipulation of data to suit a government's narrative [@Kalgin2014; @Zhang2019; @Berdine2018]. One way to get data that the government has, but does not necessarily want to provide, is to submit a Freedom of Information (FOI) request [@walby2019freedom]. For instance, @biasbehindbars use data from FOI to find evidence of systematic racism in the Canadian prison system.
+
+While farmed datasets have always been useful, they were developed for a time when much analysis was conducted without the use of programming languages. Many R packages have been developed to make it easier to get these datasets into R. Here we cover a few that are especially useful. 
 
 
 
 ### Canada
 
-The first census in Canada was conducted in 1666.\index{census!Canada} This was also the first modern census, whereby every individual was recorded by name [@godfrey1918history, p. 179], although it is worth pointing out that it does not include Aboriginal peoples. There were 3,215 inhabitants that were counted, and the census asked about age, sex, marital status, and occupation [@statcanhistory]. In association with the Confederation, in 1867 a decennial census was required so that political representatives could be allocated for the new Parliament. Regular censuses have occurred since then, the most recent in 2021.
+The first census in Canada was conducted in 1666.\index{census!Canada} This was also the first modern census where every individual was recorded by name, although it does not include Aboriginal peoples [@godfrey1918history, p. 179]. There were 3,215 inhabitants that were counted, and the census asked about age, sex, marital status, and occupation [@statcanhistory]. In association with Canadian Confederation, in 1867 a decennial census was required so that political representatives could be allocated for the new Parliament. Regular censuses have occurred since then.
 
-We can explore some data on languages spoken in Canada from the 2016 Census using `canlang`. This package is not on CRAN, but can be installed from GitHub with: `devtools::install_github("ttimbers/canlang")`).\index{packages!install}
+We can explore some data on languages spoken in Canada from the 2016 Census using `canlang`. This package is not on CRAN, but can be installed from GitHub with: `install.packages("devtools")` then `devtools::install_github("ttimbers/canlang")`.\index{packages!install}
 
-We will start with the "can_lang" dataset, which provides the number of Canadians who use each of 214 languages.
+After loading `canlang` we can use the `can_lang` dataset. This provides the number of Canadians who use each of 214 languages.
 
 ```{r}
 #| message: false
@@ -239,7 +232,7 @@ can_lang |>
   select(language, mother_tongue)
 ```
 
-We could combine two datasets together, "region_lang" and "region_data", to see if the five most common languages differ between the largest region, Toronto, and the smallest, Belleville.
+We could combine two datasets: `region_lang` and `region_data`, to see if the five most common languages differ between the largest region, Toronto, and the smallest, Belleville.
 
 ```{r}
 region_lang |>
@@ -263,7 +256,7 @@ In general, data from Canadian censuses are not as easily available through the 
 
 Another way to access data from the Canadian census is to use `cancensus`.\index{census!Canada} It requires an API key,\index{API} which can be requested by creating an [account](https://censusmapper.ca/users/sign_up) and then going to "edit profile". The package has a helper function that makes it easier to add the API key to an ".Renviron" file, which we will explain in more detail in @sec-gather-data.
 
-We can use `get_census()` to get census data. We need to specify a census of interest, and a variety of other arguments. For instance, we could get data from the 2016 census about Ontario, which is the largest Canadian province by population.\index{Canada}
+After installing and loading `cancensus` we can use `get_census()` to get census data. We need to specify a census of interest, and a variety of other arguments. For instance, we could get data from the 2016 census about Ontario, which is the largest Canadian province by population.\index{Canada}
 
 ```{r}
 #| message: false
@@ -310,16 +303,15 @@ ontario_population
 ontario_population
 ```
 
-Data from the 1996, 2001, 2006, 2011, and 2016 censuses are available, and `list_census_datasets()` provides the metadata that we need to provide to `get_census()` to access these. Data are available based on a variety of regions, and `list_census_regions()` provides the metadata that we need. And finally, `list_census_vectors()` provides the metadata about the variables that are available.
-
+Data for censuses since 1996 are available, and `list_census_datasets()` provides the metadata that we need to provide to `get_census()` to access these. Data are available based on a variety of regions, and `list_census_regions()` provides the metadata that we need. Finally, `list_census_vectors()` provides the metadata about the variables that are available.
 
 ### United States
 
 #### Census
 
-The requirement for a census is included in the United States Constitution, although births and deaths were legally required to be registered in what became Massachusetts as early as 1639 [@gutman1958birth].\index{census!United States} We can use `tidycensus` to get started with access to United States census data. As with `cancensus`, we first need to obtain an API key from the [Census Bureau API](http://api.census.gov/data/key_signup.html) and store it locally using a helper function.\index{API}
+The requirement for a census is included in the United States Constitution, although births and deaths were legally required to be registered in what became Massachusetts as early as 1639 [@gutman1958birth].\index{census!United States} After installing and loading it we can use `tidycensus` to get started with access to United States census data. As with `cancensus`, we first need to obtain an API key from the [Census Bureau API](http://api.census.gov/data/key_signup.html) and store it locally using a helper function.\index{API}
 
-Having set that up, we can use `get_decennial()` to obtain data on variables of interest. As an example, we could gather data about the average household size in 2010 overall, and by owner or renter (@fig-utahvsdc).
+Having set that up, we can use `get_decennial()` to obtain data on variables of interest. As an example, we could gather data about the average household size in 2010 overall, and by owner or renter, for certain states (@fig-utahvsdc).
 
 ```{r}
 #| message: false
@@ -342,26 +334,16 @@ us_ave_household_size_2010 |>
     "Utah",
     "Massachusetts"
   )) |>
-  ggplot(aes(
-    y = NAME,
-    x = value,
-    color = variable
-  )) +
+  ggplot(aes(y = NAME, x = value, color = variable)) +
   geom_point() +
   theme_minimal() +
-  labs(
-    x = "Average household size",
-    y = "State",
-    color = "Household type"
-  ) +
+  labs(x = "Average household size", 
+       y = "State", 
+       color = "Household type") +
   scale_color_brewer(
     palette = "Set1",
-    labels = c(
-      "Total",
-      "Owner occupied",
-      "Renter occupied"
+    labels = c("Total", "Owner occupied", "Renter occupied")
     )
-  )
 ```
 
 ```{r}
@@ -422,13 +404,11 @@ us_ave_household_size_2010 |>
   )
 ```
 
+@walker2022 provides further detail about analyzing United States census data with R.\index{census!United States}
 
+#### American Community Survey
 
-The definitive book about analyzing United States census data with R is @walker2022.\index{census!United States}
-
-#### ACS
-
-The United States is in the enviable situation where there is usually a better approach than using the census and there is a better way than having to use government statistical agency websites.\index{IPUMS} IPUMS provides access to a wide range of datasets, including international census microdata. In the specific case of the US, the American Community Survey (ACS) is a survey whose content is comparable to the questions asked on many censuses, but it is available on an annual basis, compared with a census which could be quite out-of-date by the time the data are available.\index{American Community Survey} It ends up with millions of responses each year. Although the ACS is smaller than a census, the advantage is that it is available on a more timely basis. We access the ACS through IPUMS.
+The United States is in the enviable situation where there is usually a better approach than using the census and there is a better way than having to use government statistical agency websites.\index{IPUMS} IPUMS provides access to a wide range of datasets, including international census microdata. In the specific case of the United States, the American Community Survey (ACS) is a survey whose content is comparable to the questions asked on many censuses, but it is available on an annual basis, compared with a census which could be quite out-of-date by the time the data are available.\index{American Community Survey} It ends up with millions of responses each year. Although the ACS is smaller than a census, the advantage is that it is available on a more timely basis. We access the ACS through IPUMS.
 
 :::{.callout-note}
 ## Shoulders of giants
@@ -436,7 +416,7 @@ The United States is in the enviable situation where there is usually a better a
 Steven Ruggles\index{Ruggles, Steven} is Regents Professor of History and Population Studies at the University of Minnesota and is in charge of IPUMS.\index{IPUMS} After earning a PhD in historical demography\index{demography} from the University of Pennsylvania in 1984, he was appointed as an assistant professor at the University of Minnesota, and promoted to full professor in 1995. The initial IPUMS data release was in 1993 [@sobek1999ipums]. Since then it has grown and now includes social and economic data from many countries. Ruggles was awarded a MacArthur Foundation Fellowship in 2022.\index{MacArthur Foundation Fellowship}
 :::
 
-Go to [IPUMS](https://ipums.org), then "IPUMS USA", and select "Get Data". We are interested in a sample, so go to "SELECT SAMPLE", and un-select "Default sample from each year" and instead select "2019 ACS" and then "SUBMIT SAMPLE SELECTIONS" (@fig-ipumstwo).\index{IPUMS}
+Go to [IPUMS](https://ipums.org), then "IPUMS USA", and click "Get Data". We are interested in a sample, so go to "SELECT SAMPLE". Un-select "Default sample from each year" and instead select "2019 ACS" and then "SUBMIT SAMPLE SELECTIONS" (@fig-ipumstwo).\index{IPUMS}
 
 ::: {#fig-ipums layout-nrow=3}
 
@@ -456,24 +436,20 @@ An overview of the steps involved in getting data from IPUMS
 :::
 
 
-We might be interested in data based on state. We would begin by looking at "HOUSEHOLD" variables and selecting "GEOGRAPHIC" (@fig-ipumsfour).
+We might be interested in data based on state. We would begin by looking at "HOUSEHOLD" variables and selecting "GEOGRAPHIC" (@fig-ipumsfour). We add "STATEICP" to our "cart" by clicking the plus, which will then turn into a tick (@fig-ipumssix). We might then be interested in data on a "PERSON" basis, for instance, "DEMOGRAPHIC" variables such as "AGE", which we should add to our cart. We also want "SEX" and "EDUC" (both are in "PERSON").
 
-We add "STATEICP" to our "cart" by clicking the plus, which will then turn into a tick (@fig-ipumssix).
-
-We might then be interested in data on a "PERSON" basis, for instance, "DEMOGRAPHIC" variables such as "AGE", which we should add to our cart. We also want "SEX" and "EDUC" (both are in "PERSON").
-
-When we are done, we can "VIEW CART", and then "CREATE DATA EXTRACT" (@fig-ipumseight). At this point there are two aspects that we likely want to change:
+When we are done, we can click "VIEW CART", and then click "CREATE DATA EXTRACT" (@fig-ipumseight). At this point there are two aspects that we likely want to change:
 
 1. Change the "DATA FORMAT" from ".dat" to ".dta" (@fig-ipumsnine).
 2. Customize the sample size as we likely do not need three million responses, and could just change it to, say, 500,000 (@fig-ipumsten).
 
 Briefly check the dimensions of the request. It should not be much more than around 40MB. If it is then check whether there are variables accidentally selected that are not needed or further reduce the number of observations. 
 
-Finally, we want to include a descriptive name for the extract, for instance, "2023-05-15: State, age, sex, education", which specifies the date we made the extract and what is in the extract. After that we can "SUBMIT EXTRACT".
+Finally, we want to include a descriptive name for the extract, for instance, "2023-05-15: State, age, sex, education", which specifies the date we made the extract and what is in the extract. After that we can click "SUBMIT EXTRACT".
 
 We will be asked to log in or create an account, and after doing that will be able to submit the request. IPUMS will email when the extract is available, after which we can download it and read it into R in the usual way. We assume the dataset has been saved locally as "usa_00015.dta" (your dataset may have a slightly different filename).
 
-It is critical that we cite this dataset when we use it. For instance we can use the following bibtex entry for @ipumsusa.\index{citation!IPUMS}
+It is critical that we cite this dataset when we use it. For instance we can use the following BibTeX entry for @ipumsusa.\index{citation!IPUMS}
 
 ::: {.content-visible when-format="pdf"}
 ```
@@ -503,7 +479,7 @@ It is critical that we cite this dataset when we use it. For instance we can use
 ```
 :::
 
-We will briefly tidy and prepare the this dataset, which we will use in @sec-multilevel-regression-with-post-stratification. Our code is based on @greatstudentwork.
+We will briefly tidy and prepare this dataset. We will use it in @sec-multilevel-regression-with-post-stratification. Our code is based on @greatstudentwork.
 
 ```{r}
 #| message: false
@@ -553,8 +529,6 @@ ipums_extract <-
 ipums_extract
 ```
 
-We will use this dataset in XX, and so we will need to change some of its features.
-
 ```{r}
 #| eval: true
 #| echo: true
@@ -574,13 +548,11 @@ cleaned_ipums <-
     ),
     education_level = case_when(
       educd %in% c(
-        "nursery school, preschool", "kindergarten",
-        "grade 1", "grade 2", "grade 3", "grade 4",
-        "grade 5", "grade 6", "grade 7", "grade 8",
-        "grade 9", "grade 10", "grade 11", "12th grade, no diploma",
-        "regular high school diploma",
-        "ged or alternative credential",
-        "no schooling completed"
+        "nursery school, preschool", "kindergarten", "grade 1",
+        "grade 2", "grade 3", "grade 4", "grade 5", "grade 6",
+        "grade 7", "grade 8", "grade 9", "grade 10", "grade 11",
+        "12th grade, no diploma", "regular high school diploma",
+        "ged or alternative credential", "no schooling completed"
       ) ~ "High school or less",
       educd %in% c(
         "some college, but less than 1 year",
@@ -595,30 +567,18 @@ cleaned_ipums <-
       ) ~ "Grad degree",
       TRUE ~ "Trouble"
     )
-  )
-
-# Just keep relevant variables
-cleaned_ipums <-
-  cleaned_ipums |>
-  select(
-    gender,
-    age_group,
-    education_level,
-    stateicp
-  )
-
-# Tidy the class
-cleaned_ipums <-
-  cleaned_ipums |>
-  mutate(across(c(gender, stateicp, education_level, age_group), as_factor)) |> 
-  mutate(age_group = 
-           factor(age_group, 
-                  levels = c("18-29", "30-44", "45-59", "60+")))
+  ) |>
+  select(gender, age_group, education_level, stateicp) |>
+  mutate(across(c(
+    gender, stateicp, education_level, age_group),
+    as_factor)) |>
+  mutate(age_group =
+           factor(age_group, levels = c("18-29", "30-44", "45-59", "60+")))
 
 cleaned_ipums
 ```
 
-We will draw on this dataset in @sec-multilevel-regression-with-post-stratification. So we will save it. 
+We will draw on this dataset in @sec-multilevel-regression-with-post-stratification, so we will save it. 
 
 ```{r}
 #| eval: false
@@ -644,7 +604,7 @@ We can also have a look at some of the variables (@fig-ipumsquickgraph).
 #| label: fig-ipumsquickgraph
 
 cleaned_ipums |>
-  ggplot(mapping = aes(x = age_group, fill = education_level)) +
+  ggplot(mapping = aes(x = age_group, fill = gender)) +
   geom_bar(position = "dodge2") +
   theme_minimal() +
   labs(
@@ -652,17 +612,14 @@ cleaned_ipums |>
     y = "Number of respondents",
     fill = "Education"
   ) +
-  facet_wrap(vars(gender)) +
-  guides(x =  guide_axis(angle = 90)) +
+  facet_wrap(vars(education_level)) +
+  guides(x = guide_axis(angle = 90)) +
   theme(legend.position = "bottom") +
   scale_fill_brewer(palette = "Set1")
 ```
 
 
-Incredibly, full count data, that is the entire census, are available through IPUMS\index{IPUMS} for the United States censuses conducted between 1850 and 1940, with the exception of 1890.\index{census!United States} Most of the 1890 census records were destroyed due to a fire in 1921. One per cent samples are available for all censuses through to 1990. And ACS data are available from 2000. We return to the ACS in @sec-store-and-share in relation to discussing synthetic data and differential privacy.
-
-
-
+Full count data---that is the entire census---are available through IPUMS\index{IPUMS} for United States censuses conducted between 1850 and 1940, with the exception of 1890.\index{census!United States} Most of the 1890 census records were destroyed due to a fire in 1921. One per cent samples are available for all censuses through to 1990. And ACS data are available from 2000. We return to the ACS in @sec-store-and-share in relation to discussing synthetic data and differential privacy.
 
 <!-- Measuring homelessness? -->
 
@@ -670,11 +627,7 @@ Incredibly, full count data, that is the entire census, are available through IP
 
 <!-- "S-Night survey conducted by the United States Census Bureau in 1990" -->
 
-<!-- "Street count surveys are used in many cities to count the number of homeless people in the streets at a point in time and gain a better understanding of the needs of homeless populations. In surveys such as the S-Night survey conducted by the United States Census Bureau in 1990, enumerators are sent to pre-identified sites to enumerate homeless people while other survey personnel (“plants”) are planted among homeless people and indistinguishable from actual homeless. The ratio of plants seen by the enumerators to the number of plants deployed is used to inform the detection probability of homeless and provide an adjustment to the homeless undercount.  In practice, one cannot know for sure which plants were seen because enumerators cannot distinguish between plants and homeless people. We can only rely on the plants’ judgement of whether (yes, no or maybe) they think they were seen by an enumerator. The presence of “maybes” in the data leads to more unknown parameters than data points, which makes estimation of detection probabilities difficult. We propose to solve this problem by developing a Bayesian hierarchical model that uses hierarchical priors on detection probabilities across survey years and/or across cities. Such hierarchical modeling of the data is challenging because the data is available at various aggregated levels of the population (e.g., `seen` = plant AND seen + homeless AND seen, `maybes` = plant AND seen AND not interviewed AND maybe + plant AND not seen AND maybe.) The new methodology will be applied to a simulated reconstruction of the original S-night survey data and our estimates will be compared to those of the original analysis of the S-night data." -->
-
-
 <!-- ### Australia -->
-
 
 <!-- ## Other government data -->
 
@@ -684,22 +637,13 @@ Incredibly, full count data, that is the entire census, are available through IP
 
 <!-- ### General Social Survey -->
 
-
-
-
-
-
 <!-- ## Open Government Data -->
-
 
 <!-- ### Canada -->
 
 <!-- - Canadian Government Open Data: https://open.canada.ca/en/open-data. -->
 
 <!-- - City of Toronto Open Data Portal  -->
-
-
-
 
 <!-- ## Electoral Studies -->
 
@@ -711,15 +655,11 @@ Incredibly, full count data, that is the entire census, are available through IP
 
 <!-- ### CCES -->
 
-
-
-
-
 ## Sampling essentials
 
 Statistics\index{statistics} is at the heart of telling stories with data because it is almost never possible to get all the data that we would like. Statisticians have spent considerable time and effort thinking about the properties that various samples of data will have and how they enable us to speak to implications for the broader population.\index{sampling}
 
-Let us say that we have some data. For instance, a particular toddler goes to sleep at 6:00pm every night. We might be interested to know whether that bedtime is common among all toddlers, or if we have an unusual toddler. We only have one toddler so our ability to use his bedtime to speak about all toddlers is limited.
+Let us say that we have some data.\index{simulation!toddler bedtime} For instance, a particular toddler goes to sleep at 6:00pm every night. We might be interested to know whether that bedtime is common among all toddlers, or if we have an unusual toddler. If we only had one toddler then our ability to use their bedtime to speak about all toddlers would be limited.
 
 One approach would be to talk to friends who also have toddlers. And then talk to friends-of-friends. How many friends, and friends-of-friends, do we have to ask before we can begin to feel comfortable that we can speak about some underlying truth of toddler bedtime?
 
@@ -735,11 +675,11 @@ Three pieces of critical terminology are:
 - "Sampling frame": A list of all the items from the target population that we could get data about.\index{sampling!sampling frame}
 - "Sample": The items from the sampling frame that we get data about.\index{sampling!sample}
 
-A target population is a finite set of labelled items, of size $N$.\index{sampling!target population} For instance, in theory we could add a label to all the books in the world: "Book 1", "Book 2", "Book 3", ..., "Book $N$". There is a difference between the use of the term population here, and that of everyday usage.\index{census!sampling error} For instance, one sometimes hears those who work with census data say that they do not need to worry about sampling because they have the whole population of the country. This is a conflation of the terms, as what they have is the sample gathered by the census of the population of a country. While the goal of a census is to get every unit, and so if this was achieved then sampling error would not be an issue, there are still many other issues. Even if a census was done perfectly and we got data about every unit in the target population, there are still issues, for instance due to measurement error, and it being a sample at a particular time, and @totalsurveyerror provide an interesting discussion of the evolution of total survey error.\index{census!total survey error}
+A target population is a finite set of labelled items, of size $N$.\index{sampling!target population} For instance, in theory we could add a label to all the books in the world: "Book 1", "Book 2", "Book 3", ..., "Book $N$". There is a difference between the use of the term population here, and that of everyday usage.\index{census!sampling error} For instance, one sometimes hears those who work with census data say that they do not need to worry about sampling because they have the whole population of the country. This is a conflation of the terms, as what they have is the sample gathered by the census of the population of a country. While the goal of a census is to get every unit---and if this was achieved then sampling error would be less of an issue---there would still be many other issues. Even if a census was done perfectly and we got data about every unit in the target population, there are still issues, for instance due to measurement error, and it being a sample at a particular time. @totalsurveyerror provide a discussion of the evolution of total survey error.\index{census!total survey error}
 
-In the same way that we saw how difficult it can be to define what to measure, it can be difficult to define a target population.\index{sampling!target population} For instance, say we have been asked to find out about the consumption habits of university students. How can we define that target population? If someone is a student, but also works full time, then are they in the population? What about mature-aged students? Some aspects that we might be interested in are formally defined to an extent that is not always commonly realized. For instance, whether an area is classified as urban or rural is often formally defined by a country's statistical agency. But other aspects are less clear. For instance, @gelmanhillvehtari2020 [p. 24] discuss the difficulty of how we might classify someone as a "smoker". If a 15-year-old has had 100 cigarettes over their lifetime, then we need to treat them differently than if they have had none. But if a 90-year-old has had 100 cigarettes over their lifetime, then are they likely different to a 90-year-old who has had none? At what age, and number of cigarettes, do these answers change?
+In the same way that we saw how difficult it can be to define what to measure, it can be difficult to define a target population.\index{sampling!target population} For instance, say we have been asked to find out about the consumption habits of university students. How can we define that target population? If someone is a student, but also works full time, then are they in the population? What about mature-aged students, who might have different responsibilities? Some aspects that we might be interested in are formally defined to an extent that is not always commonly realized. For instance, whether an area is classified as urban or rural is often formally defined by a country's statistical agency. But other aspects are less clear. @gelmanhillvehtari2020 [p. 24] discuss the difficulty of how we might classify someone as a "smoker". If a 15-year-old has had 100 cigarettes over their lifetime, then we need to treat them differently than if they have had none. But if a 90-year-old has had 100 cigarettes over their lifetime, then are they likely different to a 90-year-old who has had none? At what age, and number of cigarettes, do these answers change?
 
-Consider if we want to speak to the titles of all the books ever written. Our target population is all books ever written. But it is almost impossible for us to imagine that we could get information about the title of a book that was written in the nineteenth century, but that the author locked in their desk and never told anyone about.\index{sampling!target population} One sampling frame could be all books in the Library of Congress Online Catalog, another could be the 25 million that were digitized by Google [@somers2017torching].\index{sampling!sampling frame} And then finally, our sample may be the tens of thousands that are available through Project Gutenberg, and that we can access using `gutenbergr`.\index{sampling!sample}
+Consider if we want to speak to the titles of all the books ever written. Our target population is all books ever written. But it is almost impossible for us to imagine that we could get information about the title of a book that was written in the nineteenth century, but that the author locked in their desk and never told anyone about.\index{sampling!target population} One sampling frame could be all books in the Library of Congress Online Catalog, another could be the 25 million books that were digitized by Google [@somers2017torching].\index{sampling!sampling frame} Our sample may be the tens of thousands of books that are available through [Project Gutenberg](https://www.gutenberg.org), which we will use in later chapters.
 
 To consider another example, consider wanting to speak of the attitudes of all Brazilians who live in Germany. The target population is all Brazilians who live in Germany. One possible source of information would be Facebook and so in that case, the sampling frame might be all Brazilians who live in Germany who have Facebook. And then our sample might be all Brazilians who live in Germany who have Facebook who we can gather data about. The target population and the sampling frame will be different because not all Brazilians who live in Germany will have Facebook. And the sampling frame will be different to the sample because we will likely not be able to gather data about all Brazilians who live in Germany and have Facebook.
 
@@ -748,15 +688,19 @@ To consider another example, consider wanting to speak of the attitudes of all B
 
 To be clearer, we consider two examples: a 1798 count of the number of inhabitants of Dublin, Ireland [@whitelaw1805], and a 1912 count of working-class households in Reading, England [@bowley1913working].
 
-In 1798 the Reverend James Whitelaw conducted a survey of Dublin, Ireland,\index{Ireland!Population of Dublin in 1798} to count its population. @whitelaw1805 describes how population estimates at the time were something of a mess. For instance, the estimated size of London at the time ranged from 128,570 to 300,000. Whitelaw expected that the Lord Mayor of Dublin could compel the person in charge of each house to affix a list of the inhabitants of that house to the door, and then Whitelaw could simply use this. 
+#### Survey of Dublin in 1798
 
-Instead, he found that the lists were "frequently illegible, and generally short of the actual number by a third, or even one-half". And so instead he recruited assistants, and they went door-to-door making their own counts. The resulting estimates are particularly informative (@fig-whitelawsresults). And the total population of Dublin in 1798 was estimated at 182,370.
+In 1798 the Reverend James Whitelaw conducted a survey of Dublin, Ireland,\index{Ireland!Population of Dublin in 1798} to count its population. @whitelaw1805 describes how population estimates at the time varied considerably. For instance, the estimated size of London at the time ranged from 128,570 to 300,000 people. Whitelaw expected that the Lord Mayor of Dublin could compel the person in charge of each house to affix a list of the inhabitants of that house to the door, and then Whitelaw could simply use this. 
+
+Instead, he found that the lists were "frequently illegible, and generally short of the actual number by a third, or even one-half". And so instead he recruited assistants, and they went door-to-door making their own counts. The resulting estimates are particularly informative (@fig-whitelawsresults). The total population of Dublin in 1798 was estimated at 182,370.
 
 ![Extract of the results that Whitelaw found in 1798](figures/whitelaw.png){#fig-whitelawsresults width=85% fig-align="center"}
 
-One aspect worth noticing is that Whitelaw includes information about class. It is difficult to know how that was determined, but it played a large role in the data collection. Whitelaw describes how the houses of "the middle and upper classes always contained some individual who was competent to the task [of making a list]". But that "among the lower class, which forms the great mass of the population of this city, the case was very different". It is difficult to know how Whitelaw could have known that the upper and middle classes were not representing their number, while the lower class was. It is also difficult to imagine Whitelaw going into the houses of the upper class and counting their number, as he and his assistants did for the lower classes, so there may have been some data truncation. As always, the issue of defining the target population is a difficult one, and it seems that there may have been slightly different approaches to each class. 
+One aspect worth noticing is that Whitelaw includes information about class. It is difficult to know how that was determined, but it played a large role in the data collection. Whitelaw describes how the houses of "the middle and upper classes always contained some individual who was competent to the task [of making a list]". But that "among the lower class, which forms the great mass of the population of this city, the case was very different". It is difficult to see how Whitelaw could have known that without going into the houses of both upper and lower classes. But it is also difficult to imagine Whitelaw going into the houses of the upper class and counting their number. It may be that different approaches were needed.
 
 Whitelaw attempted to construct a full sample of the inhabitants of Dublin without using much in the way of statistical machinery to guide his choices. We will now consider a second example, conducted in 1912, where they were able to start to use sampling approaches that we still use today.
+
+#### Working-class households in Reading in 1912
 
 A little over one hundred years after @whitelaw1805, @bowley1913working was interested in counting the number of working-class households in Reading, England.\index{England!survey in Reading} Bowley selected the sample using the following procedure [@bowley1913working, p. 672]:
 
@@ -766,7 +710,7 @@ A little over one hundred years after @whitelaw1805, @bowley1913working was inte
 
 ![Extract of the results that Bowley found about rent paid by the working-class in Reading, England](figures/bowleyrents.png){#fig-bowleyrents width=85% fig-align="center"}
 
-Then, having judged based on the census that there were about 18,000 households in Reading, @bowley1913working applied a multiplier of 21 to the sample, resulting in estimates for Reading overall. The key aspect that ensures the resulting estimates are reasonable is that the sampling was done in a random way.\index{sampling!systematic} This is why @bowley1913working was so insistent that the visitors go to the actual house that was selected, and not substitute it for another. 
+Then, having judged from the census that there were about 18,000 households in Reading, @bowley1913working applied a multiplier of 21 to the sample, resulting in estimates for Reading overall. The key aspect that ensures the resulting estimates are reasonable is that the sampling was done in a random way.\index{sampling!systematic} This is why @bowley1913working was so insistent that the visitors go to the actual house that was selected, and not substitute it for another. 
 
 ### Probabilistic sampling
 
@@ -775,14 +719,14 @@ Having identified a target population and a sampling frame, we need to distingui
 - "Probability sampling": Every unit in the sampling frame has some known chance of being sampled and the specific sample is obtained randomly based on these chances. The chance of being sampled does not necessarily need to be same for each unit.\index{sampling!probability}
 - "Non-probability sampling": Units from the sampling frame are sampled based on convenience, quotas, judgement, or other non-random processes.\index{sampling!non-probability}
 
-Often the difference between probability and non-probability sampling is one of degree. For instance, we usually cannot forcibly obtain data, and so there is almost always an aspect of volunteering on the part of a respondent. Even when there are penalties for not providing data, such as the case for completing a census form in many countries, it is difficult for even a government to force people to fill it out completely or truthfully. The most important aspect to be clear about with probability sampling is the role of uncertainty. This allows us to make claims about the population, based on our sample, with known amounts of error. The trade-off is that probability sampling is often expensive and difficult.
+Often the difference between probability and non-probability sampling is one of degree. For instance, we usually cannot forcibly obtain data, and so there is almost always an aspect of volunteering on the part of a respondent. Even when there are penalties for not providing data, such as the case for completing a census form in many countries, it is difficult for even a government to force people to fill it out completely or truthfully---famously in the 2001 New Zealand census more than one per cent of the population listed their religion as "Jedi" [@nzjedis]. The most important aspect to be clear about with probability sampling is the role of uncertainty. This allows us to make claims about the population, based on our sample, with known amounts of error. The trade-off is that probability sampling is often expensive and difficult.
 
 We will consider four types of probability sampling: 
 
-1) simple random sampling; 
-2) systematic sampling; 
-3) stratified sampling; and 
-4) cluster sampling.
+1) simple random; 
+2) systematic; 
+3) stratified; and 
+4) cluster.
 
 To add some more specificity to our discussion, in a way that is also used by @lohr [p. 27], it may help to consider the numbers one to 100 as our target population. With simple random sampling, every unit has the same chance of being included. In this case let us say it is 20 per cent.\index{sampling!simple random} That means we would expect to have around 20 units in our sample, or around one in five compared with our target population.
 
@@ -792,22 +736,17 @@ To add some more specificity to our discussion, in a way that is also used by @l
 
 set.seed(853)
 
-illustrative_sampling <-
-  tibble(
-    unit = 1:100,
-    simple_random_sampling =
-      sample(
-        x = c("Included", "Not included"),
-        size = 100,
-        replace = TRUE,
-        prob = c(0.2, 0.8)
-      )
+illustrative_sampling <- tibble(
+  unit = 1:100,
+  simple_random_sampling =
+    sample(x = c("In", "Out"), 
+           size = 100, 
+           replace = TRUE, 
+           prob = c(0.2, 0.8))
   )
 
 illustrative_sampling |>
   count(simple_random_sampling)
-
-illustrative_sampling
 ```
 
 With systematic sampling,\index{sampling!systematic} as was used by @bowley1913working, we proceed by selecting some value, and we then sample every fifth unit to obtain a 20 per cent sample. To begin, we randomly pick a starting point from units one to five, say three. And so sampling every fifth unit would mean looking at the third, the eighth, the thirteenth, and so on.
@@ -815,10 +754,7 @@ With systematic sampling,\index{sampling!systematic} as was used by @bowley1913w
 ```{r}
 set.seed(853)
 
-starting_point <- sample(
-  x = c(1:5),
-  size = 1
-)
+starting_point <- sample(x = c(1:5), size = 1)
 
 illustrative_sampling <-
   illustrative_sampling |>
@@ -826,80 +762,58 @@ illustrative_sampling <-
     systematic_sampling =
       if_else(
         unit %in% seq.int(
-          from = starting_point,
-          to = 100,
-          by = 5
-        ),
-        "Included",
-        "Not included"
-      )
-  )
+          from = starting_point, to = 100, by = 5), 
+        "In", "Out")
+    )
 
 illustrative_sampling |>
   count(systematic_sampling)
-
-illustrative_sampling
 ```
 
 When we consider our population, it will typically have some grouping. This may be as straight forward as a country having states, provinces, counties, or statistical districts; a university having faculties and departments; and humans having age-groups. A stratified structure is one in which we can divide the population into mutually exclusive, and collectively exhaustive, sub-populations called "strata".\index{sampling!stratified}
 
-We use stratification to help with the efficiency of sampling\index{efficiency!sampling} or with the balance of the survey. For instance, the population of the United States is around 335 million, with around 40 million people in California and around half a million people in Wyoming. Even a survey of 10,000 responses would only expect to have 15 responses from Wyoming, which could make inferences about Wyoming difficult. We could use stratification to ensure there are, say, 200 responses from each of the 50 United States states. We could use random sampling within each state to select the person about whom data will be gathered.
+We use stratification to help with the efficiency of sampling\index{efficiency!sampling} or with the balance of the survey. For instance, the population of the United States is around 335 million, with around 40 million people in California and around half a million people in Wyoming. Even a survey of 10,000 responses would only expect to have 15 responses from Wyoming, which could make inference about Wyoming difficult. We could use stratification to ensure there are, say, 200 responses from each state. We could use random sampling within each state to select the person about whom data will be gathered.
 
 In our case, we will stratify our illustration by considering that our strata are the tens, that is, one to ten is one stratum, 11 to 20 is another, and so on. We will use simple random sampling within these strata to select two units from each.
 
 ```{r}
 set.seed(853)
 
-selected_within_strata <-
+picked_in_strata <-
   illustrative_sampling |>
   mutate(strata = (unit - 1) %/% 10) |>
-  slice_sample(n = 2,
-               by = strata) |>
+  slice_sample(n = 2, by = strata) |>
   pull(unit)
 
 illustrative_sampling <-
   illustrative_sampling |>
-  mutate(stratified_sampling = if_else(
-    unit %in% selected_within_strata,
-    "Included",
-    "Not included"
-  ))
+  mutate(stratified_sampling = 
+           if_else(unit %in% picked_in_strata, "In", "Out"))
 
 illustrative_sampling |>
   count(stratified_sampling)
-
-illustrative_sampling
 ```
 
-And finally, we can also take advantage of some clusters that may exist in our dataset.\index{sampling!cluster} Like strata, clusters are collectively exhaustive and mutually exclusive. Our examples from earlier of states, departments, and age-groups remain valid as clusters. However, it is our intentions toward these groups that is different. Specifically, with cluster sampling, we do not intend to collect data from every cluster, whereas with stratified sampling we do. With stratified sampling we look at every stratum and conduct simple random sampling within each strata to select the sample. With cluster sampling we conduct simple random sampling to select clusters of interest. We can then either sample every unit in those selected clusters or use simple random sampling, within the selected clusters, to select units. That all said, this difference can become less clear in practice, especially *ex post*. Interestingly, @rose2006comparison gather mortality data for North Darfur, Sudan, in 2005.\index{Sudan!comparison of cluster and systematic sampling} They find that both cluster and systematic sampling provide similar results, and they point out that systematic sampling requires less training of the survey teams. In general, cluster sampling can be cheaper because of the focus on geographically close locations.
+And finally, we can also take advantage of some clusters that may exist in our dataset.\index{sampling!cluster} Like strata, clusters are collectively exhaustive and mutually exclusive. Our examples from earlier of states, departments, and age-groups remain valid as clusters. However, it is our intention toward these groups that is different. Specifically, with cluster sampling, we do not intend to collect data from every cluster, whereas with stratified sampling we do. With stratified sampling we look at every stratum and conduct simple random sampling within each strata to select the sample. With cluster sampling we select clusters of interest. We can then either sample every unit in those selected clusters or use simple random sampling, within the selected clusters, to select units. That all said, this difference can become less clear in practice, especially after the fact. @rose2006comparison gather mortality data for North Darfur, Sudan, in 2005.\index{Sudan!comparison of cluster and systematic sampling} They find that both cluster and systematic sampling provide similar results, and they point out that systematic sampling requires less training of the survey teams. In general, cluster sampling can be cheaper because of the focus on geographically close locations.
 
 In our case, we will cluster our illustration again based on the tens. We will use simple random sampling to select two clusters for which we will use the entire cluster.
 
 ```{r}
 set.seed(853)
 
-selected_clusters <-
-  sample(
-    x = c(0:9),
-    size = 2
-  )
+picked_clusters <-
+  sample(x = c(0:9), size = 2)
 
 illustrative_sampling <-
   illustrative_sampling |>
   mutate(
     cluster = (unit - 1) %/% 10,
-    cluster_sampling = if_else(
-      cluster %in% selected_clusters,
-      "Included",
-      "Not included"
-    )
-  ) |>
+    cluster_sampling = if_else(cluster %in% picked_clusters, "In", "Out")
+    ) |>
   select(-cluster)
 
 illustrative_sampling |>
   count(cluster_sampling)
-
-illustrative_sampling
 ```
 
 At this point we can illustrate the differences between our approaches (@fig-samplingexamples). We could also consider it visually, by pretending that we randomly sample using the different methods from different parts of the world (@fig-samplingexamplesworld).
@@ -921,40 +835,21 @@ new_labels <- c(
 illustrative_sampling_long <-
   illustrative_sampling |>
   pivot_longer(
-    cols = c(
-      simple_random_sampling,
-      systematic_sampling,
-      stratified_sampling,
-      cluster_sampling
-    ),
-    names_to = "sampling_method",
+    cols = names(new_labels), names_to = "sampling_method",
     values_to = "in_sample"
-  ) |>
-  mutate(sampling_method = factor(
-    sampling_method,
-    levels = c(
-      "simple_random_sampling",
-      "systematic_sampling",
-      "stratified_sampling",
-      "cluster_sampling"
-    )
-  ))
+    ) |>
+  mutate(sampling_method = 
+           factor(sampling_method,levels = names(new_labels)))
 
 illustrative_sampling_long |>
-  filter(in_sample == "Included") |>
+  filter(in_sample == "In") |>
   ggplot(aes(x = unit, y = in_sample)) +
   geom_point() +
-  facet_wrap(
-    vars(sampling_method),
-    dir = "v",
-    ncol = 1,
-    labeller = labeller(sampling_method = new_labels)
-  ) +
+  facet_wrap(vars(sampling_method), dir = "v", ncol = 1, 
+             labeller = labeller(sampling_method = new_labels)
+             ) +
   theme_minimal() +
-  labs(
-    x = "Unit",
-    y = "Is included in sample"
-  ) +
+  labs(x = "Unit", y = "Is included in sample") +
   theme(axis.text.y = element_blank())
 ```
 
@@ -1023,7 +918,7 @@ base <-
     colour = "grey"
   ) +
   coord_map(xlim = c(-180, 180), ylim = c(-70, 80)) + # https://stackoverflow.com/a/23659405
-  theme_classic() +
+  theme_minimal() +
   labs(
     x = "Longitude",
     y = "Latitude"
@@ -1058,7 +953,9 @@ base +
 
 @fig-samplingexamples and @fig-samplingexamplesworld illustrate the trade-offs between the different methods, and the ways in which they will be differently appropriate.\index{sampling!trade-offs} For instance, we see that systematic sampling provides a useful picture of the world in @fig-samplingexamplesworld, but if we were interested only in, say, only land, we would still be left with many samples that were not informative. Stratified sampling and cluster sampling enable us to focus on aspects of interest, but at the cost of a more holistic picture.\index{maps!sampling}
 
-The best way to appreciate the differences between these approaches is to consider them in practice and @thatrandyaupersonagain provides a number of examples. In particular, @raptors provide a fascinating comparison of simple random sampling, stratified sampling, systematic sampling and cluster sampling, as well as additional considerations, in the context of counting raptors.\index{sampling!counting raptors}
+The best way to appreciate the differences between these approaches is to consider them in practice. @thatrandyaupersonagain provides a number of examples. In particular, @raptors provide a fascinating comparison of simple random sampling, stratified sampling, systematic sampling and cluster sampling, as well as additional considerations, in the context of counting raptors.\index{sampling!counting raptors}
+
+#### Inference for probability samples
 
 Having established our sample, we typically want to use it to make claims about the population. @neyman1934two [p. 561] goes further and says that "...the problem of the representative method is *par excellence* the problem of statistical estimation. We are interested in characteristics of a certain population, say $\pi$, which it is either impossible or at least very difficult to study in detail, and we try to estimate these characteristics basing our judgment on the sample."\index{sampling!population}
 
@@ -1070,6 +967,7 @@ $$
  \hat{\sigma}^2 &= \frac{1}{n-1} \times \sum_{i = 1}^{n}\left(x_i - \hat{\mu}\right)^2
 \end{aligned}
 $$
+
 We can use the approaches that we have used so far to simulate various types of survey designs. There are also packages that can help, including `DeclareDesign` [@citedeclaredesign] and `survey` [@citesurvey].
 
 Scaling up estimates can be used when we are interested in using a count from our sample to imply some total count for the target population. We saw this in @bowley1913working where the ratio of the number of households in the sample, compared with the number of households known from the census, was 21 and this information was used to scale up the sample.
@@ -1079,11 +977,11 @@ To consider an example, perhaps we were interested in the sum of the numbers fro
 ```{r}
 #| label: tbl-scaleup
 #| eval: true
-#| echo: true
+#| echo: false
 #| tbl-cap: "Sum of the numbers in each sample, and implied sum of population"
 
 illustrative_sampling_long |>
-  filter(in_sample == "Included") |>
+  filter(in_sample == "In") |>
   summarise(sum_from_sample = sum(unit),
             .by = sampling_method) |>
   mutate(scaled_by_five = sum_from_sample * 5) |>
@@ -1097,9 +995,7 @@ illustrative_sampling_long |>
   )
 ```
 
-The actual sum of the population is 5,050. We can obtain this using a trick attributed to Leonhard Euler,\index{Euler, Leonhard} the eighteenth-century mathematician, who noticed that the sum of one to any number can be quickly obtained by finding the middle number and then multiplying that by one plus the number. In this case, we have $50 \times 101$. Alternatively we can use R: `sum(1:100)`.
-
-While the specifics are unique to this sample, our estimate of the population sum, based on the scaling, are especially revealing.\index{sampling!comparison} The closest is stratified sample, closely followed by systematic sampling. Cluster sampling is a little over 10 per cent off, while simple random sampling is a little further away. To get close, it is important that our sampling method gets as many of the higher values as possible. And so stratified and systematic sampling, both of which ensured that we had outcomes from the larger numbers did particularly well. The performance of cluster and simple random sampling would depend on the particular clusters, and units, selected. In this case, stratified and systematic sampling ensured that our estimate of the sum of the population would not be too far away from the actual population sum. Here, we might think of implications for the construction and evaluation of measures, such as GDP and other constructions that are summed, and the effect on the total of the different strata based on their size.
+The actual sum of the population is 5,050.^[We can obtain this using a trick attributed to Leonhard Euler,\index{Euler, Leonhard} the eighteenth century mathematician, who noticed that the sum of one to any number can be quickly obtained by finding the middle number and then multiplying that by one plus the number. In this case, we have $50 \times 101$. Alternatively we can use R: `sum(1:100)`.] While the specifics are unique to this sample, our estimate of the population sum, based on the scaling, are revealing.\index{sampling!comparison} The closest is stratified sample, closely followed by systematic sampling. Cluster sampling is a little over 10 per cent off, while simple random sampling is a little further away. To get close to the true sum, it is important that our sampling method gets as many of the higher values as possible. And so stratified and systematic sampling, both of which ensured that we had outcomes from the larger numbers did particularly well. The performance of cluster and simple random sampling would depend on the particular clusters, and units, selected. In this case, stratified and systematic sampling ensured that our estimate of the sum of the population would not be too far away from the actual population sum. Here, we might think of implications for the construction and evaluation of measures, such as GDP and other constructions that are summed, and the effect on the total of the different strata based on their size.
 
 This approach has a long history. For instance, @stigler [p. 163] describes how by 1826 Adolphe Quetelet,\index{Quetelet, Adolphe} the nineteenth century astronomer, had become involved in the statistical bureau, which was planning for a census. Quetelet argued that births and deaths were well known, but migration was not. He proposed an approach based on counts in specific geographies, which could then be scaled up to the whole country. The criticism of the plan focused on the difficulty of selecting appropriate geographies, which we saw also in our example of cluster sampling. The criticism was reasonable, and even today, some 200 years later, something that we should keep front of mind, [@stigler]:
 
@@ -1154,33 +1050,31 @@ The ratio of the proportion of sleep that a parent gets compared with their todd
 
 $$\hat{B} = \frac{\bar{y}}{\bar{x}} = \frac{4.9}{6.16} \approx 0.8.$$
 
-And given the toddler slept 185 hours over that 30-day period, our estimate of the number of hours that the parents slept is $185 \times 0.8 = 148$. This turns out to be almost exactly right, as the sum is 147. In this example, the estimate was not needed because we were able to sum the data, but say some other set of parents only recorded the number of hours that their toddler slept, not how long they slept, then we could use this to estimate how much they had slept.
+Given the toddler slept 185 hours over that 30-day period, our estimate of the number of hours that the parents slept is $185 \times 0.8 = 148$. This turns out to be almost exactly right, as the sum is 147. In this example, the estimate was not needed because we were able to sum the data, but say some other set of parents only recorded the number of hours that their toddler slept, not how long they slept, then we could use this to estimate how much they had slept.
 
 
-One variant of the ratio estimator that is commonly used is capture and recapture, which is one of the crown jewels of data gathering.\index{capture and recapture} It is commonly used in ecology where we know we can never gather data about all animals.\index{ecology} Instead, a sample is captured, marked, and released. The researchers return after some time to capture another sample. Assuming enough time passes that the initially captured animals had time to integrate back into the population, but not so much time has passed that there are concerns around births, deaths, and migration, then we can use these values to estimate a population size. The key is what proportion in this second sample have been recaptured. This proportion can be used to estimate the size of the whole population. More recently, we are seeing capture and recapture be combined with scraping, which we consider in @sec-gather-data, for the construction of survey frames [@Hyman2021].
-
-
+One variant of the ratio estimator that is commonly used is capture and recapture, which is one of the crown jewels of data gathering.\index{capture and recapture} It is commonly used in ecology where we know we can never gather data about all animals.\index{ecology} Instead, a sample is captured, marked, and released. The researchers return after some time to capture another sample. Assuming enough time passes that the initially captured animals had time to integrate back into the population, but not so much time has passed that there are insurmountable concerns around births, deaths, and migration, then we can use these values to estimate a population size. The key is what proportion in this second sample have been recaptured. This proportion can be used to estimate the size of the whole population. Recently we have seen capture and recapture combined with web scraping, which we consider in @sec-gather-data, for the construction of survey frames [@Hyman2021].
 
 ### Non-probability samples
 
 While acknowledging that it is a spectrum, much of statistics\index{statistics} was developed based on probability sampling. But a considerable amount of modern sampling is done using non-probability sampling.\index{sampling!non-probability} One approach is to use social media and other advertisements to recruit a panel of respondents, possibly in exchange for compensation. This panel is then the group that is sent various surveys as necessary. But think for a moment about the implications of this. For instance, what type of people are likely to respond to such an advertisement? Is the richest person in the world likely to respond? Are especially young or especially old people likely to respond? In some cases, it is possible to do a census. Governments typically do one every five to ten years. But there is a reason that it is generally governments that do them---they are expensive, time-consuming, and surprisingly, they are sometimes not as accurate as we may hope because of how general they need to be.
 
-Non-probability samples have an important role to play because they are typically cheaper and quicker to obtain than probability samples.\index{sampling!non-probability} They have been found to be less accurate [@Yeager2011]. But @beaumont2020probability further describes a variety of factors in favor of non-probability samples including declining response rates to probability samples, and increased demand for real-time statistics. Further, as we have discussed, the difference between probability and non-probability samples is sometimes one of degree, rather than dichotomy. In any case, non-probability samples are legitimate and appropriate for some tasks provided one is clear about the trade-offs and ensures transparency [@nonprobabilitysmaples]. Low response rates mean that true probability samples are rare, and so grappling with the implications of non-probability sampling is important.
+Non-probability samples have an important role to play because they are typically cheaper and quicker to obtain than probability samples.\index{sampling!non-probability} @beaumont2020probability describes a variety of factors in favor of non-probability samples including declining response rates to probability samples, and increased demand for real-time statistics. Further, as we have discussed, the difference between probability and non-probability samples is sometimes one of degree, rather than dichotomy. Non-probability samples are legitimate and appropriate for some tasks provided one is clear about the trade-offs and ensures transparency [@nonprobabilitysmaples]. Low response rates mean that true probability samples are rare, and so grappling with the implications of non-probability sampling is important.
 
-Convenience sampling involves gathering data from a sample that is easy to access.\index{sampling!convenience} For instance, one often asks one's friends and family to fill out a survey as a way of testing it before more wide-scale distribution. If instead we were to analyze such a sample, then we would likely be using convenience sampling. 
+Convenience sampling involves gathering data from a sample that is easy to access.\index{sampling!convenience} For instance, one often asks one's friends and family to fill out a survey as a way of testing it before wide-scale distribution. If we were to analyze such a sample, then we would likely be using convenience sampling. 
 
-The main issue with convenience sampling is that it is unlikely to be able to speak to much of a broader population than those who filled out the survey. There are also tricky ethical considerations, and typically a lack of anonymity which may further bias the results.\index{ethics!convenience sampling} On the other hand, it can be useful to cheaply get a quick sense of a situation while rolling out sampling approaches likely to be more broadly useful.
+The main concern with convenience sampling is whether it is able to speak to the broader population. There are also tricky ethical considerations, and typically a lack of anonymity which may further bias the results.\index{ethics!convenience sampling} On the other hand, it can be useful to cheaply get a quick sense of a situation.
 
-Quota sampling occurs when we have strata, but we do not use random sampling within those strata to select the unit.\index{sampling!quota} For instance, if we again stratified the United States based on state, but then instead of ensuring that everyone in Wyoming had the chance to be chosen for that stratum, just picked people at Jackson Hole. There are some advantages to this approach, especially in terms of speed and cost, but the resulting sample may be biased in various ways. That is not to say they are without merit. For instance, the Bank of Canada runs a non-probability survey focused on the method that is used to pay for goods and services.\index{Canada!Bank of Canada} They use quota sampling, and various adjustment methods, and this use of non-probability sampling enables them to deliberately focus on hard-to-reach aspects of the population [@chen20182017].
+Quota sampling occurs when we have strata, but we do not use random sampling within those strata to select the unit.\index{sampling!quota} For instance, if we again stratified the United States based on state, but then instead of ensuring that everyone in Wyoming had the chance to be chosen for that stratum, just picked people at Jackson Hole. There are some advantages to this approach, especially in terms of speed and cost, but the resulting sample may be biased in various ways. That is not to say they are without merit. For instance, the Bank of Canada runs a non-probability survey focused on the method of payment for goods and services.\index{Canada!Bank of Canada} They use quota sampling, and various adjustment methods. This use of non-probability sampling enables them to deliberately focus on hard-to-reach aspects of the population [@chen20182017].
 
 As the saying goes, birds of a feather flock together. And we can take advantage of that in our sampling. Although @handcock2011comment describe various uses before this, and it is notoriously difficult to define attribution in multidisciplinary work, snowball sampling is nicely defined by @goodman1961snowball.\index{sampling!snowball} Following @goodman1961snowball, to conduct snowball sampling, we first draw a random sample from the sampling frame. Each of these is asked to name $k$ others also in the sample population, but not in that initial draw, and these form the "first stage". Each individual in the first stage is then similarly asked to name $k$ others who are also in the sample population, but again not in the random draw or the first stage, and these form the "second stage". We need to have specified the number of stages, $s$, and also $k$ ahead of time.
 
-Respondent-driven sampling was developed by @heckathorn1997respondent to focus on hidden populations, which are those for which:\index{sampling!respondent-driven} 
+Respondent-driven sampling was developed by @heckathorn1997respondent to focus on hidden populations, which are those where:\index{sampling!respondent-driven} 
 
 1) there is no sampling frame; and 
 2) being known to be in the sampling population could have a negative effect. 
 
-For instance, we could imagine various countries in which it would be difficult to sample from the gay population or those who have had abortions because it is illegal. Respondent-driven sampling differs from snowball sampling in two ways: 
+For instance, we could imagine various countries in which it would be difficult to sample from, say, the gay population or those who have had abortions. Respondent-driven sampling differs from snowball sampling in two ways: 
 
 1) In addition to compensation for their own response, as is the case with snowball sampling, respondent-driven sampling typically also involves compensation for recruiting others. 
 2) Respondents are not asked to provide information about others to the investigator, but instead recruit them into the study. Selection into the sample occurs not from sampling frame, but instead from the networks of those already in the sample [@salganik2004sampling].
