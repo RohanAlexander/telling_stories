@@ -1214,19 +1214,23 @@ We can then simulate a dataset.\index{simulation!Tanzania DHS}\index{distributio
 
 set.seed(853)
 
-age_group <- sapply(0:19, function(i) paste0(i * 5, "-", (i * 5 + 4)))
+age_group <- tibble(starter = 0:19) |>
+  mutate(lower = starter * 5, upper = starter * 5 + 4) |>
+  unite(string_sequence, lower, upper, sep = "-") |>
+  pull(string_sequence)
+
 mean_value <- 10
 
-simulated_tanzania_dataset <- 
+simulated_tanzania_dataset <-
   tibble(
-  age_group = age_group,
-  urban_male = round(rnorm(length(age_group), mean_value)),
-  urban_female = round(rnorm(length(age_group), mean_value)),
-  rural_male = round(rnorm(length(age_group), mean_value)),
-  rural_female = round(rnorm(length(age_group), mean_value)),
-  total_male = round(rnorm(length(age_group), mean_value)),
-  total_female = round(rnorm(length(age_group), mean_value))
-) |> 
+    age_group = age_group,
+    urban_male = round(rnorm(length(age_group), mean_value)),
+    urban_female = round(rnorm(length(age_group), mean_value)),
+    rural_male = round(rnorm(length(age_group), mean_value)),
+    rural_female = round(rnorm(length(age_group), mean_value)),
+    total_male = round(rnorm(length(age_group), mean_value)),
+    total_female = round(rnorm(length(age_group), mean_value))
+  ) |>
   mutate(
     urban_total = urban_male + urban_female,
     rural_total = rural_male + rural_female,

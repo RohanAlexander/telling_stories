@@ -7,21 +7,21 @@ engine: knitr
 **Prerequisites**
 
 - Read *The Future of Data Analysis*, [@tukey1962future]
-  - John Tukey, the twentieth century statistician, made a variety of contributions to statistics. Focus on Part 1 "General Considerations", which was ahead of its time about the ways in which we ought to learn something from data.
+  - John Tukey, the twentieth century statistician, made many contributions to statistics. From this paper focus on Part 1 "General Considerations", which was ahead of its time about the ways in which we ought to learn something from data.
 - Read *Best Practices in Data Cleaning*, [@bestpracticesindatacleaning]
-  - Focus on Chapter 6 "Dealing with Missing or Incomplete Data".
+  - Focus on Chapter 6 "Dealing with Missing or Incomplete Data" which is a chapter-length treatment of this issue.
 - Read *R for Data Science*, [@r4ds]
   - Focus on Chapter 12 "Exploratory data analysis", which provides a written self-contained EDA worked example.
 - Watch *Whole game*, [@hadleycodes]
-  - A video of a self-contained EDA worked example.
+  - A video providing a self-contained EDA worked example. One nice aspect is that you get to see an expert make mistakes and then fix them.
 
 **Key concepts and skills**
 
-- Exploratory data analysis is the process of coming to terms with a new dataset by constructing graphs and tables. We want to explore and understand three critical aspects: 
+- Exploratory data analysis is the process of coming to terms with a new dataset by looking at the data, constructing graphs, tables, and models. We want to understand three aspects: 
   1) each individual variable by itself; 
   2) each individual in the context of other, relevant, variables; and 
   3) the data that are not there.
-- During the EDA process we want to come to understand the issues and features of the dataset and how this may affect analysis decisions. We are especially concerned about missing values and outliers.
+- During EDA we want to come to understand the issues and features of the dataset and how this may affect analysis decisions. We are especially concerned about missing values and outliers.
 
 **Software and packages**
 
@@ -61,19 +61,19 @@ library(tidyverse)
 
 Exploratory data analysis\index{exploratory data analysis} is never finished. It is the active process of exploring and becoming familiar with our data. Like a farmer with their hands in the earth, we need to know every contour and aspect of our data. We need to know how it changes, what it shows, hides, and what are its limits. Exploratory data analysis (EDA) is the unstructured process of doing this.
 
-EDA is a means to an end.\index{exploratory data analysis!how to} While it will inform the entire paper, especially the data section, it is not typically something that ends up in the final paper. The way to proceed is to make a separate Quarto document. Add code and brief notes on-the-go. Do not delete previous code, just add to it. By the end of it we will have created a useful notebook that captures our exploration of the dataset. This is a document that will guide the subsequent analysis and modeling.
+EDA is a means to an end.\index{exploratory data analysis!how to} While it will inform the entire paper, especially the data section, it is not typically something that ends up in the final paper. The way to proceed is to make a separate Quarto document. Add code and brief notes on-the-go. Do not delete previous code, just add to it. By the end of it we will have created a useful notebook that captures your exploration of the dataset. This is a document that will guide the subsequent analysis and modeling.
 
-EDA draws on a variety of skills and there are a lot of options when understanding EDA [@staniak2019landscape]. Every tool should be considered. Look at the data and scroll through it. Make tables, plots, summary statistics, even some models. The key is to iterate, move quickly rather than perfectly, and come to a thorough understanding of the data.
+EDA draws on a variety of skills and there are a lot of options when conducting EDA [@staniak2019landscape]. Every tool should be considered. Look at the data and scroll through it. Make tables, plots, summary statistics, even some models. The key is to iterate, move quickly rather than perfectly, and come to a thorough understanding of the data. Interestingly, coming to thoroughly understand the data that we have often helps us understand what we do not have. 
 
-Interestingly, coming to thoroughly understand the data that we have often helps us understand what we do not have. We are interested in the following process:\index{exploratory data analysis!aims}
+We are interested in the following process:\index{exploratory data analysis!aims}
 
 - Understand the distribution and properties of individual variables.
 - Understand relationships between variables.
 - Understand what is not there.
 
-There is no one correct process or set of steps that are required to undertake and complete EDA. Instead, the relevant steps and tools depend on the data and question of interest. As such, in this chapter we will illustrate approaches to EDA through various examples of EDA including US state populations, subway delays in Toronto, and Airbnb listings in London.
+There is no one correct process or set of steps that are required to undertake and complete EDA. Instead, the relevant steps and tools depend on the data and question of interest. As such, in this chapter we will illustrate approaches to EDA through various examples of EDA including US state populations, subway delays in Toronto, and Airbnb listings in London. We also build on @sec-farm-data and return to missing data.
 
-## 1975 US states data
+## 1975 United States population and income data
 
 As a first example we consider US state populations\index{United States} as of 1975. This dataset is built into R with `state.x77`.\index{exploratory data analysis} Here is what the dataset looks like:
 
@@ -91,7 +91,7 @@ us_populations <-
 us_populations
 ```
 
-We want to get a quick sense of the data.\index{exploratory data analysis} The first step is to have a look at the top and bottom of it with `head()` and `tail()`, then a random selection, and finally to focus on the variables and their class with `glimpse()`. The random selection is an important aspect, and anytime you use `head()` you should also quickly consider a random selection.
+We want to get a quick sense of the data.\index{exploratory data analysis} The first step is to have a look at the top and bottom of it with `head()` and `tail()`, then a random selection, and finally to focus on the variables and their class with `glimpse()`. The random selection is an important aspect, and when you use `head()` you should also quickly consider a random selection.
 
 ```{r}
 us_populations |>
@@ -101,20 +101,20 @@ us_populations |>
   tail()
 
 us_populations |>
-  slice_sample(n = 10)
+  slice_sample(n = 6)
 
 us_populations |>
   glimpse()
 ```
 
-We are then interested in understanding key summary statistics, such as the minimum, median, and maximum values for numeric variables with `summary()` from base R. 
+We are then interested in understanding key summary statistics, such as the minimum, median, and maximum values for numeric variables with `summary()` from base R and the number of observations.
 
 ```{r}
 us_populations |>
   summary()
 ```
 
-Finally, it is especially important to understand the behavior of these key summary statistics at the limits.\index{exploratory data analysis!limits} In particular, one approach is to randomly remove some observations and compare what happens to them. For instance, we can randomly create five datasets that differ on the basis of which rows are removed. We can then compare the summary statistics. If any of them are especially different then we might want to look at the rows that were removed as they may contain observations with high influence\index{influential points}.
+Finally, it is especially important to understand the behavior of these key summary statistics at the limits.\index{exploratory data analysis!limits} In particular, one approach is to randomly remove some observations and compare what happens to them. For instance, we can randomly create five datasets that differ on the basis of which observations were removed. We can then compare the summary statistics. If any of them are especially different then we would want to look at the observations that were removed as they may contain observations with high influence\index{influential points}.
 
 ```{r}
 #| echo: true
@@ -156,7 +156,9 @@ sample_means |>
       "Ignored states"
     ),
     digits = 0,
-    format.args = list(big.mark = ",")
+    format.args = list(big.mark = ","),
+    booktabs = TRUE,
+    linesep = ""
   )
 ```
 
@@ -164,7 +166,7 @@ In the case of the populations of US states, we know that larger states, such as
 
 ## Missing data
 
-We have discussed missing data a lot throughout this book, especially in @sec-farm-data. Here we return to it because understanding missing data\index{data!missing}\index{missing data} tends to be a substantial focus of EDA.\index{exploratory data analysis!missing data} When we find missing data---and there are always missing data of some sort or another---we want to establish what type of missingness we are dealing with. Focusing on known-missing, that is where there are observations that we can see are missing in the dataset, based on @gelmanhillvehtari2020 [p. 323] we consider three main categories of missing data:\index{missing data!types} 
+We have discussed missing data a lot throughout this book, especially in @sec-farm-data. Here we return to it because understanding missing data\index{data!missing}\index{missing data} tends to be a substantial focus of EDA.\index{exploratory data analysis!missing data} When we find missing data---and there are always missing data of some sort or another---we want to establish what type of missingness we are dealing with. Focusing on known-missing observations, that is where there are observations that we can see are missing in the dataset, based on @gelmanhillvehtari2020 [p. 323] we consider three main categories of missing data:\index{missing data!types} 
 
 1) Missing Completely At Random; 
 2) Missing at Random; and 
@@ -176,11 +178,7 @@ When data are Missing Completely At Random (MCAR),\index{missing data!MCAR} obse
 set.seed(853)
 
 remove_random_states <-
-  sample(
-    x = state.name,
-    size = 3,
-    replace = FALSE
-  )
+  sample(x = state.name, size = 3, replace = FALSE)
 
 us_states_MCAR <-
   us_populations |>
@@ -192,7 +190,7 @@ us_states_MCAR <-
 summary(us_states_MCAR)
 ```
 
-When observations are Missing at Random (MAR) they are missing from the dataset in a way that is related to other variables in the dataset.\index{missing data!MAR} For instance, it may be that we are interested in understanding the effect of income and gender on political participation, and so we gather information on these three variables. It might be that for some reason males are less likely to respond to a question about income. 
+When observations are Missing at Random (MAR) they are missing from the dataset in a way that is related to other variables in the dataset.\index{missing data!MAR} For instance, it may be that we are interested in understanding the effect of income and gender on political participation, and so we gather information on these three variables. But perhaps for some reason males are less likely to respond to a question about income. 
 
 In the case of the US states dataset, we can simulate a MAR dataset by making the three US states with the highest population not have an observation for income.
 
@@ -232,15 +230,15 @@ us_states_MNAR <-
 us_states_MNAR
 ```
 
-The specifics of the best approach will always be bespoke to the circumstances, but in general we always want to use simulation to better understand the implications of our choices. From a data side we can choose to remove observations that are missing or input a value. (There are also options on the model side, but those are beyond the scope of this book.) These approaches have their place, but need to be used with humility and extensively communicated. The use of simulation is critical. 
+The best approach will be bespoke to the circumstances, but in general we want to use simulation to better understand the implications of our choices. From a data side we can choose to remove observations that are missing or input a value. (There are also options on the model side, but those are beyond the scope of this book.) These approaches have their place, but need to be used with humility and well communicated. The use of simulation is critical. 
 
 We can return to our US states dataset, generate some missing data, and consider a few common approaches for dealing with missing data, and compare the implied values for each state, and the overall US mean population.\index{missing data!strategies} We consider the following options:
 
-1) Drop the observations with missing data.
+1) Drop observations with missing data.
 2) Impute the mean of observations without missing data.
-3) Use multiple imputation, which involves creating many potential datasets, conducting inference, and then bringing them together potentially though averaging [@gelmanandhill, p. 542].
+3) Use multiple imputation.
 
-To drop the observations with missing data, we can use `mean()` because by default it will exclude observations with missing values in its calculation. To impute the mean, we construct a second dataset with the observations with missing data removed. We then compute the mean of the population column, and impute that into the missing values in the original dataset. And finally, we can implement multiple imputation with `mice()` from `mice`.
+To drop the observations with missing data, we can use `mean()`. By default it will exclude observations with missing values in its calculation. To impute the mean, we construct a second dataset with the observations with missing data removed. We then compute the mean of the population column, and impute that into the missing values in the original dataset. Multiple imputation involves creating many potential datasets, conducting inference, and then bringing them together potentially though averaging [@gelmanandhill, p. 542]. We can implement multiple imputation with `mice()` from `mice`.
 
 ```{r}
 #| message: false
@@ -255,8 +253,6 @@ multiple_imputation <-
 mice_estimates <-
   complete(multiple_imputation) |>
   as_tibble()
-
-mice_estimates
 ```
 
 
@@ -306,21 +302,21 @@ tibble(
   kable(
     col.names = c(
       "Observation",
-      "Drop missing rows",
-      "Input the mean",
+      "Drop missing",
+      "Input mean",
       "Multiple imputation",
-      "Actual value"
+      "Actual"
     ),
     digits = 0,
     format.args = list(big.mark = ",")
   )
 ```
 
-@tbl-imputationoptions makes it clear that none of these approaches should be naively imposed. For instance, Florida's population should be 8,277. Imputing the mean across all the states would result in an estimate of 4,308, and multiple imputation results in an estimate of 5,814, both of which are too low. If imputation is the answer, it is likely that the question is wrong. It is worth pointing out that it was developed for specific circumstances of limiting public disclosure of private information [@myboynick]. 
+@tbl-imputationoptions makes it clear that none of these approaches should be naively imposed. For instance, Florida's population should be 8,277. Imputing the mean across all the states would result in an estimate of 4,308, and multiple imputation results in an estimate of 5,814, both of which are too low. If imputation is the answer, it may be better to look for a different question. It is worth pointing out that it was developed for specific circumstances of limiting public disclosure of private information [@myboynick]. 
 
-Nothing can make up for missing data [@manskiwow].\index{missing data!strategies} The conditions under which it makes sense to impute the mean or the prediction based on multiple imputation are not common, and even more rare is our ability to verify them. Missing data are not a nuisance to be papered over. The correct choice depends on the circumstances and purpose of the analysis. Simulating the removal of observations that we actually have to better understand the trade-off in the particular situation is critical. Whatever choice is made, and there is rarely a clear-cut solution, the most important aspect is to document and communicate what was done, and explore the effect of different choices on subsequent estimates. One way to proceed is to do exactly what we have done here---simulate different scenarios by removing some of the data that we do have, and evaluating how the approaches differ.
+Nothing can make up for missing data [@manskiwow].\index{missing data!strategies} The conditions under which it makes sense to impute the mean or the prediction based on multiple imputation are not common, and even more rare is our ability to verify them. What to do depends on the circumstances and purpose of the analysis. Simulating the removal of observations that we have and then implementing various options can help us better understand the trade-offs we face. Whatever choice is made---and there is rarely a clear-cut solution---try to document and communicate what was done, and explore the effect of different choices on subsequent estimates. We recommend proceeding by simulating different scenarios that remove some of the data that we have, and evaluating how the approaches differ.
 
-Finally, more prosaically, but just as importantly, sometimes missing data is encoded with particular values.\index{missing data!encoding} For instance, while R has the option of "NA", sometimes numerical data is entered as "-99" or alternatively as a very large integer such as "9999999" if it is missing. In the case of the Nationscape survey dataset introduced in @sec-hunt-data, there are three types of known missing data: 
+Finally, more prosaically, but just as importantly, sometimes missing data is encoded in the variable with particular values.\index{missing data!encoding} For instance, while R has the option of "NA", sometimes numerical data is entered as "-99" or alternatively as a very large integer such as "9999999", if it is missing. In the case of the Nationscape survey dataset introduced in @sec-hunt-data, there are three types of known missing data: 
 
 - "888": "Asked in this wave, but not asked of this respondent"
 - "999": "Not sure, don't know"
@@ -331,9 +327,9 @@ It is always worth looking explicitly for values that seem like they do not belo
 
 ## TTC subway delays 
 
-As a second, and more involved, example of EDA we use `opendatatoronto`, introduced in @sec-fire-hose, and the `tidyverse` to obtain and explore data about the Toronto subway system\index{Canada!Toronto subway delays}.\index{exploratory data analysis!Toronto} We are especially interested in getting a sense of the delays that have occurred.
+As a second, and more involved, example of EDA we use `opendatatoronto`, introduced in @sec-fire-hose, and the `tidyverse` to obtain and explore data about the Toronto subway system\index{Canada!Toronto subway delays}.\index{exploratory data analysis!Toronto} We want to get a sense of the delays that have occurred.
 
-To begin, we download the data on Toronto Transit Commission (TTC) subway delays in 2021. The data are available as an Excel file with a separate sheet for each month. We are interested in 2021 so we filter to just that year then download it using `get_resource()` and bring the months together with `bind_rows()`.
+To begin, we download the data on Toronto Transit Commission (TTC) subway delays in 2021. The data are available as an Excel file with a separate sheet for each month. We are interested in 2021 so we filter to just that year then download it using `get_resource()` from `opendatatoronto` and bring the months together with `bind_rows()`.
 
 ```{r}
 #| eval: false
@@ -371,7 +367,7 @@ all_2021_ttc_data <- read_csv("inputs/data/all_2021_ttc_data.csv")
 all_2021_ttc_data
 ```
 
-The dataset has a variety of columns, and we can find out more about each of them by downloading the codebook. The reason for each delay is coded, and so we can also download the explanations. One variable of interest appears to be "min_delay", which gives the extent of the delay in minutes. 
+The dataset has a variety of columns, and we can find out more about each of them by downloading the codebook. The reason for each delay is coded, and so we can also download the explanations. One variable of interest appears is "min_delay", which gives the extent of the delay in minutes. 
 
 ```{r}
 #| eval: false
@@ -423,15 +419,15 @@ delay_codes
 
 There is no one way to explore a dataset while conducting EDA, but we are usually especially interested in: 
 
-- What should the variables look like? For instance, what is their type, what are the values, and what does the distribution of these look like?
+- What should the variables look like? For instance, what is their class, what are the values, and what does the distribution of these look like?
 - What aspects are surprising, both in terms of data that are there that we do not expect, such as outliers, but also in terms of data that we may expect but do not have, such as missing data.
 - Developing a goal for our analysis. For instance, in this case, it might be understanding the factors such as stations and the time of day that are associated with delays. While we would not answer these questions formally here, we might explore what an answer could look like.
 
-It is important to document all aspects as we go through and note anything surprising. We are looking to create a record of the steps and assumptions that we made as we were going because these will be important when we come to modeling. In the natural sciences, a research notebook of this type can be a legal document [@nihtalk].
+It is important to document all aspects as we go through and note anything surprising. We are looking to create a record of the steps and assumptions that we made as we were going because these will be important when we come to modeling. In the natural sciences, a research notebook of this type can even be a legal document [@nihtalk].
 
 ### Distribution and properties of individual variables
 
-We should check that the variables are what they say they are. If they are not, then we need to work out what to do, for instance, should we change them, or possibly even remove them? It is also important to ensure that the class of the variables is as we expect. For instance, variables that should be a factor are a factor and those that should be a character are a character. And that we do not accidentally have, say, factors as numbers, or vice versa. One way to do this is to use `unique()`, and another is to use `table()`. There is no universal answer to which variables should be of certain classes, because the answer depends on the context.
+We should check that the variables are what they say they are. If they are not, then we need to work out what to do. For instance, should we change them, or possibly even remove them? It is also important to ensure that the class of the variables is as we expect. For instance, variables that should be a factor are a factor and those that should be a character are a character. And that we do not accidentally have, say, factors as numbers, or vice versa. One way to do this is to use `unique()`, and another is to use `table()`. There is no universal answer to which variables should be of certain classes, because the answer depends on the context.
 
 ```{r}
 unique(all_2021_ttc_data$day)
@@ -443,7 +439,7 @@ table(all_2021_ttc_data$day)
 table(all_2021_ttc_data$line)
 ```
 
-We have likely issues in terms of the subway lines. Some of them have a clear fix, but not all. One option would be to drop them, but we would need to think about whether these errors might be correlated with something that is of interest, because if they were then we may be dropping important information. There is usually no one right answer, because it will usually depend on what we are using the data for. We would note the issue, as we continued with EDA and then decide later about what to do. For now, we will remove all the lines that are not the ones that we know to be correct based on the codebook.
+We have likely issues in terms of the subway lines. Some of them have a clear fix, but not all. One option would be to drop them, but we would need to think about whether these errors might be correlated with something that is of interest. If they were then we may be dropping important information. There is usually no one right answer, because it will usually depend on what we are using the data for. We would note the issue, as we continued with EDA and then decide later about what to do. For now, we will remove all the lines that are not the ones that we know to be correct based on the codebook.
 
 ```{r}
 delay_codebook |>
@@ -456,18 +452,20 @@ all_2021_ttc_data_filtered_lines <-
 
 Entire careers are spent understanding missing data, and the presence, or lack, of missing values can haunt an analysis. To get started we could look at known-unknowns, which are the NAs for each variable. For instance, we could create counts by variable.
 
-In this case we have many missing values in "bound" and two in "line". For these known-unknowns, as discussed in @sec-farm-data, we are interested in whether or not they are missing at random. We want to, ideally, show that data happened to just drop out. This is unlikely, and so we are usually trying to look at what is systematic about how our data are missing.
+In this case we have many missing values in "bound" and two in "line". For these known-unknowns, as discussed in @sec-farm-data, we are interested in whether they are missing at random. We want to, ideally, show that data happened to just drop out. But this is unlikely, and so we are usually trying to look at what is systematic about how the data are missing.
 
 Sometimes data happen to be duplicated. If we did not notice this, then our analysis would be wrong in ways that we would not be able to consistently expect. There are a variety of ways to look for duplicated rows, but `get_dupes()` from `janitor` is especially useful.
 
 ```{r}
 #| eval: true
 #| include: true
+#| message: false
+#| warning: false
 
 get_dupes(all_2021_ttc_data_filtered_lines)
 ```
 
-This dataset has many duplicates. Again, we are interested in whether there is something systematic going on. Remembering that during EDA we are trying to quickly come to terms with a dataset, one way forward is to flag this as an issue to come back to and explore later, and to just remove duplicates for now using `distinct()`.
+This dataset has many duplicates. We are interested in whether there is something systematic going on. Remembering that during EDA we are trying to quickly come to terms with a dataset, one way forward is to flag this as an issue to come back to and explore later, and to just remove duplicates for now using `distinct()`.
 
 ```{r}
 #| eval: true
@@ -478,7 +476,7 @@ all_2021_ttc_data_no_dupes <-
   distinct()
 ```
 
-The station names are a mess.
+The station names have many errors.
 
 ```{r}
 all_2021_ttc_data_no_dupes |>
@@ -494,19 +492,21 @@ We could try to quickly bring a little order to the chaos by just taking just th
 
 all_2021_ttc_data_no_dupes <-
   all_2021_ttc_data_no_dupes |>
-  mutate(station_clean = case_when(
-    str_starts(station, 
-               "ST") & str_detect(station, 
-                                  "WEST") ~ word(station, 1, 3),
-    str_starts(station, "ST") ~ word(station, 1, 2),
-    str_detect(station, "WEST") ~ word(station, 1, 2),
-    TRUE ~ word(station, 1)
-  ))
+  mutate(
+    station_clean =
+      case_when(
+        str_starts(station, "ST") &
+          str_detect(station, "WEST") ~ word(station, 1, 3),
+        str_starts(station, "ST") ~ word(station, 1, 2),
+        str_detect(station, "WEST") ~ word(station, 1, 2),
+        TRUE ~ word(station, 1)
+      )
+  )
 
 all_2021_ttc_data_no_dupes
 ```
 
-We need to see the data in its original state to understand it, and we use bar charts, scatterplots, line plots, and histograms extensively for this. During EDA we are not as concerned with whether the graph looks nice, but are instead trying to acquire a sense of the data as quickly as possible. We can start by looking at the distribution of "min_delay", which is one outcome of interest.
+We need to see the data in its original state to understand it, and we often use bar charts, scatterplots, line plots, and histograms for this. During EDA we are not so concerned with whether the graph looks nice, but are instead trying to acquire a sense of the data as quickly as possible. We can start by looking at the distribution of "min_delay", which is one outcome of interest.
 
 ```{r}
 #| eval: true
@@ -569,7 +569,7 @@ all_2021_ttc_data_no_dupes_with_explanation |>
 
 From this we can see that the 348 minute delay was due to "Traction Power Rail Related", the 343 minute delay was due to "Signals - Track Circuit Problems", and so on.
 
-Another thing that we are looking for is various groupings of the data, especially where sub-groups may end up with only a small number of observations in them. This is because any analysis could be especially influenced by them. One quick way to do this is to group the data by a variable that is of interest, for instance, "line", using color.
+Another thing that we are looking for is various groupings of the data, especially where sub-groups may end up with only a small number of observations in them. This is because our analysis could be especially influenced by them. One quick way to do this is to group the data by a variable that is of interest, for instance, "line", using color.
 
 ```{r}
 #| eval: true
@@ -604,7 +604,7 @@ all_2021_ttc_data_no_dupes_with_explanation |>
   scale_x_log10()
 ```
 
-@fig-delaydensity-1 uses density so that we can look at the distributions more comparably, but we should also be aware of differences in frequency (@fig-delaydensity-2). In this case, we will see that "SHP" and "SRT" have much smaller counts.
+@fig-delaydensity-1 uses density so that we can look at the distributions more comparably, but we should also be aware of differences in frequency (@fig-delaydensity-2). In this case, we see that "SHP" and "SRT" have much smaller counts.
 
 To group by another variable, we can add facets (@fig-delayfreqfacet).
 
@@ -642,14 +642,11 @@ all_2021_ttc_data_no_dupes_with_explanation |>
             .by = c(line, station_clean)) |>
   filter(n_obs > 1) |>
   arrange(line, -mean_delay) |>
-  slice(1:5) |>
+  slice(1:5, .by = line) |>
   ggplot(aes(station_clean, mean_delay)) +
   geom_col() +
   coord_flip() +
-  facet_wrap(
-    vars(line),
-    scales = "free_y"
-  )
+  facet_wrap(vars(line), scales = "free_y")
 ```
 
 As discussed in @sec-clean-and-prepare, dates are often difficult to work with because they are so prone to having issues. For this reason, it is especially important to consider them during EDA. Let us create a graph by week, to see if there is any seasonality over the course of a year. When using dates, `lubridate` is especially useful. For instance, we can look at the average delay, of those that were delayed, by week, using `week()` to construct the weeks (@fig-delaybyweek).
@@ -670,10 +667,7 @@ all_2021_ttc_data_no_dupes_with_explanation |>
   ggplot(aes(week, mean_delay, color = line)) +
   geom_point() +
   geom_smooth() +
-  facet_wrap(
-    vars(line),
-    scales = "free_y"
-  )
+  facet_wrap(vars(line), scales = "free_y")
 ```
 
 Now let us look at the proportion of delays that were greater than ten minutes (@fig-longdelaybyweek).
@@ -693,17 +687,14 @@ all_2021_ttc_data_no_dupes_with_explanation |>
   ggplot(aes(week, prop_delay, color = line)) +
   geom_point() +
   geom_smooth() +
-  facet_wrap(
-    vars(line),
-    scales = "free_y"
-  )
+  facet_wrap(vars(line), scales = "free_y")
 ```
 
 These figures, tables, and analysis may not have a place in a final paper. Instead, they allow us to become comfortable with the data. We note aspects about each that stand out, as well as the warnings and any implications or aspects to return to.
 
 ### Relationships between variables
 
-We are also interested in looking at the relationship between two variables. We will draw heavily on graphs for this, and appropriate types, for different circumstances, were discussed in @sec-static-communication. Scatter plots are especially useful for continuous variables, and are a good precursor to modeling. For instance, we may be interested in the relationship between the delay and the gap, which is the number of minutes between trains (@fig-delayvsgap).
+We are also interested in looking at the relationship between two variables. We will draw heavily on graphs for this. Appropriate types, for different circumstances, were discussed in @sec-static-communication. Scatter plots are especially useful for continuous variables, and are a good precursor to modeling. For instance, we may be interested in the relationship between the delay and the gap, which is the number of minutes between trains (@fig-delayvsgap).
 
 ```{r}
 #| eval: true
@@ -714,7 +705,7 @@ We are also interested in looking at the relationship between two variables. We 
 #| warning: false
 
 all_2021_ttc_data_no_dupes_with_explanation |>
-  ggplot(aes(x = min_delay, y = min_gap)) +
+  ggplot(aes(x = min_delay, y = min_gap, alpha = 0.1)) +
   geom_point() +
   scale_x_log10() +
   scale_y_log10()
@@ -735,16 +726,9 @@ all_2021_ttc_data_no_dupes_with_explanation |>
             .by = c(line, code_desc)) |>
   arrange(-mean_delay) |>
   slice(1:5) |>
-  ggplot(aes(
-    x = code_desc,
-    y = mean_delay
-  )) +
+  ggplot(aes(x = code_desc, y = mean_delay)) +
   geom_col() +
-  facet_wrap(
-    vars(line),
-    scales = "free_y",
-    nrow = 4
-  ) +
+  facet_wrap(vars(line), scales = "free_y", nrow = 4) +
   coord_flip()
 ```
 
@@ -898,7 +882,7 @@ all_2021_ttc_data_no_dupes_with_explanation |>
 
 ## Airbnb listings in London, England
 
-In this case study we look at Airbnb\index{Airbnb} listings in London, England,\index{United Kingdom!London} as at 14 March 2023.\index{exploratory data analysis!Airbnb} The dataset is from [Inside Airbnb](http://insideairbnb.com) [@airbnbdata] and we will read it from their website, and then save a local copy. We can give `read_csv()` a link to where the dataset is and it will download it. This helps with reproducibility because the source is clear. But, as that link could change at any time, longer-term reproducibility, as well as wanting to minimize the effect on the Inside Airbnb\index{Inside Airbnb} servers, suggests that we should also save a local copy of the data and then use that. 
+In this case study we look at Airbnb\index{Airbnb} listings in London, England,\index{United Kingdom!London} as at 14 March 2023.\index{exploratory data analysis!Airbnb} The dataset is from [Inside Airbnb](http://insideairbnb.com) [@airbnbdata] and we will read it from their website, and then save a local copy. We can give `read_csv()` a link to where the dataset is and it will download it. This helps with reproducibility because the source is clear. But as that link could change at any time, longer-term reproducibility, as well as wanting to minimize the effect on the Inside Airbnb\index{Inside Airbnb} servers, suggests that we should also save a local copy of the data and then use that. 
 
 To get the dataset that we need, go to Inside Airbnb -> "Data" -> "Get the Data", then scroll down to London. We are interested in the "listings dataset", and we right click to get the URL that we need (@fig-getairbnb). Inside Airbnb update the data that they make available, and so the particular dataset that is available will change over time.
 
@@ -929,7 +913,7 @@ write_csv(airbnb_data, "airbnb_data.csv")
 airbnb_data
 ```
 
-It is important that we refer to this local copy of our data when we run our scripts to explore the data, rather than asking the Inside Airbnb servers for the data each time. It might be worth even commenting out this call to their servers to ensure that we do not accidentally stress their service.
+We should refer to this local copy of our data when we run our scripts to explore the data, rather than asking the Inside Airbnb servers for the data each time. It might be worth even commenting out this call to their servers to ensure that we do not accidentally stress their service.
 
 Again, add this filename---"airbnb_data.csv"---to the ".gitignore" file so that it is not pushed to GitHub. The size of the dataset will create complications that we would like to avoid. 
 
@@ -995,7 +979,7 @@ airbnb_data_selected
 
 ### Distribution and properties of individual variables
 
-First we might be interested in price. It is a character at the moment and so we need to convert it to a numeric. This is a common problem, and we need to be a little careful that it does not all just convert to NAs. In our case if we just force the price data to be a numeric then it will go to NA because there are a lot of characters where it is unclear what the numeric equivalent is, such as "$". We need to remove those characters first.
+First we might be interested in price. It is a character at the moment and so we need to convert it to a numeric. This is a common problem and we need to be a little careful that it does not all just convert to NAs. If we just force the price variable to be a numeric then it will go to NA because there are a lot of characters where it is unclear what the numeric equivalent is, such as "$". We need to remove those characters first.
 
 ```{r}
 #| eval: true
@@ -1016,8 +1000,7 @@ airbnb_data_selected |>
 airbnb_data_selected <-
   airbnb_data_selected |>
   mutate(
-    price = str_remove(price, "\\$"),
-    price = str_remove(price, ","),
+    price = str_remove_all(price, "[\\$,]"),
     price = as.integer(price)
   )
 ```
@@ -1057,7 +1040,7 @@ airbnb_data_selected |>
   scale_y_log10()
 ```
 
-If we focus on prices that are less than \$1,000, then we see that most properties have a nightly price less than \$250 (@fig-airbnbpricesbunch-1). Interestingly it looks like there is some bunching of prices. It might be that this is happening around numbers ending in zero or nine. Let us just zoom in on prices between \$90 and \$210, out of interest, but change the bins to be smaller (@fig-airbnbpricesbunch-2).
+If we focus on prices that are less than \$1,000, then we see that most properties have a nightly price less than \$250 (@fig-airbnbpricesbunch-1). In the same way that we saw some bunching in ages in @sec-clean-and-prepare, it looks like there is some bunching of prices here. It might be that this is happening around numbers ending in zero or nine. Let us just zoom in on prices between \$90 and \$210, out of interest, but change the bins to be smaller (@fig-airbnbpricesbunch-2).
 
 ```{r}
 #| eval: true
@@ -1065,10 +1048,10 @@ If we focus on prices that are less than \$1,000, then we see that most properti
 #| warning: false
 #| message: false
 #| label: fig-airbnbpricesbunch
-#| fig-cap: "Distribution of prices less than $1000 for London Airbnb rentals in March 2023 shows bunching"
+#| fig-cap: "Distribution of prices for Airbnb listings in London in March 2023"
 #| fig-subcap:
-#|   - "Prices less than $1,000"
-#|   - "Prices between $90 and $210"
+#|   - "Prices less than $1,000 suggest some bunching"
+#|   - "Prices between $90 and $210 illustrate the bunching more clearly"
 #| layout-ncol: 2
 
 airbnb_data_selected |>
@@ -1104,7 +1087,7 @@ airbnb_data_less_1000 <-
   filter(price < 1000)
 ```
 
-Superhosts are especially experienced Airbnb hosts, and we might be interested to learn more about them. For instance, a host either is or is not a superhost, and so we would not expect any NAs. But we can see that there are. It might be that the host removed a listing or similar.
+Superhosts are especially experienced Airbnb hosts, and we might be interested to learn more about them. For instance, a host either is or is not a superhost, and so we would not expect any NAs. But we can see that there are NAs. It might be that the host removed a listing or similar, but this is something that we would need to look further into.
 
 ```{r}
 #| eval: true
@@ -1230,7 +1213,7 @@ airbnb_data_has_reviews |>
   count(host_response_time)
 ```
 
-It is unclear a host could have a response time of NA. It may be that they are related to some other variable. Interestingly it seems like what looks like "NAs" in "host_response_time" variable are not coded as proper NAs, but are instead being treated as another category. We will recode them to be actual NAs and change the variable to be a factor.
+It is unclear how a host could have a response time of NA. It may be this is related to some other variable. Interestingly it seems like what looks like "NAs" in "host_response_time" variable are not coded as proper NAs, but are instead being treated as another category. We will recode them to be actual NAs and change the variable to be a factor.
 
 ```{r}
 #| eval: true
@@ -1324,7 +1307,7 @@ airbnb_data_selected |>
   )
 ```
 
-Based on @fig-airbnbhostlisting we can see there are a large number who have somewhere in the 2-500 properties range, by the usual long tail. The number with many listings is unexpected and worth following up on. And there are a bunch with NA that we will need to deal with.
+Based on @fig-airbnbhostlisting we can see there are a large number who have somewhere in the 2-500 properties range, with the usual long tail. The number with that many listings is unexpected and worth following up on. And there are a bunch with NA that we will need to deal with.
 
 ```{r}
 #| eval: true
@@ -1335,7 +1318,7 @@ airbnb_data_selected |>
   head()
 ```
 
-There is nothing that immediately jumps out as odd about the people with more than ten listings, but there must be something going on. For now, we will move on and focus on only those with one property for simplicity.
+There is nothing that immediately jumps out as odd about the people with more than ten listings, but at the same time it is still not clear. For now, we will move on and focus on only those with one property for simplicity.
 
 ```{r}
 #| eval: true
@@ -1351,9 +1334,9 @@ airbnb_data_selected <-
 
 ### Relationships between variables
 
-We might like to make some graphs to see if there are any relationships that become clear. Some aspects that come to mind are looking at prices and reviews and superhosts, and number of properties and neighborhood. 
+We might like to make some graphs to see if there are any relationships between variables that become clear. Some aspects that come to mind are looking at prices and comparing with reviews, superhosts, number of properties, and neighborhood. 
 
-Look at the relationship between price and reviews, and whether they are a super-host, for properties with more than one review (@fig-priceandreview).
+We can look at the relationship between price and reviews, and whether they are a super-host, for properties with more than one review (@fig-priceandreview).
 
 ```{r}
 #| eval: true
@@ -1406,18 +1389,7 @@ airbnb_data_selected |>
   adorn_title()
 ```
 
-Finally, we could look at neighborhood. The data provider has attempted to clean the neighborhood variable for us, so we will use that variable for now. Although if we ended up using this variable for our actual analysis we would want to check they had not made any errors.
-
-```{r}
-#| eval: true
-#| include: true
-
-airbnb_data_selected |>
-  tabyl(neighbourhood_cleansed) |>
-  adorn_totals("row") |>
-  adorn_pct_formatting() |>
-  nrow()
-```
+Finally, we could look at neighborhood. The data provider has attempted to clean the neighborhood variable for us, so we will use that variable for now. Although if we ended up using this variable for our actual analysis we would want to examine how it was constructed.
 
 ```{r}
 #| eval: true
@@ -1433,7 +1405,7 @@ airbnb_data_selected |>
 ```
 
 
-We will now run some models on our dataset. We will cover modeling in more detail in @sec-its-just-a-linear-model, but we can use models during EDA to help get a better sense of relationships that may exist between multiple variables in a dataset. For instance, we may like to see whether we can forecast whether someone is a superhost, and the factors that go into explaining that. As the dependent variable is binary, this is a good opportunity to use logistic regression. We expect that superhost status will be associated with faster responses and better reviews. Specifically, the model that we estimate is:
+We will quickly run a model on our dataset. We will cover modeling in more detail in @sec-its-just-a-linear-model, but we can use models during EDA to help get a better sense of relationships that may exist between multiple variables in a dataset. For instance, we may like to see whether we can forecast whether someone is a superhost, and the factors that go into explaining that. As the dependent variable is binary, this is a good opportunity to use logistic regression. We expect that superhost status will be associated with faster responses and better reviews. Specifically, the model that we estimate is:
 
 $$\mbox{Prob(Is superhost} = 1) = \mbox{logit}^{-1}\left( \beta_0 + \beta_1 \mbox{Response time} + \beta_2 \mbox{Reviews} + \epsilon\right)$$
 
@@ -1453,7 +1425,7 @@ logistic_reg_superhost_response_review <-
   )
 ```
 
-We can have a quick look at the results using `modelsummary()` from `modelsummary` (@tbl-modelsummarylogisticregressionsuper).
+After installing and loading `modelsummary` we can have a quick look at the results using `modelsummary()` (@tbl-modelsummarylogisticregressionsuper).
 
 ```{r}
 #| eval: true
@@ -1490,7 +1462,7 @@ write_parquet(x = airbnb_data_selected,
 
 ## Concluding remarks
 
-In this chapter we have considered exploratory data analysis, which is the active process of getting to know a dataset. We focused on missing data, the distributions of variables, and the relationships between variables. And we extensively used graphs and tables to do this. 
+In this chapter we have considered exploratory data analysis (EDA), which is the active process of getting to know a dataset. We focused on missing data, the distributions of variables, and the relationships between variables. And we extensively used graphs and tables to do this. 
 
 The approaches to EDA will vary depending on context, and the issues and features that are encountered in the dataset. It will also depend on your skills, for instance it is common to consider regression models, and dimensionality reduction approaches.
 
@@ -1500,8 +1472,8 @@ The approaches to EDA will vary depending on context, and the issues and feature
 
 ### Scales {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: *We have some data on age from a social media company that has about 80 per cent of the US population on the platform.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
-2. *(Simulate)* Please further consider the scenario described and simulate the situation. Please include ten tests based on the simulated data. Submit a link to a GitHub Gist that contains your code.
+1. *(Plan)* Consider the following scenario: *We have some data on age from a social media company that has about 80 per cent of the US population on the platform.* Please sketch what that dataset could look like and then sketch a graph that you could build to show all observations.
+2. *(Simulate)* Please further consider the scenario described and simulate the situation. Use parquet due to size. Please include ten tests based on the simulated data. Submit a link to a GitHub Gist that contains your code.
 3. *(Acquire)* Please describe a possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched. Submit a link to a GitHub Gist that contains your code.
 5. *(Communicate)* Please write one page about what you did, and be careful to discuss some of the threats to the estimate that you make based on the sample.
@@ -1511,19 +1483,19 @@ The approaches to EDA will vary depending on context, and the issues and feature
 1. Summarize @tukey1962future in a few paragraphs and then relate it to data science.
 2. In your own words what is exploratory data analysis (please write at least three paragraphs, and include citations and examples)?
 3. Suppose you have a dataset called "my_data", which has two columns: "first_col" and "second_col". Please write some R code that would generate a graph (the type of graph does not matter). Submit a link to a GitHub Gist that contains your code.
-4. Consider a dataset that has 500 observations and three variables, so there are 1,500 cells. If 100 of the rows are missing data for at least one of the columns, then would you: a) remove the whole row from your dataset, b) try to run your analysis on the data as is, or c) some other procedure? What if your dataset had 10,000 rows instead, but the same number of missing rows? Discuss, with examples and citations, in at least three paragraphs.
+4. Consider a dataset that has 500 observations and three variables, so there are 1,500 cells. If 100 of the rows are missing a cell for at least one of the columns, then would you: a) remove the whole row from your dataset, b) try to run your analysis on the data as is, or c) some other procedure? What if your dataset had 10,000 rows instead, but the same number of missing rows? Discuss, with examples and citations, in at least three paragraphs.
 5. Please discuss three ways of identifying unusual values, writing at least one paragraph for each.
 6. What is the difference between a categorical and continuous variable?
 7. What is the difference between a factor and an integer variable?
 8. How can we think about who is systematically excluded from a dataset?
-9. Using `opendatatoronto`, download the data on mayoral campaign contributions for 2014. (Note: the 2014 file you will get from `get_resource()`, so just keep the sheet that relates to the mayor election). 
+9. Using `opendatatoronto`, download the data on mayoral campaign contributions for 2014. (Note: the 2014 file you will get from `get_resource()` contains many sheets, so just keep the sheet that relates to the mayor election). 
     1. Clean up the data format (fixing the parsing issue and standardizing the column names using `janitor`).
     2. Summarize the variables in the dataset. Are there missing values, and if so, should we be worried about them? Is every variable in the format it should be? If not, create new variable(s) that are in the right format.
     3. Visually explore the distribution of values of the contributions. What contributions are notable outliers? Do they share similar characteristic(s)? It may be useful to plot the distribution of contributions without these outliers to get a better sense of most of the data. 
     4. List the top five candidates in each of these categories: 1) total contributions; 2) mean contribution; and 3) number of contributions.
     5. Repeat that process, but without contributions from the candidates themselves.
     6. How many contributors gave money to more than one candidate?
-10. Name three geoms that produce graphs that have bars in `ggplot()`.
+10. List three geoms that produce graphs that have bars in `ggplot()`.
 11. Consider a dataset with 10,000 observations and 27 variables. For each observation, there is at least one missing variable. Please discuss, in a paragraph or two, the steps that you would take to understand what is going on.
 12. Known missing data are those that leave holes in your dataset. But what about data that were never collected? Please look at @mcclelland2019lock and @luscombe2020policing. Look into how they gathered their dataset and what it took to put this together. What is in the dataset and why? What is missing and why? How could this affect the results? How might similar biases enter into other datasets that you have used or read about? 
 
