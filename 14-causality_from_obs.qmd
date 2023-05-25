@@ -377,28 +377,21 @@ Berkson's paradox\index{Berkson's paradox} occurs when we estimate some relation
 set.seed(853)
 
 num_pros <- 100
-
 num_public <- 1000
 
-professionals <-
-  tibble(
-    VO2 = runif(n = num_pros, min = 0.7, max = 0.9),
-    chance_of_winning = runif(n = num_pros, min = 0.7, max = 0.9),
-    type = "Professionals"
-  )
+professionals <- tibble(
+  VO2 = runif(num_pros, 0.7, 0.9),
+  chance_of_winning = runif(num_pros, 0.7, 0.9),
+  type = "Professionals"
+)
 
-general_public <-
-  tibble(
-    VO2 = runif(n = num_public, min = 0.6, max = 0.8),
-    noise = rnorm(n = num_public, 0, sd = 0.03),
-    chance_of_winning = VO2 + noise + 0.1,
-    type = "Public"
-  ) |>
-  select(-noise)
+general_public <- tibble(
+  VO2 = runif(num_public, 0.6, 0.8),
+  chance_of_winning = VO2 + rnorm(num_public, 0, 0.03) + 0.1,
+  type = "Public"
+)
 
-professionals_and_public <- rbind(professionals, general_public)
-
-professionals_and_public
+professionals_and_public <- bind_rows(professionals, general_public)
 ```
 
 
@@ -456,15 +449,9 @@ simulated_diff_in_diff <-
   tibble(
     person = rep(c(1:1000), times = 2),
     time = c(rep(0, times = 1000), rep(1, times = 1000)),
-    treat_group = rep(
-      sample(
-        x = 0:1,
-        size = 1000,
-        replace = TRUE
-      ),
-      times = 2
-    )
-  ) |>
+    treat_group = 
+      rep(sample(x = 0:1, size = 1000, replace = TRUE ), times = 2)
+    ) |>
   mutate(
     treat_group = as.factor(treat_group),
     time = as.factor(time)
@@ -511,7 +498,7 @@ simulated_diff_in_diff |>
   theme(legend.position = "bottom")
 ```
 
-As it is a straight forward example, we can obtain our estimate manually, by looking at the average difference of the differences. When we do that, we find that we estimate the effect of the new tennis racket to be 5.06, which is similar to what we simulated.
+We can obtain our estimate manually, by looking at the average difference of the differences. When we do that, we find that we estimate the effect of the new tennis racket to be 5.06, which is similar to what we simulated.
 
 ```{r}
 #| eval: true
@@ -525,8 +512,8 @@ ave_diff <-
     names_prefix = "time_"
   ) |>
   mutate(difference = time_1 - time_0) |>
-  # Average difference between old racket and new racket serve speed,
-  # within groups (pro and amateur)
+  # Average difference between old and new racket serve
+  # speed within groups
   summarise(average_difference = mean(difference),
             .by = treat_group)
 
@@ -534,7 +521,7 @@ ave_diff <-
 ave_diff$average_difference[2] - ave_diff$average_difference[1]
 ```
 
-And we can use linear regression to get the same result. The equation that we are interested in is:
+And we can use linear regression to get the same result. The model we are interested in is:
 
 $$Y_{i,t} = \beta_0 + \beta_1\times\mbox{Treatment}_i + \beta_2\times\mbox{Time}_t + \beta_3\times(\mbox{Treatment} \times\mbox{Time})_{i,t} + \epsilon_{i,t}$$
 
@@ -612,13 +599,13 @@ modelsummary(
 
 ### Assumptions
 
-If we want to use difference-in-differences, then we need to satisfy the assumptions.\index{difference-in-differences!assumptions}  There were three that were touched on earlier, but here we will focus on one: the "parallel trends" assumption. The parallel trends assumption haunts everything to do with difference-in-differences analysis because we can never prove it; we can just be convinced of it, and try to convince others.
+If we want to use difference-in-differences, then we need to satisfy the assumptions.\index{difference-in-differences!assumptions}  There were three that were touched on earlier, but here we will focus on the "parallel trends" assumption. The parallel trends assumption haunts everything to do with difference-in-differences analysis because we can never prove it; we can just be convinced of it, and try to convince others.
 
-To see why we can never prove it, consider an example in which we want to know the effect of a new stadium on a professional sports team's wins/loses. To do this we consider two teams: the Golden State Warriors and the Toronto Raptors. The Warriors changed stadiums at the start of the 2019-20 season, while the Raptors did not, so we will consider four time periods: the 2016-17 season, 2017-18 season, 2018-19 season, and finally we will compare the performance with the one after they moved, so the 2019-20 season. The Raptors here act as our counterfactual. This means that we assume the relationship between the Warriors and the Raptors, in the absence of a new stadium, would have continued to change in a consistent way. But the fundamental problem of causal inference means that we can never know that for certain.\index{causal inference!fundamental problem} We must present sufficient evidence to assuage any concerns that a reader may have. 
+To see why we can never prove it, consider an example in which we want to know the effect of a new stadium on a professional sports team's wins/loses. To do this we consider two professional basketball teams: the Golden State Warriors and the Toronto Raptors. The Warriors changed stadiums at the start of the 2019-20 season, while the Raptors did not, so we will consider four time periods: the 2016-17 season, 2017-18 season, 2018-19 season, and finally we will compare the performance with the one after they moved, so the 2019-20 season. The Raptors here act as our counterfactual. This means that we assume the relationship between the Warriors and the Raptors, in the absence of a new stadium, would have continued to change in a consistent way. But the fundamental problem of causal inference means that we can never know that for certain.\index{causal inference!fundamental problem} We must present sufficient evidence to assuage any concerns that a reader may have. 
 
 There are four main threats to validity when we use difference-in-differences, and we need to address all of them [@Cunningham2021, p. 272--277]:
 
-1. Non-parallel trends. The treatment and control groups may be based on differences. As such it can be difficult to convincingly argue for parallel trends. In this case, maybe try to find another factor to consider in your model that may adjust for some of that. This may require triple-differenced approaches. For instance, in the earlier example, we could perhaps add the San Francisco 49ers as they are in the same broad geographic area as the Warriors. Or maybe rethink the analysis to see if we can make a different control group. Adding additional earlier time periods may help but may introduce more issues, which we touch on in the third point.
+1. Non-parallel trends. The treatment and control groups may be based on differences. As such it can be difficult to convincingly argue for parallel trends. In this case, maybe try to find another factor to consider in your model that may adjust for some of that. This may require triple-differenced approaches. For instance, in the earlier example, we could perhaps add the San Francisco 49ers, a football team, as they are in the same broad geographic area as the Warriors. Or maybe rethink the analysis to see if we can make a different control group. Adding additional earlier time periods may help but may introduce more issues, which we touch on in the third point.
 2. Compositional differences. This is a concern when working with repeated cross-sections. What if the composition of those cross-sections change? For instance, if we are working at an app that is rapidly growing, and we want to look at the effect of some change. In our initial cross-section, we may have mostly young people, but in a subsequent cross-section, we may have more older people as the demographics of the app usage change. Hence our results may just be an age-effect, not an effect of the change that we are interested in. 
 3. Long-term effects compared with reliability. As we discussed in @sec-hunt-data, there is a trade-off between the length of the analysis that we run. As we run the analysis for longer there is more opportunity for other factors to affect the results. There is also increased chance for someone who was not treated to be treated. But, on the other hand, it can be difficult to convincingly argue that short-term results will continue in the long term. 
 4. Functional form dependence. This is less of an issue when the outcomes are similar, but if they are different then functional form may be responsible for some aspects of the results.
@@ -634,9 +621,9 @@ There are four main threats to validity when we use difference-in-differences, a
 
 ### French newspaper prices between 1960 and 1974
 
-In this case study we introduce @angelucci2019newspapers, and replicate one of the main findings.\index{France!newspaper prices} 
+In this case study we introduce @angelucci2019newspapers. They are interested in understanding the effect of the introduction of television on French newspapers. We will replicate one of the main findings.\index{France!newspaper prices} 
 
-The business model of newspapers has been challenged by the internet and many local newspapers have closed. And this issue is not new. When television was introduced, there were similar concerns. @angelucci2019newspapers use the introduction of television advertising in France, announced in 1967, to examine the effect of decreased advertising revenue on newspapers. They create a dataset of French newspapers from 1960 to 1974 and then use difference-in-differences to examine the effect of the reduction in advertising revenues on newspapers' content and prices. The change that they focus on is the introduction of television advertising, which they argue affected national newspapers more than local newspapers. They find that this change results in both less journalism content in the newspapers and lower newspaper prices. Focusing on this change, and analyzing it using difference-in-differences, is important because it allows us to disentangle a few competing effects. For instance, did newspapers become redundant because they could no longer charge high prices for their advertisements, or because consumers preferred to get their news from the television?
+The business model of newspapers has been challenged by the internet and many local newspapers have closed. This issue is not new. When television was introduced, there were similar concerns. @angelucci2019newspapers use the introduction of television advertising in France, announced in 1967, to examine the effect of decreased advertising revenue on newspapers. They create a dataset of French newspapers from 1960 to 1974 and then use difference-in-differences to examine the effect of the reduction in advertising revenues on newspapers' content and prices. The change that they focus on is the introduction of television advertising, which they argue affected national newspapers more than local newspapers. They find that this change results in both less journalism content in the newspapers and lower newspaper prices. Focusing on this change, and analyzing it using difference-in-differences, is important because it allows us to disentangle a few competing effects. For instance, did newspapers become redundant because they could no longer charge high prices for their advertisements, or because consumers preferred to get their news from the television?
 
 We can get free access to the [data](https://www.openicpsr.org/openicpsr/project/116438/version/V1/view) that underpins @angelucci2019newspapers after registration. The dataset is in the Stata data format, ".dta", which we can read with `read_dta()` from `haven`. The file that we are interested in is "Angelucci_Cage_AEJMicro_dataset.dta", which is the "dta" folder.
 
@@ -664,21 +651,8 @@ We focus just on the headline difference-in-differences result and construct sum
 
 newspapers <-
   newspapers |>
-  select(
-    year,
-    id_news,
-    after_national,
-    local,
-    national, # Diff in diff variables
-    ra_cst,
-    ads_p4_cst,
-    ads_s, # Advertising side dependents
-    ps_cst,
-    po_cst,
-    qtotal,
-    qs_s,
-    rs_cst
-  ) |> # Reader side dependents
+  select(year, id_news, after_national, local, national, 
+         ra_cst, ps_cst, qtotal) |> 
   mutate(ra_cst_div_qtotal = ra_cst / qtotal) |>
   mutate(across(c(id_news, after_national, local, national), 
                 as.factor)) |>
@@ -705,17 +679,9 @@ newspapers |>
     labels = dollar_format(
       prefix = "$",
       suffix = "M",
-      scale = 0.000001
-    )
-  ) +
-  labs(
-    x = "Year",
-    y = "Advertising revenue"
-  ) +
-  facet_wrap(
-    vars(type),
-    nrow = 2
-  ) +
+      scale = 0.000001)) +
+  labs(x = "Year", y = "Advertising revenue") +
+  facet_wrap(vars(type), nrow = 2) +
   theme_minimal() +
   geom_vline(xintercept = 1966.5, linetype = "dashed")
 ```
@@ -725,7 +691,7 @@ The model that we are interested in estimating is:
 
 $$\mbox{ln}(y_{n,t}) = \beta_0 + \beta_1\times(\mbox{National binary}\times\mbox{1967 onward binary}) + \lambda_n + \gamma_t + \epsilon$$
 
-It is the $\beta_1$ coefficient that we are especially interested in. We use $\lambda_n$ as a fixed effect for each newspaper, and the $\gamma_y$ as a fixed effect for each year. We estimate the models using `stan_glm()`.
+It is the $\beta_1$ coefficient that we are especially interested in. We estimate the models using `stan_glm()`.
 
 ```{r}
 #| echo: true
@@ -781,22 +747,6 @@ saveRDS(
   subscription_price,
   file = "subscription_price.rds"
 )
-
-unit_price <-
-  stan_glm(
-    formula = log(po_cst) ~ after_national + id_news + year,
-    data = newspapers,
-    family = gaussian(),
-    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
-    prior_intercept = normal(0, 2.5, autoscale = TRUE),
-    prior_aux = exponential(rate = 1, autoscale = TRUE),
-    seed = 853
-  )
-
-saveRDS(
-  unit_price,
-  file = "unit_price.rds"
-)
 ```
 
 
@@ -821,11 +771,6 @@ saveRDS(
   subscription_price,
   file = "outputs/model/subscription_price.rds"
 )
-
-saveRDS(
-  unit_price,
-  file = "outputs/model/unit_price.rds"
-)
 ```
 
 ```{r}
@@ -842,9 +787,6 @@ ad_revenue_div_circulation <-
 
 subscription_price <-
   readRDS(file = "subscription_price.rds")
-
-unit_price <-
-  readRDS(file = "unit_price.rds")
 ```
 
 
@@ -862,9 +804,6 @@ ad_revenue_div_circulation <-
 
 subscription_price <-
   readRDS(file = "outputs/model/subscription_price.rds")
-
-unit_price <-
-  readRDS(file = "outputs/model/unit_price.rds")
 ```
 
 Looking at the advertising-side variables, such as revenue and prices, in @tbl-frenchnewspapersadvertising we find consistently negative coefficients. 
@@ -892,17 +831,17 @@ modelsummary(
 )
 ```
 
-In general, we can replicate the main results of @angelucci2019newspapers and find that in many cases there appears to be a difference from 1967 onward. @angelucci2019newspapers [pp. 353-358] also include an excellent example of the discussion of interpretation, external validity, and robustness that is required for difference-in-differences models.
+We can replicate the main results of @angelucci2019newspapers and find that in many cases there appears to be a difference from 1967 onward. @angelucci2019newspapers [pp. 353-358] also include an excellent example of the discussion of interpretation, external validity, and robustness that is required for difference-in-differences models.
 
 ## Propensity score matching
 
-Difference-in-differences is a powerful analysis framework. But it can be tough to identify appropriate treatment and control groups. @alexander2018age compare migrant brothers, where one brother had most of their education in a different country, and the other brother had most of their education in the US. Given the data that are available, this match provides a reasonable treatment and control group. But other matches could have given different results, for instance friends or cousins.
+Difference-in-differences is a powerful analysis framework. But it can be tough to identify appropriate treatment and control groups. @alexander2018age compare migrant brothers, where one brother had most of their education in a different country, and the other brother had most of their education in the United States. Given the data that are available, this match provides a reasonable treatment and control group. But other matches could have given different results, for instance friends or cousins.
 
 We can only match based on observable variables. For instance, age-group or education. At two different times we compare smoking rates in 18-year-olds in one city with smoking rates in 18-year-olds in another city. This would be a coarse match because we know that there are many differences between 18-year-olds, even in terms of the variables that we commonly observe, say gender and education. One way to deal with this would be to create sub-groups: 18-year-old males with a high school education, etc. But then the sample sizes quickly become small. We also have the issue of how to deal with continuous variables. And is an 18-year-old really that different to a 19-year-old? Why not also compare with them?
 
-One way to proceed is to consider a nearest neighbor approach, but there can be limited concern for uncertainty with this approach. There can also be an issue with having many variables because we end up with a high-dimension graph. This leads to propensity score matching. Here we explain the process of propensity score matching and some of the concerns that are commonly brought up about it.
+One way to proceed is to consider a nearest neighbor approach, but there can be limited concern for uncertainty with this approach. There can also be an issue with having many variables because we end up with a high-dimension graph. This leads to propensity score matching. Here we explain the process of propensity score matching and a few of the concerns that are commonly brought up about it.
 
-Propensity score matching\index{propensity score matching} involves assigning some probability---the "propensity score"---to each observation. We construct that probability based on the observation's values for the independent variables, before treatment. That probability is our best guess at the probability of the observation being treated, regardless of whether it was actually treated. For instance, if 18-year-old males were treated but 19-year-old males were not, then, as there is not much difference between 18-year-old males and 19-year-old males in general, our assigned probability would be similar. We then compare the outcomes of observations with similar propensity scores.
+Propensity score matching\index{propensity score matching} involves assigning some probability---the "propensity score"---to each observation. We construct that probability based on the observation's values for the predictors without the treatment. That probability is our best guess at the probability of the observation being treated, regardless of whether it was actually treated. For instance, if 18-year-old males were treated but 19-year-old males were not, then, as there is not much difference between 18-year-old and 19-year-old males in general, our assigned probability would be similar. We then compare the outcomes of observations with similar propensity scores.
 
 One advantage of propensity score matching is that it allows us to easily consider many independent variables at once, and it can be constructed using logistic regression. To be more specific we can simulate some data. We will pretend that we work for a large online retailer. We are going to treat some individuals with free shipping to see what happens to their average purchase.\index{distribution!Normal}
 
@@ -916,28 +855,21 @@ sample_size <- 10000
 
 purchase_data <-
   tibble(
-    # simulate individual level characteristics
     unique_person_id = 1:sample_size,
-    age = sample(
-      x = 18:100,
-      size = sample_size,
-      replace = TRUE
-    ),
+    age = sample(x = 18:100, size = sample_size, replace = TRUE),
     gender = sample(
       x = c("Female", "Male", "Other/decline"),
       size = sample_size,
       replace = TRUE,
       prob = c(0.49, 0.47, 0.02)
     ),
-    income = rnorm(n = sample_size,
-                   mean = 60000,
-                   sd = 15000) |> round(0)
+    income = rnorm(n = sample_size, mean = 60000, sd = 15000) |> round(0)
   ) 
 
 purchase_data
 ```
 
-Then we need to add some probability of being treated with free shipping. We will say that it depends on our variables and that younger, higher-income, male individuals make this treatment more likely.
+Then we need to add some probability of being treated with free shipping. We will say that it depends on our predictors and that younger, higher-income, male individuals make this treatment more likely. We only know that because we simulated the situation. We would not know it if we were using actual data.
 
 ```{r}
 #| echo: true
@@ -956,13 +888,9 @@ purchase_data <-
     income_num = rank(income, ties.method = "random") %/% 3000
   ) |>
   mutate(
-    # create probability based on bounded numbered characteristics
     sum_num = age_num + gender_num + income_num,
-    softmax_prob = exp(sum_num) / exp(max(sum_num) + 0.5)
-  ) |>
-  mutate(# random draw whether free shipping
-    free_shipping = rbinom(n = sample_size, size = 1, 
-                           prob = softmax_prob),) |>
+    softmax_prob = exp(sum_num) / exp(max(sum_num) + 0.5),
+    free_shipping = rbinom(n = sample_size, size = 1, prob = softmax_prob)) |>
   select(-(age_num:softmax_prob))
 ```
 
@@ -985,19 +913,18 @@ purchase_data <-
 purchase_data
 ```
 
-Naively we can see that there is a difference in the average spend between those with free shipping and those without (@tbl-heyheybigspender). But the fundamental concern is what would have the spend have been of those with free shipping if they have not had free shipping. We use propensity score matching to "link" each observation that actually got free shipping with their most similar observation, based on the observable variables, that did not get free shipping.
+Naively we can see that there is a difference in the average spend between those with free shipping and those without (@tbl-heyheybigspender). But the fundamental concern is what would have the spend have been of those with free shipping if they have not had free shipping. @tbl-heyheybigspender shows an average comparison but not everyone had the same chance of getting free shipping. So we question the validity of that use of an average comparison.  Instead we use propensity score matching to "link" each observation that actually got free shipping with their most similar observation, based on the observable variables, that did not get free shipping.
 
 ```{r}
 #| label: tbl-heyheybigspender
 #| tbl-cap: "Difference in average spend by whether had free shipping"
 
-purchase_data |> 
-  summarise(average_spend = 
-              round(mean(spend), 2), .by = free_shipping) |> 
-  mutate(free_shipping = 
-           if_else(free_shipping == 0, "No", "Yes")) |> 
+purchase_data |>
+  summarise(average_spend = round(mean(spend), 2), .by = free_shipping) |>
+  mutate(free_shipping = if_else(free_shipping == 0, "No", "Yes")) |>
   kable(
-    col.names = c("Received free shipping?", "Average spend")
+    col.names = c("Received free shipping?", "Average spend"),
+    booktabs = TRUE, linesep = ""
   )
 ```
 
@@ -1006,6 +933,7 @@ We use `matchit()` from `MatchIt` to implement logistic regression and create ma
 
 ```{r}
 #| message: false
+#| warning: false
 
 matched_groups <- 
   matchit(
@@ -1038,22 +966,22 @@ propensity_score_regression <- lm(
 modelsummary(propensity_score_regression)
 ```
 
-In @tbl-treatedexample we find that the effect is what we simulated. That is, there is a difference of ten between the average spend of those who received free shipping and those that did not.
+In @tbl-treatedexample, which was based on only the matched sample, we find that the effect is what we simulated. That is, there is a difference of ten between the average spend of those who received free shipping and those that did not. That is in contrast to @tbl-heyheybigspender which was based on the entire sample.
 
-We cover propensity score matching because it is widely used. But there are many tradeoffs and humility and transparency are needed when it is being used [@omggreifer]. These include [@king2019propensity]:\index{propensity score matching!concerns}
+We cover propensity score matching because it is widely used. But there are tradeoffs. Transparency is needed when it is being used [@omggreifer]. These concerns include [@king2019propensity]:\index{propensity score matching!concerns}
 
-1. Unobservables. Propensity score matching cannot match on unobserved variables. This may be fine in a classroom setting, but in more realistic settings it will likely cause issues. It is very difficult to understand why individuals that appear to be so similar, would have received different treatments, unless there is something unobserved that causes the difference. As propensity score matching cannot account for these, it is difficult to know which features are actually being brought together.
+1. Unobservables. Propensity score matching cannot match on unobserved variables. This may be fine in a classroom setting, but in more realistic settings it will likely cause issues. It is difficult to understand why individuals that appear to be so similar, would have received different treatments, unless there is something unobserved that causes the difference. As propensity score matching cannot account for these, it is difficult to know which features are actually being brought together.
 2. Modeling. The results of propensity score matching tend to be specific to the model that is used. As there is considerable flexibility as to which model is used, this enables researchers to pick through matches to find one that suits. Additionally, because the two regression steps (the matching and the analysis) are conducted separately, there is no propagation of uncertainty.
 
 The fundamental problem of unobservables can never be shown to be inconsequential because that would require the unobserved data. Those who want to use propensity score matching, and other matching methods, need to be able to argue convincingly that it is appropriate. @mckenzieforthedefence presents a few cases where this is possible, for instance, when there are capacity limits. As is the common theme of this book, such cases will require focusing on the data and a deep understanding of the situation that produced it.
 
 ## Regression discontinuity design
 
-Regression discontinuity design (RDD)\index{regression discontinuity design} was established by @thistlethwaite1960regression and is a popular way to get causality when there is a continuous variable with cut-offs that determine treatment. Is there a difference between a student who gets 79 per cent and a student who gets 80 per cent? Probably not much, but one may get a A-, while the other may get a B+, and seeing that on a transcript could affect who gets a job which could affect income. In this case the percentage is a "forcing variable" or "forcing function" and the cut-off for an A- is a "threshold". As the treatment is determined by the forcing variable we need to control for that variable. And these seemingly arbitrary cut-offs can be seen all the time. Hence, there has been a great deal of work using RDD.
+Regression discontinuity design (RDD)\index{regression discontinuity design} was established by @thistlethwaite1960regression and is a popular way to get causality when there is a continuous variable with cut-offs that determine treatment. Is there a difference between a student who gets 79 per cent and a student who gets 80 per cent? Probably not much, but one may get a A-, while the other may get a B+. Seeing that on a transcript could affect who gets a job which could affect income. In this case the percentage is a "forcing variable" or "forcing function" and the cut-off for an A- is a "threshold". As the treatment is determined by the forcing variable we need to control for that variable. These seemingly arbitrary cut-offs can be seen all the time. Hence, there has been a great deal of work using RDD.
 
 There is sometimes slightly different terminology used when it comes to RDD. For instance, @Cunningham2021 refers to the forcing function as a running variable. The exact terminology that is used does not matter provided we use it consistently.  
 
-### Simulated example
+### Simulated example: income and grades
 
 To be more specific about the situation, we simulate data.\index{simulation!grades} We will consider the relationship between income and grades, and simulate there to be a change if a student gets at least 80 (@fig-rddmarks).\index{distribution!Normal}
 
@@ -1065,19 +993,19 @@ To be more specific about the situation, we simulate data.\index{simulation!grad
 
 set.seed(853)
 
-number_of_observation <- 1000
+num_observations <- 1000
 
 rdd_example_data <- tibble(
-  person = c(1:number_of_observation),
-  mark = runif(number_of_observation, min = 78, max = 82),
-  income = rnorm(number_of_observation, 10, 1)
+  person = c(1:num_observations),
+  mark = runif(num_observations, min = 78, max = 82),
+  income = rnorm(num_observations, 10, 1)
 )
 
 ## Make income more likely to be higher if mark at least 80
 rdd_example_data <-
   rdd_example_data |>
   mutate(
-    noise = rnorm(n = number_of_observation, mean = 2, sd = 1),
+    noise = rnorm(n = num_observations, mean = 2, sd = 1),
     income = if_else(mark >= 80, income + noise, income)
   )
 
@@ -1191,7 +1119,7 @@ modelsummary(
 )
 ```
 
-There are various caveats to this estimate that we will discuss, but the essentials of RDD are here. Given an appropriate set-up, and model, a RDD can compare favorably to randomized trials [@bloombellreiman2020].
+There are various caveats to this estimate that we will discuss, but the essentials of RDD are here. Given an appropriate set-up, and model, RDD can compare favorably to randomized trials [@bloombellreiman2020].
 
 We could also implement RDD using `rdrobust`. The advantage of this approach is that many common extensions are easily available. 
 
@@ -1216,16 +1144,26 @@ The key assumptions of RDD are [@Cunningham2021, p. 163]:\index{regression disco
 
 The first assumption is largely about being unable to manipulate the cut-off, and ensures that the cut-off has meaning. The second assumption enables us to be confident that people on either side of the threshold are similar, apart from just happening to just fall on either side of the threshold.
 
-When we discussed randomized control trials and A/B testing in @sec-hunt-data the randomized assignment of the treatment meant that the control and treatment groups were the same, but for the treatment. Then we moved to difference-in-differences, and we assumed that there was a common trend between the treated and control groups. We allowed that the groups could be different, but that we could "difference out" their differences. Finally, we considered matching, and we said that even if the control and treatment groups seemed quite different, we were able to match, to some extent, those who were treated with a group that were like them in all ways, apart from the fact that they were not treated.
+When we discussed randomized control trials and A/B testing in @sec-hunt-data the randomized assignment of the treatment meant that the control and treatment groups were the same, but for the treatment. Then we moved to difference-in-differences, and we assumed that there was a common trend between the treated and control groups. We allowed that the groups could be different, but that we could "difference out" their differences. Finally, we considered matching, and we said that even if the control and treatment groups seemed different, we were able to match, to some extent, those who were treated with a group that were like them in all ways, apart from the fact that they were not treated.
 
-In regression discontinuity we consider a slightly different setting. The two groups are completely different in terms of the forcing variable. They are on either side of the threshold. There is no overlap at all. But we know the threshold and believe that those on either side are essentially matched. Let us consider the 2019 NBA Eastern Conference Semifinals - Toronto and Philadelphia. Game 1: Raptors win 108-95; Game 2: 76ers win 94-89; Game 3: 76ers win 116-95; Game 4: Raptors win 101-96; Game 5: Raptors win 125-89; Game 6: 76ers win 112-101; and finally, Game 7: Raptors win 92-90, because of a ball that went in after bouncing on the rim four times. Was there really that much difference between the teams?
+In regression discontinuity we consider a slightly different setting. The two groups are completely different in terms of the forcing variable. They are on either side of the threshold. There is no overlap at all. But we know the threshold and believe that those on either side are essentially matched. Let us consider the 2019 NBA Eastern Conference Semifinals---Toronto and Philadelphia: 
+
+- Game 1: Raptors win 108-95; 
+- Game 2: 76ers win 94-89; 
+- Game 3: 76ers win 116-95; 
+- Game 4: Raptors win 101-96; 
+- Game 5: Raptors win 125-89; 
+- Game 6: 76ers win 112-101; and finally, 
+- Game 7: Raptors win 92-90, because of a ball that went in after bouncing on the rim four times. 
+
+Was there really that much difference between the teams?
 
 The continuity assumption is important, but we cannot test this as it is based on a counterfactual. Instead, we need to convince people of it. Ways to do this include: 
 
 - Using a test/train set-up.
 - Trying different specifications. We are especially concerned if results do not broadly persist with just linear or quadratic functions.
 - Considering different subsets of the data.
-- Considering different windows.
+- Considering different windows, which is the term we give to how far each side of the cutoff we examine.
 - Being clear about uncertainty intervals, especially in graphs.
 - Discuss and assuaging concerns about the possibility of omitted variables.
 
@@ -1237,13 +1175,9 @@ There are a variety of weaknesses of RDD, including:
 - The important responses are those that are close to the cut-off. This means that even if we have many A and B students, they do not help much. Hence, we need a lot of data or we may have concerns about our ability to support our claims [@green2009testing].
 - As the researcher, we have a lot of freedom to implement different options. This means that open science best practice becomes vital.
 
-To this point we have considered "sharp" RDD. That is, the threshold is strict. But, in reality, often the boundary is a little less strict. For instance, consider the drinking age. There is a legal drinking age, say 18. If we looked at the number of people who had drunk, then it is likely to increase in the few years leading up to that age. 
+To this point we have considered "sharp" RDD. That is, the threshold is strict. But, in reality, often the boundary is a little less strict. In a sharp RDD setting, if we know the value of the forcing function then we know the outcome. For instance, if a student gets a mark of 80 then we know that they got an A-, but if they got a mark of 79 then we know that they got a B+. But with fuzzy RDD it is only known with some probability. 
 
-In a sharp RDD setting, if we know the value of the forcing function then we know the outcome. For instance, if a student gets a mark of 80 then we know that they got an A-, but if they got a mark of 79 then we know that they got a B+. But with fuzzy RDD it is only known with some probability. We can say that a Canadian 19-year-old is more likely to have drunk alcohol than a Canadian 18-year-old, but the number of Canadian 18-year-olds who have drunk alcohol is not zero.
-
-It may be possible to deal with fuzzy RDD settings with appropriate choice of model or data. It may also be possible to deal with them using instrumental variables.
-
-We want as "sharp" an effect as possible, but if the thresholds are known, then they will be gamed. For instance, there is a lot of evidence that people run for certain marathon times, and we know that people aim for certain grades. Similarly, from the other side, it is a lot easier for an instructor to just give out As than it is to have to justify Bs. One way to look at this is to consider how "balanced" the sample is on either side of the threshold. We can do this using histograms with appropriate bins. For instance, think of the age-heaping that we found in the cleaned Kenyan census data in @sec-gather-data.
+We want as "sharp" an effect as possible, but if the thresholds are known, then they will be gamed. For instance, there is a lot of evidence that people run for certain marathon times, and we know that people aim for certain grades. Similarly, from the other side, it is a lot easier for an instructor to just give out As than it is to have to justify Bs. One way to look at this is to consider how "balanced" the sample is on either side of the threshold. We can do this using histograms with appropriate bins. For instance, think of the age-heaping that we found in the cleaned Kenyan census data in @sec-clean-and-prepare.
 
 Another key factor for RDD is the possible effect of the decision around the choice of model. For instance, @fig-rddissuperconcerning illustrates the difference between linear (@fig-rddissuperconcerning-1) and polynomial (@fig-rddissuperconcerning-2).\index{distribution!Normal}
 
@@ -1292,7 +1226,7 @@ RDD is a popular approach, but meta-analysis suggests that standard errors are o
 
 ### Alcohol and crime in California
 
-There are many opportunities to use regression discontinuity design.\index{regression discontinuity design!alcohol and crime} For instance, we often see it used in elections where one candidate barely wins. In US House elections between 1942 and 2008 @caugheysekhon2011 showed that there is actually considerable difference between bare winners and bare losers, and highlight that one of the advantages of regression discontinuity is the fact that the assumptions can be tested. Another common use is when there is a somewhat arbitrary cut-off. For instance, in much of the USA the legal drinking age is 21. @carpenterdobkin consider the possible effect of alcohol on crime by comparing arrests and other records of those who are either side of 21 in California. They find those who are slightly over 21 are slightly more likely to be arrested than those slightly under 21. We will revisit @carpenterdobkin in the context of crime in California.\index{United States!California}
+There are many opportunities to use regression discontinuity design.\index{regression discontinuity design!alcohol and crime} For instance, we often see it used in elections where one candidate barely wins. @caugheysekhon2011 examine US House elections between 1942 and 2008 and showed that there is considerable difference between bare winners and bare losers. They highlight that one of the advantages of regression discontinuity is the fact that the assumptions can be tested. Another common use is when there is a somewhat arbitrary cut-off. For instance, in much of the USA the legal drinking age is 21. @carpenterdobkin consider the possible effect of alcohol on crime by comparing arrests and other records of those who are either side of 21 in California. They find those who are slightly over 21 are slightly more likely to be arrested than those slightly under 21. We will revisit @carpenterdobkin in the context of crime in California.\index{United States!California}
 
 We can obtain their replication data [@carpenterdobkinreplicationdata] from [here](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/27070). @carpenterdobkin consider a large number of variables and construct a rate, and average this rate over a fortnight, but for simplicity, we will just consider numbers for a few variables: assault, aggravated assault, DUI, and traffic violations (@fig-californiaarrests).
 
@@ -1324,13 +1258,7 @@ carpenter_dobkin <-
 carpenter_dobkin_prepared <-
   carpenter_dobkin |>
   mutate(age = 21 + days_to_21 / 365) |>
-  select(
-    age,
-    assault,
-    aggravated_assault,
-    dui,
-    traffic_violations
-  ) |>
+  select(age, assault, aggravated_assault, dui, traffic_violations) |>
   pivot_longer(
     cols = c(assault, aggravated_assault, dui, traffic_violations),
     names_to = "arrested_for",
@@ -1349,10 +1277,7 @@ carpenter_dobkin_prepared |>
   ) |>
   ggplot(aes(x = age, y = number)) +
   geom_point(alpha = 0.05) +
-  facet_wrap(
-    facets = vars(arrested_for),
-    scales = "free_y"
-  ) +
+  facet_wrap(facets = vars(arrested_for), scales = "free_y") +
   theme_minimal()
 ```
 
@@ -1493,9 +1418,9 @@ As an aside, the history of instrumental variables is intriguing, and @stock2003
 
 ### Simulated example
 
-Let us generate some data.\index{simulation!instrumental variables}\index{instrumental variables!simulation} We will explore a simulation related to the canonical example of health status, smoking, and tax rates. We are looking to explain how healthy someone is based on the amount they smoke, via the tax rate on smoking. We are going to generate different tax rates by provinces. My understanding is that the tax rate on cigarettes is now pretty much the same in each of the provinces, but that this is fairly recent. We will pretend that Alberta had a low tax, and Nova Scotia had a high tax.
+Let us generate some data.\index{simulation!instrumental variables}\index{instrumental variables!simulation} We will explore a simulation related to the canonical example of health status, smoking, and tax rates. We are looking to explain how healthy someone is based on the amount they smoke, via the tax rate on smoking. We are going to generate different tax rates by provinces. The tax rate on cigarettes is now similar across the Canadian provinces but that this is fairly recent. Let us assume Alberta had a low tax, and Nova Scotia had a high tax.
 
-As a reminder, we are simulating data for illustrative purposes, so we need to impose the answer that we want. When you actually use instrumental variables you will be reversing the process.
+We are simulating data for illustrative purposes, so we need to impose the answer that we want. When you actually use instrumental variables you will be reversing the process.
 
 ```{r}
 #| warnings: false
@@ -1503,19 +1428,16 @@ As a reminder, we are simulating data for illustrative purposes, so we need to i
 
 set.seed(853)
 
-number_of_observation <- 10000
+num_observations <- 10000
 
 iv_example_data <- tibble(
-  person = c(1:number_of_observation),
-  smoker = sample(
-    x = c(0:1),
-    size = number_of_observation,
-    replace = TRUE
+  person = c(1:num_observations),
+  smoker = 
+    sample(x = c(0:1), size = num_observations, replace = TRUE)
   )
-)
 ```
 
-Now we need to relate the number of cigarettes that someone smoked to their health. We will model health status as a draw from the normal distribution, with either a high or low mean depending on whether the person smokes.\index{distribution!Normal}
+Now we need to relate the number of cigarettes that someone smoked to their health. We will model health status as a draw from the Normal distribution, with either a high or low mean depending on whether the person smokes.\index{distribution!Normal}
 
 ```{r}
 #| warnings: false
@@ -1528,7 +1450,6 @@ iv_example_data <-
     rnorm(n = n(), mean = 1, sd = 1),
     rnorm(n = n(), mean = 0, sd = 1)
   ))
-## Health to be one SD higher for people who do not or barely smoke.
 ```
 
 Now we need a relationship between cigarettes and the province (because in this illustration, the provinces have different tax rates).
@@ -1537,39 +1458,29 @@ Now we need a relationship between cigarettes and the province (because in this 
 #| warnings: false
 #| message: false
 
-iv_example_data <-
-  iv_example_data |>
-  rowwise() |>
+iv_example_data <- iv_example_data |>
   mutate(
-    province =
-      case_when(
-        smoker == 0 ~ sample(
-          x = c("Nova Scotia", "Alberta"),
-          size = 1,
-          replace = FALSE,
-          prob = c(1 / 2, 1 / 2)
-        ),
-        smoker == 1 ~ sample(
-          x = c("Nova Scotia", "Alberta"),
-          size = 1,
-          replace = FALSE,
-          prob = c(1 / 4, 3 / 4)
-        )
+    province = case_when(
+      smoker == 0 ~ sample(
+        c("Nova Scotia", "Alberta"),
+        size = n(),
+        replace = TRUE,
+        prob = c(1/2, 1/2)
+      ),
+      smoker == 1 ~ sample(
+        c("Nova Scotia", "Alberta"),
+        size = n(),
+        replace = TRUE,
+        prob = c(1/4, 3/4)
       )
-  ) |>
-  ungroup()
+    ),
+    tax = case_when(province == "Alberta" ~ 0.3, 
+                    province == "Nova Scotia" ~ 0.5,
+                    TRUE ~ 9999999
+                    )
+    )
 
-iv_example_data <-
-  iv_example_data |>
-  mutate(tax = case_when(
-    province == "Alberta" ~ 0.3,
-    province == "Nova Scotia" ~ 0.5,
-    TRUE ~ 9999999
-  ))
-
-iv_example_data$tax |> table()
-
-head(iv_example_data)
+iv_example_data
 ```
 
 Now we can look at our data. 
@@ -1606,21 +1517,6 @@ tibble(
 ```
 
 By understanding the effect of tax rates on both smoking and health, we find that if you smoke then your health is likely to be worse than if you do not smoke.
-
-Equivalently, we can think of instrumental variables in a two-stage regression context (@tbl-ivetwostage). 
-
-```{r}
-#| label: tbl-ivetwostage
-#| tbl-cap: "Instrumental variable two-stage example"
-#| warning: false
-#| message: false
-
-first_stage <- lm(smoker ~ tax, data = iv_example_data)
-health_hat <- first_stage$fitted.values
-second_stage <- lm(health ~ health_hat, data = iv_example_data)
-
-modelsummary(second_stage)
-```
 
 We can use `iv_robust()` from `estimatr` to estimate IV (@tbl-ivexamplesmoker). One nice reason for doing this is that it can help to keep everything organized and adjust the standard errors.
 
@@ -1711,7 +1607,7 @@ When considering an instrumental variable approach, you should spend considerabl
 1. *(Plan)* Consider the following scenario: *Two children will both look when an ambulance passes, but only the older one will look if a street car passes, and only the younger one will look when a bike passes.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation. Please include at least ten tests based on the simulated data.
 3. *(Acquire)* Please describe a possible source of such a dataset.
-4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
+4. *(Explore)* Please use `ggplot2` to build the graph that you sketched. Then use `rstanarm` to build a model.
 5. *(Communicate)* Please write two paragraphs about what you did.
 
 ### Questions {.unnumbered}
@@ -1721,32 +1617,28 @@ When considering an instrumental variable approach, you should spend considerabl
 3. Please go to the GitHub [page](https://github.com/the-markup/investigation-allstates-algorithm) related to @markupinsurance. Please list two points about what is good, and another two points about what could be improved.
 4. What are the fundamental features of regression discontinuity design and what are the conditions that are needed in order for regression discontinuity design to be able to be used?
 5. What are some threats to the validity of regression discontinuity design estimates?
-6. What is the key assumption in difference-in-differences
-    a. Parallel trends.
-    b. Heteroscedasticity.
-7. According to @Meng2021What "Data science can persuade via..." (pick all that apply):
+6. According to @Meng2021What "Data science can persuade via$\dots$" (pick all that apply):
     a. the careful establishment of evidence from fair-minded and high-quality data collection
     b. processing and analysis
     c. the honest interpretation and communication of findings
     d. large sample sizes
-8. According to @riedererdesignpatterns if I have "disjoint treated and untreated groups partitioned by a sharp cut-off" then which method should I use to measure the local treatment effect at the juncture between groups (pick one)?
+7. According to @riedererdesignpatterns if we have "disjoint treated and untreated groups partitioned by a sharp cut-off" then which method should we use to measure the local treatment effect at the juncture between groups (pick one)?
     a. regression discontinuity
     b. matching
     c. difference-in-differences
     d. event study methods
-9. What does causal inference require according to @riedererdesignpatterns (pick all that apply)?
+8. What does causal inference require according to @riedererdesignpatterns (pick all that apply)?
     a.  data management
     b.  domain knowledge
     c.  probabilistic reasoning
-10. Consider an Australian 30-39 year old male living in Toronto with two children and a PhD. Which of the following do you think they would match most closely with and why (please explain in a paragraph or two)?
+9. Consider an Australian 30-39 year old male living in Toronto with two children and a PhD. Which of the following do you think they would match most closely with and why (please explain in a paragraph or two)?
     a. An Australian 30-39 year old male living in Toronto with one child and a bachelors degree
     b. A Canadian 30-39 year old male living in Toronto with one child and a PhD
     c. An Australian 30-39 year old male living in Ottawa with one child and a PhD
     d. A Canadian 18-29 year old male living in Toronto with one child and a PhD
-11. What is propensity score matching? If you were matching people, then what are some of the features that you would like to match on? What sort of ethical questions does collecting and storing such information raise for you?
-12. What is a DAG (in your own words please)?
-13. Draw a DAG illustrating the collider bias described by @bronnerftw.
-14. @NoiseKahneman say "...while correlation does not imply causation, causation does imply correlation. Where there is a causal link, we should find a correlation". With reference to @Cunningham2021 [Chapter 1], are they right or wrong, and why?
+10. What is propensity score matching? If you were matching people, then what are some of the features that you would like to match on? What sort of ethical questions does collecting and storing such information raise for you? (Please write at least one paragraph for each question.)
+11. Draw a DAG illustrating the collider bias described by @bronnerftw.
+12. @NoiseKahneman say "$\dots$while correlation does not imply causation, causation does imply correlation. Where there is a causal link, we should find a correlation". With reference to @Cunningham2021 [Chapter 1], are they right or wrong, and why?
 
 ### Tutorial {.unnumbered}
 
@@ -1756,7 +1648,7 @@ You have access to individual-level data from a social media website, which cont
 
 1. While the social media website is very popular, not everyone in the population you are interested in has an account, and not everyone that has an account is active on the website. Given you are interested in economic measures, what are some possible issues with using these data to make inferences about the broader population?
 2. The data do not contain information on individual-level income. But for around 20 per cent of the sample you have information on the "census block" of the individual. By way of background, a census block contains no more than 3,000 individuals. The median income of each census block is known. As such, you decide to estimate individual-level income as follows:
-    a) Regress the median income of each census block on a series of individual level characteristics (such as age, education, marital status, gender, ...).
+    a) Regress the median income of each census block on a series of individual level characteristics (such as age, education, marital status, gender, $\dots$).
     b) Use these estimates to predict the income of individuals that do not have location information.
 Briefly discuss the advantages and disadvantages of this approach, particularly in how it could affect the study of income characteristics of friendship groups. Ensure that you address the ecological fallacy.
 3. Understandably, the social media website will not allow the unfettered distribution of individual-level data. What are some ways in which you might nonetheless enhance the reproducibility of your work?

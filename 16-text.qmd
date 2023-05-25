@@ -7,9 +7,9 @@ engine: knitr
 **Prerequisites**
 
 - Read *Text as data: An overview*, [@benoit2020text]
-  - An overview of using text as data.
-- Read *Supervised Machine Learning for Text Analysis in R*, Chapters 6 "Regression", and 7 "Classification", [@hvitfeldt2021supervised]
-  - Implements linear and generalized linear models using text as data.
+  - This chapter provides an overview of using text as data.
+- Read *Supervised Machine Learning for Text Analysis in R*, [@hvitfeldt2021supervised]
+  - Focus on Chapters 6 "Regression", and 7 "Classification", which implements linear and generalized linear models using text as data.
 - Read *The Naked Truth: How the names of 6,816 complexion products can reveal bias in beauty*, [@thenakedtruth]
   - Analysis of text on make-up products.
 
@@ -23,7 +23,7 @@ engine: knitr
 **Software and packages**
 
 - Base R [@citeR]
-- `astrologer` [@astrologer] (not on CRAN, so install with: `devtools::install_github("sharlagelfand/astrologer")`)
+- `astrologer` [@astrologer] (this package is not on CRAN, so install it with: `devtools::install_github("sharlagelfand/astrologer")`)
 - `beepr` [@beepr]
 - `fs` [@fs]
 - `gutenbergr` [@gutenbergr]
@@ -51,13 +51,13 @@ library(tidyverse)
 Text is all around us.\index{text!data} In many cases, text is the earliest type of data that we are exposed to. Increases in computational power, the development of new methods, and the enormous availability of text means that there has been a great deal of interest in using text as data. Using text as data opens up a wide opportunity for unique analyses. For instance:
 
 - text analysis of state-run newspapers in African countries can identify manipulation by governments [@Hassan2022]; 
-- the text from UK daily newspapers can be used to generate better forecasts of GDP and inflation [@Kalamara2022], and similarly, the New York Times\index{New York Times} can be used to create an uncertainty index which correlates with US economic activity [@Alexopoulos2015]; 
+- the text from UK daily newspapers can be used to generate better forecasts of GDP and inflation [@Kalamara2022], and similarly, *The New York Times*\index{text!newspapers} can be used to create an uncertainty index which correlates with US economic activity [@Alexopoulos2015]; 
 - the analysis of notes in Electronic Health Records (EHR)\index{Electronic Health Records (EHR)} can improve the efficiency of disease prediction [@jessgronsbell]; and 
 - analysis of US congressional records indicates just how often women legislators are interrupted by men [@millersutherland2022].
 
 Earlier approaches to the analysis of text tend to convert words into numbers, divorced of context.\index{text!context} They could then be analyzed using traditional approaches, such as variants of logistic regression. More recent methods try to take advantage of the structure inherent in text, which can bring additional meaning.\index{text!structure} The difference is perhaps akin to a child who can group similar colors, compared with a child who knows what objects are; although both crocodiles and trees are green, and you can do something with that knowledge, it is useful to know that a crocodile could eat you while a tree probably would not.
 
-Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with wide data, insofar as often each variable is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with one variable of words and another of the counts. Considering text as data naturally requires some abstraction from its context. But this should not be entirely separated as this can perpetuate historical inequities. For instance, @koenecke2020 find that automated speech recognition systems perform much worse for Black compared with White speakers, and @davidson2019racial find that tweets that use Black American\index{Black American!English}, which is a specifically defined technical term, are classified at hate speech at higher rates than similar tweets in Standard American English, which again is a technical term.
+Text can be considered an unwieldy, but in general similar, version of the datasets that we have used throughout this book. The main difference is that we will typically begin with wide data, insofar as often each variable is a word, or token more generally. Each entry is then often a count. We would then typically transform this into rather long data, with one variable of words and another of the counts. Considering text as data naturally requires some abstraction from its context. But this should not be entirely separated as this can perpetuate historical inequities. For instance, @koenecke2020 find that automated speech recognition systems perform much worse for Black compared with White speakers, and @davidson2019racial find that tweets that use Black American English\index{Black American!English}, which is a specifically defined technical term, are classified at hate speech at higher rates than similar tweets in Standard American English, which again is a technical term.
 
 One exciting aspect of text data is that it is typically not generated for the purposes of our analysis. The trade-off is that we typically must do a bunch more work to get it into a form that we can work with. There are a lot of decisions to be made in the data cleaning and preparation stages.\index{data cleaning}
 
@@ -98,7 +98,7 @@ bookshelf <-
 bookshelf
 ```
 
-We typically want to construct a document-feature matrix, which has documents in each observation, words in each column, and a count for each combination, along with associated metadata.\index{text!document-feature matrix} For instance, if our corpus was the text from Airbnb\index{Airbnb} reviews, then each document may be a review, and typical features could include "The", "Airbnb", "was", "great". Notice here that the sentence has been split into different words. We typically talk of "tokens" to generalize away from words, because of the variety of aspects we may be interested in, but words are commonly used.\index{text!tokens}
+We typically want to construct a document-feature matrix, which has documents in each observation, words in each column, and a count for each combination, along with associated metadata.\index{text!document-feature matrix} For instance, if our corpus was the text from Airbnb\index{Airbnb} reviews, then each document may be a review, and typical features could include: "The", "Airbnb", "was", "great". Notice here that the sentence has been split into different words. We typically talk of "tokens" to generalize away from words, because of the variety of aspects we may be interested in, but words are commonly used.\index{text!tokens}
 
 ```{r}
 books_corpus <-
@@ -112,6 +112,9 @@ books_corpus
 We use the tokens in the corpus to construct a document-feature matrix (DFM) using `dfm()` from `quanteda` [@quanteda].\index{text!document-feature matrix}
 
 ```{r}
+#| message: false
+#| warning: false
+
 books_dfm <-
   books_corpus |>
   tokens() |>
@@ -171,6 +174,9 @@ bookshelf |>
 We can integrate the removal of stop words into our construction of the DFM with `dfm_remove()` from `quanteda`.
 
 ```{r}
+#| message: false
+#| warning: false
+
 books_dfm |>
   dfm_remove(stopwords(source = "snowball"))
 ```
@@ -190,40 +196,15 @@ bookshelf |>
 
 ```{r}
 bookshelf |>
-  mutate(no_punctuation = str_replace_all(
+  mutate(no_punctuation_numbers = str_replace_all(
     string = first_sentence,
-    pattern = "[:punct:]",
+    pattern = "[:punct:]|[:digit:]",
     replacement = " "
   )) |>
-  select(no_punctuation)
-```
-
-
-```{r}
-bookshelf |>
-  mutate(
-    no_numbers = str_replace_all(
-      string = first_sentence,
-      pattern = "[:digit:]",
-      replacement = " "
-    )
-  ) |>
-  select(no_numbers)
+  select(no_punctuation_numbers)
 ```
 
 As an aside, we can remove letters, numbers, and punctuation with "[:graph:]" in `str_replace_all()`. While this is rarely needed in textbook examples, it is especially useful with real datasets, because they will typically have a small number of unexpected symbols that we need to identify and then remove. We use it to remove everything that we are used to, leaving only that which we are not.
-
-```{r}
-bookshelf |>
-  mutate(
-    let_num_punc = str_replace_all(
-      string = first_sentence,
-      pattern = "[:graph:]",
-      replacement = " "
-    )
-  ) |>
-  select(let_num_punc)
-```
 
 More generally, we can use arguments in `tokens()` from `quanteda()` to do this. 
 
@@ -239,6 +220,9 @@ Then we need to decide what to do about typos and other minor issues.\index{text
 We could fix typos in the same way that we fixed stop words, i.e. with lists of corrections. When it comes to uncommon words, we can build this into our document-feature matrix creation with `dfm_trim()`. For instance, we could use "min_termfreq = 2" to remove any word that does not occur at least twice, or "min_docfreq = 0.05" to remove any word that is not in at least five per cent of documents or "max_docfreq = 0.90" to remove any word that is in at least 90 per cent of documents.
 
 ```{r}
+#| message: false
+#| warning: false
+
 books_corpus |>
   tokens(remove_numbers = TRUE, remove_punct = TRUE) |>
   dfm(tolower = TRUE) |>
@@ -263,7 +247,7 @@ tokens(a_sentence) |>
   tokens_compound(pattern = phrase(some_places))
 ```
 
-In that case, we knew what the tuples were. But it might be that we were not sure what the common tuples were in the corpus. We could use `tokens_ngrams()` to identify them. We could ask for, say, all bi-grams in an excerpt from the book *Jane Eyre*.\index{Brontë, Charlotte!Jane Eyre} We showed how to download the text of this book from Project Gutenberg\index{Project Gutenberg} in @sec-its-just-a-generalized-linear-model and so here we load the local version that we saved earlier.
+In that case, we knew what the tuples were. But it might be that we were not sure what the common tuples were in the corpus. We could use `tokens_ngrams()` to identify them. We could ask for, say, all bi-grams in an excerpt from *Jane Eyre*.\index{Brontë, Charlotte!Jane Eyre} We showed how to download the text of this book from Project Gutenberg\index{Project Gutenberg} in @sec-its-just-a-generalized-linear-model and so here we load the local version that we saved earlier.
 
 ```{r}
 #| eval: false
@@ -318,9 +302,7 @@ jane_eyre_text <- tibble(
 
 jane_eyre_corpus <-
   corpus(jane_eyre_text, docid_field = "book", text_field = "text")
-
 ngrams <- tokens_ngrams(tokens(jane_eyre_corpus), n = 2)
-
 ngram_counts <-
   tibble(ngrams = unlist(ngrams)) |>
   count(ngrams, sort = TRUE)
@@ -349,11 +331,11 @@ While this is a common step in using text as data, @schofield2017understanding f
 
 ### Duplication
 
-Duplication is a major concern with text datasets because of their size.\index{text!duplication} For instance, @bandy2021addressing showed that around 30 per cent of the data were inappropriately duplicated in a large text dataset commonly used in computer science,\index{computer science} and @schofield2017quantifying show that this is a major concern and could substantially affect results. However, it can be a subtle and difficult to diagnose problem. For instance, in @sec-its-just-a-linear-model when we considered counts of page numbers for various authors in the context of Poisson regression, we could easily have accidentally included each Shakespeare\index{Shakespeare, William} entry twice because not only are there entries for each play, but also many anthologies that contained all of them. Careful consideration of our dataset identified the issue, but that would be difficult at scale.
+Duplication is a major concern with text datasets because of their size.\index{text!duplication} For instance, @bandy2021addressing showed that around 30 per cent of the data were inappropriately duplicated in the BookCorpus dataset,\index{computer science} and @schofield2017quantifying show that this is a major concern and could substantially affect results. However, it can be a subtle and difficult to diagnose problem. For instance, in @sec-its-just-a-generalized-linear-model when we considered counts of page numbers for various authors in the context of Poisson regression, we could easily have accidentally included each Shakespeare\index{Shakespeare, William} entry twice because not only are there entries for each play, but also many anthologies that contained all of them. Careful consideration of our dataset identified the issue, but that would be difficult at scale.
 
 ## Term Frequency-Inverse Document Frequency (TF-IDF)
 
-We now use `astrologer` [@astrologer], which is a dataset of horoscopes to explore a real dataset.\index{zodiac}\index{astrology} 
+Install and load `astrologer`, which is a dataset of horoscopes to explore a real dataset.\index{zodiac}\index{astrology} 
 
 We can then access the "horoscopes" dataset.
 
@@ -368,7 +350,7 @@ horoscopes |>
   count(zodiacsign)
 ```
 
-We can see that there are 106 horoscopes for each zodiac sign. In this example we first tokenize by word, and then create counts based on zodiac sign only, not date. We use `tidytext` because it is used extensively in @hvitfeldt2021supervised.
+There are 106 horoscopes for each zodiac sign. In this example we first tokenize by word, and then create counts based on zodiac sign only, not date. We use `tidytext` because it is used extensively in @hvitfeldt2021supervised.
 
 ```{r}
 horoscopes_by_word <-
@@ -622,6 +604,9 @@ hansard_canada_2018_corpus
 We use the tokens in the corpus to construct a document-feature matrix. To make our life a little easier, computationally, we remove any word that does not occur at least twice, and any word that does not occur in at least two documents.
 
 ```{r}
+#| message: false
+#| warning: false
+
 hansard_dfm <-
   hansard_canada_2018_corpus |>
   tokens(
@@ -713,7 +698,7 @@ labelTopics(hansard_topics)
 1. *(Plan)* Consider the following scenario: *You run a news website and are trying to understand whether to allow anonymous comments. You decide to do a A/B test, where we keep everything the same, but only allow anonymous comments on one version of the site. All you will have to decide is the text data that you obtain from the test.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation. Please include at least ten tests based on the simulated data.
 3. *(Acquire)* Please describe one possible source of such a dataset.
-4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
+4. *(Explore)* Please use `ggplot2` to build the graph that you sketched. Use `rstanarm` to build a model.
 5. *(Communicate)* Please write two paragraphs about what you did.
 
 ### Questions {.unnumbered}
