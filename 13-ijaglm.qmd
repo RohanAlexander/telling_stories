@@ -17,7 +17,8 @@ engine: knitr
 
 - Linear regression can be generalized for alternative types of dependent variables. 
 - Logistic regression can be used when we have a binary dependent variable.
-- Poisson regression can be used when we have an integer count dependent variable. A variant, negative binomial regression, is often also considered because the assumptions are less onerous. 
+- Poisson regression can be used when we have an integer count dependent variable. A variant---negative binomial regression---is often also considered because the assumptions are less onerous. 
+- Multilevel modeling is an approach that can allow us to make better use of our data.
 
 **Software and packages**
 
@@ -32,6 +33,7 @@ engine: knitr
 - `marginaleffects` [@marginaleffects]
 - `modelsummary` [@citemodelsummary]
 - `rstanarm` [@citerstanarm]
+- `tidybayes` [@citetidybayes]
 - `tidyverse` [@tidyverse]
 	
 ```{r}
@@ -48,20 +50,15 @@ library(knitr)
 library(marginaleffects)
 library(modelsummary)
 library(rstanarm)
+library(tidybayes)
 library(tidyverse)
 ```
 
 ## Introduction
 
-Linear models, covered in @sec-its-just-a-linear-model, have evolved substantially over the past century.\index{statistics!history of} Francis Galton,\index{Galton, Francis} mentioned in @sec-hunt-data, and others of his generation used linear regression in earnest in the late 1800s and early 1900s. Binary outcomes quickly became of interest and needed special treatment, leading to the development and wide adaption of logistic regression and similar methods in the mid-1900s [@cramer2002origins]. The generalized linear model framework came into being, in a formal sense, in the 1970s with @nelder1972generalized. Generalized linear models (GLMs)\index{generalized linear models} broaden the types of outcomes that are allowed. We still model outcomes as a linear function, but we are less constrained. The outcome can be anything in the exponential family, and popular choices include the logistic distribution and the Poisson distribution. A further generalization of GLMs is generalized additive models (GAMs) where we broaden the structure of the explanatory side. We still explain the dependent variable as an additive function of various bits and pieces, but those bits and pieces can be functions. This framework was proposed in the 1990s by @hastie1990generalized.
+Linear models, covered in @sec-its-just-a-linear-model, have evolved substantially over the past century.\index{statistics!history of} Francis Galton,\index{Galton, Francis} mentioned in @sec-hunt-data, and others of his generation used linear regression in earnest in the late 1800s and early 1900s. Binary outcomes quickly became of interest and needed special treatment, leading to the development and wide adaption of logistic regression and similar methods in the mid-1900s [@cramer2002origins]. The generalized linear model framework came into being, in a formal sense, in the 1970s with @nelder1972generalized. Generalized linear models (GLMs)\index{generalized linear models} broaden the types of outcomes that are allowed. We still model outcomes as a linear function, but we are less constrained. The outcome can be anything in the exponential family, and popular choices include the logistic distribution and the Poisson distribution. For the sake of a completed story but turning to approaches that are beyond the scope of this book, a further generalization of GLMs is generalized additive models (GAMs) where we broaden the structure of the explanatory side. We still explain the dependent variable as an additive function of various bits and pieces, but those bits and pieces can be functions. This framework was proposed in the 1990s by @hastie1990generalized.
 
-:::{.callout-note}
-## Shoulders of giants
-
-Dr Robert Tibshirani\index{Tibshirani, Robert} is Professor in the Departments of Statistics and Biomedical Data Science at Stanford University.\index{statistics} After earning a PhD in Statistics from Stanford University in 1981, he joined the University of Toronto as an assistant professor.\index{University of Toronto} He was promoted to full professor in 1994 and moved to Stanford in 1998. He made fundamental contributions including GAMs, mentioned above, and lasso regression, which is a way of automated variable selection. He is an author of @islr. He was awarded the COPSS Presidents' Award in 1996 and was appointed a Fellow of the Royal Society in 2019.\index{COPSS Presidents' Award}
-:::
-
-In this chapter we consider logistic, Poisson, and negative binomial regression. 
+In terms of generalized linear models, in this chapter we consider logistic, Poisson, and negative binomial regression. But we also explore a variant that is relevant to both linear models and generalized linear models: multilevel modeling. This is when we take advantage of some type of grouping that exists within our dataset.
 
 ## Logistic regression
 
@@ -69,7 +66,7 @@ Linear regression\index{regression!logistic}\index{logistic regression} is a use
 
 Logistic regression\index{logistic regression}, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable\index{binary outcome} may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it. For instance, win or lose, available or not available, support or not.
 
-The foundation of this is the Bernoulli distribution\index{distribution!Bernoulli} where there is a certain probability, $p$, of outcome "1" and the remainder, $1-p$, for outcome "0". We can use `rbinom()` with one trial to simulate data from the Bernoulli distribution.\index{simulation} 
+The foundation of this is the Bernoulli distribution\index{distribution!Bernoulli}. There is a certain probability, $p$, of outcome "1" and the remainder, $1-p$, for outcome "0". We can use `rbinom()` with one trial ("size = 1") to simulate data from the Bernoulli distribution.\index{simulation} 
 
 ```{r}
 #| message: false
@@ -196,17 +193,17 @@ week_or_weekday_predictions |>
   theme(legend.position = "bottom")
 ```
 
-The marginal effect\index{marginal effects} at each observation is of interest because it provides a sense of how this probability is changing. It enables us to say that at the mean (which in this case is if we were to see 50 cars) the probability of it being a weekday increases by almost five per cent if we were to see another car (@tbl-marginaleffectcar).
+The marginal effect\index{marginal effects} at each observation is of interest because it provides a sense of how this probability is changing. It enables us to say that at the median (which in this case is if we were to see 50 cars) the probability of it being a weekday increases by almost five per cent if we were to see another car (@tbl-marginaleffectcar).
 
 ```{r}
 #| label: tbl-marginaleffectcar
-#| tbl-cap: "Marginal effect of another car on the probability that it is a weekday, at the mean"
+#| tbl-cap: "Marginal effect of another car on the probability that it is a weekday, at the median"
 
 slopes(week_or_weekday_model, newdata = "median") |>
   select(term, estimate, std.error) |>
   kable(
     col.names = c("Term", "Estimate", "Standard error"),
-    digits = 3
+    digits = 3, booktabs = TRUE, linesep = ""
   )
 ```
 
@@ -330,9 +327,9 @@ us_political_preferences <- tibble(
   select(-support_prob, supports_biden, gender, education)
 ```
 
-For the actual data we can use the 2020 Cooperative Election Study\index{Cooperative Election Study} (CES) [@cooperativeelectionstudyus], which is a long-standing annual survey of US political opinion. In 2020, there were 61,000 respondents who completed the post-election survey. While the sampling methodology, detailed in @guidetothe2020ces [p. 13], is not a perfect random sample and relies on matching, it is a widely used and accepted approach that balances sampling concerns and cost.
+For the actual data we can use the 2020 Cooperative Election Study\index{Cooperative Election Study} (CES) [@cooperativeelectionstudyus]. This is a long-standing annual survey of US political opinion. In 2020, there were 61,000 respondents who completed the post-election survey. The sampling methodology, detailed in @guidetothe2020ces [p. 13], relies on matching and is an accepted approach that balances sampling concerns and cost.
 
-We can access the CES using `get_dataframe_by_name()` from `dataverse`. This approach was introduced in @sec-gather-data and @sec-store-and-share. We save the data that are of interest to us, and then refer to that saved dataset.
+We can access the CES using `get_dataframe_by_name()` after installing and loading `dataverse`. This approach was introduced in @sec-gather-data and @sec-store-and-share. We save the data that are of interest to us, and then refer to that saved dataset.
 
 ```{r}
 #| echo: true
@@ -522,6 +519,16 @@ saveRDS(
 ```
 
 ```{r}
+#| echo: true
+#| eval: false
+#| message: false
+#| warning: false
+
+political_preferences <-
+  readRDS(file = "political_preferences.rds")
+```
+
+```{r}
 #| eval: true
 #| include: false
 #| message: false
@@ -542,18 +549,29 @@ The results of our model are interesting. They suggest males were less likely to
 modelsummary(
   list(
     "Support Biden" = political_preferences
+  ),
+  statistic = "mad"
   )
-)
 ```
 
+It can be useful to plot the credibility intervals of these predictors (@fig-modelplotlogisticpolitical). In particular this might be something that is especially useful in an appendix.
 
+```{r}
+#| label: fig-modelplotlogisticpolitical
+#| fig-cap: "Credible intervals for predictors of support for Biden"
+
+modelplot(political_preferences, conf_level = 0.9) +
+  labs(x = "90 per cent credibility interval")
+```
 
 ## Poisson regression
 
-When we have count data we should initially think to take advantage of the Poisson distribution.\index{distribution!Poisson}\index{regression!Poisson} One fun application of Poisson regression is in modeling the outcomes of sports. For instance @Burch2023 builds a Poisson model of hockey outcomes, and their model follows @Baio2010 who build a Poisson model of football outcomes. The Poisson distribution is governed by one parameter, $\lambda$. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. As such, the Poisson distribution has the interesting feature that the mean is also the variance, and so as the mean increases, so does the variance. The Poisson probability mass function is [@pitman, p. 121]: 
+When we have count data we should initially think to take advantage of the Poisson distribution.\index{distribution!Poisson}\index{regression!Poisson} One application of Poisson regression is modeling the outcomes of sports. For instance @Burch2023 builds a Poisson model of hockey outcomes, following @Baio2010 who build a Poisson model of football outcomes. 
+
+The Poisson distribution is governed by one parameter, $\lambda$. This distributes probabilities over non-negative integers and hence governs the shape of the distribution. As such, the Poisson distribution has the interesting feature that the mean is also the variance. As the mean increases, so does the variance. The Poisson probability mass function is [@pitman, p. 121]: 
 
 $$P_{\lambda}(k) = e^{-\lambda}\lambda^k/k!\mbox{, for }k=0,1,2,...$$
-We can simulate $n=20$ draws from the Poisson distribution\index{distribution!Poisson} with `rpois()`, where $\lambda$ here is equal to three.\index{simulation}
+We can simulate $n=20$ draws from the Poisson distribution\index{distribution!Poisson} with `rpois()`, where $\lambda$ is equal to three.\index{simulation}
 
 ```{r}
 rpois(n = 20, lambda = 3)
@@ -576,19 +594,19 @@ number_of_each <- 100
 
 lambdas <- c(0, 1, 2, 4, 7, 10, 15, 25, 50)
 
-poisson_takes_shape <- map(lambdas, ~ tibble(
-  lambda = rep(.x, number_of_each),
-  draw = rpois(n = number_of_each, lambda = .x)
-)) |> list_rbind()
+poisson_takes_shape <-
+  map(lambdas, ~ tibble(lambda = rep(.x, number_of_each),
+                        draw = rpois(n = number_of_each, lambda = .x))) |> 
+  list_rbind()
 
-poisson_takes_shape <- poisson_takes_shape %>%
+poisson_takes_shape <- poisson_takes_shape |>
   mutate(lambda = paste("Lambda =", lambda),
          lambda = factor(lambda, levels = paste("Lambda =", lambdas)))
 
 ggplot(poisson_takes_shape, aes(x = draw)) +
   geom_density() +
   facet_wrap(vars(lambda), scales = "free_y") +
-  theme_minimal() +
+  theme_classic() +
   labs(x = "Integer", y = "Density")
 ```
 
@@ -615,8 +633,6 @@ count_of_A <-
       rpois(n = class_size, lambda = 20)
     )
   )
-
-count_of_A
 ```
 
 ```{r}
@@ -644,7 +660,8 @@ count_of_A |>
     fill = "Department"
   ) +
   theme_classic() +
-  scale_fill_brewer(palette = "Set1")
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
 ```
 
 Our simulated dataset has the number of As awarded by courses, which are structured within departments (@fig-simgradesdepartments). In @sec-multilevel-regression-with-post-stratification, we will take advantage of this departmental structure, but for now we just ignore it and focus on differences between departments.
@@ -755,8 +772,8 @@ slopes(grades_rstanarm) |>
   summary() |>
   select(-term) |>
   kable(
-    digits = 2,
-    col.names = c("Compare department", "Estimate", "2.5%", "97.5%")
+    col.names = c("Compare department", "Estimate", "2.5%", "97.5%"),
+    digits = 2, booktabs = TRUE, linesep = ""
   )
 ```
 
@@ -805,7 +822,7 @@ count_of_e_simulation |>
   scale_fill_brewer(palette = "Set1")
 ```
 
-We can now gather and prepare our data. We download the text of the book from Project Gutenberg using `gutenberg_download()`.\index{text!gathering}\index{Project Gutenberg}
+We can now gather and prepare our data. We download the text of the book from Project Gutenberg using `gutenberg_download()` from `gutenbergr`.\index{text!gathering}\index{Project Gutenberg}
 
 ```{r}
 #| eval: false
@@ -900,7 +917,7 @@ jane_eyre_reduced |>
   head()
 ```
 
-We can verify that the mean and variance of the number of e/Es is roughly similar by plotting all of the data (@fig-janeecounts). The mean, in pink, is 6.7, and the variance, in blue, is 6.2. While they are not entirely the same, they are similar. We include the diagonal in @fig-janeecounts-2 to help with thinking about the data. If the data were on the $y=x$ line, then on average there is one e/E per word. As it is below that point, it means that on average there is less than one per word.
+We can verify that the mean and variance of the number of e/Es is roughly similar by plotting all of the data (@fig-janeecounts). The mean, in pink, is 6.7, and the variance, in blue, is 6.2. While they are not entirely the same, they are similar. We include the diagonal in @fig-janeecounts-2 to help with thinking about the data. If the data were on the $y=x$ line, then on average there would be one e/E per word. Given the mass of points below that line expect that on average there is less than one per word.
 
 ```{r}
 #| echo: true
@@ -1026,7 +1043,7 @@ plot_predictions(jane_e_counts, condition = "word_count") +
 
 ## Negative binomial regression
 
-One of the major restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion by using a close variant, negative binomial regression\index{regression!negative binomial}. 
+One of the restrictions with Poisson regression is the assumption that the mean and the variance are the same. We can relax this assumption to allow over-dispersion by using a close variant, negative binomial regression\index{regression!negative binomial}. 
 
 Poisson and negative binomial models go hand in hand. It is often the case that we will end up fitting both, and then comparing them. For instance: 
 
@@ -1164,7 +1181,7 @@ alberta_cod <-
   mutate(cause = str_trunc(cause, 30))
 ```
 
-If we were to look at the top-ten causes in 2021, we would notice a variety of interesting aspects (@tbl-albertahuh). For instance, we would expect that the most common causes would be in all 21 years of our data. But we notice that that most common cause, "Other ill-defined and unknown causes of mortality", is only in three years. "COVID-19, virus identified", is only in two other years, as there were no known COVID deaths in Canada before 2020.
+If we were to look at the top-ten causes in 2021, we would notice a variety of interesting aspects (@tbl-albertahuh). For instance, we would expect that the most common causes would be present in all 21 years of our data. But we notice that the most common cause, "Other ill-defined and unknown causes of mortality", is only in three years. "COVID-19, virus identified", is only in two other years, as there were no known COVID deaths in Canada before 2020.
 
 ```{r}
 #| label: tbl-albertahuh
@@ -1178,15 +1195,9 @@ alberta_cod |>
   ) |>
   mutate(total_deaths = format(total_deaths, big.mark = ",")) |>
   kable(
-    col.names = c(
-      "Year",
-      "Cause",
-      "Ranking",
-      "Deaths",
-      "Years"
-    ),
-    digits = 0,
-    align = c("l", "r", "r", "r", "r")
+    col.names = c("Year", "Cause", "Ranking", "Deaths", "Years"),
+    align = c("l", "r", "r", "r", "r"),
+    digits = 0, booktabs = TRUE, linesep = ""
   )
 ```
 
@@ -1213,18 +1224,16 @@ alberta_cod <-
 #| label: fig-albertacod
 #| message: false
 #| warning: false
+#| fig-height: 8
 
 alberta_cod |>
   ggplot(aes(x = calendar_year, y = total_deaths, color = cause)) +
-  geom_line(alpha = 0.5) +
+  geom_line() +
   theme_minimal() +
   scale_color_brewer(palette = "Set1") +
-  labs(
-    x = "Year",
-    y = "Annual number of deaths in Alberta",
-    color = "Cause"
-  ) +
-  theme(legend.position = "bottom")
+  labs(x = "Year", y = "Annual number of deaths in Alberta") +
+  facet_wrap(vars(cause), dir = "v", ncol = 1) +
+  theme(legend.position = "none")
 ```
 
 One thing that we notice is that the mean, 1,273, is different to the variance, 182,378 (@tbl-ohboyalberta).
@@ -1322,7 +1331,7 @@ modelsummary(
 )
 ```
 
-We could use posterior predictive checks\index{Bayesian!posterior predictive check}, introduced in @sec-inferencewithbayesianmethods, to show that the negative binomial approach is a better choice for this circumstance (@fig-ppcheckpoissonvsbinomial).
+The estimates are similar. We could use posterior predictive checks\index{Bayesian!posterior predictive check}, introduced in @sec-inferencewithbayesianmethods, to show that the negative binomial approach is a better choice for this circumstance (@fig-ppcheckpoissonvsbinomial).
 
 ```{r}
 #| echo: true
@@ -1341,7 +1350,15 @@ pp_check(cause_of_death_alberta_neg_binomial) +
   theme(legend.position = "bottom")
 ```
 
-Finally, we can compare between the models using the resampling method leave-one-out\index{leave-one-out} (LOO) cross-validation (CV).\index{cross-validation} This is a variant of cross-validation, where the size of each fold is one. That is to say, if there was a dataset with 100 observations, this LOO is equivalent to 100-fold cross validation. We can implement this in `rstanarm` with `loo()` for each model, and then compare between them with `loo_compare()`. Strictly speaking LOO-CV is not actually done by `loo()`, because it would be too computationally intensive. Instead an approximation is done which provides the expected log point wise predictive density (ELPD), where the higher the better.
+Finally, we can compare between the models using the resampling method leave-one-out\index{leave-one-out} (LOO) cross-validation (CV).\index{cross-validation} This is a variant of cross-validation, where the size of each fold is one. That is to say, if there was a dataset with 100 observations, this LOO is equivalent to 100-fold cross validation. We can implement this in `rstanarm` with `loo()` for each model, and then compare between them with `loo_compare()` where the higher the better.^[By way of background, LOO-CV is not done by `loo()`, because it would be too computationally intensive. Instead an approximation is done which provides the expected log point wise predictive density (ELPD). The `rstanarm` vignettes provide more detail.] 
+
+::: {.content-visible when-format="pdf"}
+We provide more information on cross-validation in the ["Prediction" Online Appendix](https://tellingstorieswithdata.com/27-prediction.html).
+:::
+
+::: {.content-visible unless-format="pdf"}
+We provide more information on cross-validation in [Online Appendix -@sec-predictingpythons].
+:::
 
 ```{r}
 #| message: false
@@ -1355,7 +1372,334 @@ loo_compare(poisson, neg_binomial)
 
 In this case we find that the negative binomial model is a better fit than the Poisson, because ELPD is larger.
 
-We have covered a variety of diagnostic aspects for Bayesian models. While it is difficult to be definitive about what is "enough" because it is context specific, the following checklist would be enough for most purposes. These would go into an appendix that was mentioned and cross-referenced in the model section of a paper:
+## Multilevel modeling
+
+Multilevel modeling goes by a variety of names including "hierarchical", and "random effects".\index{multilevel modeling!definition}\index{hierarchical modeling|see {multilevel modeling}}\index{random effects|see {multilevel modeling}} While there are sometimes small differences in meaning between disciplines, in general they refer to the same or at least similar ideas. The fundamental insight of multilevel modeling is that a lot of the time our observations are not completely independent of each other, and can instead be grouped. Accounting for that grouping when we model, can provide us with some useful information. For instance, there is a difference in the earnings of professional athletes depending on whether they compete in men's or women's events. If we were interested in trying to forecast the earnings of a particular athlete, based on their competition results, then knowing which type of competition it was would enable the model to make a better forecast.
+
+:::{.callout-note}
+## Shoulders of giants
+
+Dr Fiona Steele\index{Steele, Fiona} is a Professor of Statistics at the London School of Economics (LSE). 
+After earning a PhD in Statistics from University of Southampton in 1996, she was a Lecturer at the LSE, before moving to the University of London, and the University of Bristol where she was appointed a full professor in 2008. She returned to the LSE in 2013. 
+One area of her research is multilevel modeling and applications in demography, education, family psychology, and health. For instance, @Steele2007 looks at multilevel models for longitudinal data, and @Steele2007again looks at the relationship between school resources and pupil attainment.
+She was awarded the Royal Statistical Society Guy Medal\index{Guy Medal!Bronze} in Bronze in 2008.
+:::
+
+We distinguish between three settings:\index{multilevel modeling!pooling} 1) Complete pooling, where we treat every observation as being from the same group, which is what we have been doing to this point. 2) No pooling, where we treat every group separately, which might happen if we were to run a separate regression for each group. 3) Partial pooling, where we allow group membership to have some influence. As an example, consider we are interested in the relationship between GDP and inflation for each of the countries in the world. Complete pooling would have us put all the countries into the one group; no pooling would have us run separate regressions for each continent. We will now illustrate the partial pooling approach.
+
+In general there are two ways to go about this: 1) enable varying intercepts, or 2) enable varying slopes. We consider only the first, but if the latter is of interest, then @citemcelreath and @bayesrules are the next natural steps. 
+
+Let us consider a situation in which the probability of support for a particular political party depends on their age-group, and the state that they live in.
+
+$$
+\begin{aligned}
+\mbox{Pr}(y_i=1) & = \mbox{logit}^{-1}\left(\alpha_0 + \alpha_{i}^{\mbox{age}} + \alpha_{j[i]}^{\mbox{state}} \right)\\
+\alpha_0 & \sim \mbox{Normal}(0, 3)\\
+\alpha^{\mbox{age}} & \sim \mbox{Normal}(0, 3)\\
+\alpha_{s}^{\mbox{state}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{state}}\right)\mbox{ for }s=1, 2, \dots, S\\
+\sigma_{\mbox{state}} & \sim \mbox{Exponential}(1)
+\end{aligned}
+$$
+
+where $S$ is the total number of states. We include this in the function with "(1 | state)" within `stan_glmer()` from `rstanarm` [@citerstanarm]. This term indicates that we are looking at a group effect by state, which means that the fitted model's intercept is allowed to vary according by state.\index{distribution!Normal}
+
+```{r}
+#| warning: false
+#| message: false
+
+set.seed(853)
+
+political_support <-
+  tibble(
+    state = sample(1:50, size = 1000, replace = TRUE),
+    age_group = sample(c(1, 15, 30, 45), size = 1000, replace = TRUE),
+    noise = rnorm(n = 1000, mean = 0, sd = 10) |> round(),
+    supports = if_else(state + age_group + noise > 50, 1, 0)
+  )
+
+political_support
+```
+
+```{r}
+#| eval: false
+#| echo: true
+#| message: false
+#| warning: false
+
+voter_preferences <-
+  stan_glmer(
+    supports ~ factor(age_group) + (1 | state),
+    data = political_support,
+    family = binomial(link = "logit"),
+    prior = normal(location = 0, scale = 3, autoscale = TRUE),
+    prior_intercept = 
+      normal(location = 0, scale = 3, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  voter_preferences,
+  file = "voter_preferences.rds"
+)
+```
+
+```{r}
+#| eval: false
+#| include: false
+#| message: false
+#| warning: false
+
+# INTERNAL
+saveRDS(
+  voter_preferences,
+  file = "outputs/model/voter_preferences.rds"
+)
+```
+
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+
+voter_preferences <-
+  readRDS(file = "outputs/model/voter_preferences.rds")
+```
+
+```{r}
+voter_preferences
+```
+
+It is worth trying to look for opportunities to use a multilevel model when you come to a new modeling situation, especially one where inference is the primary concern. There is often some grouping that can be taken advantage of to provide the model with more information.
+
+When we move to multilevel modeling, it is possible that some `rstanarm` models will result in a warning about "divergent transitions".\index{multilevel modeling!divergent transition} For the purposes of getting a model working for this book, if there are just a handful of warnings and the Rhat values of the coefficients are all close to one (check this with `any(summary(change_this_to_the_model_name)[, "Rhat"] > 1.1)`), then just ignore it. If there are more than a handful, and/or any of the Rhats are not close to one, then add "adapt_delta = 0.99" as an argument to `stan_glmer()` and re-run the model (keeping in mind that it will take longer to run). If that does not fix the issue, then simplify the model by removing a variable. We will see an example in @sec-multilevel-regression-with-post-stratification when we apply MRP to the 2020 US election, where the "adapt_delta" strategy fixes the issue.
+
+### Austen, Brontë, Dickens, and Shakespeare
+
+As an example of multilevel modeling, we consider data from Project Gutenberg on the length of books by four authors: Jane Austen, Charlotte Brontë, Charles Dickens, and William Shakespeare. We would expect that Austen, Brontë, and Dickens, as they wrote books, will have longer books than Shakespeare, as he wrote plays. But it is not clear what difference we should expect between the three book authors.
+
+```{r}
+#| eval: false
+#| echo: true
+authors <- c("Austen, Jane", "Dickens, Charles", 
+             "Shakespeare, William", "Brontë, Charlotte")
+
+# The document values for duplicates and letters that we do not want
+dont_get_shakespeare <-
+  c(2270, 4774, 5137, 9077, 10606, 12578, 22791, 23041, 23042, 23043, 
+    23044, 23045, 23046, 28334, 45128, 47518, 47715, 47960, 49007, 
+    49008, 49297, 50095, 50559)
+dont_get_bronte <- c(31100, 42078)
+dont_get_dickens <-
+  c(25852, 25853, 25854, 30368, 32241, 35536, 37121, 40723, 42232, 43111, 
+    43207, 46675, 47529, 47530, 47531, 47534, 47535, 49927, 50334)
+
+books <-
+  gutenberg_works(
+    author %in% authors,
+    !gutenberg_id %in% 
+      c(dont_get_shakespeare, dont_get_bronte, dont_get_dickens)
+    ) |>
+  gutenberg_download(
+    meta_fields = c("title", "author"),
+    mirror = "https://gutenberg.pglaf.org/"
+  )
+
+write_csv(books, "books-austen_bronte_dickens_shakespeare.csv")
+```
+
+```{r}
+#| eval: false
+#| echo: false
+
+# INTERNAL
+
+write_csv(books, "dont_push/books-austen_bronte_dickens_shakespeare.csv")
+```
+
+```{r}
+#| eval: false
+#| echo: false
+
+# INTERNAL
+
+books <- read_csv(
+  "dont_push/books-austen_bronte_dickens_shakespeare.csv",
+  col_types = cols(
+    gutenberg_id = col_integer(),
+    text = col_character(),
+    title = col_character(),
+    author = col_character()
+  )
+)
+```
+
+```{r}
+#| eval: false
+#| echo: true
+
+books <- read_csv(
+  "books-austen_bronte_dickens_shakespeare.csv",
+  col_types = cols(
+    gutenberg_id = col_integer(),
+    text = col_character(),
+    title = col_character(),
+    author = col_character()
+  )
+)
+```
+
+
+```{r}
+#| eval: false
+#| echo: true
+
+lines_by_author_work <-
+  books |>
+  summarise(number_of_lines = n(),
+            .by = c(author, title))
+
+lines_by_author_work
+```
+
+```{r}
+#| eval: false
+#| echo: false
+
+# INTERNAL
+
+write_csv(lines_by_author_work, "outputs/lines_by_author_work.csv")
+```
+
+```{r}
+#| eval: true
+#| echo: false
+
+lines_by_author_work <- read_csv(
+  "outputs/lines_by_author_work.csv",
+  col_types = cols(
+    author = col_character(),
+    title = col_character(),
+    number_of_lines = col_integer()
+  )
+)
+
+lines_by_author_work
+```
+
+
+```{r}
+#| echo: true
+#| eval: false
+
+author_lines_rstanarm <-
+  stan_glm(
+    number_of_lines ~ author,
+    data = lines_by_author_work,
+    family = neg_binomial_2(link = "log"),
+    prior = normal(location = 0, scale = 0.5, autoscale = TRUE),
+    prior_intercept = 
+      normal(location = 0, scale = 0.5, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  author_lines_rstanarm,
+  file = "author_lines_rstanarm.rds"
+)
+
+author_lines_rstanarm_multilevel <-
+  stan_glmer(
+    number_of_lines ~ (1 | author),
+    data = lines_by_author_work,
+    family = neg_binomial_2(link = "log"),
+    prior = normal(location = 0, scale = 0.5, autoscale = TRUE),
+    prior_intercept = 
+      normal(location = 0, scale = 0.5, autoscale = TRUE),
+    seed = 853
+  )
+
+saveRDS(
+  author_lines_rstanarm_multilevel,
+  file = "author_lines_rstanarm_multilevel.rds"
+)
+```
+
+
+```{r}
+#| echo: false
+#| eval: false
+#| message: false
+#| warning: false
+
+# INTERNAL
+saveRDS(
+  author_lines_rstanarm,
+  file = "outputs/model/author_lines_rstanarm.rds"
+)
+
+saveRDS(
+  author_lines_rstanarm_multilevel,
+  file = "outputs/model/author_lines_rstanarm_multilevel.rds"
+)
+```
+
+```{r}
+#| eval: true
+#| echo: false
+#| warning: false
+#| message: false
+
+author_lines_rstanarm <-
+  readRDS(file = "outputs/model/author_lines_rstanarm.rds")
+
+author_lines_rstanarm_multilevel <-
+  readRDS(file = "outputs/model/author_lines_rstanarm_multilevel.rds")
+```
+
+
+```{r}
+#| label: tbl-modelsummaryaustenshakes
+#| tbl-cap: "Explaining whether Austen, Brontë, Dickens, or Shakespeare wrote a book based on the number of lines"
+#| warning: false
+
+modelsummary(
+  list(
+    "Neg binomial" = author_lines_rstanarm,
+    "Multilevel neg binomial" = author_lines_rstanarm_multilevel
+  )
+)
+```
+
+@tbl-modelsummaryaustenshakes is a little empty for the multilevel model, and we often use graphs to avoid overwhelming the reader with numbers (we will see examples of this in @sec-multilevel-regression-with-post-stratification). For instance, @fig-multilevelexampleleveldistribution shows the distribution of draws for each of the four authors using `spread_draws()` from `tidybayes`.
+
+```{r}
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-multilevelexampleleveldistribution
+#| fig-cap: "Examining the distribution of draws for each of the four authors"
+
+author_lines_rstanarm_multilevel |>
+  spread_draws(`(Intercept)`, b[, group]) |>
+  mutate(condition_mean = `(Intercept)` + b) |>
+  ggplot(aes(y = group, x = condition_mean)) +
+  stat_halfeye() +
+  theme_minimal()
+```
+
+In this case, we see that we typically expect Brontë to write the longest books of the three book authors. Shakespeare, as expected, typically wrote works with the fewest lines.
+
+## Concluding remarks
+
+In this chapter we have considered generalized linear models and also introduce multilevel modeling. We built on the foundation established in @sec-its-just-a-linear-model and provided some essentials for Bayesian model building. As mentioned in @sec-its-just-a-linear-model, this is enough to get started, and hopefully you are excited to learn more. Start with the modeling books recommended in @sec-concluding-remarks.
+
+Over the course of @sec-its-just-a-linear-model and @sec-its-just-a-generalized-linear-model we have covered a variety of approaches for Bayesian models. But we have not done everything for every model. 
+
+It is difficult to be definitive about what is "enough" because it is context specific, but the following checklist, drawn from concepts introduced across Chapters -@sec-its-just-a-linear-model and -@sec-its-just-a-generalized-linear-model would be sufficient for most purposes when you are getting started. In the model section of the paper, write out the model using equations and include a few paragraphs of text explaining the equations. Then justify the model choices, and briefly detail any alternatives that you considered. Finish with a sentence explaining how the model was fit, which in this case is likely to be with `rstanarm`, and that diagnostics are available in a cross-referenced appendix. 
+
+In that appendix you should include:  
 
 - Prior predictive checks.
 - Trace plots.
@@ -1363,17 +1707,16 @@ We have covered a variety of diagnostic aspects for Bayesian models. While it is
 - Posterior distributions.
 - Posterior predictive checks.
 
-
-
+In the results section you should then include a table of the estimates, built using `modelsummary`, and talk through them, likely with the help of `marginaleffects`. It may also be useful to include a graph of your results, especially if you are using a multilevel model, with the help of `tidybayes`. The model itself should be run in a separate R script. It should be preceded by tests of class and the number of observations. It should be followed by tests of the coefficients. These should be based on simulation. You should save the model in that R script using `saveRDS()`. In the Quarto document, you should read in that model using `readRDS()`. 
 
 ## Exercises
 
 ### Scales {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: *A person is interested in the number of deaths, attributed to cancer, in Sydney. They collect data from the five largest hospitals.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+1. *(Plan)* Consider the following scenario: *A person---"Monica"---is interested in the number of deaths, attributed to cancer, in Sydney, Australia. They collect data from the five largest hospitals, for the past 20 years.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation, along with three independent variables that are associated with the number of deaths, by cause. Please include at least ten tests based on the simulated data.
 3. *(Acquire)* Please describe one possible source of such a dataset.
-4. *(Explore)* Please use `ggplot2` to build the graph that you sketched.
+4. *(Explore)* Please use `ggplot2` to build the graph that you sketched. Then use `rstanarm` to build a model.
 5. *(Communicate)* Please write two paragraphs about what you did.
 
 ### Questions {.unnumbered}
@@ -1396,16 +1739,15 @@ We have covered a variety of diagnostic aspects for Bayesian models. While it is
     a. Median.
     b. Standard deviation.
     c. Variance.
-5. Please redo the `tidymodels` example of US elections but include additional variables. Which variable did you choose, and how did the performance of the model improve?
+5. Please redo the `rstanarm` example of US elections but include additional variables. Which variable did you choose, and how did the performance of the model improve?
 6. Please create the graph of the density of the Poisson distribution when $\lambda = 75$.
 7. From @gelmanhillvehtari2020, what is the offset in Poisson regression?
 8. Redo the *Jane Eyre* example, but for "A/a".
 9. The twentieth century British statistician George Box, famously said, "[s]ince all models are wrong the scientist must be alert to what is importantly wrong. It is inappropriate to be concerned about mice when there are tigers abroad." [@Box1976, p. 792]. Discuss, with the help of examples and citations.
 
-
 ### Tutorial {.unnumbered}
 
-Please consider @maher1982modelling or @thanksleo. Build a simplified version of their model. Obtain some recent relevant data, estimate the model, and discuss your choice between Poisson and negative binomial regression.
+Please consider @maher1982modelling, @thanksleo, or @cohn2016. Build a simplified version of their model. Obtain some recent relevant data, estimate the model, and discuss your choice between logistic, Poisson, and negative binomial regression.
 
 
 ### Paper {.unnumbered}

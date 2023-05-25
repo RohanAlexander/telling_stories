@@ -18,7 +18,7 @@ engine: knitr
 **Key concepts and skills**
 
 - Running an experiment is not always possible, but we can use various approaches to nonetheless be able to speak to causality to some extent. The first step is to be clear about the relationships that we expect by building a directed acyclic graph (DAG).
-- We need to be careful of common paradoxes including Simpson's paradox and Berkson's paradox, and be aware of pitfalls from matching.
+- We need to be careful of common paradoxes including Simpson's paradox and Berkson's paradox, and be aware of both the potential and pitfalls of matching.
 - We can use difference-in-differences when we have data on both treated and untreated units at both time periods. Regression discontinuity is useful when a group is either treated or not, but the two groups are very similar apart from the treatment. And instrumental variables is an approach used to estimate causality indirectly through another variable.
 - In general, these approaches need to be used with humility and concern for weaknesses and assumptions, both those that we can test and those that we cannot.
 
@@ -87,6 +87,8 @@ digraph D {
 
 In @fig-dot-firstdag-pdf, we are saying that we think *x* causes *y*. 
 
+### Confounder
+
 We could build another DAG where the situation is less clear. To make the examples a little easier to follow, we will switch to thinking about a hypothetical relationship between income and happiness, with consideration of variables that could affect that relationship. In this first one we consider the relationship between income and happiness, along with education (@fig-dot-educationasconfounder).
 
 ```{dot}
@@ -115,6 +117,8 @@ In @fig-dot-educationasconfounder, we think income causes happiness. But we also
 
 If there are confounders, but we are still interested in causal effects, then we need to adjust for them.\index{confounder!adjust for} One way is to include them in the regression. But the validity of this requires several assumptions. In particular, @gelmanandhill [p. 169] warn that our estimate will only correspond to the average causal effect in the sample if we include all of the confounders and have the right model. Putting the second requirement to one side, and focusing only on the first, if we do not think about and observe a confounder, then it can be difficult to adjust for it. And this is an area where both domain expertise and theory can bring a lot to an analysis. 
 
+### Mediator
+
 In @fig-dot-luxuryasmediator we again consider that income causes happiness. But, if income also causes children, and children also cause happiness, then we have a situation where it would be tricky to understand the effect of income on happiness.
 
 ```{dot}
@@ -138,6 +142,8 @@ digraph D {
 ```
 
 In @fig-dot-luxuryasmediator, children is called a "mediator" and we would not adjust for it if we were interested in the effect of income on happiness. If we were to adjust for it, then some of what we are attributing to income, would be due to children.\index{Directed Acyclic Graph!mediator}
+
+### Collider
 
 Finally, in @fig-dot-residenceascollider we have yet another similar situation, where we think that income causes happiness. But this time both income and happiness also cause exercise. For instance, if you have more money, then it may be easier to exercise, but also it may be easier to exercise if you are happier.
 
@@ -264,7 +270,10 @@ When we are building models, it can be tempting to include as many independent v
 
 ## Two common paradoxes
 
-There are two situations where data can trick us that are so common that we will explicitly go through them. These are: 1) Simpson's paradox,\index{Simpson's paradox} and 2) Berkson's paradox.\index{Berkson's paradox} 
+There are two situations where data can trick us that are so common that we will explicitly go through them. These are: 
+
+1) Simpson's paradox,\index{Simpson's paradox} and 
+2) Berkson's paradox.\index{Berkson's paradox} 
 
 ### Simpson's paradox
 
@@ -313,11 +322,7 @@ both_departments |>
   ggplot(aes(x = undergrad, y = grad)) +
   geom_point(aes(color = type), alpha = 0.1) +
   geom_smooth(aes(color = type), method = "lm", formula = "y ~ x") +
-  geom_smooth(
-    method = "lm",
-    formula = "y ~ x",
-    color = "black"
-  ) +
+  geom_smooth(method = "lm", formula = "y ~ x", color = "black") +
   labs(
     x = "Undergraduate results",
     y = "Graduate results",
@@ -1044,7 +1049,7 @@ The fundamental problem of unobservables can never be shown to be inconsequentia
 
 ## Regression discontinuity design
 
-Regression discontinuity design (RDD)\index{Regression discontinuity design} was established by @thistlethwaite1960regression and is a popular way to get causality when there is a continuous variable with cut-offs that determine treatment. Is there a difference between a student who gets 79 per cent and a student who gets 80 per cent? Probably not much, but one may get a A-, while the other may get a B+, and seeing that on a transcript could affect who gets a job which could affect income. In this case the percentage is a "forcing variable" or "forcing function" and the cut-off for an A- is a "threshold". As the treatment is determined by the forcing variable we need to control for that variable. And these seemingly arbitrary cut-offs can be seen all the time. Hence, there has been a great deal of work using RDD.
+Regression discontinuity design (RDD)\index{regression discontinuity design} was established by @thistlethwaite1960regression and is a popular way to get causality when there is a continuous variable with cut-offs that determine treatment. Is there a difference between a student who gets 79 per cent and a student who gets 80 per cent? Probably not much, but one may get a A-, while the other may get a B+, and seeing that on a transcript could affect who gets a job which could affect income. In this case the percentage is a "forcing variable" or "forcing function" and the cut-off for an A- is a "threshold". As the treatment is determined by the forcing variable we need to control for that variable. And these seemingly arbitrary cut-offs can be seen all the time. Hence, there has been a great deal of work using RDD.
 
 There is sometimes slightly different terminology used when it comes to RDD. For instance, @Cunningham2021 refers to the forcing function as a running variable. The exact terminology that is used does not matter provided we use it consistently.  
 
@@ -1204,7 +1209,7 @@ rdrobust(
 
 ### Assumptions
 
-The key assumptions of RDD are [@Cunningham2021, p. 163]:\index{Regression discontinuity design (RDD)!assumptions}
+The key assumptions of RDD are [@Cunningham2021, p. 163]:\index{regression discontinuity design!assumptions}
 
 1. The cut-off is specific, fixed, and known to all.
 2. The forcing function is continuous.
