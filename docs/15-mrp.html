@@ -562,11 +562,7 @@ Shoulders of giants
 </div>
 </div>
 <p>In total, 750,148 interviews were conducted, with 345,858 unique respondents, over 30,000 of whom completed five or more polls. As may be expected, young men dominate the Xbox population: 18-to-29-year-olds comprise 65 per cent of the Xbox dataset, compared to 19 per cent in the exit poll; and men make up 93 per cent of the Xbox sample but only 47 per cent of the electorate.</p>
-<p>The details do not matter, but essentially they model how likely a respondent is to vote for Obama, given various information such as state, education, sex, etc:</p>
-<p><span class="math display">\[
-\mbox{Pr}\left(Y_i = \mbox{Obama}\right) = \mbox{logit}^{-1}\left(\alpha_0 + \alpha_{s[i]}^{\mbox{state}} + \alpha_{e[i]}^{\mbox{edu}} + \dots \right)
-\]</span></p>
-<p>Having a trained model that considers the effect of these various predictors on support for the candidates, they now post-stratify, where each of these “cell-level estimates are weighted by the proportion of the electorate in each cell and aggregated to the appropriate level (i.e., state or national).”</p>
+<p>The details do not matter, but essentially they model how likely a respondent is to vote for Obama, given various information such as state, education, sex, etc. Having a trained model that considers the effect of these various predictors on support for the candidates, they now post-stratify, where each of these “cell-level estimates are weighted by the proportion of the electorate in each cell and aggregated to the appropriate level (i.e., state or national).”</p>
 <p>They need cross-tabulated population data which counts the number of people in each combination of variables. In general, the census would have worked, or one of the other large surveys available in the US, such as the ACS, which we introduced in <a href="06-farm.html"><span>Chapter&nbsp;6</span></a>. The difficulty is that the variables need to be available on a cross-tabulated basis. As such, they use exit polls, although these are not as widely available in other countries.</p>
 <p>They make state-specific estimates by post-stratifying to the features of each state. And they similarly examine demographic-differences. Finally, they convert their estimates into electoral college estimates.</p>
 <p>In general, MRP is a good way to accomplish specific aims, but it is not without trade-offs. If we have a good quality survey, then it may be a way to speak to disaggregated aspects of it. Or if we are concerned about uncertainty then it is a good way to think about that. If we have a biased survey, then it is a great place to start, but it is not a panacea. There is plenty of scope for exciting work from a variety of approaches. For instance, from a more statistical perspective, there is a lot of work to do in terms of thinking through how survey design and modeling approaches interact and the extent to which we are underestimating uncertainty. It is also interesting to think through the implications of small samples and uncertainty in the post-stratification dataset. There is an awful lot to do in terms of thinking through what the appropriate model is to use, and how do we even evaluate what “appropriate” means here, for instance, based on <span class="citation" data-cites="si2020use">Si (<a href="99-references.html#ref-si2020use" role="doc-biblioref">2020</a>)</span>. More generally, we have little idea of the conditions under which we will have the stable preferences and relationships that are required for MRP to be accurate. A great deal of work is needed to understand how this relates to uncertainty in survey design, for instance, based on <span class="citation" data-cites="lauderdale2020model">Lauderdale et al. (<a href="99-references.html#ref-lauderdale2020model" role="doc-biblioref">2020</a>)</span> or <span class="citation" data-cites="ghitza2020voter">Ghitza and Gelman (<a href="99-references.html#ref-ghitza2020voter" role="doc-biblioref">2020</a>)</span>.</p>
@@ -780,15 +776,15 @@ Shoulders of giants
 <p><span class="math display">\[
 \begin{aligned}
 y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
-\mbox{logit}(\pi_i) &amp; = \left(\alpha_0 + \alpha_{a[i]}^{\mbox{age}} + \alpha_{n[i]}^{\mbox{nat}} \right) \\
+\mbox{logit}(\pi_i) &amp; = \beta_0 + \alpha_{a[i]}^{\mbox{age}} + \alpha_{n[i]}^{\mbox{nat}} \\
 \alpha_0 &amp; \sim \mbox{Normal}(0, 2.5)\\
-\alpha_{a}^{\mbox{age}} &amp; \sim \mbox{Normal}\left(0, \sigma_{\mbox{age}}\right)\mbox{ for }a = 1, 2, \dots, A\\
-\alpha_{n}^{\mbox{nat}} &amp; \sim \mbox{Normal}\left(0, \sigma_{\mbox{nat}}\right)\mbox{ for }n = 1, 2, \dots, N\\
+\alpha_{a}^{\mbox{age}} &amp; \sim \mbox{Normal}\left(0, \sigma^2_{\mbox{age}}\right)\mbox{ for }a = 1, 2, \dots, A\\
+\alpha_{n}^{\mbox{nat}} &amp; \sim \mbox{Normal}\left(0, \sigma^2_{\mbox{nat}}\right)\mbox{ for }n = 1, 2, \dots, N\\
 \sigma_{\mbox{age}} &amp; \sim \mbox{Exponential}(1)\\
 \sigma_{\mbox{nat}} &amp; \sim \mbox{Exponential}(1)
 \end{aligned}
 \]</span></p>
-<p>where <span class="math inline">\(y_i\)</span> is the tea preference of the respondent and <span class="math inline">\(\alpha^{\mbox{age}}\)</span> and <span class="math inline">\(\alpha^{\mbox{nat}}\)</span> are the effect of age and national origin, respectively. The <span class="math inline">\(a[i]\)</span> and <span class="math inline">\(n[i]\)</span> refer to which age-group and nationality, respectively, the respondent belongs to. <span class="math inline">\(A\)</span> and <span class="math inline">\(N\)</span> are the total number of age-groups and nationalities, respectively. We will estimate the model with <code>stan_glm()</code>.</p>
+<p>where <span class="math inline">\(y_i\)</span> is the tea preference of the respondent, <span class="math inline">\(\pi_i = \mbox{Pr}(y_i=1)\)</span>, and <span class="math inline">\(\alpha^{\mbox{age}}\)</span> and <span class="math inline">\(\alpha^{\mbox{nat}}\)</span> are the effect of age and national origin, respectively. The <span class="math inline">\(a[i]\)</span> and <span class="math inline">\(n[i]\)</span> refer to which age-group and nationality, respectively, the respondent belongs to. <span class="math inline">\(A\)</span> and <span class="math inline">\(N\)</span> are the total number of age-groups and nationalities, respectively. We will estimate the model with <code>stan_glm()</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>tea_preference_model <span class="ot">&lt;-</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stan_glmer</span>(</span>
@@ -1410,19 +1406,18 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 <p><span class="math display">\[
 \begin{aligned}
 y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
-\mbox{logit}(\pi_i) &amp; = \left(\alpha_0+ \alpha_{g[i]}^{\mbox{gender}} + \alpha_{a[i]}^{\mbox{age}} + \alpha_{s[i]}^{\mbox{state}} + \alpha_{e[i]}^{\mbox{edu}} \right) \\
-\alpha_0 &amp; \sim \mbox{Normal}(0, 2.5)\\
-\alpha_{g}^{\mbox{gender}} &amp; \sim \mbox{Normal}\left(0, \sigma_{\mbox{gender}}\right)\mbox{ for }g = 1, 2, \dots, G\\
-\alpha_{a}^{\mbox{age}} &amp; \sim \mbox{Normal}\left(0, \sigma_{\mbox{age}}\right)\mbox{ for }a = 1, 2, \dots, A\\
-\alpha_{s}^{\mbox{state}} &amp; \sim \mbox{Normal}\left(0, \sigma_{\mbox{state}}\right)\mbox{ for }s = 1, 2, \dots, S\\
-\alpha_{e}^{\mbox{edu}} &amp; \sim \mbox{Normal}\left(0, \sigma_{\mbox{edu}}\right)\mbox{ for }e = 1, 2, \dots, E\\
+\mbox{logit}(\pi_i) &amp; = \beta_0+ \alpha_{g[i]}^{\mbox{gender}} + \alpha_{a[i]}^{\mbox{age}} + \alpha_{s[i]}^{\mbox{state}} + \alpha_{e[i]}^{\mbox{edu}} \\
+\beta_0 &amp; \sim \mbox{Normal}(0, 2.5)\\
+\alpha_{g}^{\mbox{gender}} &amp; \sim \mbox{Normal}(0, 2.5)\mbox{ for }g=1, 2\\
+\alpha_{a}^{\mbox{age}} &amp; \sim \mbox{Normal}\left(0, \sigma^2_{\mbox{age}}\right)\mbox{ for }a = 1, 2, \dots, A\\
+\alpha_{s}^{\mbox{state}} &amp; \sim \mbox{Normal}\left(0, \sigma^2_{\mbox{state}}\right)\mbox{ for }s = 1, 2, \dots, S\\
+\alpha_{e}^{\mbox{edu}} &amp; \sim \mbox{Normal}\left(0, \sigma^2_{\mbox{edu}}\right)\mbox{ for }e = 1, 2, \dots, E\\
 \sigma_{\mbox{gender}} &amp; \sim \mbox{Exponential}(1)\\
-\sigma_{\mbox{age}} &amp; \sim \mbox{Exponential}(1)\\
 \sigma_{\mbox{state}} &amp; \sim \mbox{Exponential}(1)\\
 \sigma_{\mbox{edu}} &amp; \sim \mbox{Exponential}(1)
 \end{aligned}
 \]</span></p>
-<p>where <span class="math inline">\(y_i\)</span> is whether a respondent supports Biden. <span class="math inline">\(\alpha^{\mbox{gender}}\)</span>, <span class="math inline">\(\alpha^{\mbox{age}}\)</span>, <span class="math inline">\(\alpha^{\mbox{state}}\)</span>, and <span class="math inline">\(\alpha^{\mbox{edu}}\)</span> are the effect of gender, age, state, and education, respectively. The <span class="math inline">\(g[i]\)</span>, <span class="math inline">\(a[i]\)</span>, <span class="math inline">\(s[i]\)</span>, and <span class="math inline">\(e[i]\)</span> refer to which gender, age-group, state, and education level, respectively, the respondent belongs to. <span class="math inline">\(G\)</span>, <span class="math inline">\(A\)</span>, <span class="math inline">\(S\)</span>, and <span class="math inline">\(E\)</span> are the total number of genders, age-groups, states, and education levels, respectively.</p>
+<p>where <span class="math inline">\(y_i\)</span> is whether a respondent supports Biden, <span class="math inline">\(\pi_i = \mbox{Pr}(y = 1)\)</span>. <span class="math inline">\(\alpha^{\mbox{gender}}\)</span>, <span class="math inline">\(\alpha^{\mbox{age}}\)</span>, <span class="math inline">\(\alpha^{\mbox{state}}\)</span>, and <span class="math inline">\(\alpha^{\mbox{edu}}\)</span> are the effect of gender, age, state, and education, respectively. The <span class="math inline">\(g[i]\)</span>, <span class="math inline">\(a[i]\)</span>, <span class="math inline">\(s[i]\)</span>, and <span class="math inline">\(e[i]\)</span> refer to which gender, age-group, state, and education level, respectively, the respondent belongs to. <span class="math inline">\(A\)</span>, <span class="math inline">\(S\)</span>, and <span class="math inline">\(E\)</span> are the total number of age-groups, states, and education levels, respectively.</p>
 <p>After reading in the data that we cleaned earlier, following <span class="citation" data-cites="kennedygabry2020">Kennedy and Gabry (<a href="99-references.html#ref-kennedygabry2020" role="doc-biblioref">2020</a>)</span> we use <code>stan_glmer()</code> from <code>rstanarm</code> to estimate the model.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>nationscape_data <span class="ot">&lt;-</span> </span>
@@ -1431,7 +1426,7 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 <div class="cell">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>us_election_model <span class="ot">&lt;-</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stan_glmer</span>(</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    vote_biden <span class="sc">~</span> (<span class="dv">1</span><span class="sc">|</span>gender) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>age_group) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>stateicp) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>education_level),</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    vote_biden <span class="sc">~</span> gender <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>age_group) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>stateicp) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>education_level),</span>
 <span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> nationscape_data,</span>
 <span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">family =</span> <span class="fu">binomial</span>(<span class="at">link =</span> <span class="st">"logit"</span>),</span>
 <span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="fl">2.5</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
@@ -1470,23 +1465,23 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">(Intercept)</td>
-<td style="text-align: center;">0.083</td>
+<td style="text-align: center;">0.373</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">gendermale</td>
+<td style="text-align: center;">−0.542</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">Sigma[stateicp × (Intercept),(Intercept)]</td>
-<td style="text-align: center;">0.080</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Sigma[education_level × (Intercept),(Intercept)]</td>
-<td style="text-align: center;">0.037</td>
+<td style="text-align: center;">0.081</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Sigma[age_group × (Intercept),(Intercept)]</td>
-<td style="text-align: center;">0.237</td>
+<td style="text-align: left;">Sigma[education_level × (Intercept),(Intercept)]</td>
+<td style="text-align: center;">0.036</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left; box-shadow: 0px 1.5px;">Sigma[gender × (Intercept),(Intercept)]</td>
-<td style="text-align: center; box-shadow: 0px 1.5px;">0.327</td>
+<td style="text-align: left; box-shadow: 0px 1.5px;">Sigma[age_group × (Intercept),(Intercept)]</td>
+<td style="text-align: center; box-shadow: 0px 1.5px;">0.241</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Num.Obs.</td>
@@ -1498,19 +1493,19 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 </tr>
 <tr class="even">
 <td style="text-align: left;">R2 Marg.</td>
-<td style="text-align: center;">0.000</td>
+<td style="text-align: center;">0.018</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ICC</td>
-<td style="text-align: center;">0.3</td>
+<td style="text-align: center;">0.2</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Log.Lik.</td>
-<td style="text-align: center;">−3434.096</td>
+<td style="text-align: center;">−3434.075</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ELPD</td>
-<td style="text-align: center;">−3467.8</td>
+<td style="text-align: center;">−3468.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">ELPD s.e.</td>
@@ -1518,7 +1513,7 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 </tr>
 <tr class="odd">
 <td style="text-align: left;">LOOIC</td>
-<td style="text-align: center;">6935.6</td>
+<td style="text-align: center;">6936.1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">LOOIC s.e.</td>
@@ -1526,7 +1521,7 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 </tr>
 <tr class="odd">
 <td style="text-align: left;">WAIC</td>
-<td style="text-align: center;">6935.5</td>
+<td style="text-align: center;">6936.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">RMSE</td>
@@ -1539,7 +1534,7 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 
 </div>
 </div>
-<p><a href="#fig-politicsmodelresultsplots">Figure&nbsp;<span>15.2</span></a> shows the distribution of draws for age groups, education, and gender. We plot some selected states separately for reasons of space (<a href="#fig-politicsmodelresultsplotsstates">Figure&nbsp;<span>15.3</span></a>).</p>
+<p><a href="#fig-politicsmodelresultsplots">Figure&nbsp;<span>15.2</span></a> shows the distribution of draws for age groups, and education. We plot some selected states separately for reasons of space (<a href="#fig-politicsmodelresultsplotsstates">Figure&nbsp;<span>15.3</span></a>).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>us_election_model <span class="sc">|&gt;</span></span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">spread_draws</span>(<span class="st">`</span><span class="at">(Intercept)</span><span class="st">`</span>, b[, group]) <span class="sc">|&gt;</span></span>
@@ -1607,12 +1602,12 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 <pre><code># A tibble: 6 × 4
   stateicp       mean lower upper
   &lt;fct&gt;         &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-1 connecticut   0.625 0.290 0.901
-2 maine         0.537 0.210 0.849
-3 massachusetts 0.624 0.297 0.896
-4 new hampshire 0.533 0.201 0.859
-5 rhode island  0.540 0.201 0.862
-6 vermont       0.582 0.243 0.882</code></pre>
+1 connecticut   0.624 0.284 0.884
+2 maine         0.535 0.211 0.840
+3 massachusetts 0.623 0.292 0.884
+4 new hampshire 0.531 0.201 0.834
+5 rhode island  0.540 0.206 0.841
+6 vermont       0.582 0.256 0.872</code></pre>
 </div>
 </div>
 <p>And we can have a look at our estimates graphically (<a href="#fig-estimatyusamrp">Figure&nbsp;<span>15.4</span></a>).</p>

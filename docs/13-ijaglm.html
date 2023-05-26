@@ -744,7 +744,7 @@ Number of Fisher Scoring iterations: 7</code></pre>
 <p><span class="math display">\[
 \begin{aligned}
 y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
-\mbox{logit}(\pi_i) &amp; = \left(\beta_0+\beta_1 x_i\right) \\
+\mbox{logit}(\pi_i) &amp; = \beta_0+\beta_1 x_i \\
 \beta_0 &amp; \sim \mbox{Normal}(0, 2.5)\\
 \beta_1 &amp; \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
@@ -996,13 +996,13 @@ y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
 <p><span class="math display">\[
 \begin{aligned}
 y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
-\mbox{logit}(\pi_i) &amp; = \left(\beta_0+\beta_1 \times \mbox{gender}_i + \beta_2 \times \mbox{education}_i\right) \\
+\mbox{logit}(\pi_i) &amp; = \beta_0+\beta_1 \times \mbox{gender}_i + \beta_2 \times \mbox{education}_i \\
 \beta_0 &amp; \sim \mbox{Normal}(0, 2.5)\\
 \beta_1 &amp; \sim \mbox{Normal}(0, 2.5)\\
 \beta_2 &amp; \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
 \]</span></p>
-<p>where <span class="math inline">\(y_i\)</span> is the political preference of the respondent, <span class="math inline">\(\mbox{gender}_i\)</span> is the gender of the respondent, and <span class="math inline">\(\mbox{education}_i\)</span> is the education of the respondent. We could estimate the parameters using <code>stan_glm()</code>. (In the interest of run-time we will randomly sample 1,000 observations and fit the model on that, rather than the full dataset.)</p>
+<p>where <span class="math inline">\(y_i\)</span> is the political preference of the respondent and equal to 1 if Biden and 0 if Trump, <span class="math inline">\(\mbox{gender}_i\)</span> is the gender of the respondent, and <span class="math inline">\(\mbox{education}_i\)</span> is the education of the respondent. We could estimate the parameters using <code>stan_glm()</code>. Note that the model is a generally accepted short-hand. In practice <code>rstanarm</code> converts categorical variables into a series of indicator variables and there are multiple coefficients estimated. In the interest of run-time we will randomly sample 1,000 observations and fit the model on that, rather than the full dataset.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -2148,54 +2148,55 @@ Shoulders of giants
 <p>In this book we consider only the first, but you should move onto <span class="citation" data-cites="gelmanhillvehtari2020">Gelman, Hill, and Vehtari (<a href="99-references.html#ref-gelmanhillvehtari2020" role="doc-biblioref">2020</a>)</span>, <span class="citation" data-cites="citemcelreath">McElreath (<a href="99-references.html#ref-citemcelreath" role="doc-biblioref">[2015] 2020</a>)</span>, and <span class="citation" data-cites="bayesrules">Johnson, Ott, and Dogucu (<a href="99-references.html#ref-bayesrules" role="doc-biblioref">2022</a>)</span>.</p>
 <section id="simulated-example-political-support" class="level3" data-number="13.5.1">
 <h3 data-number="13.5.1" class="anchored" data-anchor-id="simulated-example-political-support"><span class="header-section-number">13.5.1</span> Simulated example: political support</h3>
-<p>Let us consider a situation in which the probability of support for a particular political party depends on an individual’s age-group, and the state that they live in.</p>
+<p>Let us consider a situation in which the probability of support for a particular political party depends on an individual’s gender, and the state that they live in.</p>
 <p><span class="math display">\[
 \begin{aligned}
-\mbox{Pr}(y_i=1) &amp; = \mbox{logit}^{-1}\left(\alpha_0 + \alpha_{i}^{\mbox{age}} + \alpha_{j[i]}^{\mbox{state}} \right)\\
-\alpha_0 &amp; \sim \mbox{Normal}(0, 3)\\
-\alpha^{\mbox{age}} &amp; \sim \mbox{Normal}(0, 3)\\
-\alpha_{s}^{\mbox{state}} &amp; \sim \mbox{Normal}\left(0, \sigma_{\mbox{state}}\right)\mbox{ for }s=1, 2, \dots, S\\
+y_i|\pi_i &amp; \sim \mbox{Bern}(\pi_i) \\
+\mbox{logit}(\pi_i) &amp; = \beta_0 + \alpha_{g[i]}^{\mbox{gender}} + \alpha_{s[i]}^{\mbox{state}} \\
+\beta_0 &amp; \sim \mbox{Normal}(0, 2.5)\\
+\alpha_{g}^{\mbox{gender}} &amp; \sim \mbox{Normal}(0, 2.5)\mbox{ for }g=1, 2\\
+\alpha_{s}^{\mbox{state}} &amp; \sim \mbox{Normal}\left(0, \sigma_{\mbox{state}}^2\right)\mbox{ for }s=1, 2, \dots, S\\
 \sigma_{\mbox{state}} &amp; \sim \mbox{Exponential}(1)
 \end{aligned}
 \]</span></p>
-<p>where <span class="math inline">\(S\)</span> is the total number of states. We include this in the function with “(1 | state)” within <code>stan_glmer()</code> from <code>rstanarm</code> <span class="citation" data-cites="citerstanarm">(<a href="99-references.html#ref-citerstanarm" role="doc-biblioref">Goodrich et al. 2023</a>)</span>. This term indicates that we are looking at a group effect by state, which means that the fitted model’s intercept is allowed to vary according by state.</p>
+<p>where <span class="math inline">\(\pi_i = \mbox{Pr}(y_i=1)\)</span>, there are two gender groups, because that is what is going to be available from the survey we will use in <a href="15-mrp.html"><span>Chapter&nbsp;15</span></a>, and <span class="math inline">\(S\)</span> is the total number of states. We include this in the function with “(1 | state)” within <code>stan_glmer()</code> from <code>rstanarm</code> <span class="citation" data-cites="citerstanarm">(<a href="99-references.html#ref-citerstanarm" role="doc-biblioref">Goodrich et al. 2023</a>)</span>. This term indicates that we are looking at a group effect by state, which means that the fitted model’s intercept is allowed to vary according by state.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">853</span>)</span>
 <span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>political_support <span class="ot">&lt;-</span></span>
 <span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
 <span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">50</span>, <span class="at">size =</span> <span class="dv">1000</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">age_group =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">15</span>, <span class="dv">30</span>, <span class="dv">45</span>), <span class="at">size =</span> <span class="dv">1000</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">gender =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">size =</span> <span class="dv">1000</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
 <span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">noise =</span> <span class="fu">rnorm</span>(<span class="at">n =</span> <span class="dv">1000</span>, <span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> <span class="dv">10</span>) <span class="sc">|&gt;</span> <span class="fu">round</span>(),</span>
-<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">supports =</span> <span class="fu">if_else</span>(state <span class="sc">+</span> age_group <span class="sc">+</span> noise <span class="sc">&gt;</span> <span class="dv">50</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">supports =</span> <span class="fu">if_else</span>(state <span class="sc">+</span> gender <span class="sc">+</span> noise <span class="sc">&gt;</span> <span class="dv">50</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
 <span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>political_support</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1,000 × 4
-   state age_group noise supports
-   &lt;int&gt;     &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;
- 1     9         1    11        0
- 2    26        30     3        1
- 3    29        45     7        1
- 4    17        15    13        0
- 5    37        45    11        1
- 6    29        45     9        1
- 7    50        45     3        1
- 8    20        15     3        0
- 9    19         1    -1        0
-10     3        15     7        0
+   state gender noise supports
+   &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;
+ 1     9      1    11        0
+ 2    26      1     3        0
+ 3    29      2     7        0
+ 4    17      2    13        0
+ 5    37      2    11        0
+ 6    29      2     9        0
+ 7    50      2     3        1
+ 8    20      2     3        0
+ 9    19      1    -1        0
+10     3      2     7        0
 # ℹ 990 more rows</code></pre>
 </div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>voter_preferences <span class="ot">&lt;-</span></span>
 <span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stan_glmer</span>(</span>
-<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>    supports <span class="sc">~</span> <span class="fu">factor</span>(age_group) <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span> state),</span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>    supports <span class="sc">~</span> gender <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span> state),</span>
 <span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> political_support,</span>
 <span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">family =</span> <span class="fu">binomial</span>(<span class="at">link =</span> <span class="st">"logit"</span>),</span>
-<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="dv">3</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior_intercept =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="dv">3</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="fl">2.5</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior_intercept =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="fl">2.5</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
 <span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">seed =</span> <span class="dv">853</span></span>
 <span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb56-10"><a href="#cb56-10" aria-hidden="true" tabindex="-1"></a></span>
@@ -2209,18 +2210,16 @@ Shoulders of giants
 <div class="cell-output cell-output-stdout">
 <pre><code>stan_glmer
  family:       binomial [logit]
- formula:      supports ~ factor(age_group) + (1 | state)
+ formula:      supports ~ gender + (1 | state)
  observations: 1000
 ------
-                    Median MAD_SD
-(Intercept)         -5.0    0.6  
-factor(age_group)15  3.1    0.5  
-factor(age_group)30  5.9    0.6  
-factor(age_group)45  8.6    0.7  
+            Median MAD_SD
+(Intercept) -4.4    0.7  
+gender       0.4    0.3  
 
 Error terms:
  Groups Name        Std.Dev.
- state  (Intercept) 3.1     
+ state  (Intercept) 2.5     
 Num. levels: state 50 
 
 ------
@@ -2304,8 +2303,8 @@ Num. levels: state 50
 <span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>    number_of_lines <span class="sc">~</span> author,</span>
 <span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> lines_by_author_work,</span>
 <span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">family =</span> <span class="fu">neg_binomial_2</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
-<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="fl">0.5</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior_intercept =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="fl">0.5</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="dv">3</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior_intercept =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="dv">3</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
 <span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">seed =</span> <span class="dv">853</span></span>
 <span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb63-10"><a href="#cb63-10" aria-hidden="true" tabindex="-1"></a></span>
@@ -2319,8 +2318,8 @@ Num. levels: state 50
 <span id="cb63-18"><a href="#cb63-18" aria-hidden="true" tabindex="-1"></a>    number_of_lines <span class="sc">~</span> (<span class="dv">1</span> <span class="sc">|</span> author),</span>
 <span id="cb63-19"><a href="#cb63-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> lines_by_author_work,</span>
 <span id="cb63-20"><a href="#cb63-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">family =</span> <span class="fu">neg_binomial_2</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
-<span id="cb63-21"><a href="#cb63-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="fl">0.5</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb63-22"><a href="#cb63-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior_intercept =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="fl">0.5</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb63-21"><a href="#cb63-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="dv">3</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb63-22"><a href="#cb63-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior_intercept =</span> <span class="fu">normal</span>(<span class="at">location =</span> <span class="dv">0</span>, <span class="at">scale =</span> <span class="dv">3</span>, <span class="at">autoscale =</span> <span class="cn">TRUE</span>),</span>
 <span id="cb63-23"><a href="#cb63-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">seed =</span> <span class="dv">853</span></span>
 <span id="cb63-24"><a href="#cb63-24" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb63-25"><a href="#cb63-25" aria-hidden="true" tabindex="-1"></a></span>
@@ -2350,42 +2349,42 @@ Num. levels: state 50
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">(Intercept)</td>
-<td style="text-align: center;">8.966</td>
-<td style="text-align: center;">0.220</td>
+<td style="text-align: center;">9.245</td>
+<td style="text-align: center;">8.980</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
-<td style="text-align: center;">(0.275)</td>
-<td style="text-align: center;">(0.486)</td>
+<td style="text-align: center;">(0.342)</td>
+<td style="text-align: center;">(0.371)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">authorBrontë, Charlotte</td>
-<td style="text-align: center;">0.727</td>
+<td style="text-align: center;">0.686</td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
-<td style="text-align: center;">(0.512)</td>
+<td style="text-align: center;">(0.576)</td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">authorDickens, Charles</td>
-<td style="text-align: center;">0.082</td>
+<td style="text-align: center;">0.019</td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
-<td style="text-align: center;">(0.288)</td>
+<td style="text-align: center;">(0.364)</td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">authorShakespeare, William</td>
-<td style="text-align: center;">−0.803</td>
+<td style="text-align: center;">−0.875</td>
 <td style="text-align: center;"></td>
 </tr>
 <tr class="even">
 <td style="text-align: left; box-shadow: 0px 1.5px;"></td>
-<td style="text-align: center; box-shadow: 0px 1.5px;">(0.289)</td>
+<td style="text-align: center; box-shadow: 0px 1.5px;">(0.361)</td>
 <td style="text-align: center; box-shadow: 0px 1.5px;"></td>
 </tr>
 <tr class="odd">
@@ -2400,38 +2399,38 @@ Num. levels: state 50
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Log.Lik.</td>
-<td style="text-align: center;">−1237.644</td>
-<td style="text-align: center;">−1234.085</td>
+<td style="text-align: center;">−1234.105</td>
+<td style="text-align: center;">−1234.124</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">ELPD</td>
-<td style="text-align: center;">−1241.0</td>
-<td style="text-align: center;">−1237.4</td>
+<td style="text-align: center;">−1237.3</td>
+<td style="text-align: center;">−1237.2</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ELPD s.e.</td>
-<td style="text-align: center;">13.8</td>
-<td style="text-align: center;">11.6</td>
+<td style="text-align: center;">11.5</td>
+<td style="text-align: center;">11.5</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">LOOIC</td>
-<td style="text-align: center;">2482.0</td>
-<td style="text-align: center;">2474.8</td>
+<td style="text-align: center;">2474.7</td>
+<td style="text-align: center;">2474.4</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">LOOIC s.e.</td>
-<td style="text-align: center;">27.7</td>
-<td style="text-align: center;">23.2</td>
+<td style="text-align: center;">23.1</td>
+<td style="text-align: center;">23.1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">WAIC</td>
-<td style="text-align: center;">2481.9</td>
-<td style="text-align: center;">2474.8</td>
+<td style="text-align: center;">2474.6</td>
+<td style="text-align: center;">2474.4</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">RMSE</td>
-<td style="text-align: center;">9117.24</td>
-<td style="text-align: center;">8953.67</td>
+<td style="text-align: center;">8954.42</td>
+<td style="text-align: center;">8984.71</td>
 </tr>
 </tbody>
 </table>

@@ -92,13 +92,7 @@ He was appointed a Fellow of the American Statistical Association in 1998 and aw
 
 In total, 750,148 interviews were conducted, with 345,858 unique respondents, over 30,000 of whom completed five or more polls. As may be expected, young men dominate the Xbox\index{Xbox paper} population: 18-to-29-year-olds comprise 65 per cent of the Xbox dataset, compared to 19 per cent in the exit poll; and men make up 93 per cent of the Xbox sample but only 47 per cent of the electorate.
 
-The details do not matter, but essentially they model how likely a respondent is to vote for Obama, given various information such as state, education, sex, etc:
-
-$$
-\mbox{Pr}\left(Y_i = \mbox{Obama}\right) = \mbox{logit}^{-1}\left(\alpha_0 + \alpha_{s[i]}^{\mbox{state}} + \alpha_{e[i]}^{\mbox{edu}} + \dots \right)
-$$
-
-Having a trained model that considers the effect of these various predictors on support for the candidates, they now post-stratify, where each of these "cell-level estimates are weighted by the proportion of the electorate in each cell and aggregated to the appropriate level (i.e., state or national)."
+The details do not matter, but essentially they model how likely a respondent is to vote for Obama, given various information such as state, education, sex, etc. Having a trained model that considers the effect of these various predictors on support for the candidates, they now post-stratify, where each of these "cell-level estimates are weighted by the proportion of the electorate in each cell and aggregated to the appropriate level (i.e., state or national)."
 
 They need cross-tabulated population data which counts the number of people in each combination of variables. In general, the census would have worked, or one of the other large surveys available in the US, such as the ACS, which we introduced in @sec-farm-data. The difficulty is that the variables need to be available on a cross-tabulated basis. As such, they use exit polls, although these are not as widely available in other countries.
 
@@ -194,16 +188,16 @@ We now train a model based on the biased survey. We explain tea preferences base
 $$
 \begin{aligned}
 y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
-\mbox{logit}(\pi_i) & = \left(\alpha_0 + \alpha_{a[i]}^{\mbox{age}} + \alpha_{n[i]}^{\mbox{nat}} \right) \\
+\mbox{logit}(\pi_i) & = \beta_0 + \alpha_{a[i]}^{\mbox{age}} + \alpha_{n[i]}^{\mbox{nat}} \\
 \alpha_0 & \sim \mbox{Normal}(0, 2.5)\\
-\alpha_{a}^{\mbox{age}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{age}}\right)\mbox{ for }a = 1, 2, \dots, A\\
-\alpha_{n}^{\mbox{nat}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{nat}}\right)\mbox{ for }n = 1, 2, \dots, N\\
+\alpha_{a}^{\mbox{age}} & \sim \mbox{Normal}\left(0, \sigma^2_{\mbox{age}}\right)\mbox{ for }a = 1, 2, \dots, A\\
+\alpha_{n}^{\mbox{nat}} & \sim \mbox{Normal}\left(0, \sigma^2_{\mbox{nat}}\right)\mbox{ for }n = 1, 2, \dots, N\\
 \sigma_{\mbox{age}} & \sim \mbox{Exponential}(1)\\
 \sigma_{\mbox{nat}} & \sim \mbox{Exponential}(1)
 \end{aligned}
 $$
 
-where $y_i$ is the tea preference of the respondent and $\alpha^{\mbox{age}}$ and $\alpha^{\mbox{nat}}$ are the effect of age and national origin, respectively. The $a[i]$ and $n[i]$ refer to which age-group and nationality, respectively, the respondent belongs to. $A$ and $N$ are the total number of age-groups and nationalities, respectively. We will estimate the model with `stan_glm()`. 
+where $y_i$ is the tea preference of the respondent, $\pi_i = \mbox{Pr}(y_i=1)$, and $\alpha^{\mbox{age}}$ and $\alpha^{\mbox{nat}}$ are the effect of age and national origin, respectively. The $a[i]$ and $n[i]$ refer to which age-group and nationality, respectively, the respondent belongs to. $A$ and $N$ are the total number of age-groups and nationalities, respectively. We will estimate the model with `stan_glm()`. 
 
 ```{r}
 #| eval: false
@@ -826,20 +820,19 @@ We are going to use logistic regression to estimate a model where the binary of 
 $$
 \begin{aligned}
 y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
-\mbox{logit}(\pi_i) & = \left(\alpha_0+ \alpha_{g[i]}^{\mbox{gender}} + \alpha_{a[i]}^{\mbox{age}} + \alpha_{s[i]}^{\mbox{state}} + \alpha_{e[i]}^{\mbox{edu}} \right) \\
-\alpha_0 & \sim \mbox{Normal}(0, 2.5)\\
-\alpha_{g}^{\mbox{gender}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{gender}}\right)\mbox{ for }g = 1, 2, \dots, G\\
-\alpha_{a}^{\mbox{age}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{age}}\right)\mbox{ for }a = 1, 2, \dots, A\\
-\alpha_{s}^{\mbox{state}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{state}}\right)\mbox{ for }s = 1, 2, \dots, S\\
-\alpha_{e}^{\mbox{edu}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{edu}}\right)\mbox{ for }e = 1, 2, \dots, E\\
+\mbox{logit}(\pi_i) & = \beta_0+ \alpha_{g[i]}^{\mbox{gender}} + \alpha_{a[i]}^{\mbox{age}} + \alpha_{s[i]}^{\mbox{state}} + \alpha_{e[i]}^{\mbox{edu}} \\
+\beta_0 & \sim \mbox{Normal}(0, 2.5)\\
+\alpha_{g}^{\mbox{gender}} & \sim \mbox{Normal}(0, 2.5)\mbox{ for }g=1, 2\\
+\alpha_{a}^{\mbox{age}} & \sim \mbox{Normal}\left(0, \sigma^2_{\mbox{age}}\right)\mbox{ for }a = 1, 2, \dots, A\\
+\alpha_{s}^{\mbox{state}} & \sim \mbox{Normal}\left(0, \sigma^2_{\mbox{state}}\right)\mbox{ for }s = 1, 2, \dots, S\\
+\alpha_{e}^{\mbox{edu}} & \sim \mbox{Normal}\left(0, \sigma^2_{\mbox{edu}}\right)\mbox{ for }e = 1, 2, \dots, E\\
 \sigma_{\mbox{gender}} & \sim \mbox{Exponential}(1)\\
-\sigma_{\mbox{age}} & \sim \mbox{Exponential}(1)\\
 \sigma_{\mbox{state}} & \sim \mbox{Exponential}(1)\\
 \sigma_{\mbox{edu}} & \sim \mbox{Exponential}(1)
 \end{aligned}
 $$
 
-where $y_i$ is whether a respondent supports Biden. $\alpha^{\mbox{gender}}$, $\alpha^{\mbox{age}}$, $\alpha^{\mbox{state}}$, and $\alpha^{\mbox{edu}}$ are the effect of gender, age, state, and education, respectively. The $g[i]$, $a[i]$, $s[i]$, and $e[i]$ refer to which gender, age-group, state, and education level, respectively, the respondent belongs to. $G$, $A$, $S$, and $E$ are the total number of genders, age-groups, states, and education levels, respectively. 
+where $y_i$ is whether a respondent supports Biden, $\pi_i = \mbox{Pr}(y = 1)$. $\alpha^{\mbox{gender}}$, $\alpha^{\mbox{age}}$, $\alpha^{\mbox{state}}$, and $\alpha^{\mbox{edu}}$ are the effect of gender, age, state, and education, respectively. The $g[i]$, $a[i]$, $s[i]$, and $e[i]$ refer to which gender, age-group, state, and education level, respectively, the respondent belongs to. $A$, $S$, and $E$ are the total number of age-groups, states, and education levels, respectively. 
 
 After reading in the data that we cleaned earlier, following @kennedygabry2020 we use `stan_glmer()` from `rstanarm` to estimate the model.
 
@@ -866,7 +859,7 @@ nationscape_data <-
 
 us_election_model <-
   stan_glmer(
-    vote_biden ~ (1|gender) + (1|age_group) + (1|stateicp) + (1|education_level),
+    vote_biden ~ gender + (1|age_group) + (1|stateicp) + (1|education_level),
     data = nationscape_data,
     family = binomial(link = "logit"),
     prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
@@ -930,7 +923,7 @@ modelsummary(
 )
 ```
 
-@fig-politicsmodelresultsplots shows the distribution of draws for age groups, education, and gender. We plot some selected states separately for reasons of space (@fig-politicsmodelresultsplotsstates).
+@fig-politicsmodelresultsplots shows the distribution of draws for age groups, and education. We plot some selected states separately for reasons of space (@fig-politicsmodelresultsplotsstates).
 
 ```{r}
 #| echo: true

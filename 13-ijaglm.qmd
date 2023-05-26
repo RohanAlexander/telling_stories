@@ -227,7 +227,7 @@ To more thoroughly examine the situation we might want to build a Bayesian model
 $$
 \begin{aligned}
 y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
-\mbox{logit}(\pi_i) & = \left(\beta_0+\beta_1 x_i\right) \\
+\mbox{logit}(\pi_i) & = \beta_0+\beta_1 x_i \\
 \beta_0 & \sim \mbox{Normal}(0, 2.5)\\
 \beta_1 & \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
@@ -483,14 +483,14 @@ The model that we are interested in is:
 $$
 \begin{aligned}
 y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
-\mbox{logit}(\pi_i) & = \left(\beta_0+\beta_1 \times \mbox{gender}_i + \beta_2 \times \mbox{education}_i\right) \\
+\mbox{logit}(\pi_i) & = \beta_0+\beta_1 \times \mbox{gender}_i + \beta_2 \times \mbox{education}_i \\
 \beta_0 & \sim \mbox{Normal}(0, 2.5)\\
 \beta_1 & \sim \mbox{Normal}(0, 2.5)\\
 \beta_2 & \sim \mbox{Normal}(0, 2.5)
 \end{aligned}
 $$
 
-where $y_i$ is the political preference of the respondent, $\mbox{gender}_i$ is the gender of the respondent, and $\mbox{education}_i$ is the education of the respondent. We could estimate the parameters using `stan_glm()`. (In the interest of run-time we will randomly sample 1,000 observations and fit the model on that, rather than the full dataset.)
+where $y_i$ is the political preference of the respondent and equal to 1 if Biden and 0 if Trump, $\mbox{gender}_i$ is the gender of the respondent, and $\mbox{education}_i$ is the education of the respondent. We could estimate the parameters using `stan_glm()`. Note that the model is a generally accepted short-hand. In practice `rstanarm` converts categorical variables into a series of indicator variables and there are multiple coefficients estimated. In the interest of run-time we will randomly sample 1,000 observations and fit the model on that, rather than the full dataset.
 
 ```{r}
 #| eval: false
@@ -1417,19 +1417,20 @@ In this book we consider only the first, but you should move onto @gelmanhillveh
 
 ### Simulated example: political support
 
-Let us consider a situation in which the probability of support for a particular political party depends on an individual's age-group, and the state that they live in.
+Let us consider a situation in which the probability of support for a particular political party depends on an individual's gender, and the state that they live in.
 
 $$
 \begin{aligned}
-\mbox{Pr}(y_i=1) & = \mbox{logit}^{-1}\left(\alpha_0 + \alpha_{i}^{\mbox{age}} + \alpha_{j[i]}^{\mbox{state}} \right)\\
-\alpha_0 & \sim \mbox{Normal}(0, 3)\\
-\alpha^{\mbox{age}} & \sim \mbox{Normal}(0, 3)\\
-\alpha_{s}^{\mbox{state}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{state}}\right)\mbox{ for }s=1, 2, \dots, S\\
+y_i|\pi_i & \sim \mbox{Bern}(\pi_i) \\
+\mbox{logit}(\pi_i) & = \beta_0 + \alpha_{g[i]}^{\mbox{gender}} + \alpha_{s[i]}^{\mbox{state}} \\
+\beta_0 & \sim \mbox{Normal}(0, 2.5)\\
+\alpha_{g}^{\mbox{gender}} & \sim \mbox{Normal}(0, 2.5)\mbox{ for }g=1, 2\\
+\alpha_{s}^{\mbox{state}} & \sim \mbox{Normal}\left(0, \sigma_{\mbox{state}}^2\right)\mbox{ for }s=1, 2, \dots, S\\
 \sigma_{\mbox{state}} & \sim \mbox{Exponential}(1)
 \end{aligned}
 $$
 
-where $S$ is the total number of states. We include this in the function with "(1 | state)" within `stan_glmer()` from `rstanarm` [@citerstanarm]. This term indicates that we are looking at a group effect by state, which means that the fitted model's intercept is allowed to vary according by state.\index{distribution!Normal}
+where $\pi_i = \mbox{Pr}(y_i=1)$, there are two gender groups, because that is what is going to be available from the survey we will use in @sec-multilevel-regression-with-post-stratification, and $S$ is the total number of states. We include this in the function with "(1 | state)" within `stan_glmer()` from `rstanarm` [@citerstanarm]. This term indicates that we are looking at a group effect by state, which means that the fitted model's intercept is allowed to vary according by state.\index{distribution!Normal}
 
 ```{r}
 #| warning: false
@@ -1440,9 +1441,9 @@ set.seed(853)
 political_support <-
   tibble(
     state = sample(1:50, size = 1000, replace = TRUE),
-    age_group = sample(c(1, 15, 30, 45), size = 1000, replace = TRUE),
+    gender = sample(c(1, 2), size = 1000, replace = TRUE),
     noise = rnorm(n = 1000, mean = 0, sd = 10) |> round(),
-    supports = if_else(state + age_group + noise > 50, 1, 0)
+    supports = if_else(state + gender + noise > 50, 1, 0)
   )
 
 political_support
@@ -1456,11 +1457,11 @@ political_support
 
 voter_preferences <-
   stan_glmer(
-    supports ~ factor(age_group) + (1 | state),
+    supports ~ gender + (1 | state),
     data = political_support,
     family = binomial(link = "logit"),
-    prior = normal(location = 0, scale = 3, autoscale = TRUE),
-    prior_intercept = normal(location = 0, scale = 3, autoscale = TRUE),
+    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -1624,8 +1625,8 @@ author_lines_rstanarm <-
     number_of_lines ~ author,
     data = lines_by_author_work,
     family = neg_binomial_2(link = "log"),
-    prior = normal(location = 0, scale = 0.5, autoscale = TRUE),
-    prior_intercept = normal(location = 0, scale = 0.5, autoscale = TRUE),
+    prior = normal(location = 0, scale = 3, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 3, autoscale = TRUE),
     seed = 853
   )
 
@@ -1639,8 +1640,8 @@ author_lines_rstanarm_multilevel <-
     number_of_lines ~ (1 | author),
     data = lines_by_author_work,
     family = neg_binomial_2(link = "log"),
-    prior = normal(location = 0, scale = 0.5, autoscale = TRUE),
-    prior_intercept = normal(location = 0, scale = 0.5, autoscale = TRUE),
+    prior = normal(location = 0, scale = 3, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 3, autoscale = TRUE),
     seed = 853
   )
 
