@@ -105,8 +105,7 @@ In this case study we will use an [API provided by arXiv](https://arxiv.org/help
 #| message: false
 #| warning: false
 
-arxiv <-
-  GET("http://export.arxiv.org/api/query?id_list=2111.09299")
+arxiv <- GET("http://export.arxiv.org/api/query?id_list=2111.09299")
 
 status_code(arxiv)
 ```
@@ -180,9 +179,7 @@ To consider another example, each day, NASA\index{NASA} provides the Astronomy P
 
 ```{r}
 NASA_APOD_20190719 <-
-  GET(
-"https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&date=2019-07-19"
-)
+  GET("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&date=2019-07-19")
 ```
 
 Examining the returned data using `content()`, we can see that we are provided with various fields, such as date, title, explanation, and a URL. 
@@ -523,7 +520,7 @@ Then we can bring them together and make the graph (@fig-swiftyvsnationalvsradio
 #| label: fig-swiftyvsnationalvsradiohead
 #| message: false
 #| warning: false
-#| fig-height: 8
+#| fig-height: 6
 
 rbind(taylor_swift, the_national, radiohead) |>
   select(artist_name, album_release_date, valence) |>
@@ -561,10 +558,10 @@ Privacy often trumps reproducibility.\index{ethics!privacy vs reproducibility} T
 
 Police violence is particularly concerning because of the need for trust between the police and society.\index{police violence!measurement of} Without good data it is difficult to hold police departments accountable, or know whether there is an issue, but getting data is difficult [@bronnerpolicenordata]. The fundamental problem is that there is no way to easily simplify an encounter that results in violence into a dataset. Two popular datasets draw on web scraping: 
 
-1) "Mapping Police Violence";\index{police violence!Mapping Police Violence} and 
-2) "Fatal Force Database".\index{police violence!Fatal Force Database} 
+1) "Mapping Police Violence"; and 
+2) "Fatal Force Database".
 
-@Bor2018 use "Mapping Police Violence" to examine police killings of Black Americans, especially when unarmed, and find a substantial effect on the mental health of Black Americans. Responses to the paper, such as @Nix2020, have special concern with the coding of the dataset, and after re-coding draw different conclusions. An example of a coding difference is the unanswerable question, because it depends on context and usage, of whether to code an individual who was killed with a toy firearm as "armed" or "unarmed". We may want a separate category, but some simplification is necessary for the construction of a quantitative dataset. The Washington Post\index{The Washington Post} writes many articles using the "Fatal Force Database" [@washpostfatalforce]. @washpostfatalforcemethods describes their methodology and the challenges of standardization. @Comer2022 compare the datasets and find similarities, but document ways in which the datasets are different. 
+@Bor2018 use "Mapping Police Violence" to examine police killings of Black Americans, especially when unarmed, and find a substantial effect on the mental health of Black Americans. Responses to the paper, such as @Nix2020, have special concern with the coding of the dataset, and after re-coding draw different conclusions. An example of a coding difference is the unanswerable question, because it depends on context and usage, of whether to code an individual who was killed with a toy firearm as "armed" or "unarmed". We may want a separate category, but some simplification is necessary for the construction of a quantitative dataset. *The Washington Post* writes many articles using the "Fatal Force Database" [@washpostfatalforce]. @washpostfatalforcemethods describes their methodology and the challenges of standardization. @Comer2022 compare the datasets and find similarities, but document ways in which the datasets are different. 
 :::
 
 Web scraping is an invaluable source of data. But they are typically datasets that can be created as a by-product of someone trying to achieve another aim. And web scraping imposes a cost on the website host, and so we should reduce this to the extent possible. For instance, a retailer may have a website with their products and their prices. That has not been created deliberately as a source of data, but we can scrape it to create a dataset. The following principles may be useful to guide web scraping.\index{web scraping!principles}
@@ -579,7 +576,7 @@ Web scraping is an invaluable source of data. But they are typically datasets th
 6. Do not republish the pages that were scraped (this contrasts with datasets that you create from it).
 7. Take ownership and ask permission if possible. At a minimum all scripts should have contact details in them. Depending on the circumstances, it may be worthwhile asking for permission before you scrape.
 
-### HTML/CSS
+### HTML/CSS essentials
 
 Web scraping is possible by taking advantage of the underlying structure of a webpage. We use patterns in the HTML/CSS to get the data that we want.\index{HTML!web scraping} To look at the underlying HTML/CSS we can either: 
 
@@ -752,10 +749,7 @@ We now need to clean the data. First we want to separate the title and the autho
 all_books <-
   all_books |>
   mutate(books = str_squish(books)) |>
-  separate(books, 
-           into = c("author", "title"), 
-           sep = "\\, [[:digit:]]{4}\\, "
-           )
+  separate(books, into = c("author", "title"), sep = "\\, [[:digit:]]{4}\\, ")
 
 head(all_books)
 ```
@@ -832,22 +826,6 @@ raw_data <-
 write_html(raw_data, "inputs/wiki/pms.html") # Note that we save the file as a HTML file.
 ```
 
-::: {.content-visible when-format="pdf"}
-```{r} 
-#| echo: true
-#| eval: false
-#| include: true
-
-raw_data <-
-  read_html(
-    paste0("https://en.wikipedia.org/wiki/",
-    "List_of_prime_ministers_of_the_United_Kingdom")
-  )
-write_html(raw_data, "pms.html")
-```
-:::
-
-::: {.content-visible unless-format="pdf"}
 ```{r} 
 #| echo: true
 #| eval: false
@@ -859,7 +837,6 @@ raw_data <-
   )
 write_html(raw_data, "pms.html")
 ```
-:::
 
 As with the earlier case study, we are looking for patterns in the HTML that we can use to help us get closer to the data that we want. This is an iterative process and requires a lot of trial and error. Even simple examples will take time. 
 
@@ -872,7 +849,6 @@ One tool that may help is the [SelectorGadget](https://rvest.tidyverse.org/artic
 #| eval: false
 #| include: true
 
-# Read in our saved data
 raw_data <- read_html("pms.html")
 ```
 
@@ -889,7 +865,6 @@ raw_data
 #| eval: true
 #| include: true
 
-# We can parse tags in order
 parse_data_selector_gadget <-
   raw_data |>
   html_element(".wikitable") |>
@@ -943,10 +918,9 @@ Finally, we need to clean up the columns.
 cleaned_data <-
   initial_clean |>
   separate(date, into = c("birth", "died"), 
-           sep = "–") |>   # PMs who have died have their 
-  # birth and death years separated by a hyphen, but we 
-  # need to be careful with the hyphen as it seems to be 
-  # a slightly odd type of hyphen and we need to copy/paste it.
+           sep = "–") |>   # PMs who have died have their birth and death years 
+  # separated by a hyphen, but we need to be careful with the hyphen as it seems 
+  # to be a slightly odd type of hyphen and we need to copy/paste it.
   mutate(
     born = str_remove_all(born, "born[[:space:]]"),
     birth = if_else(!is.na(born), born, birth)
@@ -955,7 +929,7 @@ cleaned_data <-
   rename(born = birth) |> 
   mutate(across(c(born, died), as.integer)) |> 
   mutate(Age_at_Death = died - born) |> 
-  distinct()                # Some of the PMs had two goes at it.
+  distinct() # Some of the PMs had two goes at it.
 
 head(cleaned_data)
 ```
@@ -971,8 +945,7 @@ Our dataset looks similar to the one that we said we wanted at the start (@tbl-c
 cleaned_data |>
   head() |>
   kable(
-    col.names = 
-      c("Prime Minister", "Birth year", "Death year", "Age at death")
+    col.names = c("Prime Minister", "Birth year", "Death year", "Age at death")
     )
 ```
 
@@ -991,26 +964,20 @@ cleaned_data |>
     died = if_else(is.na(died), as.integer(2023), died)
   ) |>
   mutate(name = as_factor(name)) |>
-  ggplot(aes(
-    x = born,
-    xend = died,
-    y = name,
-    yend = name,
-    color = still_alive
-  )) +
+  ggplot(
+    aes(x = born, xend = died, y = name, yend = name, color = still_alive)
+    ) +
   geom_segment() +
   labs(
-    x = "Year of birth",
-    y = "Prime minister",
-    color = "PM is currently alive"
-  ) +
+    x = "Year of birth", y = "Prime minister", color = "PM is currently alive"
+    ) +
   theme_minimal() +
   scale_color_brewer(palette = "Set1") +
   theme(legend.position = "bottom")
 ```
 
 
-### Downloading multiple files
+### Iteration
 
 Considering text as data is exciting and opens a lot of different research questions.\index{text!gathering} We will draw on it in @sec-text-as-data. Many guides assume that we already have a nicely formatted text dataset, but that is rarely actually the case. In this case study we will download files from a few different pages. While we have already seen two examples of web scraping, those were focused on just one page, whereas we often need many. Here we will focus on this iteration. We will use `download.file()` to do the download, and use `purrr` to apply this function across multiple sites.\index{web scraping!multiple files} You do not need to install or load that package because it is part of the core `tidyverse` so it is loaded when you load the `tidyverse`.
 
@@ -1219,7 +1186,7 @@ jane_eyre <-
 jane_eyre
 ```
 
-### United States Total Fertility Rate
+### Total Fertility Rate in the United States
 
 The United States Department of Health and Human Services Vital Statistics Report provides information about the Total Fertility Rate (TFR) for each state. The average number of births per woman if women experience the current age-specific fertility rates throughout their reproductive years.\index{United States!Vital Statistics Report}\index{United States!Total Fertility Rate} The data are available in PDFs. We can use the approaches above to get the data into a dataset.
 
@@ -1460,7 +1427,7 @@ dhs_2000_cleaned |>
 ```{r}
 #| fig-cap: "Distribution of TFR by US state in 2000"
 #| label: fig-smalldhsexample
-#| fig-height: 8
+#| fig-height: 7
 
 dhs_2000_cleaned |> 
   filter(state != "Total") |> 
@@ -1522,7 +1489,7 @@ In general the result is not too bad. OCR is a useful tool but is not perfect an
 
 ### Scales {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: *A group of five undergraduates each read some number of pages from a book each day for 100 days. Two of the undergraduates are a couple and so their number of pages is positively correlated, however all the others are independent.* Please sketch what that dataset could look like and then sketch a graph that you could build to show all observations.
+1. *(Plan)* Consider the following scenario: *A group of five undergraduates---Matt, Ash, Jacki, Rol, and Mike---each read some number of pages from a book each day for 100 days. Two of the undergraduates are a couple and so their number of pages is positively correlated, however all the others are independent.* Please sketch what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation. Please include five tests based on the simulated data. Submit a link to a GitHub Gist that contains your code.
 3. *(Acquire)* Please describe a possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched using the data that you simulated. Submit a link to a GitHub Gist that contains your code.

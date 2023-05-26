@@ -80,13 +80,9 @@ set.seed(853)
 
 treat_control <-
   tibble(
-    group = sample(x = c("Treatment", "Control"), 
-                   size = 100, 
-                   replace = TRUE),
-    binary_effect = sample(x = c(0, 1), 
-                           size = 100, 
-                           replace = TRUE)
-  )
+    group = sample(x = c("Treatment", "Control"), size = 100, replace = TRUE),
+    binary_effect = sample(x = c(0, 1), size = 100, replace = TRUE)
+    )
 
 treat_control
 ```
@@ -106,11 +102,11 @@ treat_control |>
 
 In this case, we draw either 0 or 1, 100 times, for each the treatment and control group, and then the estimate of the average effect of being treated is 0.22.
 
-More broadly, to tell causal stories\index{causal inference!stories} we need to bring together theory and a detailed knowledge of what we are interested in [@Cunningham2021, p. 4]. In @sec-gather-data we discussed gathering data\index{data!gathering} that we observed about the world. In this chapter we are going to be more active about turning the world into the data that we need. As the researcher, we will decide what to measure and how, and we will need to define what we are interested in. We will be active participants in the data-generating process.\index{data generating process} That is, if we want to use this data, then as researchers we must go out and hunt it.
+More broadly, to tell causal stories\index{causal inference!stories} we need to bring together theory and a detailed knowledge of what we are interested in [@Cunningham2021, p. 4]. In @sec-gather-data we discussed gathering data\index{data!gathering} that we observed about the world. In this chapter we are going to be more active about turning the world into the data that we need. As the researcher, we will decide what to measure and how, and we will need to define what we are interested in. We will be active participants in the data-generating process.\index{data!generating process} That is, if we want to use this data, then as researchers we must go out and hunt it.
 
 In this chapter we cover experiments,\index{experiment} especially constructing treatment and control groups, and appropriately considering their results. We go through implementing a survey. We discuss some aspects of ethical behavior in experiments through reference to the Tuskegee Syphilis Study and the Extracorporeal Membrane Oxygenation (ECMO) experiment and go through various case studies. Finally, we then turn to A/B testing, which is extensively used in industry, and consider a case study based on Upworthy data. 
 
-Ronald Fisher,\index{Fisher, Ronald} the twentieth century statistician, and Francis Galton,\index{Galton, Francis} the nineteenth century statistician, are the intellectual grandfathers of much of the work that we cover in this chapter.\index{statistics!history of} In some cases it is directly their work, in other cases it is work that built on their contributions. Both men believed in eugenics, amongst other things that are generally reprehensible. In the same way that art history acknowledges, say, Caravaggio\index{Caravaggio, Michelangelo Merisi da} as a murderer, while also considering his work and influence, so too must statistics and data science more generally concern themselves with this past, at the same time as we try to build a better future.
+Ronald Fisher,\index{Fisher, Ronald} the twentieth century statistician, and Francis Galton,\index{Galton, Francis} the nineteenth century statistician, are the intellectual grandfathers of much of the work that we cover in this chapter.\index{statistics!history of} In some cases it is directly their work, in other cases it is work that built on their contributions. Both men believed in eugenics, amongst other things that are generally reprehensible. In the same way that art history acknowledges, say, Caravaggio as a murderer, while also considering his work and influence, so too must statistics and data science more generally concern themselves with this past, at the same time as we try to build a better future.
 
 ## Field experiments and randomized controlled trials
 
@@ -137,9 +133,7 @@ num_people <- 5000
 
 population <- tibble(
   person = 1:num_people,
-  favorite_color = sample(c("Blue", "White"), 
-                          size = num_people, 
-                          replace = TRUE),
+  favorite_color = sample(c("Blue", "White"), size = num_people, replace = TRUE),
   prefers_dogs = if_else(favorite_color == "Blue", 
                          rbinom(num_people, 1, 0.9), 
                          rbinom(num_people, 1, 0.1))
@@ -171,10 +165,9 @@ set.seed(853)
 sample <-
   frame |>
   select(-prefers_dogs) |>
-  mutate(group = sample(
-    x = c("Treatment", "Control"),
-    size = nrow(frame),
-    replace = TRUE
+  mutate(
+    group = 
+      sample(x = c("Treatment", "Control"), size = nrow(frame), replace = TRUE
   ))
 ```
 
@@ -223,7 +216,7 @@ sample |>
 
 It is exciting to have a representative\index{representative sample} share on "unobservables". (In this case, we do "observe" them---to illustrate the point---but we did not select on them). We get this because the variables were correlated. But it will break down in several ways that we will discuss. It also assumes large enough groups. For instance, if we considered specific dog breeds, instead of dogs as an entity, we may not find ourselves in this situation. To check that the two groups are the same, we look to see if we can identify a difference between the two groups based on observables, theory, experience, and expert opinion. In this case we looked at the mean, but we could look at other aspects as well. 
 
-This would traditionally bring us to Analysis of Variance (ANOVA). ANOVA\index{ANOVA} was introduced around 100 years ago by Fisher\index{Fisher, Ronald} while he was working on statistical problems in agriculture.\index{statistics!history of} (@Stolley1991 provides additional background on Fisher.) This is less unexpected than it may seem because historically agricultural research\index{statistics!agriculture} was closely tied to statistical innovation. Often statistical methods were designed to answer agricultural questions such as "does fertilizer work?" and were only later adapted to clinical trials [@yoshioka1998use]. It was relatively easily to divide a field into "treated" and "non-treated", and the magnitude of any effect was likely to be large. While appropriate for that context, often these same statistical approaches are still taught today in introductory material, even when they are being applied in different circumstances to those they were designed for. It almost always pays to take a step back and think about what is being done and whether it is appropriate to these circumstances. We mention ANOVA\index{ANOVA} here because of its importance historically. There is nothing wrong with it in the right setting. But the number of modern use-cases where it is the best option tends to be small. It might be better to build the model that underpins ANOVA\index{ANOVA} ourselves, which we cover in @sec-its-just-a-linear-model.
+This would traditionally bring us to Analysis of Variance (ANOVA). ANOVA\index{ANOVA} was introduced around 100 years ago by Fisher\index{Fisher, Ronald} while he was working on statistical problems in agriculture.\index{statistics!history of} (@Stolley1991 provides additional background on Fisher.) This is less unexpected than it may seem because historically agricultural research\index{statistics!agriculture} was closely tied to statistical innovation. Often statistical methods were designed to answer agricultural questions such as "does fertilizer work?" and were only later adapted to clinical trials [@yoshioka1998use]. It was relatively easily to divide a field into "treated" and "non-treated", and the magnitude of any effect was likely to be large. While appropriate for that context, often these same statistical approaches are still taught today in introductory material, even when they are being applied in different circumstances to those they were designed for. It almost always pays to take a step back and think about what is being done and whether it is appropriate to the circumstances. We mention ANOVA here because of its importance historically. There is nothing wrong with it in the right setting. But the number of modern use-cases where it is the best option tends to be small. It might be better to build the model that underpins ANOVA ourselves, which we cover in @sec-its-just-a-linear-model.
 
 ### Treatment and control
 
@@ -266,9 +259,7 @@ set.seed(853)
 
 ate_example <- 
   tibble(person = 1:1000,
-         treated = sample(c("Yes", "No"), 
-                          size = 1000, 
-                          replace = TRUE)) |>
+         treated = sample(c("Yes", "No"), size = 1000, replace = TRUE)) |>
   mutate(outcome = case_when(
     treated == "No" ~ rnorm(n(), mean = 5, sd = 1),
     treated == "Yes" ~ rnorm(n(), mean = 6, sd = 1),
@@ -347,9 +338,9 @@ We consider the need to obtain informed consent\index{experiment!informed consen
 
 #### Tuskegee Syphilis Study
 
-Following @brandt1978racism and @tuskegeeandthehealthofblackmen, the Tuskegee Syphilis Study\index{Tuskegee Syphilis Study} is an infamous medical trial that began in 1932.\index{ethics!informed consent} As part of this experiment, 400 Black Americans\index{Black American} with syphilis\index{syphilis} were not given appropriate treatment, nor even told they had syphilis, well after a standard treatment for syphilis was established and widely available. A control group, without syphilis, were also given non-effective drugs. These financially poor Black Americans in the United States South were offered minimal compensation and not told they were part of an experiment. Further, extensive work was undertaken to ensure the men would not receive treatment from anywhere, including writing to local doctors and the local health department. Even after some of the men were drafted and told to immediately get treatment, the draft board complied with a request to have the men excluded from treatment. By the time the study was stopped in 1972, more than half of the men were deceased and many of deaths were from syphilis-related causes.
+Following @brandt1978racism and @tuskegeeandthehealthofblackmen, the Tuskegee Syphilis Study\index{Tuskegee Syphilis Study} is an infamous medical trial that began in 1932.\index{ethics!informed consent} As part of this experiment, 400 Black Americans\index{Black American} with syphilis were not given appropriate treatment, nor even told they had syphilis, well after a standard treatment for syphilis was established and widely available. A control group, without syphilis, were also given non-effective drugs. These financially poor Black Americans in the United States South were offered minimal compensation and not told they were part of an experiment. Further, extensive work was undertaken to ensure the men would not receive treatment from anywhere, including writing to local doctors and the local health department. Even after some of the men were drafted and told to immediately get treatment, the draft board complied with a request to have the men excluded from treatment. By the time the study was stopped in 1972, more than half of the men were deceased and many of deaths were from syphilis-related causes.
 
-The effect of the Tuskegee Syphilis Study\index{Tuskegee Syphilis Study} was felt not just by the men in the study, but more broadly. @tuskegeeandthehealthofblackmen found that it is associated with a decrease in life expectancy at age 45 of up to 1.5 years for Black men located around central Alabama\index{United States!Alabama} because of medical mistrust and decreased interactions with physicians. In response the United States established requirements for Institutional Review Boards\index{Institutional Review Boards} and President Clinton\index{Clinton, Bill} made a formal apology in 1997. @brandt1978racism [p. 27] says:
+The effect of the Tuskegee Syphilis Study\index{Tuskegee Syphilis Study} was felt not just by the men in the study, but more broadly. @tuskegeeandthehealthofblackmen found that it is associated with a decrease in life expectancy at age 45 of up to 1.5 years for Black men located around central Alabama\index{United States!Alabama} because of medical mistrust and decreased interactions with physicians. In response the United States established requirements for Institutional Review Boards\index{Institutional Review Boards} and President Clinton made a formal apology in 1997. @brandt1978racism [p. 27] says:
 
 > In retrospect the Tuskegee Study revealed more about the pathology of racism than the pathology of syphilis; more about the nature of scientific inquiry than the nature of the disease process$\dots$ [T]he notion that science is a value-free discipline must be rejected. The need for greater vigilance in assessing the specific ways in which social values and attitudes affect professional behavior is clearly indicated.
 
@@ -632,7 +623,7 @@ $$ {#eq-oregon}
 
 Like earlier studies such as @randhealth, @finkelstein2012oregon found that the treatment group used more health care including both primary and preventive care as well as hospitalizations but had lower out-of-pocket medical expenditures. More generally, the treatment group reported better physical and mental health.
 
-### Civic honesty around the globe
+### Civic Honesty Around The Globe
 
 Trust is not something that we think regularly about, but it is fundamental to most interactions, both economic and personal. For instance, many people get paid after they do some work---they are trusting their employer will make good, and vice versa.\index{trust} If you get paid in advance, then they are trusting you. In a strictly naive, one-shot, world without transaction costs, this does not make sense. If you get paid in advance, the incentive is for you to take the money and run in the last pay period before you quit, and through backward induction everything falls apart. We do not live in such a world. For one thing there are transaction costs, for another, generally, we have repeated interactions, and finally, the world usually ends up being fairly small.
 
@@ -652,7 +643,7 @@ Using the data for the paper that is made available [@walletsdata] we can see th
 #| label: fig-wallets
 #| message: false
 #| warning: false
-#| fig-height: 8
+#| fig-height: 7
 
 wallet_data <- read_csv(here::here("inputs/data/behavioral_data.csv"))
 
@@ -721,7 +712,7 @@ This trade-off could become known during the hypothetical driver experiment if w
 :::{.callout-note}
 ## Shoulders of giants
 
-Dr Susan Athey\index{Athey, Susan} is the Economics of Technology Professor at Stanford University.\index{economics} After earning a PhD in Economics from Stanford in 1995, she joined MIT as an assistant professor, returning to Stanford in 2001, where she was promoted to full professor in 2004. One area of her research is applied economics, and one particularly important paper is @Abadie2017, which considers when standard errors need to be clustered. Another is @Athey2017, which considers how to analyze randomized experiments. In addition to her academic appointments, she has worked at Microsoft and other tech firms and been extensively involved in running experiments in this context. She was awarded the John Bates Clark Medal in 2007.\index{John Bates Clark Medal}
+Dr Susan Athey\index{Athey, Susan} is the Economics of Technology Professor at Stanford University.\index{economics} After earning a PhD in Economics from Stanford in 1995, she joined MIT as an assistant professor, returning to Stanford in 2001, where she was promoted to full professor in 2004. One area of her research is applied economics, and one particularly important paper is @Abadie2017, which considers when standard errors need to be clustered. Another is @Athey2017, which considers how to analyze randomized experiments. In addition to her academic appointments, she has worked at Microsoft and other technology firms and been extensively involved in running experiments in this context. She was awarded the John Bates Clark Medal in 2007.\index{John Bates Clark Medal}
 :::
 
 ### Upworthy

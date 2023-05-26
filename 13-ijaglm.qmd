@@ -106,6 +106,8 @@ tibble(values = seq(from = 0, to = 1, by = 0.001),
        y = "logit(x)")
 ```
 
+### Simulated example: day or night
+
 To illustrate logistic regression\index{logistic regression}, we will simulate data on whether it is a weekday or weekend, based on the number of cars on the road.\index{simulation} We will assume that on weekdays the road is busier.\index{distribution!Normal}
 
 ```{r}
@@ -165,7 +167,7 @@ week_or_weekday_predictions <-
 week_or_weekday_predictions
 ```
 
-And we can then graph the probability that our model implies, for each observation, of it being a weekday (@fig-dayornightprobs).
+And we can then graph the probability that our model implies, for each observation, of it being a weekday (@fig-dayornightprobs). This is a nice opportunity to consider a few different ways of illustrating the fit. While it is common to use a scatterplot (@fig-dayornightprobs-1), this is also an opportunity to use an ECDF (@fig-dayornightprobs-2).
 
 ```{r}
 #| eval: true
@@ -174,19 +176,32 @@ And we can then graph the probability that our model implies, for each observati
 #| label: fig-dayornightprobs
 #| message: false
 #| warning: false
+#| fig-subcap: ["Illustrating the fit with a scatterplot", "Illustrating the fit with an ECDF"]
+#| layout-ncol: 2
 
+# Panel (a)
 week_or_weekday_predictions |>
   mutate(is_weekday = factor(is_weekday)) |>
-  ggplot(aes(
-    x = num_cars,
-    y = estimate,
-    color = is_weekday
-  )) +
+  ggplot(aes(x = num_cars, y = estimate, color = is_weekday)) +
   geom_jitter(width = 0.01, height = 0.01, alpha = 0.3) +
   labs(
     x = "Number of cars that were seen",
     y = "Estimated probability it is a weekday",
     color = "Was actually weekday"
+  ) +
+  theme_classic() +
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+
+# Panel (b)
+week_or_weekday_predictions |>
+  mutate(is_weekday = factor(is_weekday)) |>
+  ggplot(aes(x = num_cars, y = estimate, color = is_weekday)) +
+  stat_ecdf(geom = "point", alpha = 0.75) +
+  labs(
+    x = "Number of cars that were seen",
+    y = "Estimated probability it is a weekday",
+    color = "Actually weekday"
   ) +
   theme_classic() +
   scale_color_brewer(palette = "Set1") +
@@ -203,7 +218,7 @@ slopes(week_or_weekday_model, newdata = "median") |>
   select(term, estimate, std.error) |>
   kable(
     col.names = c("Term", "Estimate", "Standard error"),
-    digits = 3, booktabs = TRUE, linesep = ""
+    digits = 3, booktabs = TRUE
   )
 ```
 
@@ -600,15 +615,17 @@ poisson_takes_shape <-
   list_rbind()
 
 poisson_takes_shape <- poisson_takes_shape |>
-  mutate(lambda = paste("Lambda =", lambda),
-         lambda = factor(lambda, levels = paste("Lambda =", lambdas)))
+  mutate(lambda = paste("lambda =", lambda),
+         lambda = factor(lambda, levels = paste("lambda =", lambdas)))
 
 ggplot(poisson_takes_shape, aes(x = draw)) +
   geom_density() +
   facet_wrap(vars(lambda), scales = "free_y") +
-  theme_classic() +
+  theme_minimal() +
   labs(x = "Integer", y = "Density")
 ```
+
+### Simulated example: number of As by department
 
 To illustrate the situation, we could simulate data about the number of As that are awarded in each university course.\index{simulation} In this simulated example, we consider three departments, each of which has many courses. Each course will award a different number of As.\index{distribution!Poisson}
 
@@ -1224,7 +1241,7 @@ alberta_cod <-
 #| label: fig-albertacod
 #| message: false
 #| warning: false
-#| fig-height: 8
+#| fig-height: 6
 
 alberta_cod |>
   ggplot(aes(x = calendar_year, y = total_deaths, color = cause)) +
@@ -1399,6 +1416,8 @@ In general there are two ways to go about this:
 2) enable varying slopes. 
 
 In this book we consider only the first, but you should move onto @gelmanhillvehtari2020, @citemcelreath, and @bayesrules. 
+
+### Simulated example: political support
 
 Let us consider a situation in which the probability of support for a particular political party depends on an individual's age-group, and the state that they live in.
 
@@ -1704,27 +1723,19 @@ In this case, we see that we typically expect Brontë to write the longest books
 
 ## Concluding remarks
 
-In this chapter we have considered generalized linear models and also introduce multilevel modeling. We built on the foundation established in @sec-its-just-a-linear-model and provided some essentials for Bayesian model building. As mentioned in @sec-its-just-a-linear-model, this is enough to get started, and hopefully you are excited to learn more. Start with the modeling books recommended in @sec-concluding-remarks.
+In this chapter we have considered generalized linear models and also introduced multilevel modeling. We built on the foundation established in @sec-its-just-a-linear-model and provided some essentials for Bayesian model building. As mentioned in @sec-its-just-a-linear-model, this is enough to get started. Hopefully you are excited to learn more and to do that you should start with the modeling books recommended in @sec-concluding-remarks.
 
 Over the course of @sec-its-just-a-linear-model and @sec-its-just-a-generalized-linear-model we have covered a variety of approaches for Bayesian models. But we have not done everything for every model. 
 
-It is difficult to be definitive about what is "enough" because it is context specific, but the following checklist, drawn from concepts introduced across Chapters -@sec-its-just-a-linear-model and -@sec-its-just-a-generalized-linear-model would be sufficient for most purposes when you are getting started. In the model section of the paper, write out the model using equations and include a few paragraphs of text explaining the equations. Then justify the model choices, and briefly detail any alternatives that you considered. Finish with a sentence explaining how the model was fit, which in this case is likely to be with `rstanarm`, and that diagnostics are available in a cross-referenced appendix. 
+It is difficult to be definitive about what is "enough" because it is context specific, but the following checklist, drawn from concepts introduced across @sec-its-just-a-linear-model and @sec-its-just-a-generalized-linear-model would be sufficient for most purposes when you are getting started. In the model section of the paper, write out the model using equations and include a few paragraphs of text explaining the equations. Then justify the model choices, and briefly detail any alternatives that you considered. Finish with a sentence explaining how the model was fit, which in this case is likely to be with `rstanarm`, and that diagnostics are available in a cross-referenced appendix. In that appendix you should include: prior predictive checks, trace plots, Rhat plots, posterior distributions, and posterior predictive checks.
 
-In that appendix you should include:  
-
-- Prior predictive checks.
-- Trace plots.
-- Rhat plots.
-- Posterior distributions.
-- Posterior predictive checks.
-
-In the results section you should then include a table of the estimates, built using `modelsummary`, and talk through them, likely with the help of `marginaleffects`. It may also be useful to include a graph of your results, especially if you are using a multilevel model, with the help of `tidybayes`. The model itself should be run in a separate R script. It should be preceded by tests of class and the number of observations. It should be followed by tests of the coefficients. These should be based on simulation. You should save the model in that R script using `saveRDS()`. In the Quarto document, you should read in that model using `readRDS()`. 
+In the results section you should include a table of the estimates, built using `modelsummary`, and talk through them, likely with the help of `marginaleffects`. It may also be useful to include a graph of your results, especially if you are using a multilevel model, with the help of `tidybayes`. The model itself should be run in a separate R script. It should be preceded by tests of class and the number of observations. It should be followed by tests of the coefficients. These should be based on simulation. You should save the model in that R script using `saveRDS()`. In the Quarto document, you should read in that model using `readRDS()`. 
 
 ## Exercises
 
 ### Scales {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: *A person---"Monica"---is interested in the number of deaths, attributed to cancer, in Sydney, Australia. They collect data from the five largest hospitals, for the past 20 years.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+1. *(Plan)* Consider the following scenario: *A person is interested in the number of deaths, attributed to cancer, in Sydney, Australia. They collect data from the five largest hospitals, for the past 20 years.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation, along with three independent variables that are associated with the number of deaths, by cause. Please include at least ten tests based on the simulated data.
 3. *(Acquire)* Please describe one possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched. Then use `rstanarm` to build a model.

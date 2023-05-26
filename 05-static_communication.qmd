@@ -69,7 +69,7 @@ library(WDI)
 
 When telling stories with data, we would like the data to do much of the work of convincing our reader. The paper is the medium, and the data are the message. To that end, we want to show our reader the data that allowed us to come to our understanding of the story. We use graphs, tables, and maps to help achieve this. 
 
-Try to show the observations that underpin our analysis. For instance, if your dataset consists of 2,500 responses to a survey, then at some point in the paper you should have a graph that contains each of the 2,500 observations, for every variable of interest. To do this we build graphs using `ggplot2` which is part of the core `tidyverse` and so does not have to be installed or loaded separately. In this chapter we go through a variety of different options including bar charts, scatterplots, line plots, and histograms.
+Try to show the observations that underpin our analysis. For instance, if your dataset consists of 2,500 responses to a survey, then at some point in the paper you should have a plot/s that contains each of the 2,500 observations, for every variable of interest. To do this we build graphs using `ggplot2` which is part of the core `tidyverse` and so does not have to be installed or loaded separately. In this chapter we go through a variety of different options including bar charts, scatterplots, line plots, and histograms.
 
 In contrast to the role of graphs, which is to show each observation, the role of tables is typically to show an extract of the dataset or to convey various summary statistics, or regression results. We will build tables primarily using `knitr`. Later we will use `modelsummary` to build tables related to regression output.
 
@@ -89,11 +89,9 @@ To see why graphing the actual data is important\index{graphs!importance of}, af
 
 ```{r}
 datasaurus_dozen
-
-unique(datasaurus_dozen$dataset)
 ```
 
-The dataset consists of values for "x" and "y", which should be plotted on the x-axis and y-axis, respectively. We can further see that there are 13 different values in the variable "dataset" including: "dino", "star", "away", and "bullseye". We focus on those four and generate summary statistics for each (@tbl-datasaurussummarystats).
+The dataset consists of values for "x" and "y", which should be plotted on the x-axis and y-axis, respectively. There are 13 different values in the variable "dataset" including: "dino", "star", "away", and "bullseye". We focus on those four and generate summary statistics for each (@tbl-datasaurussummarystats).
 
 ```{r}
 #| label: tbl-datasaurussummarystats
@@ -105,10 +103,10 @@ datasaurus_dozen |>
   summarise(across(c(x, y), list(mean = mean, sd = sd)),
             .by = dataset) |>
   kable(col.names = c("Dataset", "x mean", "x sd", "y mean", "y sd"),
-        digits = 1)
+        booktabs = TRUE, digits = 1)
 ```
 
-Notice that the summary statistics are similar (@tbl-datasaurussummarystats). Despite this it turns out that the different datasets are actually very different beasts. This becomes clear when we graph the data (@fig-datasaurusgraph).
+Notice that the summary statistics are similar (@tbl-datasaurussummarystats). Despite this it turns out that the different datasets are actually very different beasts. This becomes clear when we plot the data (@fig-datasaurusgraph).
 
 ```{r}
 #| eval: true
@@ -154,7 +152,7 @@ tidy_anscombe <-
   )
 ```
 
-We can first create summary statistics (@tbl-anscombesummarystats) and then graph the data (@fig-anscombegraph). This again illustrates the importance of graphing the actual data, rather than relying on summary statistics.
+We can first create summary statistics (@tbl-anscombesummarystats) and then plot the data (@fig-anscombegraph). This again illustrates the importance of graphing the actual data, rather than relying on summary statistics.
 
 ```{r}
 #| label: tbl-anscombesummarystats
@@ -167,10 +165,8 @@ tidy_anscombe |>
     .by = set
     ) |>
   kable(
-    col.names = c(
-    "Dataset", "x mean", "x sd", "y mean", "y sd"
-    ),
-    digits = 1
+    col.names = c("Dataset", "x mean", "x sd", "y mean", "y sd"),
+    digits = 1, booktabs = TRUE
   )
 ```
 
@@ -204,7 +200,7 @@ beps <-
   select(age, vote, gender, political_knowledge)
 ```
 
-The dataset consists of which party the respondent supports, along with various demographic, economic, and political variables. In particular, we have the age of the respondent. We begin by creating age-groups from the ages, and making a bar chart showing the frequency of each age-group using `geom_bar()` (@fig-bepfitst).
+The dataset consists of which party the respondent supports, along with various demographic, economic, and political variables. In particular, we have the age of the respondent. We begin by creating age-groups from the ages, and making a bar chart showing the frequency of each age-group using `geom_bar()` (@fig-bepfitst-1).
 
 ```{r}
 beps <-
@@ -219,9 +215,7 @@ beps <-
         age < 100 ~ "80-99"
       ),
     age_group = 
-      factor(age_group,
-             levels = c("<35", "35-49", "50-64", "65-79", "80-99")
-             )
+      factor(age_group, levels = c("<35", "35-49", "50-64", "65-79", "80-99"))
   )
 ```
 
@@ -230,23 +224,14 @@ beps <-
 #| eval: true
 #| fig-cap: "Distribution of age-groups in the 1997-2001 British Election Panel Study"
 #| echo: true
+#| fig-subcap: ["Using `geom_bar()`", "Using `count()` and `geom_col()`"]
+#| layout-ncol: 2
 
 beps |>
   ggplot(mapping = aes(x = age_group)) +
   geom_bar() +
   theme_minimal() +
   labs(x = "Age group", y = "Number of observations")
-```
-
-The default axis label used by `ggplot2` is the name of the relevant variable, so it is often useful to add more detail. We do this using `labs()` by specifying a variable and a name. In the case of @fig-bepfitst we have specified labels for the x-axis and y-axis.
-
-By default, `geom_bar()` creates a count of the number of times each age-group appears in the dataset. It does this because the default statistical transformation---a "stat"---for `geom_bar()` is "count", which saves us from having to create that statistic ourselves. But if we had already constructed a count (for instance, with `beps |> count(age_group)`), then we could specify a variable for the y-axis and then use `geom_col()` (@fig-bepfitstcount).
-
-```{r}
-#| label: fig-bepfitstcount
-#| eval: true
-#| fig-cap: "Distribution of age-groups in the 1997-2001 British Election Panel Study"
-#| echo: true
 
 beps |> 
   count(age_group) |> 
@@ -256,34 +241,34 @@ beps |>
   labs(x = "Age group", y = "Number of observations")
 ```
 
-We may also like to consider various groupings of the data to get a different insight. For instance, we can use color to look at which party the respondent supports, by age-group (@fig-bepsecond).
+The default axis label used by `ggplot2` is the name of the relevant variable, so it is often useful to add more detail. We do this using `labs()` by specifying a variable and a name. In the case of @fig-bepfitst-1 we have specified labels for the x-axis and y-axis.
+
+By default, `geom_bar()` creates a count of the number of times each age-group appears in the dataset. It does this because the default statistical transformation---a "stat"---for `geom_bar()` is "count", which saves us from having to create that statistic ourselves. But if we had already constructed a count (for instance, with `beps |> count(age_group)`), then we could specify a variable for the y-axis and then use `geom_col()` (@fig-bepfitst-2).
+
+We may also like to consider various groupings of the data to get a different insight. For instance, we can use color to look at which party the respondent supports, by age-group (@fig-bepsecond-1).
 
 ```{r}
 #| echo: true
 #| eval: true
 #| fig-cap: "Distribution of age-group, and vote preference, in the 1997-2001 British Election Panel Study"
 #| label: fig-bepsecond
+#| fig-subcap: ["Using `geom_bar()`", "Using `geom_bar()` with dodge2"]
+#| layout-ncol: 2
 
 beps |>
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar() +
-  labs(x = "Age group", y = "Number of observations", fill = "Vote")
-```
-
-By default, these different groups are stacked, but they can be placed side by side with `position = "dodge2"` (@fig-bepthird). (Using "dodge2" rather than "dodge" a little space between the bars.)
-
-```{r}
-#| echo: true
-#| eval: true
-#| fig-cap: "Distribution of age-groups, and vote preference, in the 1997-2001 British Election Panel Study"
-#| label: fig-bepthird
-#| warning: false
+  labs(x = "Age group", y = "Number of observations", fill = "Vote") +
+  theme(legend.position = "bottom")
 
 beps |>
   ggplot(mapping = aes(x = age_group, fill = vote)) +
   geom_bar(position = "dodge2") +
-  labs(x = "Age group", y = "Number of observations", fill = "Vote")
+  labs(x = "Age group", y = "Number of observations", fill = "Vote") +
+  theme(legend.position = "bottom")
 ```
+
+By default, these different groups are stacked, but they can be placed side by side with `position = "dodge2"` (@fig-bepsecond-2). (Using "dodge2" rather than "dodge" adds a little space between the bars.)
 
 #### Themes
 
@@ -370,10 +355,8 @@ beps |>
     y = "Number of respondents",
     fill = "Gender"
   ) +
-  facet_wrap(
-    vars(vote),
-    scales = "free"
-  ) +
+  facet_wrap(vars(vote), scales = "free") +
+  guides(x = guide_axis(angle = 90)) +
   theme(legend.position = "bottom")
 ```
 
@@ -502,8 +485,7 @@ WDIsearch("Unemployment, total")
 world_bank_data <-
   WDI(
     indicator =
-      c("FP.CPI.TOTL.ZG", "NY.GDP.MKTP.KD.ZG",
-        "SP.POP.TOTL","SL.UEM.TOTL.NE.ZS"),
+      c("FP.CPI.TOTL.ZG", "NY.GDP.MKTP.KD.ZG", "SP.POP.TOTL","SL.UEM.TOTL.NE.ZS"),
     country = c("AU", "ET", "IN", "US")
   )
 ```
@@ -560,16 +542,12 @@ To get started we can use `geom_point()` to make a scatterplot showing GDP growt
 
 # Panel (a)
 world_bank_data |>
-  ggplot(mapping = 
-           aes(x = gdp_growth, 
-               y = inflation, color = country)) +
+  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
   geom_point()
 
 # Panel (b)
 world_bank_data |>
-  ggplot(mapping = 
-           aes(x = gdp_growth, 
-               y = inflation, color = country)) +
+  ggplot(mapping = aes(x = gdp_growth, y = inflation, color = country)) +
   geom_point() +
   theme_minimal() +
   labs(x = "GDP growth", y = "Inflation", color = "Country")
@@ -703,26 +681,21 @@ We can use a line plot\index{graphs!line plot} when we have variables that shoul
 #| layout-ncol: 2
 #| fig-subcap: ["Using a line plot", "Using a stairstep line plot"]
 
-
+# Panel (a)
 world_bank_data |>
   filter(country == "United States") |>
   ggplot(mapping = aes(x = year, y = gdp_growth)) +
   geom_line() +
   theme_minimal() +
-  labs(
-    x = "Year", y = "GDP growth", 
-    caption = "Data source: World Bank."
-  )
+  labs(x = "Year", y = "GDP growth", caption = "Data source: World Bank.")
 
+# Panel (b)
 world_bank_data |>
   filter(country == "United States") |>
   ggplot(mapping = aes(x = year, y = gdp_growth)) +
   geom_step() +
   theme_minimal() +
-  labs(
-    x = "Year",y = "GDP growth",
-    caption = "Data source: World Bank."
-  )
+  labs(x = "Year",y = "GDP growth", caption = "Data source: World Bank.")
 ```
 
 We can use `geom_step()`, a slight variant of `geom_line()`, to focus attention on the change from year to year (@fig-lineplot-2).
@@ -761,9 +734,7 @@ world_bank_data |>
     x = "Year", y = "Value", color = "Economic indicator",
     caption = "Data source: World Bank."
   ) +
-  scale_color_brewer(
-    palette = "Set1", labels = c("Inflation", "Unemployment")
-  ) +
+  scale_color_brewer(palette = "Set1", labels = c("Inflation", "Unemployment")) +
   theme(legend.position = "bottom")
 
 world_bank_data |>
@@ -1037,14 +1008,12 @@ To be able to cross-reference a table in the text, we need to add a table captio
 #| echo: fenced
 #| label: tbl-gdpfirst
 #| message: false
-#| tbl-cap: "First ten rows of a dataset of economic indicators for Australia, Ethiopia, India, and the United States"
+#| tbl-cap: "A dataset of economic indicators for four countries"
 
 world_bank_data |>
   slice(1:10) |>
   kable(
-    col.names = c(
-      "Country", "Year", "Inflation", "GDP growth", "Population"
-    ),
+    col.names = c("Country", "Year", "Inflation", "GDP growth", "Population"),
     digits = 1
   )
 ```
@@ -1062,9 +1031,7 @@ When producing PDFs, the "booktabs" option makes a host of small changes to the 
 world_bank_data |>
   slice(1:10) |>
   kable(
-    col.names = c(
-      "Country", "Year", "Inflation", "GDP growth", "Population"
-    ),
+    col.names = c("Country", "Year", "Inflation", "GDP growth", "Population"),
     digits = 1,
     booktabs = TRUE,
     linesep = ""
@@ -1082,10 +1049,10 @@ world_bank_data |>
   slice(1:10) |>
   mutate(year = as.factor(year)) |>
   kable(
-    col.names = c(
-      "Country", "Year", "Inflation", "GDP growth", "Population"
-    ),
+    col.names = c("Country", "Year", "Inflation", "GDP growth", "Population"),
     digits = 1,
+    booktabs = TRUE,
+    linesep = "",
     align = c("l", "l", "c", "c", "r", "r"),
     format.args = list(big.mark = ",")
   )
@@ -1096,7 +1063,7 @@ world_bank_data |>
 
 After installing and loading `modelsummary` we can use `datasummary_skim()` to create tables of summary statistics from our dataset.\index{tables!summary statistics} 
 
-We can use this to get a table such as @tbl-testdatasummarynormal. That might be useful for exploratory data analysis, which we cover in @sec-exploratory-data-analysis. (Here we remove population to save space.)
+We can use this to get a table such as @tbl-testdatasummarynormal. That might be useful for exploratory data analysis, which we cover in @sec-exploratory-data-analysis. (Here we remove population to save space and do not include a histogram of each variable.)
 
 ```{r}
 #| message: false
@@ -1106,7 +1073,7 @@ We can use this to get a table such as @tbl-testdatasummarynormal. That might be
 
 world_bank_data |>
   select(-population) |> 
-  datasummary_skim()
+  datasummary_skim(histogram = FALSE)
 ```
 
 By default, `datasummary_skim()` summarizes the numeric variables, but we can ask for the categorical variables (@tbl-testdatasummary). Additionally we can add cross-references in the same way as `kable()`, that is, include a "tbl-cap" entry and then cross-reference the name of the R chunk.
@@ -1173,7 +1140,7 @@ third_model <- lm(
 modelsummary(list(first_model, second_model, third_model))
 ```
 
-The number of significant digits can be adjusted with "fmt" (@tbl-twomodelstwo). To help establish credibility you should generally not naively add as many significant digits as possible [@howes2022representing]. Instead, you should think carefully about the data-generating process and adjust based on that.
+The number of significant digits can be adjusted with "fmt" (@tbl-twomodelstwo). To help establish credibility you should generally not add as many significant digits as possible [@howes2022representing]. Instead, you should think carefully about the data-generating process and adjust based on that.
 
 ```{r}
 #| label: tbl-twomodelstwo
@@ -1217,22 +1184,18 @@ Using that information you can create a map of France\index{France!cities} that 
 ggplot() +
   geom_polygon(
     data = france,
-    aes(x = long,
-        y = lat,
-        group = group),
+    aes(x = long, y = lat, group = group),
     fill = "white",
     colour = "grey"
   ) +
   coord_map() +
   geom_point(
-    aes(x = french_cities$long,
-        y = french_cities$lat),
+    aes(x = french_cities$long, y = french_cities$lat),
     alpha = 0.3,
     color = "black"
   ) +
   theme_minimal() +
-  labs(x = "Longitude",
-       y = "Latitude")
+  labs(x = "Longitude", y = "Latitude")
 ```
 
 As is often the case with R, there are many ways to get started creating static maps. We have seen how they can be built using only `ggplot2`, but `ggmap` brings additional functionality.
@@ -1269,9 +1232,7 @@ Once you have defined the bounding box, the function `get_stamenmap()` will get 
 #| warning: false
 #| message: false
 
-canberra_stamen_map <- get_stamenmap(bbox, 
-                                     zoom = 11, 
-                                     maptype = "toner-lite")
+canberra_stamen_map <- get_stamenmap(bbox, zoom = 11, maptype = "toner-lite")
 
 ggmap(canberra_stamen_map)
 ```
@@ -1330,8 +1291,8 @@ write_csv(booths, "inputs/data/booths.csv")
 
 booths <- 
   read_csv(
-  file = "inputs/data/booths.csv",
-  guess_max = 10000
+    file = "inputs/data/booths.csv",
+    guess_max = 10000
   )
 ```
 
@@ -1357,13 +1318,9 @@ Now we can use `ggmap` in the same way as before to plot our underlying tiles, a
 #| warning: false
 #| message: false
 
-ggmap(canberra_stamen_map,
-      extent = "normal",
-      maprange = FALSE) +
+ggmap(canberra_stamen_map, extent = "normal", maprange = FALSE) +
   geom_point(data = booths_reduced,
-             aes(x = Longitude,
-                 y = Latitude,
-                 colour = DivisionNm),
+             aes(x = Longitude, y = Latitude, colour = DivisionNm),
              alpha = 0.7) +
   scale_color_brewer(name = "2019 Division", palette = "Set1") +
   coord_map(
@@ -1405,17 +1362,11 @@ We will look at the locations of United States military bases in Germany,\index{
 #| warning: false
 
 # Use: https://data.humdata.org/dataset/bounding-boxes-for-countries
-bbox_germany <- c(
-  left = 5.867, bottom = 45.967, right = 15.033, top = 55.133
-  )
+bbox_germany <- c(left = 5.867, bottom = 45.967, right = 15.033, top = 55.133)
 
-bbox_japan <- c(
-  left = 127, bottom = 30, right = 146, top = 45
-  )
+bbox_japan <- c(left = 127, bottom = 30, right = 146, top = 45)
 
-bbox_australia <- c(
-  left = 112.467, bottom = -45, right = 155, top = -9.133
-  )
+bbox_australia <- c(left = 112.467, bottom = -45, right = 155, top = -9.133)
 ```
 
 Then we need to get the tiles using `get_stamenmap()` from `ggmap`.\index{maps!tiles} 
@@ -1424,14 +1375,11 @@ Then we need to get the tiles using `get_stamenmap()` from `ggmap`.\index{maps!t
 #| message: false
 #| warning: false
 
-germany_stamen_map <-
-  get_stamenmap(bbox_germany, zoom = 6, maptype = "toner-lite")
+german_stamen_map <-get_stamenmap(bbox_germany, zoom = 6, maptype = "toner-lite")
 
-japan_stamen_map <-
-  get_stamenmap(bbox_japan, zoom = 6, maptype = "toner-lite")
+japan_stamen_map <- get_stamenmap(bbox_japan, zoom = 6, maptype = "toner-lite")
 
-australia_stamen_map <-
-  get_stamenmap(bbox_australia, zoom = 5, maptype = "toner-lite")
+aus_stamen_map <- get_stamenmap(bbox_australia, zoom = 5, maptype = "toner-lite")
 ```
 
 And finally, we can bring it all together with maps showing United States military bases in Germany (@fig-mapbasesin-1), Japan (@fig-mapbasesin-2), and Australia (@fig-mapbasesin-3).\index{maps!plotting locations}
@@ -1444,26 +1392,20 @@ And finally, we can bring it all together with maps showing United States milita
 #| fig-subcap: ["Germany", "Japan", "Australia"]
 #| layout-ncol: 2
 
-ggmap(germany_stamen_map) +
-  geom_point(data = bases,
-             aes(x = lon,
-                 y = lat)) +
+ggmap(german_stamen_map) +
+  geom_point(data = bases, aes(x = lon, y = lat)) +
   labs(x = "Longitude",
        y = "Latitude") +
   theme_minimal()
 
 ggmap(japan_stamen_map) +
-  geom_point(data = bases,
-             aes(x = lon,
-                 y = lat)) +
+  geom_point(data = bases, aes(x = lon, y = lat)) +
   labs(x = "Longitude",
        y = "Latitude") +
   theme_minimal()
 
-ggmap(australia_stamen_map) +
-  geom_point(data = bases,
-             aes(x = lon,
-                 y = lat)) +
+ggmap(aus_stamen_map) +
+  geom_point(data = bases, aes(x = lon, y = lat)) +
   labs(x = "Longitude",
        y = "Latitude") +
   theme_minimal()
@@ -1524,21 +1466,16 @@ world <- map_data(map = "world")
 ggplot() +
   geom_polygon(
     data = world,
-    aes(x = long,
-        y = lat,
-        group = group),
+    aes(x = long, y = lat, group = group),
     fill = "white",
     colour = "grey"
   ) +
-  geom_point(aes(x = place_names$long,
-                 y = place_names$lat),
-             color = "black") +
-  geom_text(aes(
-    x = place_names$long,
-    y = place_names$lat,
-    label = place_names$city
-  ),
-  nudge_y = -5) +
+  geom_point(
+    aes(x = place_names$long, y = place_names$lat),
+    color = "black") +
+  geom_text(
+    aes(x = place_names$long, y = place_names$lat, label = place_names$city),
+    nudge_y = -5) +
   theme_minimal() +
   labs(x = "Longitude",
        y = "Latitude")
@@ -1553,7 +1490,7 @@ In this chapter we have covered a lot of ground, focused on communicating data. 
 
 ### Scales {.unnumbered}
 
-1. *(Plan)* Consider the following scenario: *Three friends---Edward, Hugo, Lucy---each measure the height of 20 of their friends. Each of the three use a slightly different approach to measurement and so make slightly different errors.* Please sketch what that dataset could look like and then sketch a graph that you could build to show all observations.
+1. *(Plan)* Consider the following scenario: *Three friends---Edward, Hugo, and Lucy---each measure the height of 20 of their friends. Each of the three use a slightly different approach to measurement and so make slightly different errors.* Please sketch what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation with every variable independent of each other. Please include three tests based on the simulated data.
 3. *(Acquire)* Please describe a possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched using the data that you simulated.

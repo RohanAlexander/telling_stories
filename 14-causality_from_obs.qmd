@@ -435,7 +435,7 @@ We begin by measuring Federer's serve speed and compare it to Ville's serve spee
 
 Despite these requirements, difference-in-differences is a powerful approach because we do not need the treatment and control group to be the same before the treatment. We just need to have a good idea of how they differed.
 
-### Simulated example
+### Simulated example: tennis serve speed
 
 To be more specific about the situation, we simulate data.\index{simulation!tennis racket} We will simulate a situation in which there is initially a difference of one between the serve speeds of the different people, and then after a new tennis racket, there is a difference of six. We can use a graph to illustrate the situation (@fig-diffindifftennisracket).\index{distribution!Normal}
 
@@ -449,8 +449,7 @@ simulated_diff_in_diff <-
   tibble(
     person = rep(c(1:1000), times = 2),
     time = c(rep(0, times = 1000), rep(1, times = 1000)),
-    treat_group = 
-      rep(sample(x = 0:1, size = 1000, replace = TRUE ), times = 2)
+    treat_group = rep(sample(x = 0:1, size = 1000, replace = TRUE ), times = 2)
     ) |>
   mutate(
     treat_group = as.factor(treat_group),
@@ -481,19 +480,11 @@ simulated_diff_in_diff
 #| warning: false
 
 simulated_diff_in_diff |>
-  ggplot(aes(
-    x = time,
-    y = serve_speed,
-    color = treat_group
-  )) +
+  ggplot(aes(x = time, y = serve_speed, color = treat_group)) +
   geom_point(alpha = 0.2) +
   geom_line(aes(group = person), alpha = 0.1) +
   theme_minimal() +
-  labs(
-    x = "Time period",
-    y = "Serve speed",
-    color = "Person got a new racket"
-  ) +
+  labs(x = "Time period", y = "Serve speed", color = "Person got a new racket") +
   scale_color_brewer(palette = "Set1") +
   theme(legend.position = "bottom")
 ```
@@ -512,8 +503,7 @@ ave_diff <-
     names_prefix = "time_"
   ) |>
   mutate(difference = time_1 - time_0) |>
-  # Average difference between old and new racket serve
-  # speed within groups
+  # Average difference between old and new racket serve speed within groups
   summarise(average_difference = mean(difference),
             .by = treat_group)
 
@@ -651,12 +641,12 @@ We focus just on the headline difference-in-differences result and construct sum
 
 newspapers <-
   newspapers |>
-  select(year, id_news, after_national, local, national, 
-         ra_cst, ps_cst, qtotal) |> 
-  mutate(ra_cst_div_qtotal = ra_cst / qtotal) |>
-  mutate(across(c(id_news, after_national, local, national), 
-                as.factor)) |>
-  mutate(year = as.integer(year))
+  select(
+    year, id_news, after_national, local, national, ra_cst, ps_cst, qtotal
+    ) |> 
+  mutate(ra_cst_div_qtotal = ra_cst / qtotal, 
+         across(c(id_news, after_national, local, national), as.factor),
+         year = as.integer(year))
 
 newspapers
 ```
@@ -814,11 +804,7 @@ Looking at the advertising-side variables, such as revenue and prices, in @tbl-f
 #| warning: false
 #| message: false
 
-selected_variables <-
-  c(
-    "year" = "Year",
-    "after_national1" = "After change"
-  )
+selected_variables <- c("year" = "Year", "after_national1" = "After change")
 
 modelsummary(
   models = list(
@@ -842,6 +828,8 @@ We can only match based on observable variables. For instance, age-group or educ
 One way to proceed is to consider a nearest neighbor approach, but there can be limited concern for uncertainty with this approach. There can also be an issue with having many variables because we end up with a high-dimension graph. This leads to propensity score matching. Here we explain the process of propensity score matching and a few of the concerns that are commonly brought up about it.
 
 Propensity score matching\index{propensity score matching} involves assigning some probability---the "propensity score"---to each observation. We construct that probability based on the observation's values for the predictors without the treatment. That probability is our best guess at the probability of the observation being treated, regardless of whether it was actually treated. For instance, if 18-year-old males were treated but 19-year-old males were not, then, as there is not much difference between 18-year-old and 19-year-old males in general, our assigned probability would be similar. We then compare the outcomes of observations with similar propensity scores.
+
+### Simulated example: free shipping
 
 One advantage of propensity score matching is that it allows us to easily consider many independent variables at once, and it can be constructed using logistic regression. To be more specific we can simulate some data. We will pretend that we work for a large online retailer. We are going to treat some individuals with free shipping to see what happens to their average purchase.\index{distribution!Normal}
 
@@ -1416,7 +1404,7 @@ Following the language of @gelmanandhill [p. 216], when we use instrumental vari
 As an aside, the history of instrumental variables is intriguing, and @stock2003retrospectives, via @Cunningham2021, provide a brief overview.\index{instrumental variables!history} The method was first published in @wright1928tariff. This is a book about the effect of tariffs on animal and vegetable oil. Why might instrumental variables be important in a book about tariffs on animal and vegetable oil? The fundamental problem is that the effect of tariffs depends on both supply and demand. But we only know prices and quantities, so we do not know what is driving the effect. We can use instrumental variables to pin down causality. The intriguing aspect is that the instrumental variables discussion is only in "Appendix B" of that book. It would seem odd to relegate a major statistical break through to an appendix. Further, Philip G. Wright, the book's author, had a son Sewall Wright, who had considerable expertise in statistics and the specific method used in "Appendix B". Hence the mystery of "Appendix B": did Philip or Sewall write it? @Cunningham2021, @stock2003retrospectives, and @angristkrueger all go into more detail, but on balance feel that it is likely that Philip authored the work.
 
 
-### Simulated example
+### Simulated example: health status, smoking, and tax rates
 
 Let us generate some data.\index{simulation!instrumental variables}\index{instrumental variables!simulation} We will explore a simulation related to the canonical example of health status, smoking, and tax rates. We are looking to explain how healthy someone is based on the amount they smoke, via the tax rate on smoking. We are going to generate different tax rates by provinces. The tax rate on cigarettes is now similar across the Canadian provinces but that this is fairly recent. Let us assume Alberta had a low tax, and Nova Scotia had a high tax.
 

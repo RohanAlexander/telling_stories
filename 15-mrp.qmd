@@ -111,7 +111,7 @@ In this chapter, we begin with simulating a situation in which we pretend that w
 
 ## Simulated example: coffee or tea?
 
-### Construct a population
+### Construct a population and biased sample
 
 To get started we will harken back to the tea-tasting experiment in @sec-hunt-data and simulate a population about whether someone prefers coffee or tea.\index{simulation!coffee or tea} We will then take a biased sample in favor of tea, and use MRP get those population-level preferences back. We will have two explanatory variables. Age-group will be either "young" or "old", and nationality will be either "United States" or "England". The simulation will impose an increased chance of preferring tea of the individual is English and/or old. Everything in our population will be roughly balanced, (that is half and half between each of the variables). But our survey will skew older and English. To be clear, in this example we will "know" the "true" features of the population, but this is not something that occurs when we use real data---it is just to help you understand what is happening in MRP.
 
@@ -153,8 +153,6 @@ sim_population |>
 ```
 
 On average, 50 per cent of the population prefers tea, but this preference depends on the population sub-groups.
-
-### Take a biased sample
 
 Now we want to pretend that we have some survey that has a biased sample. We will allow that it over-samples 
 older respondents and English respondents. 
@@ -219,8 +217,7 @@ tea_preference_model <-
     data = tea_sample,
     family = binomial(link = "logit"),
     prior = normal(location = 0, scale = 0.5, autoscale = TRUE),
-    prior_intercept = 
-      normal(location = 0, scale = 0.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 0.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -296,7 +293,7 @@ tea_preference_model |>
 ```
 
 
-### Get a post-stratification dataset
+### Post-stratification dataset
 
 Now we will use a post-stratification dataset to get some estimates of the number in each cell. We typically use a larger dataset that may more closely reflect the population. In the US a popular choice is the American Community Survey (ACS) which we covered in @sec-farm-data, while in other countries we typically use the census.
 
@@ -312,9 +309,6 @@ tea_poststrat_dataset <-
 
 tea_poststrat_dataset
 ```
-
-
-### Post-stratify our model estimates
 
 This is an idealized example where we assume individual-level data in our post-stratification dataset. In that world we can apply our model to each individual. 
 
@@ -825,7 +819,7 @@ poststrat_data_cells
 ```
 
 
-### Model
+### Model the sample
 
 We are going to use logistic regression to estimate a model where the binary of support for Biden versus Trump is explained by gender, age-group, education, and state. 
 
@@ -872,20 +866,11 @@ nationscape_data <-
 
 us_election_model <-
   stan_glmer(
-vote_biden ~ (1|gender) + (1|age_group) + 
-            (1|stateicp) + (1|education_level),
+    vote_biden ~ (1|gender) + (1|age_group) + (1|stateicp) + (1|education_level),
     data = nationscape_data,
     family = binomial(link = "logit"),
-    prior = normal(
-      location = 0,
-      scale = 2.5,
-      autoscale = TRUE
-    ),
-    prior_intercept = normal(
-      location = 0,
-      scale = 2.5,
-      autoscale = TRUE
-    ),
+    prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
     cores = 4,
     adapt_delta = 0.99,
     seed = 853
@@ -978,24 +963,16 @@ us_election_model |>
 us_election_model |>
   spread_draws(`(Intercept)`, b[, group]) |>
   mutate(condition_mean = `(Intercept)` + b) |>
-  separate(col = group, 
-           into = c("type", "instance"), 
-           sep = ":", remove = FALSE) |> 
+  separate(col = group, into = c("type", "instance"), sep = ":", remove = FALSE) |> 
   filter(type == "stateicp") |> 
-  filter(instance %in% c("california", 
-                         "florida", 
-                         "michigan",
-                         "new_york", 
-                         "pennsylvania", 
-                         "vermont",
-                         "west_virginia",
-                         "wisconsin")) |> 
+  filter(instance %in% 
+           c("california", "florida", "michigan", "new_york", "pennsylvania", 
+             "vermont", "west_virginia", "wisconsin")
+         ) |> 
   ggplot(aes(y = group, x = condition_mean)) +
   stat_halfeye() +
   theme_minimal()
 ```
-
-
 
 ### Post-stratify
 
@@ -1036,15 +1013,14 @@ biden_support_by_state |>
   geom_point() +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0) +
   geom_point(
-    data =
-      nationscape_data |>
-        summarise(n = n(),
-                  .by = c(stateicp, vote_biden)) |>
-        mutate(prop = n / sum(n),
-               .by = stateicp) |>
-        filter(vote_biden == 1),
+    data = nationscape_data |>
+      summarise(n = n(),
+                .by = c(stateicp, vote_biden)) |>
+      mutate(prop = n / sum(n),
+             .by = stateicp) |>
+      filter(vote_biden == 1),
     aes(y = prop, x = stateicp, color = "Nationscape raw data")
-  ) +
+    ) +
   geom_hline(yintercept = 0.5, linetype = "dashed") +
   labs(
     x = "State",

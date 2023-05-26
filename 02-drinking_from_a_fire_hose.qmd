@@ -198,13 +198,7 @@ simulated_data <-
     "Division" = 1:151,
     # Randomly pick an option, with replacement, 151 times
     "Party" = sample(
-      x = c(
-        "Liberal",
-        "Labor",
-        "National",
-        "Green",
-        "Other"
-      ),
+      x = c("Liberal", "Labor", "National", "Green", "Other"),
       size = 151,
       replace = TRUE
     )
@@ -505,10 +499,7 @@ cleaned_elections_data |>
   ggplot(aes(x = elected_party)) +
   geom_bar() +
   theme_minimal() + # Make the theme neater
-  labs(
-    x = "Party",
-    y = "Number of seats"
-  ) # Make the labels more meaningful
+  labs(x = "Party", y = "Number of seats") # Make labels more meaningful
 ```
 
 @fig-canadanice-1 accomplishes what we set out to do. But we can make it look a bit nicer by modifying the default options and improving the labels (@fig-canadanice-2).
@@ -823,10 +814,7 @@ toronto_shelters_clean |>
   summarise(number_occupied = mean(occupied_beds),
             .by = occupancy_month) |>
   kable(
-    col.names = c(
-      "Month",
-      "Average daily number of occupied beds"
-    ),
+    col.names = c("Month", "Average daily number of occupied beds"),
     digits = 1
   )
 ```
@@ -923,18 +911,12 @@ set.seed(853)
 simulated_nmr_data <-
   tibble(
     country =
-      c(
-        rep("Argentina", 50),
-        rep("Australia", 50),
-        rep("Canada", 50),
-        rep("Kenya", 50)
-      ),
+      c(rep("Argentina", 50), rep("Australia", 50), 
+        rep("Canada", 50), rep("Kenya", 50)),
     year =
       rep(c(1971:2020), 4),
     nmr =
-      runif(n = 200,
-            min = 0,
-            max = 100)
+      runif(n = 200, min = 0, max = 100)
   )
 
 head(simulated_nmr_data)
@@ -956,20 +938,12 @@ number_of_years <- 50
 simulated_nmr_data <-
   tibble(
     country =
-      c(
-        rep("Argentina", number_of_years),
-        rep("Australia", number_of_years),
-        rep("Canada", number_of_years),
-        rep("Kenya", number_of_years)
-      ),
+      c(rep("Argentina", number_of_years), rep("Australia", number_of_years),
+        rep("Canada", number_of_years), rep("Kenya", number_of_years)),
     year =
       rep(c(1:number_of_years + 1970), 4),
     nmr =
-      runif(
-        n = number_of_years * 4,
-        min = 0,
-        max = 100
-      )
+      runif(n = number_of_years * 4, min = 0, max = 100)
   )
 
 head(simulated_nmr_data)
@@ -991,12 +965,7 @@ We can write a series of tests based on these features, that we expect the datas
 #| eval: false
 
 simulated_nmr_data$country |>
-  unique() == c(
-  "Argentina",
-  "Australia",
-  "Canada",
-  "Kenya"
-)
+  unique() == c("Argentina", "Australia", "Canada", "Kenya")
 
 simulated_nmr_data$country |>
   unique() |>
@@ -1015,29 +984,6 @@ Having passed these tests, we can have confidence in the simulated dataset.\inde
 
 The UN Inter-agency Group for Child Mortality Estimation (IGME)\index{UN Inter-agency Group for Child Mortality Estimation} [provides](https://childmortality.org/) NMR estimates that we can download and save.
 
-::: {.content-visible when-format="pdf"}
-```{r}
-#| eval: false
-#| echo: true
-#| warning: false
-
-#### Acquire data ####
-raw_igme_data <-
-  read_csv(
-    file =
-      paste0("https://childmortality.org/",
-             "wp-content/uploads/2021/09/UNIGME-2021.csv"),
-    show_col_types = FALSE
-  )
-
-write_csv(
-  x = raw_igme_data,
-  file = "igme.csv"
-)
-```
-:::
-
-::: {.content-visible unless-format="pdf"}
 ```{r}
 #| eval: false
 #| echo: true
@@ -1051,10 +997,7 @@ raw_igme_data <-
     show_col_types = FALSE
   )
 
-write_csv(
-  x = raw_igme_data,
-  file = "igme.csv"
-)
+write_csv(x = raw_igme_data, file = "igme.csv")
 ```
 :::
 
@@ -1118,15 +1061,10 @@ cleaned_igme_data <-
   filter(
     sex == "Total",
     series_name == "UN IGME estimate",
-    geographic_area %in%
-      c("Argentina", "Australia", "Canada", "Kenya"),
+    geographic_area %in% c("Argentina", "Australia", "Canada", "Kenya"),
     indicator == "Neonatal mortality rate"
-  ) |>
-  select(
-    geographic_area,
-    time_period,
-    obs_value
-  )
+    ) |>
+  select(geographic_area, time_period, obs_value)
 
 head(cleaned_igme_data)
 ```
@@ -1141,11 +1079,7 @@ cleaned_igme_data <-
     time_period = as.integer(time_period)
   ) |>
   filter(time_period >= 1971) |>
-  rename(
-    nmr = obs_value,
-    year = time_period,
-    country = geographic_area
-  )
+  rename(nmr = obs_value, year = time_period, country = geographic_area)
 
 head(cleaned_igme_data)
 ```
@@ -1154,12 +1088,7 @@ Finally, we can check that our dataset passes the tests that we developed based 
 
 ```{r}
 cleaned_igme_data$country |>
-  unique() == c(
-  "Argentina",
-  "Australia",
-  "Canada",
-  "Kenya"
-)
+  unique() == c("Argentina", "Australia", "Canada", "Kenya")
 
 cleaned_igme_data$country |>
   unique() |>
@@ -1179,10 +1108,7 @@ All that remains is to save the nicely cleaned dataset.
 #| echo: true
 #| warning: false
 
-write_csv(
-  x = cleaned_igme_data,
-  file = "cleaned_igme_data.csv"
-)
+write_csv(x = cleaned_igme_data, file = "cleaned_igme_data.csv")
 ```
 
 ```{r}
@@ -1236,11 +1162,7 @@ cleaned_igme_data |>
   ggplot(aes(x = year, y = nmr, color = country)) +
   geom_point() +
   theme_minimal() +
-  labs(
-    x = "Year",
-    y = "Neonatal Mortality Rate (NMR)",
-    color = "Country"
-  ) +
+  labs(x = "Year", y = "Neonatal Mortality Rate (NMR)", color = "Country") +
   scale_color_brewer(palette = "Set1") +
   theme(legend.position = "bottom")
 ```
@@ -1267,7 +1189,7 @@ It is also the case that it is not necessary to fully understand everything in t
 
 ### Scales {.unnumbered}
 
-1.  *(Plan)* Consider the following scenario: *Every day for a year a person records whether they donated \$1, \$2, or \$3, to an unhoused person.* Please sketch what that dataset could look like, and then sketch a graph that you could build to show all observations.
+1.  *(Plan)* Consider the following scenario: *Every day for a year a person records whether they donated \$1, \$2, or \$3.* Please sketch what that dataset could look like, and then sketch a graph that you could build to show all observations.
 2.  *(Simulate I)* Please further consider the scenario described. Which of the following could be used to simulate the situation (select all that apply)?
     a.  `runif(n = 365, min = 1, max = 3) |> floor()`
     b.  `runif(n = 365, min = 1, max = 4) |> floor()`
@@ -1348,7 +1270,8 @@ midwest |>
   scale_x_log10() +
   scale_y_log10()
 ```
-15. Why do we simulate a dataset (write at least three dot points)?
+
+14. Why do we simulate a dataset (write at least three dot points)?
 
 ### Tutorial {.unnumbered}
 
