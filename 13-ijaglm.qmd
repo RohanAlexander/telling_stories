@@ -15,9 +15,9 @@ engine: knitr
 
 **Key concepts and skills**
 
-- Linear regression can be generalized for alternative types of dependent variables. 
-- Logistic regression can be used when we have a binary dependent variable.
-- Poisson regression can be used when we have an integer count dependent variable. A variant---negative binomial regression---is often also considered because the assumptions are less onerous. 
+- Linear regression can be generalized for alternative types of outcome variables. 
+- Logistic regression can be used when we have a binary outcome variable.
+- Poisson regression can be used when we have an integer count outcome variable. A variant---negative binomial regression---is often also considered because the assumptions are less onerous. 
 - Multilevel modeling is an approach that can allow us to make better use of our data.
 
 **Software and packages**
@@ -56,15 +56,15 @@ library(tidyverse)
 
 ## Introduction
 
-Linear models, covered in @sec-its-just-a-linear-model, have evolved substantially over the past century.\index{statistics!history of} Francis Galton,\index{Galton, Francis} mentioned in @sec-hunt-data, and others of his generation used linear regression in earnest in the late 1800s and early 1900s. Binary outcomes quickly became of interest and needed special treatment, leading to the development and wide adaption of logistic regression and similar methods in the mid-1900s [@cramer2002origins]. The generalized linear model framework came into being, in a formal sense, in the 1970s with @nelder1972generalized. Generalized linear models (GLMs)\index{generalized linear models} broaden the types of outcomes that are allowed. We still model outcomes as a linear function, but we are less constrained. The outcome can be anything in the exponential family, and popular choices include the logistic distribution and the Poisson distribution. For the sake of a completed story but turning to approaches that are beyond the scope of this book, a further generalization of GLMs is generalized additive models (GAMs) where we broaden the structure of the explanatory side. We still explain the dependent variable as an additive function of various bits and pieces, but those bits and pieces can be functions. This framework was proposed in the 1990s by @hastie1990generalized.
+Linear models, covered in @sec-its-just-a-linear-model, have evolved substantially over the past century.\index{statistics!history of} Francis Galton,\index{Galton, Francis} mentioned in @sec-hunt-data, and others of his generation used linear regression in earnest in the late 1800s and early 1900s. Binary outcomes quickly became of interest and needed special treatment, leading to the development and wide adaption of logistic regression and similar methods in the mid-1900s [@cramer2002origins]. The generalized linear model framework came into being, in a formal sense, in the 1970s with @nelder1972generalized. Generalized linear models (GLMs)\index{linear models!generalized} broaden the types of outcomes that are allowed. We still model outcomes as a linear function, but we are less constrained. The outcome can be anything in the exponential family, and popular choices include the logistic distribution and the Poisson distribution. For the sake of a completed story but turning to approaches that are beyond the scope of this book, a further generalization of GLMs is generalized additive models (GAMs) where we broaden the structure of the explanatory side. We still explain the outcome variable as an additive function of various bits and pieces, but those bits and pieces can be functions. This framework was proposed in the 1990s by @hastie1990generalized.
 
 In terms of generalized linear models, in this chapter we consider logistic, Poisson, and negative binomial regression. But we also explore a variant that is relevant to both linear models and generalized linear models: multilevel modeling. This is when we take advantage of some type of grouping that exists within our dataset.
 
 ## Logistic regression
 
-Linear regression\index{regression!logistic}\index{logistic regression} is a useful way to better understand our data. But it assumes a continuous outcome variable that can take any number on the real line. We would like some way to use this same machinery when we cannot satisfy this condition. We turn to logistic and Poisson regression for binary and count outcome variables, respectively. They are still linear models, because the independent variables enter in a linear fashion.
+Linear regression\index{regression!logistic}\index{logistic regression} is a useful way to better understand our data. But it assumes a continuous outcome variable that can take any number on the real line. We would like some way to use this same machinery when we cannot satisfy this condition. We turn to logistic and Poisson regression for binary and count outcome variables, respectively. They are still linear models, because the predictor variables enter in a linear fashion.
 
-Logistic regression\index{logistic regression}, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the dependent variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable\index{binary outcome} may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it. For instance, win or lose, available or not available, support or not.
+Logistic regression\index{logistic regression}, and its close variants, are useful in a variety of settings, from elections [@wang2015forecasting] through to horse racing [@chellel2018gambler; @boltonruth]. We use logistic regression when the outcome variable is a binary outcome, such as 0 or 1, or "yes" or "no". Although the presence of a binary outcome variable\index{binary outcome} may sound limiting, there are a lot of circumstances in which the outcome either naturally falls into this situation or can be adjusted into it. For instance, win or lose, available or not available, support or not.
 
 The foundation of this is the Bernoulli distribution\index{distribution!Bernoulli}. There is a certain probability, $p$, of outcome "1" and the remainder, $1-p$, for outcome "0". We can use `rbinom()` with one trial ("size = 1") to simulate data from the Bernoulli distribution.\index{simulation} 
 
@@ -732,8 +732,7 @@ grades_rstanarm <-
     data = count_of_A,
     family = poisson(link = "log"),
     prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
-    prior_intercept = 
-      normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -797,7 +796,7 @@ slopes(grades_rstanarm) |>
 
 ### Letters used in *Jane Eyre* 
 
-In an earlier age, @edgeworth1885methods made\index{Edgeworth, Francis} counts of the dactyls in Virgil's *Aeneid* (@Stigler1978 [p. 301] provides helpful background and the dataset is available using `Dactyl` from `HistData` [@HistData]). Inspired by this we could use `gutenbergr` to get the text of *Jane Eyre* by Charlotte Brontë\index{Brontë, Charlotte!Jane Eyre}.\index{text!analysis} (Recall that in @sec-gather-data we converted PDFs of *Jane Eyre* into a dataset.) We could then consider the first ten lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/Es increases as more words are used. If not, it could suggest that the distribution of e/Es is not consistent, which could be of interest to linguists.\index{regression!Poisson}
+In an earlier age, @edgeworth1885methods made counts of the dactyls in Virgil's *Aeneid* (@Stigler1978 [p. 301] provides helpful background and the dataset is available using `Dactyl` from `HistData` [@HistData]). Inspired by this we could use `gutenbergr` to get the text of *Jane Eyre* by Charlotte Brontë\index{Brontë, Charlotte!Jane Eyre}.\index{text!analysis} (Recall that in @sec-gather-data we converted PDFs of *Jane Eyre* into a dataset.) We could then consider the first ten lines of each chapter, count the number of words, and count the number of times either "E" or "e" appears. We are interested to see whether the number of e/Es increases as more words are used. If not, it could suggest that the distribution of e/Es is not consistent, which could be of interest to linguists.\index{regression!Poisson}
 
 Following the workflow advocated in this book, we first sketch our dataset and model.\index{workflow} A quick sketch of what the dataset could look like is @fig-letterssketch, and a quick sketch of our model is @fig-lettersmodel.
 
@@ -999,8 +998,7 @@ jane_e_counts <-
     data = jane_eyre_reduced,
     family = poisson(link = "log"),
     prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
-    prior_intercept = 
-      normal(location = 0, scale = 2.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -1326,7 +1324,7 @@ We can compare our different models (@tbl-modelsummarypoissonvsnegbinomial).
 
 ```{r}
 #| label: tbl-modelsummarypoissonvsnegbinomial
-#| tbl-cap: "Modeling the most prevelent cause of deaths in Alberta, 2001-2020"
+#| tbl-cap: "Modeling the most prevalent cause of deaths in Alberta, 2001-2020"
 
 coef_short_names <- 
   c("causeAll other forms of chronic ischemic heart disease"
@@ -1462,8 +1460,7 @@ voter_preferences <-
     data = political_support,
     family = binomial(link = "logit"),
     prior = normal(location = 0, scale = 3, autoscale = TRUE),
-    prior_intercept = 
-      normal(location = 0, scale = 3, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 3, autoscale = TRUE),
     seed = 853
   )
 
@@ -1628,8 +1625,7 @@ author_lines_rstanarm <-
     data = lines_by_author_work,
     family = neg_binomial_2(link = "log"),
     prior = normal(location = 0, scale = 0.5, autoscale = TRUE),
-    prior_intercept = 
-      normal(location = 0, scale = 0.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 0.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -1644,8 +1640,7 @@ author_lines_rstanarm_multilevel <-
     data = lines_by_author_work,
     family = neg_binomial_2(link = "log"),
     prior = normal(location = 0, scale = 0.5, autoscale = TRUE),
-    prior_intercept = 
-      normal(location = 0, scale = 0.5, autoscale = TRUE),
+    prior_intercept = normal(location = 0, scale = 0.5, autoscale = TRUE),
     seed = 853
   )
 
@@ -1723,7 +1718,7 @@ In this case, we see that we typically expect Brontë to write the longest books
 
 ## Concluding remarks
 
-In this chapter we have considered generalized linear models and also introduced multilevel modeling. We built on the foundation established in @sec-its-just-a-linear-model and provided some essentials for Bayesian model building. As mentioned in @sec-its-just-a-linear-model, this is enough to get started. Hopefully you are excited to learn more and to do that you should start with the modeling books recommended in @sec-concluding-remarks.
+In this chapter we have considered generalized linear models and introduced multilevel modeling. We built on the foundation established in @sec-its-just-a-linear-model and provided some essentials for Bayesian model building. As mentioned in @sec-its-just-a-linear-model, this is enough to get started. Hopefully you are excited to learn more and to do that you should start with the modeling books recommended in @sec-concluding-remarks.
 
 Over the course of @sec-its-just-a-linear-model and @sec-its-just-a-generalized-linear-model we have covered a variety of approaches for Bayesian models. But we have not done everything for every model. 
 
@@ -1736,7 +1731,7 @@ In the results section you should include a table of the estimates, built using 
 ### Scales {.unnumbered}
 
 1. *(Plan)* Consider the following scenario: *A person is interested in the number of deaths, attributed to cancer, in Sydney, Australia. They collect data from the five largest hospitals, for the past 20 years.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
-2. *(Simulate)* Please further consider the scenario described and simulate the situation, along with three independent variables that are associated with the number of deaths, by cause. Please include at least ten tests based on the simulated data.
+2. *(Simulate)* Please further consider the scenario described and simulate the situation, along with three predictor variables that are associated with the number of deaths, by cause. Please include at least ten tests based on the simulated data.
 3. *(Acquire)* Please describe one possible source of such a dataset.
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched. Then use `rstanarm` to build a model.
 5. *(Communicate)* Please write two paragraphs about what you did.
@@ -1744,18 +1739,17 @@ In the results section you should include a table of the estimates, built using 
 ### Questions {.unnumbered}
 
 1. When should we consider logistic regression (pick one)?
-    a. Continuous dependent variable.
-    b. Binary dependent variable.
-    c. Count dependent variable.
-2. We are interested in studying how voting intentions in the recent US presidential election vary by an individual's income. We set up a logistic regression model to study this relationship. In this study, one possible dependent variable would be (pick one)?
+    a. Continuous outcome variable.
+    b. Binary outcome variable.
+    c. Count outcome variable.
+2. We are interested in studying how voting intentions in the 2020 US presidential election vary by an individual's income. We set up a logistic regression model to study this relationship. In this study, one possible outcome variable would be (pick one)?
     a. Whether the respondent is a US citizen (yes/no)
     b. The respondent's personal income (high/low)
-    c. Whether the respondent is going to vote for Trump (yes/no)
+    c. Whether the respondent is going to vote for Biden (yes/no)
     d. Who the respondent voted for in 2016 (Trump/Clinton)
-3. We are interested in studying how voting intentions in the recent US presidential election vary by an individual's income. We set up a logistic regression model to study this relationship. In this study, one possible dependent variable would be (pick one)?
-    a. The race of the respondent (white/not white)
-    b. The respondent's marital status (married/not)
-    c. Whether the respondent is registered to vote (yes/no)
+3. We are interested in studying how voting intentions in the 2020 US presidential election vary by an individual's income. We set up a logistic regression model to study this relationship. In this study, some possible predictor variables could be (select all that apply)?
+    a.  The race of the respondent (white/not white)
+    b.  The respondent's marital status (married/not)
     d. Whether the respondent is going to vote for Biden (yes/no)
 4. The mean of a Poisson distribution is equal to its?
     a. Median.
