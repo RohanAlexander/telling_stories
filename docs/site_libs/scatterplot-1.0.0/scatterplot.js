@@ -1,9 +1,13 @@
-function add_scatterplot_geo_columnar( map_id, map_type, scatter_data, data_count, layer_id, auto_highlight, highlight_colour, legend, legend_format, bbox, update_view, focus_layer, js_transition, radius_min_pixels, radius_max_pixels, brush_radius ) {
+function add_scatterplot_geo_columnar( map_id, map_type, scatter_data, data_count, layer_id, auto_highlight, highlight_colour, legend, legend_format, bbox, update_view, focus_layer, js_transition, radius_min_pixels, radius_max_pixels, brush_radius, collision_filter) {
 
   var extensions = [];
 
   if ( brush_radius > 0 ) {
   	extensions.push( new deck.BrushingExtension() );
+  }
+
+  if ( collision_filter ) {
+  	extensions.push( new deck.CollisionFilterExtension() )
   }
 
   let hasTooltip = scatter_data.tooltip !== undefined;
@@ -43,7 +47,7 @@ function add_scatterplot_geo_columnar( map_id, map_type, scatter_data, data_coun
     autoHighlight: auto_highlight,
     highlightColor: md_hexToRGBA( highlight_colour ),
     onClick: info => md_layer_click( map_id, "scatterplot", info ),
-    onHover: info => hasTooltip ? md_update_binary_tooltip( info.layer, info.index, info.x, info.y ) : null,
+    onHover: hasTooltip ? md_update_binary_tooltip : null,
     transitions: js_transition || {},
     brushingRadius: brush_radius,
     extensions: extensions

@@ -1,0 +1,579 @@
+---
+engine: knitr
+---
+
+# Prediction {#sec-predictingpythons}
+
+**Prerequisites**
+
+- Read *An Introduction to Statistical Learning with Applications in R*, [@islr]
+  - Focus on Chapter 6 "Linear Model Selection and Regularization", which provides an overview of ridge and lasso regression.
+- Read *Python for Data Analysis*, [@pythonfordataanalysis]
+  - Focus on Chapter 13 which provides worked examples of data analysis in Python.
+- Read *Introduction to NFL Analytics with R*, [@congelio2024]
+  - Focus on Chapter 3 "NFL Analytics with the `nflverse` Family of Packages" and Chapter 5 "Advanced Model Creation with NFL Data".
+
+**Key concepts and skills**
+
+- 
+
+**Software and packages**
+
+- `arrow` [@arrow]
+- `nflverse` [@nflverse]
+- `poissonreg` [@poissonreg]
+- `tidymodels` [@citeTidymodels]
+  - `parsnip` [@parsnip]
+  - `recipes` [@recipes]
+  - `rsample` [@rsample]
+  - `tune` [@tune]
+  - `yarkdstick` [@yardstick]
+- `tidyverse` [@tidyverse]
+
+```{r}
+#| message: false
+#| warning: false
+
+library(arrow)
+library(nflverse)
+library(poissonreg)
+library(tidymodels)
+library(tidyverse)
+```
+
+## Introduction
+
+As discussed in @sec-its-just-a-linear-model, models tend to be focused on either inference or prediction. There are, in general, different cultures depending on your focus. One reason for this is a different emphasis of causality, which will be introduced in @sec-causality-from-observational-data. I am talking very generally here, but often with inference we will be very concerned about causality, and with prediction we will be less so. That means the quality of our predictions will break-down when conditions are quite different from what our model was expecting---but how do we know when conditions are sufficiently different for us to be worried?
+
+Another way for this cultural difference is because the rise of data science and machine learning in particular, has been substantially driven by the development of models in Python by people with a computer science or engineering background. This means there is an additional vocabulary difference because much of inference came out of statistics. Again, this is all speaking very broadly.
+
+In this chapter, I begin with a focus on prediction using the R approach of `tidymodels`. I then introduce one of those grey areas---and the reason that I have been trying to speak broadly---lasso regression. That was developed by statisticians, but is mostly used for prediction. Finally, I introduce all of this in Python.
+
+## Prediction with `tidymodels`
+
+### Linear models
+
+When we are focused on prediction, we will often want to fit many models. One way to do this is to copy and paste code many times. This is okay, and it is the way that most people get started but it is prone to making errors that are hard to find. A better approach will:
+
+1) scale more easily;
+2) enable us to think carefully about over-fitting; and
+3) add model evaluation.
+
+The use of `tidymodels` [@citeTidymodels] satisfies these criteria by providing a coherent grammar that allows us to easily fit a variety of models. Like the `tidyverse`, it is a package of packages.
+
+By way of illustration, we want to estimate the following model for the simulated running data:
+
+$$
+\begin{aligned}
+y_i | \mu_i &\sim \mbox{Normal}(\mu_i, \sigma) \\
+\mu_i &= \beta_0 +\beta_1x_i
+\end{aligned}
+$$
+
+where $y_i$ refers to the marathon time of some individual $i$ and $x_i$ refers to their five-kilometer time. Here we say that the marathon time of some individual $i$ is normally distributed with a mean of $\mu$ and a standard deviation of $\sigma$, where the mean depends on two parameters $\beta_0$ and $\beta_1$ and their five-kilometer time. Here "~" means "is distributed as". We use this slightly different notation from earlier to be more explicit about the distributions being used, but this model is equivalent to $y_i=\beta_0+\beta_1 x_i + \epsilon_i$, where $\epsilon$ is normally distributed.
+
+As we are focused on prediction, we are worried about over-fitting our data, which would limit our ability to make claims about other datasets. One way to partially address this is to split our dataset in two using `initial_split()`.
+
+```{r}
+#| message: false
+#| warning: false
+
+sim_run_data <- 
+  read_parquet(file = here::here("outputs/data/running_data.parquet"))
+
+set.seed(853)
+
+sim_run_data_split <-
+  initial_split(
+    data = sim_run_data,
+    prop = 0.80
+  )
+
+sim_run_data_split
+```
+
+Having split the data, we then create training and test datasets with `training()` and `testing()`.
+
+```{r}
+sim_run_data_train <- training(sim_run_data_split)
+
+sim_run_data_test <- testing(sim_run_data_split)
+```
+
+We have placed 80 per cent of our dataset into the training dataset. We will use that to estimate the parameters of our model. We have kept the remaining 20 per cent of it back, and we will use that to evaluate our model. Why might we do this? Our concern is the bias-variance trade-off, which haunts all aspects of modeling. We are concerned that our results may be too particular to the dataset that we have, such that they are not applicable to other datasets. To take an extreme example, consider a dataset with ten observations. We could come up with a model that perfectly hits those observations. But when we took that model to other datasets, even those generated by the same underlying process, it would not be accurate.
+
+One way to deal with this concern is to split the data in this way. We use the training data to inform our estimates of the coefficients, and then use the test data to evaluate the model. A model that too closely matched the data in the training data would not do well in the test data, because it would be too specific to the training data. The use of this test-training split enables us the opportunity to build an appropriate model.
+
+It is more difficult to do this separation appropriately than one might initially think. We want to avoid the situation where aspects of the test dataset are present in the training dataset because this inappropriately telegraphs what is about to happen. This is called data leakage. But if we consider data cleaning and preparation, which likely involves the entire dataset, it may be that some features of each are influencing each other. @kapoornarayanan2022 find extensive data leakage in applications of machine learning that could invalidate much research.
+
+To use `tidymodels` we first specify that we are interested in linear regression with `linear_reg()`. We then specify the type of linear regression, in this case multiple linear regression, with `set_engine()`. Finally, we specify the model with `fit()`. While this requires considerably more infrastructure than the base R approach detailed above, the advantage of this approach is that it can be used to fit many models; we have created a model factory, as it were.
+
+```{r}
+sim_run_data_first_model_tidymodels <-
+  linear_reg() |>
+  set_engine(engine = "lm") |>
+  fit(
+    marathon_time ~ five_km_time + was_raining,
+    data = sim_run_data_train
+  )
+```
+
+The estimated coefficients are summarized in the first column of @tbl-modelsummarybayesbetter. For instance, we find that on average in our dataset, five-kilometer run times that are one minute longer are associated with marathon times that are about eight minutes longer.
+
+### Logistic regression
+
+We can also use `tidymodels` for logistic regression problems. To accomplish this, we first need to change the class of our dependent variable into a factor because this is required for classification models.
+
+```{r}
+#| message: false
+#| warning: false
+
+week_or_weekday <- 
+  read_parquet(file = "outputs/data/week_or_weekday.parquet")
+
+set.seed(853)
+
+week_or_weekday <-
+  week_or_weekday |>
+  mutate(is_weekday = as_factor(is_weekday))
+
+week_or_weekday_split <- initial_split(week_or_weekday, prop = 0.80)
+week_or_weekday_train <- training(week_or_weekday_split)
+week_or_weekday_test <- testing(week_or_weekday_split)
+
+week_or_weekday_tidymodels <-
+  logistic_reg(mode = "classification") |>
+  set_engine("glm") |>
+  fit(
+    is_weekday ~ number_of_cars,
+    data = week_or_weekday_train
+  )
+```
+
+As before, we can make a graph of the actual results compared with our estimates. But one nice aspect of this is that we could use our test dataset to evaluate our model's prediction ability more thoroughly, for instance through a confusion matrix, which specifies the count of each prediction by what the truth was. We find that the model does well on the held-out dataset. There were 90 observations where the model predicted it was a weekday, and it was actually a weekday, and 95 where the model predicted it was a weekend, and it was a weekend. It was wrong for 15 observations, and these were split across seven where it predicted a weekday, but it was a weekend, and eight where it was the opposite case.
+
+```{r}
+week_or_weekday_tidymodels |>
+  predict(new_data = week_or_weekday_test) |>
+  cbind(week_or_weekday_test) |>
+  conf_mat(truth = is_weekday, estimate = .pred_class)
+```
+
+#### US political support
+
+One approach is to use `tidymodels` to build a prediction-focused logistic regression model in the same way as before, i.e. a validation set approach [@islr, p. 176]. In this case, the probability will be that of voting for Biden.
+
+```{r}
+
+ces2020 <- 
+  read_parquet(file = "outputs/data/ces2020.parquet")
+
+set.seed(853)
+
+ces2020_split <- initial_split(ces2020, prop = 0.80)
+ces2020_train <- training(ces2020_split)
+ces2020_test <- testing(ces2020_split)
+
+ces_tidymodels <-
+  logistic_reg(mode = "classification") |>
+  set_engine("glm") |>
+  fit(
+    voted_for ~ gender + education,
+    data = ces2020_train
+  )
+
+ces_tidymodels
+```
+
+And then evaluate it on the test set. It appears as though the model is having difficulty identifying Trump supporters.
+
+```{r}
+ces_tidymodels |>
+  predict(new_data = ces2020_test) |>
+  cbind(ces2020_test) |>
+  conf_mat(truth = voted_for, estimate = .pred_class)
+```
+
+When we introduced `tidymodels`, we discussed the importance of randomly constructing training and test sets. We use the training dataset to estimate parameters, and then evaluate the model on the test set. It is natural to ask why we should be subject to the whims of randomness and whether we are making the most of our data. For instance, what if a good model is poorly evaluated because of some random inclusion in the test set? Further, what if we do not have a large test set?
+
+One commonly used resampling method that goes some way to addressing this is $k$-fold cross-validation. In this approach we create $k$ different samples, or "folds", from the dataset without replacement. We then fit the model to the first $k-1$ folds, and evaluate it on the last fold. We do this $k$ times, once for every fold, such that every observation will be used for training $k-1$ times and for testing once. The $k$-fold cross-validation estimate is then the average mean squared error [@islr, p. 181]. For instance, `vfold_cv()` from `tidymodels` can be used to create, say, ten folds.
+
+```{r}
+set.seed(853)
+
+ces2020_10_folds <- vfold_cv(ces2020, v = 10)
+```
+
+The model can then be fit across the different combinations of folds with `fit_resamples()`. In this case, the model will be fit ten times.
+
+```{r}
+ces2020_cross_validation <-
+  fit_resamples(
+    object = logistic_reg(mode = "classification") |> set_engine("glm"),
+    preprocessor = recipe(voted_for ~ gender + education,
+                          data = ces2020),
+    resamples = ces2020_10_folds,
+    metrics = metric_set(accuracy, sens),
+    control = control_resamples(save_pred = TRUE)
+  )
+```
+
+We might be interested to understand the performance of our model and we can use `collect_metrics()` to aggregate them across the folds (@tbl-metricsvoters-1). These types of details would typically be mentioned in passing in the main content of the paper, but included in great detail in an appendix. The average accuracy of our model across the folds is 0.61, while the average sensitivity is 0.19 and the average specificity is 0.90.
+
+```{r}
+#| label: tbl-metricsvoters
+#| tbl-cap: "Average metrics across the ten folds of a logistic regression to predict voter preference"
+#| layout-ncol: 2
+#| tbl-subcap: ["Key performance metrics", "Confusion matrix"]
+
+collect_metrics(ces2020_cross_validation) |>
+  select(.metric, mean) |>
+  knitr::kable(
+    col.names = c("Metric",
+                  "Mean"),
+    digits = 2,
+    format.args = list(big.mark = ",")
+  )
+
+conf_mat_resampled(ces2020_cross_validation) |>
+  mutate(Proportion = Freq / sum(Freq)) |>
+  knitr::kable(digits = 2,
+               format.args = list(big.mark = ","))
+```
+
+What does this mean? Accuracy is the proportion of observations that were correctly classified. The result of 0.61 suggests the model is doing better than a coin toss, but not much more. Sensitivity is the proportion of true observations that are identified as true [@islr, p. 145]. In this case that would mean the model predicted a respondent voted for Trump and they did. Specificity is the proportion of false observations that are identified as false [@islr, p. 145]. In this case it is the proportion of voters that voted for Biden, that were predicted to vote for Biden. This confirms our initial thought that the model is having trouble identifying Trump supporters.
+
+We can see this in more detail by looking at the confusion matrix (@tbl-metricsvoters-2). When used with resampling approaches, such as cross-validation, the confusion matrix is computed for each fold and then averaged. The model is predicting Biden much more than we might expect from our knowledge of how close the 2020 election was. It suggests that our model may need additional variables to do a better job.
+
+Finally, it may be the case that we are interested in individual-level results, and we can add these to our dataset with `collect_predictions()`.
+
+```{r}
+ces2020_with_predictions <-
+  cbind(
+    ces2020,
+    collect_predictions(ces2020_cross_validation) |>
+      arrange(.row) |>
+      select(.pred_class)
+  ) |>
+  as_tibble()
+```
+
+For instance, we can see that the model is essentially predicting support for Biden for all individuals apart from males with no high school, high school graduates, or two years of college (@tbl-omgthismodelishorriblelol).
+
+```{r}
+#| label: tbl-omgthismodelishorriblelol
+#| tbl-cap: "The model is predicting support for Biden for all females, and for many males, regardless of education"
+
+ces2020_with_predictions |>
+  group_by(gender, education, voted_for) |>
+  count(.pred_class) |>
+  knitr::kable(
+    col.names = c(
+      "Gender",
+      "Education",
+      "Voted for",
+      "Predicted vote",
+      "Number"
+    ),
+    digits = 0,
+    format.args = list(big.mark = ",")
+  )
+```
+
+
+### Poisson regression
+
+We can use `tidymodels` to estimate Poisson models with `poissonreg` [@poissonreg] (@tbl-modelsummarypoisson).
+
+```{r}
+count_of_A <- 
+  read_parquet(file = "outputs/data/count_of_A.parquet")
+
+set.seed(853)
+
+count_of_A_split <-
+  initial_split(count_of_A, prop = 0.80)
+count_of_A_train <- training(count_of_A_split)
+count_of_A_test <- testing(count_of_A_split)
+
+grades_tidymodels <-
+  poisson_reg(mode = "regression") |>
+  set_engine("glm") |>
+  fit(
+    number_of_As ~ department,
+    data = count_of_A_train
+  )
+```
+
+The results of this estimation are in the second column of @tbl-modelsummarypoisson. They are similar to the estimates from `glm()`, but the number of observations is less because of the split.
+
+
+
+
+## Lasso regression
+
+<!-- One of the nice aspects of text is that we can adapt our existing methods to use it as an input. Here we are going to use a variant of logistic regression, along with text inputs, to predict. Inspired by @silge2018 we are going to have two different text inputs, train a model on a sample of text from each of them, and then try to use that model to predict the text in a training set. Although this is an arbitrary example, we could imagine many real-world applications. For instance, we may be interested in whether some text was likely written by a bot or a human. -->
+
+
+:::{.callout-note}
+## Shoulders of giants
+
+Dr Robert Tibshirani\index{Tibshirani, Robert} is Professor in the Departments of Statistics and Biomedical Data Science at Stanford University.\index{statistics} After earning a PhD in Statistics from Stanford University in 1981, he joined the University of Toronto as an assistant professor.\index{University of Toronto} He was promoted to full professor in 1994 and moved to Stanford in 1998. He made fundamental contributions including GAMs, mentioned above, and lasso regression, which is a way of automated variable selection. He is an author of @islr. He was awarded the COPSS Presidents' Award in 1996 and was appointed a Fellow of the Royal Society in 2019.\index{COPSS Presidents' Award}
+:::
+
+
+<!-- First we need to get some data. We use books from Project Gutenberg using `gutenberg_download()` from `gutenbergr` [@gutenbergr]. We consider *Jane Eyre* [@janeeyre] and *Alice's Adventures in Wonderland* [@citealice]. -->
+
+<!-- ```{r} -->
+<!-- #| include: true -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+<!-- #| eval: false -->
+
+<!-- library(gutenbergr) -->
+<!-- library(tidyverse) -->
+
+<!-- # The books that we are interested in have the keys of 1260 and 11, respectively. -->
+<!-- alice_and_jane <- -->
+<!--   gutenberg_download( -->
+<!--     gutenberg_id = c(1260, 11), -->
+<!--     meta_fields = "title" -->
+<!--   ) -->
+
+<!-- write_csv(alice_and_jane, "alice_and_jane.csv") -->
+
+<!-- head(alice_and_jane) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| include: false -->
+<!-- #| eval: true -->
+<!-- #| warning: false -->
+<!-- #| message: false -->
+
+<!-- library(gutenbergr) -->
+<!-- library(tidyverse) -->
+
+<!-- alice_and_jane <- read_csv("inputs/books/alice_and_jane.csv") -->
+
+<!-- head(alice_and_jane) -->
+<!-- ``` -->
+
+<!-- One of the great things about this is that the dataset is a tibble. So we can work with all our familiar skills. Each line of the book is read in as a different row in the dataset. Notice that we have downloaded two books here at once, and so we added the title. The two books are one after each other.  -->
+
+<!-- By looking at the number of lines in each, it looks like *Jane Eyre* is much longer than *Alice in Wonderland*. We start by getting rid of blank lines using `remove_empty()` from `janitor` [@janitor]. -->
+
+<!-- ```{r} -->
+<!-- library(janitor) -->
+
+<!-- alice_and_jane <- -->
+<!--   alice_and_jane |> -->
+<!--   mutate(blank_line = if_else(text == "", 1, 0)) |> -->
+<!--   filter(blank_line == 0) |> -->
+<!--   select(-blank_line) -->
+
+<!-- table(alice_and_jane$title) -->
+<!-- ``` -->
+
+<!-- There is still an overwhelming amount of *Jane Eyre*, compared with *Alice in Wonderland*, so we sample from *Jane Eyre* to make it more equal. -->
+
+<!-- ```{r} -->
+<!-- set.seed(853) -->
+
+<!-- alice_and_jane$rows <- c(1:nrow(alice_and_jane)) -->
+<!-- sample_from_me <- alice_and_jane |> filter(title == "Jane Eyre: An Autobiography") -->
+<!-- keep_me <- sample(x = sample_from_me$rows, size = 2481, replace = FALSE) -->
+
+<!-- alice_and_jane <- -->
+<!--   alice_and_jane |> -->
+<!--   filter(title == "Alice's Adventures in Wonderland" | rows %in% keep_me) |> -->
+<!--   select(-rows) -->
+
+<!-- table(alice_and_jane$title) -->
+<!-- ``` -->
+
+<!-- There are a variety of issues here, for instance, we have the whole of Alice, but we only have random bits of Jane, but nonetheless we continue and add a counter with the line number for each book. -->
+
+<!-- ```{r} -->
+<!-- alice_and_jane <- -->
+<!--   alice_and_jane |> -->
+<!--   group_by(title) |> -->
+<!--   mutate(line_number = paste(gutenberg_id, row_number(), sep = "_")) |> -->
+<!--   ungroup() -->
+<!-- ``` -->
+
+<!-- We now want to unnest the tokes. We use `unnest_tokens()` from `tidytext` [@SilgeRobinson2016]. -->
+
+<!-- ```{r} -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+
+<!-- library(tidytext) -->
+
+<!-- alice_and_jane_by_word <- -->
+<!--   alice_and_jane |> -->
+<!--   unnest_tokens(word, text) |> -->
+<!--   group_by(word) |> -->
+<!--   filter(n() > 10) |> -->
+<!--   ungroup() -->
+<!-- ``` -->
+
+<!-- We remove any word that was not used more than 10 times. Nonetheless we still have more than 500 unique words. (If we did not require that the word be used by the author at least 10 times then we end up with more than 6,000 words.) -->
+
+<!-- The reason this is relevant is because these are our independent variables. So where we may be used to having something less than 10 explanatory variables, in this case we are going to have 585 As such, we need a model that can handle this. -->
+
+<!-- However, as mentioned before, we are going to have some rows that essentially just had one word. And so we filter for that also, which ensures that the model will have at least some words to work with. -->
+
+<!-- ```{r} -->
+<!-- alice_and_jane_by_word <- -->
+<!--   alice_and_jane_by_word |> -->
+<!--   group_by(title, line_number) |> -->
+<!--   mutate(number_of_words_in_line = n()) |> -->
+<!--   ungroup() |> -->
+<!--   filter(number_of_words_in_line > 2) |> -->
+<!--   select(-number_of_words_in_line) -->
+<!-- ``` -->
+
+<!-- We create a test/training split, and load in `tidymodels`. -->
+
+<!-- ```{r} -->
+<!-- #| message: false -->
+<!-- #| warning: false -->
+
+<!-- library(tidymodels) -->
+
+<!-- set.seed(853) -->
+
+<!-- alice_and_jane_by_word_split <- -->
+<!--   alice_and_jane_by_word |> -->
+<!--   select(title, line_number) |> -->
+<!--   distinct() |> -->
+<!--   initial_split(prop = 3 / 4, strata = title) -->
+<!-- ``` -->
+
+<!-- Then we can use `cast_dtm()` to create a document-term matrix. This provides a count of how many times each word is used. -->
+
+<!-- ```{r} -->
+<!-- alice_and_jane_dtm_training <- -->
+<!--   alice_and_jane_by_word |> -->
+<!--   count(line_number, word) |> -->
+<!--   inner_join(training(alice_and_jane_by_word_split) |> select(line_number)) |> -->
+<!--   cast_dtm(term = word, document = line_number, value = n) -->
+
+<!-- dim(alice_and_jane_dtm_training) -->
+<!-- ``` -->
+
+<!-- So we have our independent variables sorted, now we need our binary dependent variable, which is whether the book is Alice in Wonderland or Jane Eyre. -->
+
+<!-- ```{r} -->
+<!-- response <- -->
+<!--   data.frame(id = dimnames(alice_and_jane_dtm_training)[[1]]) |> -->
+<!--   separate(id, into = c("book", "line", sep = "_")) |> -->
+<!--   mutate(is_alice = if_else(book == 11, 1, 0)) -->
+
+<!-- predictor <- alice_and_jane_dtm_training[] |> as.matrix() -->
+<!-- ``` -->
+
+
+<!-- Now we can run our model. -->
+
+<!-- ```{r} -->
+<!-- #| eval: false -->
+
+<!-- library(glmnet) -->
+
+<!-- model <- cv.glmnet( -->
+<!--   x = predictor, -->
+<!--   y = response$is_alice, -->
+<!--   family = "binomial", -->
+<!--   keep = TRUE -->
+<!-- ) -->
+
+<!-- save(model, file = "alice_vs_jane.rda") -->
+<!-- ``` -->
+
+<!-- ```{r}  -->
+<!-- #| echo: false -->
+
+<!-- load("outputs/model/alice_vs_jane.rda") -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- library(glmnet) -->
+<!-- library(broom) -->
+
+<!-- coefs <- model$glmnet.fit |> -->
+<!--   tidy() |> -->
+<!--   filter(lambda == model$lambda.1se) -->
+
+<!-- coefs |> head() -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- coefs |> -->
+<!--   group_by(estimate > 0) |> -->
+<!--   top_n(10, abs(estimate)) |> -->
+<!--   ungroup() |> -->
+<!--   ggplot(aes(fct_reorder(term, estimate), estimate, fill = estimate > 0)) + -->
+<!--   geom_col(alpha = 0.8, show.legend = FALSE) + -->
+<!--   coord_flip() + -->
+<!--   theme_minimal() + -->
+<!--   labs( -->
+<!--     x = "Coefficient", -->
+<!--     y = "Word" -->
+<!--   ) + -->
+<!--   scale_fill_brewer(palette = "Set1") -->
+<!-- ``` -->
+
+<!-- Perhaps unsurprisingly, if a line mentions Alice then it is likely to be a Alice in Wonderland and if it mention Jane then it is likely to be Jane Eyre. -->
+
+
+
+
+## Prediction with Python
+
+### Setup
+
+We will use Python within VSCode, which is a free IDE from Microsoft that you can download [here](https://code.visualstudio.com). You then install the Quarto and Python extensions.
+
+### Data
+
+*Read in data using parquet.*
+
+*Manipulate using pandas*
+
+### Model
+
+#### scikit-learn
+
+#### TensorFlow
+
+
+## Exercises
+
+### Scales {.unnumbered}
+
+1. *(Plan)* Consider the following scenario: *Each day for a year your uncle and you play darts. Each round consists of throwing three darts each. At the end of each round you add the points that your three darts hit. So if you hit 3, 5, and 10, then your total score for that round is 18. Your uncle is somewhat benevolent, and if you hit a number less than 5, he pretends not to see that, allowing you the chance to re-throw that dart. Pretend that each day you play 15 rounds.* Please sketch out what that dataset could look like and then sketch a graph that you could build to show all observations.
+2. *(Simulate)* Please further consider the scenario described and simulate the situation. Compare your uncle's total with your total if you didn't get the chance to re-throw, and the total that actually end up with. Please include at least ten tests based on the simulated data.
+3. *(Acquire)* Please describe one possible source of such a dataset (or an equivalent sport or situation of interest to you).
+4. *(Explore)* Please use `ggplot2` to build the graph that you sketched. Then use `tidymodels` to build a forecasting model of who wins.
+5. *(Communicate)* Please write two paragraphs about what you did.
+
+### Questions {.unnumbered}
+
+
+### Tutorial {.unnumbered}
+
+Please use `nflverse` to load some statistics for NFL quarterbacks during the regular season. The [data dictionary](https://nflreadr.nflverse.com/articles/dictionary_player_stats.html) will be useful to make sense of the data.
+
+```{r}
+qb_regular_season_stats <- 
+  load_player_stats(seasons = TRUE) |> 
+  filter(season_type == "REG" & position == "QB")
+```
+
+Pretend that you are an NFL analyst and that it is half way through the 2023 regular season, i.e. Week 9 has just finished. I am interested in the best forecasting model of `passing_epa` that you can generate for each team in the remainder of the season, i.e. Weeks 10-18.
+
+Use Quarto, and include an appropriate title, author, date, link to a GitHub repo, sections, and citations, and write a 2-3 page report for management. The best performance will likely require creative feature engineering. You are welcome to use R or Python, any model, but you should be careful to specify the model and explain, at a high-level, how it works. Be careful about leakage!
+
