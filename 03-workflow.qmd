@@ -665,6 +665,7 @@ Everyone who uses R, or any programming language for that matter, has trouble fi
 7. Restart your computer.
 8. Search for what you are trying to do, rather than the error, being sure to include "tidyverse" or "in R" in the search to help make the results more appropriate. For instance, "save PDF of graph in R using ggplot". Sometimes there are relevant blog posts or Stack Overflow answers that will help.
 9. Make a small, self-contained, reproducible example "reprex" to see if the issue can be isolated and to enable others to help.\index{reprex}\index{help!reproducible example}
+10. If you are working in a Quarto doc then include label in the chunk options to make it easier to find where the mistake may be happening.
 
 More generally, while this is not always possible, it is almost always helpful to take a break and come back the next day.
 
@@ -804,7 +805,7 @@ We have discussed at length the need to share code, and we have put forward an a
 We have discussed at length the need to share code, and we have put forward an approach to this using GitHub.\index{reproducibility}\index{efficiency!reproducibility} And in @sec-store-and-share, we will discuss sharing data. But, there is another requirement to enable other people to run our code. In @sec-fire-hose we discussed how R itself, as well as R packages update from time to time, as new functionality is developed, errors fixed, and other general improvements made. [Online Appendix -@sec-r-essentials] describes how one advantage of the `tidyverse` is that it can update faster than base R, because it is more specific. But this could mean that even if we were to share all the code and data that we use, it is possible that the software versions that have become available would cause errors.
 :::
 
-The solution to this is to detail the environment that was used.\index{reproducibility} There are a large number of ways to do this, and they can add complexity. We just focus on documenting the version of R and R packages that were used, and making it easier for others to install that exact version. We use `renv` to do this. 
+The solution to this is to detail the environment that was used.\index{reproducibility} There are a large number of ways to do this, and they can add complexity. We just focus on documenting the version of R and R packages that were used, and making it easier for others to install that exact version. Essentially we are just isolating the set-up that we used because that will help with reproducibility [@Perkel2023]. In `R` we can use `renv` to do this. 
 
 Once `renv` is installed and loaded, we use `init()` to get the infrastructure set-up that we will need.\index{efficiency!reproducibility} We are going to create a file that will record the packages and versions used. We then use `snapshot()` to actually document what we are using. This creates a "lockfile" that records the information. 
 
@@ -883,7 +884,7 @@ This will automatically make changes, such as spacing and indentation. As such t
 
 ### Code review
 
-Having dealt with all of these aspects of style, we can turn to code review\index{code!review}.\index{efficiency!code review} This is the process of having another person go through and critique the code. Code review is a critical part of writing code, and @researchsoftware [p. 465] describe it as "the most effective way to find bugs". It is especially helpful, although quite daunting, when learning to code because getting feedback is a great way to improve.
+Having dealt with all of these aspects of style, we can turn to code review\index{code!review}.\index{efficiency!code review} This is the process of having another person go through and critique the code. Many professional writers have editors, and code review is the closest that we come to that in data science. Code review is a critical part of writing code, and @researchsoftware [p. 465] describe it as "the most effective way to find bugs". It is especially helpful, although quite daunting, when learning to code because getting feedback is a great way to improve.
 
 Go out of your way to be polite and collegial when reviewing another person's code.\index{help!providing} Small aspects to do with style, things like spacing and separation, should have been taken care of by a linter and styler, but if not, then make a general recommendation about that. Most of your time as a code reviewer in data science should be spent on aspects such as:
 
@@ -1031,19 +1032,38 @@ In this chapter we have considered much and it is normal to be overwhelmed. Come
 ### Practice {.unnumbered}
 
 1. *(Plan)* Consider the following scenario: *In a certain country there are only ever four parties that could win a seat in parliament. Whichever candidate has a plurality of votes in the area associated with a given seat wins that seat. The parliament is made up of 175 total seats. An analyst is interested in the number of votes for each party by seat.* Please sketch what that dataset could look like, and then sketch a graph that you could build to show all observations.
-2. *(Simulate I)* Please further consider the scenario described, and decide which of the following could be used to simulate the situation (select all that apply)?
-    a.  `tibble(seat = rep(1:175, each = 4), party = rep(x = 1:4, times = 175), votes = runif(n = 175 * 4, min = 0, max = 1000) |> floor())`
-    b. `tibble(seat = rep(1:175, each = 4), party = sample(x = 1:4, size = 175, replace = TRUE), votes = runif(n = 175 * 4, min = 0, max = 1000) |> floor())`
-    c.  `tibble(seat = rep(1:175, each = 4), party = rep(x = 1:4, times = 175), votes = sample(x = 1:1000, size = 175 * 4))`
-    d. `tibble(seat = rep(1:175, each = 4), party = sample(x = 1:4, size = 175, replace = TRUE), votes = sample(x = 1:1000, size = 175 * 4))`
-3. *(Simulate II)* Please write three tests based on this simulation.
-4. *(Acquire)* Please identify one possible source of actual data about voting in a country of interest to you.
-5. *(Explore)* Assume that the `tidyverse` is loaded and the dataset "election_results" has the columns "seat", "party", and "votes", as in the earlier question. Which of the following would result in a count of the number of seats won by each party (pick one)? 
-    a.  `election_results |> slice_max(votes, n = 1, by = seat) |> count(party)`
-    b. `election_results |> slice_max(votes, n = 1, by = party) |> count(seat)`
-    c. `election_results |> slice_max(votes, n = 1, by = party) |> count(party)`
-    d. `election_results |> slice_max(votes, n = 1, by = seat) |> count(seat)`
-6. *(Communicate)* Please write two paragraphs as if you had gathered data from that source and built a graph. The exact details contained in the paragraphs do not have to be factual (i.e. you do not actually have to get the data nor create the graphs).
+2. *(Simulate)* Please further consider the scenario described and simulate the situation. Carefully specify an appropriate situation using the code below. Then write five tests based on the simulated data.
+
+```{r}
+#| eval: false
+#| echo: true
+
+library(tidyverse)
+
+election_results <-
+  tibble(
+    seat = rep(1:175, each = 4),
+    party = rep(x = 1:4, times = 175),
+    votes = runif(n = 175 * 4, min = 0, max = 1000) |> floor()
+  )
+```
+
+3. *(Acquire)* Please specify a source of actual data about voting in a country of interest to you.
+4. *(Explore)* Start with the following code and create a table of the number of seats won by each party.
+
+```{r}
+#| eval: false
+#| echo: true
+
+library(tidyverse)
+
+election_results |> 
+  slice_max(votes, n = 1, by = seat) |> 
+  count(party) |>
+  kable()
+```
+
+5. *(Share)* Please write two paragraphs as if you had gathered data from the source you identified (rather than simulated), and if the table that you built using simulated data reflected the actual situation. The exact details contained in the paragraphs do not have to be factual but they should be reasonable (i.e. you do not actually have to get the data nor create the graphs). Separate the code appropriately into R files and a Quarto doc. Submit a link to a GitHub repo with a README.
 
 ### Quiz {.unnumbered}
 
@@ -1062,30 +1082,29 @@ In this chapter we have considered much and it is normal to be overwhelmed. Come
     b. Data mining.
     c. Sample bias.
     d. Effect size manipulation.
-4. From @Gelman2016, the garden of forking paths refers to what issue in statistical analysis (pick one)?
+4. From @Gelman2016, the garden of forking paths refers to what issue (pick one)?
     a. The complexity of decision trees in machine learning.
-    b.  The multiple potential analyses paths that can be taken with the same data.
-    c. The branching of psychological theories over time.
+    b.  The multiple potential analyses that can be conducted with the same data.
+    c. The branching of theory and applied work over time.
     d. The divergence of academic disciplines.
-5. From @Gelman2016, what does the term replication crisis refer to (pick one)?
-    a. Difficulty in creating new psychological theories.
-    b. Overproduction of similar psychological research.
+5. From @Gelman2016, what does the replication crisis refer to (pick one)?
+    a. Difficulty in creating new theory.
+    b. Overproduction of similar research.
     c.  Challenges in replicating the findings of previous studies.
     d. Shortage of participants for experiments.
-6. @Gelman2016 focuses on the replication crisis in psychology. Pick another discipline to focus on, based on your own experience, perhaps in other classes, and write about the extent to which you think there may be a replication in that discipline and why.
-7. From @wilsongoodenough, which of the following is a key practice in data management (pick one)?
-    a. Overwriting raw data files with cleaned-up versions.
-    b. Avoiding documentation of data processing steps to save time.
-    c. Using proprietary file formats for data storage.
-    d.  Saving the raw data and ensuring it's backed up.
+6. @Gelman2016 focuses on the replication crisis in psychology. Pick another discipline to focus on, based on your own experience, perhaps in other classes, and write about the extent to which you think there may be replication issues in that discipline and why.
+7. From @wilsongoodenough, which of the following are important data management practices (select all that apply)?
+    a.  Saving both the raw data and cleaned versions.
+    b.  Documenting the data processing steps.
+    c.  Using non-proprietary file formats for data storage.
 8. From @wilsongoodenough, why is it important to create a README file in the project's home directory (pick one)?
     a. To store raw data files.
     b.  To explain the purpose of the project and provide an overview.
     c. To list all the errors and bugs in the project.
     d. To keep track of all the versions of the project files.
-9. From @wilsongoodenough, what is a primary benefit of using a version control system in scientific computing projects (pick one)?
+9. From @wilsongoodenough, what is a primary benefit of using version control (pick one)?
     a. It automatically writes code for the researcher.
-    b.  It tracks changes over time and facilitates collaboration.
+    b.  It tracks changes and helps collaboration.
     c. It replaces the need for backing up data.
     d. It ensures that all data is encrypted.
 10. From @wilsongoodenough, what is a recommended practice for naming files in a project (pick one)?
@@ -1100,10 +1119,10 @@ In this chapter we have considered much and it is normal to be overwhelmed. Come
     d. It reduces the need for documentation.
 12. According to @Alexander2019 research is reproducible if (pick one)?
     a. It is published in peer-reviewed journals.
-    b. All of the materials used in the study are provided.
+    b. All the materials used in the study are provided.
     c. It can be reproduced exactly without the authors providing materials.
     d.  It can be reproduced exactly, given all the materials used in the study.
-13. Which of the following statements best describes literate programming (pick one)?
+13. What is literate programming (pick one)?
     a. It separates code and documentation into different files.
     b. It automatically fixes syntax errors in code.
     c. It automates the generation of code documentation.
@@ -1113,7 +1132,7 @@ In this chapter we have considered much and it is normal to be overwhelmed. Come
     b. To run code in parallel.
     c. To integrate data visualization into reports.
     d.  To provide a version control system for code.
-15. According to @tidyversestyleguide for naming files, how would the files "00_get_data.R" and "get data.R" be classified (pick one)?
+15. According to @tidyversestyleguide, how would the files "00_get_data.R" and "get data.R" be classified (pick one)?
     a. bad; bad.
     b.  good; bad.
     c. bad; good.
@@ -1138,72 +1157,63 @@ In this chapter we have considered much and it is normal to be overwhelmed. Come
     a.  They help with reproducibility.
     b.  They make it easier to share code.
     c.  They make your workspace more organized.
-20. Assuming the packages and datasets have been loaded, what is the mistake in this code: `DoctorVisits |> filter(visits)` (pick one)?
-    a. `visits`
-    b. `DoctorVisits`
+20. Why is it important that your R Project name reflects the content of your repo (select all that apply)?
+    a.  Consistency.
+    b.  Professionalism.
+    c.  Attention to detail.
+21. Assume the packages and datasets have been loaded; what is the mistake in this code: `DoctorVisits |> filter(visits)` (pick one)?
+    a. `DoctorVisits`
+    b. `|>`
     c.  `filter`
-    d. `|>`
-21. What is a reprex and why is it important to be able to make one (select all that apply)?
+    d. `visits`
+22. What is a reprex and why is it important to be able to make one (select all that apply)?
     a.  A reproducible example that enables your error to be reproduced. 
     b.  A reproducible example that helps others help you.
     c.  A reproducible example during the construction of which you may solve your own problem.
     d.  A reproducible example that demonstrates you have actually tried to help yourself.
-22. According to @sharlatalks, what is the key part of "If you need help getting unstuck, the first step is to create a reprex, or reproducible example. The goal of a reprex is to package your problematic code in such a way that other people can run it and feel your pain. Then, hopefully, they can provide a solution and put you out of your misery." (pick one)?
+23. According to @sharlatalks, what is the key part of "If you need help getting unstuck, the first step is to create a reprex, or reproducible example. The goal of a reprex is to package your problematic code in such a way that other people can run it and feel your pain. Then, hopefully, they can provide a solution and put you out of your misery." (pick one)?
     a. package your problematic code
     b.  other people can run it and feel your pain
     c. the first step is to create a reprex
     d. they can provide a solution and put you out of your misery
-23. In the context of reproducibility, what is the function of the `renv` package (pick one)?
+24. In the context of reproducibility, what is the function of the `renv` package (pick one)?
     a. To run code chunks in parallel.
-    b.  To document and share the software environment used for analysis.
+    b.  To document and share the software environment.
     c. To automate code linting.
     d. To improve code efficiency in simulations.
-24. Which of the following does NOT contribute to a reproducible workflow (pick one)?
+25. Which of the following does NOT contribute to a reproducible workflow (pick one)?
     a.  Using `setwd()` to set the working directory.
-    b. Sharing code and data along with research results.
-    c. Using Quarto for integrating R code with reports.
+    b. Sharing code and data as well as results.
+    c. Using Quarto for integrating R and Python code in papers.
     d. Using version control with Git and GitHub.
-25. What is one advantage of parallel processing (pick one)?
+26. What is one advantage of parallel processing (pick one)?
     a. It ensures code reproducibility.
     b.  It allows multiple chunks of code to run simultaneously, reducing execution time.
     c. It improves the readability of code.
     d. It helps automatically generate documentation.
 
-
 ### Activity {.unnumbered}
 
-Peer review generally, and code review specifically [@codereview], is an important part of working as a professional. 
+The purpose of this activity is to give and review peer review. Peer review generally, and code review specifically [@codereview], is an important part of working as a professional. 
 
-Please update your work from the Activity in @sec-fire-hose, to use the [starter folder](https://github.com/rohanalexander/starter_folder). This would involve, amongst other things, moving the downloading and cleaning to appropriate scripts, updating the README, adding a title, etc. Generally, you should look at the rubric for the *Donaldson* Paper in [Online Appendix -@sec-papers] and quickly try to comply with as much as possible, without doing too much extra work.
+Please update your work from the Activity in @sec-fire-hose, to use the [starter folder](https://github.com/rohanalexander/starter_folder). This would involve, amongst other things, moving the downloading and cleaning to appropriate scripts, updating the README, adding a title, etc. Generally, you should look at the rubric for the *Donaldson* Paper in [Online Appendix -@sec-papers] and quickly try to comply with as much as possible, without doing too much extra work. Then exchange it with someone else. 
 
-Then exchange it with someone else. 
+Read @googlecoderview and @giladpeerreview. Then using GitHub Issues please conduct peer review of the repo content. Following @giladpeerreview, the peer review should use the following structure, and be nicely formatted:
 
-Following the advice of , please provide them with a review of their code by create an Issue. That should be at least two pages (an example is [here](https://github.com/RohanAlexander/telling_stories/issues/95)). You are marked on that peer review. Submit a link to the GitHub Issue.
-
-Please read @googlecoderview and @giladpeerreview. Then using GitHub Issues please conduct peer review of the repo content. 
-
-The peer review should have the following structure (based on @giladpeerreview): 
-
-1. Opening statement summary 
-    *[Add a brief summary of the manuscript you’re reviewing]*
-2. List strong positive points
+1. Summary  
+    *[Add a brief summary of the manuscript you are reviewing.]*
+2. Strong positive points:  
     *[Please keep this brief. Two or three dot points.]*
-3. Critical improvements needed
-    *[This is the most important section. These are issues that the authors of the paper must fix and/or address. It is important to keep those very constructive and polite, be gentle but clear, and provide as much information as you can to assist authors. This might include mistakes/errors, missing information, oversights, misunderstandings, etc. If you can, explain why these are mistakes with reference to where the correct information can be found.]*
-4. Suggestions for improvement:
-    *[This is you trying to help the authors do even better, as nice to have. You can comment on things that you are not sure of, or state an opinion, but be humble about this being a suggestion, and be very positive and constructive.]*
-5. Please consider adding/changing/removing:
-    *[Add five/six dot points around typos, minor code issues, etc]*
-6. Evaluation: 
-    *[If you had to grade this section based on the evaluation criteria provided in the syllabus and at the end, what would you currently give? This will =not= be used for grading, this is ONLY to provide authors with some idea of how much work they need to put into this section to improve.]*
-7. Rubric:
-    *[Add each element of the rubric and provide a mark against it.]*
-8. Estimated overall mark
+3. Critical improvements needed:  
+    *[This is the most important section. These are issues that the authors of the paper must fix and/or address. Be very constructive and polite, be gentle but clear, and provide as much information as you can to assist authors. This might include mistakes/errors, missing information, oversights, misunderstandings, etc. If you can, explain why these are mistakes and provide either a correction or a link to where correct information can be found.]*
+4. Suggestions for improvement:  
+    *[This is you trying to help the authors do even better, as nice to have. You can comment on things that you are not sure of, or state an opinion, point out typos, or minor code issues, but be humble about this being a suggestion, and be very positive and constructive. There should be about five/six dot points.]*
+5. Evaluation:  
+    *[Add each element of the rubric and provide a comment and mark against it. This will NOT be used for grading, this is ONLY to provide authors with some idea of how much work they need to put into each element to improve.]*
+6. Estimated overall mark:  
     *[X]* out of *[Y]*.
-9. Reason:
-    *[Add a brief sentence or two justifying the estimated mark.]*
-
-Make sure that your review is nicely formatted.
+7. Any other comments:  
+    *[Any other .]*
 
 ### Paper {.unnumbered}
 
