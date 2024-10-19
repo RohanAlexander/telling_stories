@@ -30,6 +30,7 @@ engine: knitr
 - `purrr` [@citepurrr]
 - `rstanarm` [@citerstanarm]
 - `testthat` [@testthat]
+- `tictoc` [@Izrailev2014]
 - `tidyverse` [@tidyverse]
 
 ```{r}
@@ -44,6 +45,7 @@ library(modelsummary)
 library(purrr)
 library(rstanarm)
 library(testthat)
+library(tictoc)
 library(tidyverse)
 ```
 
@@ -772,6 +774,8 @@ We use `stan_glm()` with the "gaussian()" family to specify multiple linear regr
 
 The estimation results, which are in the first column of @tbl-modelsummarybayesbetter, are not quite what we expect. For instance, the rate of increase in marathon times is estimated to be around three minutes per minute of increase in five-kilometer time, which seems low given the ratio of a five-kilometer run to marathon distance.
 
+### Picking priors
+
 The issue of picking priors is a challenging one and the subject of extensive research. For the purposes of this book, using the `rstanarm` defaults is fine.\index{Bayesian!priors} But even if they are just the default, priors should be explicitly specified in the model and included in the function.\index{model!specification} This is to make it clear to others what has been done. We could use `default_prior_intercept()` and `default_prior_coef()` to find the default priors in `rstanarm` and then explicitly include them in the model. 
 
 It is normal to find it difficult to know what prior to specify. Getting started by adapting someone else's `rstanarm` code is perfectly fine. If they have not specified their priors, then we can use the helper function `prior_summary()`, to find out which priors were used.\index{Bayesian!priors}
@@ -939,6 +943,8 @@ As we used the "autoscale = TRUE" option, it can be helpful to look at how the p
 prior_summary(sim_run_data_second_model_rstanarm)
 ```
 
+### Posterior distribution
+
 Having built a Bayesian model, we may want to look at what it implies (@fig-ppcheckandposteriorvsprior). One way to do this is to consider the posterior distribution.\index{Bayesian!posterior} 
 
 One way to use the posterior distribution is to consider whether the model is doing a good job of fitting the data. The idea is that if the model is doing a good job of fitting the data, then the posterior should be able to be used to simulate data that are like the actual data [@bayesianworkflow]. We can implement a posterior predictive check\index{Bayesian!posterior predictive check} with `pp_check()` from `rstanarm` (@fig-ppcheckandposteriorvsprior-1). This compares the actual outcome variable with simulations from the posterior distribution. And we can compare the posterior with the prior with `posterior_vs_prior()` to see how much the estimates change once data are taken into account  (@fig-ppcheckandposteriorvsprior-2). Helpfully, `pp_check()` and `posterior_vs_prior()` return `ggplot2` objects so we can modify the look of them in the normal way we manipulate graphs. These checks and discussion would typically just be briefly mentioned in the main content of a paper, with the detail and graphs added to a dedicated appendix.
@@ -982,6 +988,8 @@ plot(
 )
 ```
 
+### Diagnostics
+
 The final aspect that we would like to check is a practical matter. `rstanarm` uses a sampling algorithm called Markov chain Monte Carlo (MCMC) to obtain samples from the posterior distributions of interest. We need to quickly check for the existence of signs that the algorithm ran into issues. We consider a trace plot, such as @fig-stanareyouokay-1, and a Rhat plot, such as @fig-stanareyouokay-2. These would typically go in a cross-referenced appendix.\index{Bayesian!trace plot}\index{Bayesian!Rhat plot}
 
 ```{r}
@@ -1001,13 +1009,78 @@ plot(sim_run_data_second_model_rstanarm, "rhat")
 
 In the trace plot, we are looking for lines that appear to bounce around, but are horizontal, and have a nice overlap between the chains. The trace plot in @fig-stanareyouokay-1 does not suggest anything out of the ordinary. Similarly, with the Rhat plot, we are looking for everything to be close to 1, and ideally no more than 1.1. Again @fig-stanareyouokay-2 is an example that does not suggest any problems. If these diagnostics are not like this, then simplify the model by removing or modifying predictors, change the priors, and re-run it.
 
+### Parallel processing
+
+Sometimes code is slow because the computer needs to do the same thing many times.\index{efficiency!parallel processing} We may be able to take advantage of this and enable these jobs to be done at the same time using parallel processing. This is especially the case when estimating Bayesian models.
+
+After installing and loading `tictoc` we can use `tic()` and `toc()` to time various aspects of our code.\index{efficiency!timing} This is useful with parallel processing, but also more generally, to help us find out where the largest delays are.
+
+```{r}
+#| message: false
+#| warning: false
+
+tic("First bit of code")
+print("Fast code")
+toc()
+
+tic("Second bit of code")
+Sys.sleep(3)
+print("Slow code")
+toc()
+```
+
+And so we know that there is something slowing down the code. (In this artificial case it is `Sys.sleep()` causing a delay of three seconds.)
+
+We could use `parallel` which is part of base R to run functions in parallel.\index{efficiency!parallel processing} We could also use `future` which brings additional features. After installing and loading `future` we use `plan()` to specify whether we want to run things sequentially ("sequential") or in parallel ("multisession"). We then wrap what we want this applied to within `future()`.
+
+To see this in action we will create a dataset and then implement a function on a row-wise basis.
+
+```{r}
+#| eval: false
+
+simulated_data <-
+  tibble(
+    random_draws = runif(n = 1000000, min = 0, max = 1000) |> round(),
+    more_random_draws = runif(n = 1000000, min = 0, max = 1000) |> round()
+  )
+
+plan(sequential)
+
+tic()
+simulated_data <-
+  simulated_data |>
+  rowwise() |>
+  mutate(which_is_smaller =
+           min(c(random_draws,
+                 more_random_draws)))
+toc()
+
+plan(multisession)
+
+tic()
+simulated_data <-
+  future(simulated_data |>
+           rowwise() |>
+           mutate(which_is_smaller =
+                    min(c(
+                      random_draws,
+                      more_random_draws
+                    ))))
+toc()
+```
+
+The sequential approach takes about 5 seconds, while the multisession approach takes about 0.3 seconds.
+
+In the case of estimating Bayesian models many packages such as `rstanarm` have support for parallel processing built in through `cores`.
+
+
 ## Concluding remarks
 
 In this chapter we have considered linear models. We established a foundation for analysis, and described some essential approaches. We have also skimmed over a lot. This chapter and the next should be considered together. These provide you with enough to get started, but for doing more than that, going through the modeling books recommended in @sec-concluding-remarks.
 
 ## Exercises
 
-### Scales {.unnumbered}
+### Practice {.unnumbered}
 
 1. *(Plan)* Consider the following scenario: *A person is interested in the heights of all the buildings in London. They walk around the city counting the number of floors for each building, and noting the year of construction.* Please sketch what that dataset could look like and then sketch a graph that you could build to show all observations.
 2. *(Simulate)* Please further consider the scenario described and simulate the situation, along with three predictors that are associated the count of the number of levels. Please include at least ten tests based on the simulated data. Submit a link to a GitHub Gist that contains your code.
@@ -1015,7 +1088,7 @@ In this chapter we have considered linear models. We established a foundation fo
 4. *(Explore)* Please use `ggplot2` to build the graph that you sketched. Then use `rstanarm` to build a model with number of floors as an outcome and the year of construction as a predictor. Submit a link to a GitHub Gist that contains your code.
 5. *(Communicate)* Please write two paragraphs about what you did.
 
-### Questions {.unnumbered}
+### Quiz {.unnumbered}
 
 1. Please simulate the situation in which there are two predictors, "race" and "gender", and one outcome variable, "vote_preference", which is imperfectly related to them. Submit a link to a GitHub Gist that contains your code.
 2. Please write a linear relationship between some outcome variable, Y, and some predictor, X. What is the intercept term? What is the slope term? What would adding a hat to these indicate?
@@ -1041,7 +1114,7 @@ In this chapter we have considered linear models. We established a foundation fo
 12. Discuss, with the help of examples and citations, the quote from @citemcelreath [p. 162] included toward the start of this chapter. Write at least three paragraphs.
 
 
-### Tutorial {.unnumbered}
+### Activity {.unnumbered}
 
 Allow that the true data generating process is a Normal distribution with mean of one, and standard deviation of 1. We obtain a sample of 1,000 observations using some instrument. Simulate the following situation:
 
