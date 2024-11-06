@@ -33,19 +33,19 @@ Chapman and Hall/CRC published this book in July 2023. You can purchase that [he
   - `stringr` [@citestringr]
   - `readr` [@citereadr]
 - `janitor` [@janitor]
-- `knitr` [@citeknitr]
 - `lubridate` [@GrolemundWickham2011]
 - `opendatatoronto` [@citeSharla]
+- `tinytable` [@tinytable]
 
 ```{r}
 #| message: false
 #| warning: false
 
-library("janitor")
-library("knitr")
-library("lubridate")
-library("opendatatoronto")
-library("tidyverse")
+library(janitor)
+library(lubridate)
+library(opendatatoronto)
+library(tidyverse)
+library(tinytable)
 ```
 
 ## Hello, World!
@@ -783,7 +783,7 @@ toronto_shelters_clean <-
   )
 ```
 
-The dataset contains daily records for each shelter. We are interested in understanding average usage for each month. To do this, we need to add a month column using `month()` from `lubridate`. By default, `month()` provides the number of the month, and so we include two arguments---"label" and "abbr"---to get the full name of the month. We remove rows that do not have any data for the number of beds using `drop_na()` from `tidyr`, which is part of the `tidyverse`. We will do this here unthinkingly because our focus is on getting started, but this is an important decision and we talk more about missing data in @sec-farm-data and @sec-exploratory-data-analysis. We then create a summary statistic on the basis of monthly groups, using `summarise()` from `dplyr`. We use `kable()` from `knitr` to create @tbl-homelessoccupancyd.
+The dataset contains daily records for each shelter. We are interested in understanding average usage for each month. To do this, we need to add a month column using `month()` from `lubridate`. By default, `month()` provides the number of the month, and so we include two arguments---"label" and "abbr"---to get the full name of the month. We remove rows that do not have any data for the number of beds using `drop_na()` from `tidyr`, which is part of the `tidyverse`. We will do this here unthinkingly because our focus is on getting started, but this is an important decision and we talk more about missing data in @sec-farm-data and @sec-exploratory-data-analysis. We then create a summary statistic on the basis of monthly groups, using `summarise()` from `dplyr`. We use `tt()` from `tinytable` to create @tbl-homelessoccupancyd.
 
 ```{r}
 #| label: tbl-homelessoccupancyd
@@ -799,10 +799,10 @@ toronto_shelters_clean |>
   drop_na(occupied_beds) |> 
   summarise(number_occupied = mean(occupied_beds),
             .by = occupancy_month) |>
-  kable()
+  tt()
 ```
 
-As with before, this looks fine, and achieves what we set out to do. But we can make some tweaks to the defaults to make it look even better (@tbl-homelessoccupancy). In particular we make the column names easier to read, and only show an appropriate number of decimal places.
+As with before, this looks fine, and achieves what we set out to do. But we can make some tweaks to the defaults to make it look even better (@tbl-homelessoccupancy). In particular we make the column names easier to read, only show an appropriate number of decimal places, and change the alignment (`j` is used to specify the column number of interest and `r` is the alignment type i.e. right).
 
 ```{r}
 #| label: tbl-homelessoccupancy
@@ -818,10 +818,11 @@ toronto_shelters_clean |>
   drop_na(occupied_beds) |>
   summarise(number_occupied = mean(occupied_beds),
             .by = occupancy_month) |>
-  kable(
-    col.names = c("Month", "Average daily number of occupied beds"),
+  tt(
     digits = 1
-  )
+  ) |> 
+  style_tt(j = 2, align = "r") |> 
+  setNames(c("Month", "Average daily number of occupied beds"))
 ```
 
 ### Share
