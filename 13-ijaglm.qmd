@@ -35,12 +35,12 @@ This online version has some updates to what was printed. An online version that
 - `dataverse` [@dataverse]
 - `gutenbergr` [@gutenbergr]
 - `janitor` [@janitor]
-- `knitr` [@citeknitr]
 - `marginaleffects` [@marginaleffects]
 - `modelsummary` [@citemodelsummary]
 - `rstanarm` [@citerstanarm]
 - `tidybayes` [@citetidybayes]
 - `tidyverse` [@tidyverse]
+- `tinytable` [@tinytable]
 	
 ```{r}
 #| message: false
@@ -52,12 +52,12 @@ library(collapse)
 library(dataverse)
 library(gutenbergr)
 library(janitor)
-library(knitr)
 library(marginaleffects)
 library(modelsummary)
 library(rstanarm)
 library(tidybayes)
 library(tidyverse)
+library(tinytable)
 ```
 
 ## Introduction
@@ -222,10 +222,10 @@ The marginal effect\index{marginal effects} at each observation is of interest b
 
 slopes(week_or_weekday_model, newdata = "median") |>
   select(term, estimate, std.error) |>
-  kable(
-    col.names = c("Term", "Estimate", "Standard error"),
-    digits = 3, booktabs = TRUE
-  )
+  tt() |> 
+  style_tt(j = 1:3, align = "lrr") |> 
+  format_tt(digits = 3, num_mark_big = ",", num_fmt = "decimal") |> 
+  setNames(c("Term", "Estimate", "Standard error"))
 ```
 
 To more thoroughly examine the situation we might want to build a Bayesian model using `rstanarm`.\index{Bayesian!logistic regression}\index{logistic regression!Bayesian} As in @sec-its-just-a-linear-model we will specify priors for our model, but these will just be the default priors that `rstanarm` uses:
@@ -793,10 +793,10 @@ As with logistic regression, we can use `slopes()` from `marginaleffects` to hel
 slopes(grades_rstanarm) |>
   select(contrast, estimate, conf.low, conf.high) |>
   unique() |> 
-  kable(
-    col.names = c("Compare department", "Estimate", "2.5%", "97.5%"),
-    digits = 2, booktabs = TRUE, linesep = ""
-  )
+  tt() |> 
+  style_tt(j = 1:4, align = "lrrr") |> 
+  format_tt(digits = 2, num_mark_big = ",", num_fmt = "decimal") |> 
+  setNames(c("Compare department", "Estimate", "2.5%", "97.5%"))
 ```
 
 
@@ -1219,11 +1219,10 @@ alberta_cod |>
     ranking <= 10
   ) |>
   mutate(total_deaths = format(total_deaths, big.mark = ",")) |>
-  kable(
-    col.names = c("Year", "Cause", "Ranking", "Deaths", "Years"),
-    align = c("l", "r", "r", "r", "r"),
-    digits = 0, booktabs = TRUE, linesep = ""
-  )
+  tt() |> 
+  style_tt(j = 1:5, align = "lrrrr") |> 
+  format_tt(digits = 0, num_mark_big = ",", num_fmt = "decimal") |> 
+  setNames(c("Year", "Cause", "Ranking", "Deaths", "Years"))
 ```
 
 For simplicity we restrict ourselves to the five most common causes of death in 2021 of those that have been present every year.
@@ -1774,7 +1773,65 @@ In the results section you should include a table of the estimates, built using 
 8. Redo the *Jane Eyre* example, but for "A/a".
 9. The twentieth century British statistician George Box, famously said, "[s]ince all models are wrong the scientist must be alert to what is importantly wrong. It is inappropriate to be concerned about mice when there are tigers abroad." [@Box1976, p. 792]. Discuss, with the help of examples and citations.
 
-### Activity {.unnumbered}
+### Class activities {.unnumbered}
+
+
+- Discuss how you would build a Bayesian regression model to look at the association between whether someone prefers football or hockey, and their age, gender, and location. Write out:
+    - The outcome of interest and the likelihood
+    - The regression model for the outcome of interest
+    - The priors on any parameters to be estimated in the model.
+- Use the [starter folder](https://github.com/RohanAlexander/starter_folder) and create a new repo. Add a link to the GitHub repo in the class's shared Google Doc.
+    - We are interested in explaining support for either Trump or Clinton, based on education, age-group, and gender, and state. Please sketch and simulate the situation.
+    - Please obtain the data underpinning @cohn2016, available [here](https://github.com/TheUpshot/2016-upshot-siena-polls/). Save the unedited data, and construct an analysis dataset (there is some code below to get you started). Add graphs of each of the variables, individually, into the data section, as well as graphs of how they relate.
+    - Please build one model explaining "vt_pres_2", as a function of "gender", "educ", and "age"; and another which additionally considers "state". Write up the two models in a model section, and add the results into the results section (again, there is some code below to get you started).
+```{r}
+#| echo: true
+#| eval: false
+
+vote_data <-
+  read_csv(
+    "https://raw.githubusercontent.com/TheUpshot/2016-upshot-siena-polls/master/upshot-siena-polls.csv"
+  )
+
+cleaned_vote_data <-
+  vote_data |>
+  select(vt_pres_2, gender, educ, age, state) |>
+  rename(vote = vt_pres_2) |>
+  mutate(
+    gender = factor(gender),
+    educ = factor(educ),
+    state = factor(state),
+    age = as.integer(age)
+  ) |>
+  mutate(
+    vote =
+      case_when(
+        vote == "Donald Trump, the Republican" ~ "0",
+        vote == "Hillary Clinton, the Democrat" ~ "1",
+        TRUE ~ vote
+      )
+  ) |>
+  filter(vote %in% c("0", "1")) |>
+  mutate(vote = as.integer(vote))
+```
+
+```{r}
+#| echo: true
+#| eval: false
+
+vote_model <-
+  stan_glm(
+    formula = vote ~ age + educ,
+    data = cleaned_vote_data,
+    family = gaussian(),
+    prior = normal(location = 0, scale = 2.5),
+    prior_intercept = normal(location = 0, scale = 2.5),
+    prior_aux = exponential(rate = 1),
+    seed = 853
+  )
+```
+
+### Task {.unnumbered}
 
 Please consider @maher1982modelling, @thanksleo, or @cohn2016. Build a simplified version of their model. 
 

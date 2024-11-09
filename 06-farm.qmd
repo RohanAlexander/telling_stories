@@ -31,10 +31,10 @@ Chapman and Hall/CRC published this book in July 2023. You can purchase that [he
 - Base R [@citeR]
 - `cancensus` [@citecancensus] 
 - `canlang` [@canlang] (this package is not on CRAN so install it with: `install.packages("devtools")` then `devtools::install_github("ttimbers/canlang")`)
-- `knitr` [@citeknitr]
 - `maps` [@citemaps]
 - `tidycensus` [@tidycensus]
 - `tidyverse` [@tidyverse]
+- `tinytable` [@tinytable]
 
 ```{r}
 #| message: false
@@ -42,10 +42,10 @@ Chapman and Hall/CRC published this book in July 2023. You can purchase that [he
 
 library(cancensus)
 library(canlang)
-library(knitr)
 library(maps)
 library(tidycensus)
 library(tidyverse)
+library(tinytable)
 ```
 
 ## Introduction
@@ -176,11 +176,11 @@ newborn_weight |>
 
 newborn_weight |>
   summarise(mean = mean(weight, na.rm = TRUE),
-            .by = measurement) |>
-  kable(
-    col.names = c("Measurement", "Mean"),
-    digits = 3
-  )
+            .by = measurement) |> 
+  tt() |> 
+  style_tt(j = 1:2, align = "lr") |> 
+  format_tt(digits = 3, num_fmt = "decimal") |> 
+  setNames(c("Measurement", "Mean"))
 ```
 
 ### Missing data
@@ -1001,14 +1001,14 @@ illustrative_sampling_long |>
         sampling_method == "simple_random_sampling" ~ "Simple random sampling"
       )
   ) |> 
-  kable(
-    col.names = c(
+  tt() |> 
+  style_tt(j = 1:3, align = "lrr") |> 
+  format_tt(digits = 1, num_mark_big = ",") |> 
+  setNames(c(
       "Sampling method",
       "Sum of sample",
       "Implied population sum"
-    ),
-    format.args = list(big.mark = ",")
-  )
+    ))
 ```
 
 The actual sum of the population is 5,050.^[We can obtain this using a trick attributed to Carl Friedrich Gauss, the eighteenth century mathematician, who noticed that the sum of one to any number can be quickly obtained by finding the middle number and then multiplying that by one plus the number. In this case, we have $50 \times 101$. Alternatively we can use R: `sum(1:100)`.] While the specifics are unique to this sample, our estimate of the population sum, based on the scaling, are revealing.\index{sampling!comparison} The closest is stratified sample, closely followed by systematic sampling. Cluster sampling is a little over 10 per cent off, while simple random sampling is a little further away. To get close to the true sum, it is important that our sampling method gets as many of the higher values as possible. And so stratified and systematic sampling, both of which ensured that we had outcomes from the larger numbers did particularly well. The performance of cluster and simple random sampling would depend on the particular clusters, and units, selected. In this case, stratified and systematic sampling ensured that our estimate of the sum of the population would not be too far away from the actual population sum. Here, we might think of implications for the construction and evaluation of measures, such as GDP and other constructions that are summed, and the effect on the total of the different strata based on their size.
@@ -1047,27 +1047,30 @@ sleep <-
 sleep
 ```
 
-The average of each is:
+The average of each is different (@tbl-averagesleepestimate).
 
 ```{r}
+#| label: tbl-averagesleepestimate
+#| eval: true
+#| echo: false
+#| tbl-cap: "Average toddler sleep compared with average parent sleep"
+
 sleep |>
   summarise(
     toddler_sleep_average = mean(toddler_sleep),
     parent_sleep_average = mean(parent_sleep)
   ) |>
-  kable(
-    col.names = c("Toddler sleep average", "Parent sleep average"),
-    format.args = list(big.mark = ","),
-    digits = 2
-  )
+  tt() |> 
+  style_tt(j = 1:2, align = "lr") |> 
+  format_tt(digits = 2, num_fmt = "decimal") |> 
+  setNames(c("Toddler sleep average", "Parent sleep average"))
 ```
 
 The ratio of the proportion of sleep that a parent gets compared with their toddler is:
 
-$$\hat{B} = \frac{\bar{y}}{\bar{x}} = \frac{4.9}{6.16} \approx 0.8.$$
+$$\hat{B} = \frac{\bar{y}}{\bar{x}} = \frac{4.9}{6.17} \approx 0.8.$$
 
 Given the toddler slept 185 hours over that 30-day period, our estimate of the number of hours that the parents slept is $185 \times 0.8 = 148$. This turns out to be almost exactly right, as the sum is 147. In this example, the estimate was not needed because we were able to sum the data, but say some other set of parents only recorded the number of hours that their toddler slept, not how long they slept, then we could use this to estimate how much they had slept.
-
 
 One variant of the ratio estimator that is commonly used is capture and recapture, which is one of the crown jewels of data gathering.\index{sampling!capture and recapture} It is commonly used in ecology where we know we can never gather data about all animals.\index{ecology} Instead, a sample is captured, marked, and released. The researchers return after some time to capture another sample. Assuming enough time passes that the initially captured animals had time to integrate back into the population, but not so much time has passed that there are insurmountable concerns around births, deaths, and migration, then we can use these values to estimate a population size. The key is what proportion in this second sample have been recaptured. This proportion can be used to estimate the size of the whole population. Interestingly, in the 1990s there was substantial debate about whether to use a capture-recapture model to adjust the 1990 US census due to concerns about methodology. The combination of @Breiman1994 and @newwoyktimesgleickcensus provides an overview of the concerns at the time, those of censuses more generally, and helpful background on capture and recapture methods. More recently we have seen capture and recapture combined with web scraping, which we consider in @sec-gather-data, for the construction of survey frames [@Hyman2021].
 
@@ -1308,10 +1311,53 @@ For instance, we could imagine various countries in which it would be difficult 
 49. With reference to @meng2018statistical, please discuss the claim: "When you have one million responses, you do not need to worry about randomization".
 50. Imagine you take a job at a bank and they already have a dataset for you to use. What are some questions that you should explore when deciding whether that data will be useful to you?
 
+### Class activities {.unnumbered}
 
-### Activity I {.unnumbered}
+- What does `usethis::git_vaccinate()` do?
+- Reflect on the quote from Amia Srinivasan in @sec-r-essentials, and discuss with regard to the measurement of intelligence.
+- Why is it critical to use `set.seed()` when simulating?
+- Discuss to what extent the measurement of happiness is valid, being sure to define the term as part of your discussion.
+- Discuss to what extent the measurement of beauty is reliable, being sure to define the term as part of your discussion.
+- How is it possible that Country A's measure of imports of a given good from Country B do not equal Country B's measure of exports of that same good to Country A? Discuss, in detail, a different measurement that this makes you question.
+- Please discuss @tbl-bandmembers with respect to missing data.
+```{r}
+#| echo: false
+#| label: tbl-bandmembers
+#| tbl-cap: "Members of various bands and their associated birth year"
 
-The purpose of this activity is to develop comfort with:
+tibble(
+  band = c(rep("Beatles", 3), rep("Spice Girls", 3), NA_character_, rep("Girls' Generation", 8)),
+  name = c(
+    "Ringo Starr", "John Lennon", "George Harrison",
+    "Victoria Beckham", "Mel B", NA_character_, "Mel C",
+    "Taeyeon", "Sunny", NA_character_, "Hyoyeon", "Yuri", "Sooyoung", "Yoona", NA_character_
+  ),
+  birth_year = c(1940, 1940, NA_integer_,
+                 1975, 1975, 1976, 1974,
+                 1989, 1989, NA_integer_, NA_integer_, 1989, 1990, 1990, 1991)
+  ) |> 
+  tt() |> 
+  style_tt(j = 1:3, align = "lrr") |> 
+  setNames(c("Band", "Person", "Year of birth"))
+```
+- Please discuss sampling bias in the context of the response by Katherine Rundell, a fellow at All Souls College, in response to a question about whether the word "emancipation" is from John Donne: 
+
+> It is, although, of course, I think it would be amiss of me not to offer the caveat that often, the OED has always found first uses in canonical authors, in part because they're just the ones who survived fire. So of course, he may have just been noting down a word in common parlance rather than being its inventor
+> 
+> Katherine Rundell [@conversationswithkatherinerundell]
+
+- The dean wants to understand the average statistical ability of students in the faculty. She agrees to provide you with some funding, but not so much that you can do a census, and asks you to report back in a week. Please define the target population, sampling frame, and sample. Please further discuss whether you will use probability or non-probability sampling, and within these, which approach you want to use. Discuss the strengths and weaknesses of your approach.
+- Please use a probabilistic sampling approach to determine the average height of the class.
+- Please use a large language model to generate an initial response to 'Pretend that we have conducted a survey of everyone in Canada, where we asked for age, sex, and gender. Your friend claims that there is no need to worry about uncertainty "because we have the whole population". Is your friend right or wrong, and why?'. Then use what we have covered in class, your own research to correct and expand it. In particular you should add context, nuance, and citations, as well as other aspects. Submit: 1) your prompt, 2) the initial LLM response, and 3) your augmented response.^[Damien Patrick Williams came up with the idea behind this question.]
+- I am interested in estimating the number of people on campus right now. Form a small group of 1-3 people and develop a plan, based on sampling, that you could execute given 15 minutes. Be sure to touch on measurement, counting, error, instrumentation, as well as sampling methodology. Share your plan with the class, improve it based on their feedback, and then, go an execute it. Let me know your estimate for how many people are on campus right now.
+- "Rabois' mistake": Imagine your sample consists of the entire population for some question of interest. Do you have to worry about bias? (Hint: Think about having a dataset for some year of everyone in some country and whether they went to a hospital and whether they died, and what that might lead you to conclude about the effect of hospitals on death.) To what extent would you be willing to give up some number of observations for better quality data (strong answers would reference @meng2018statistical and @Bradley2021)?  What data would you like (strong answers would establish an estimand)?
+- *Paper review:* Please read @Bradley2021 and write a review of at least one page, drawing on an example that you are familiar with.
+
+
+
+### Task I {.unnumbered}
+
+The purpose of this task is to develop comfort with:
 
 1. dealing with larger datasets, 
 2. understand ratio estimators, and 
@@ -1341,9 +1387,9 @@ Note:
 - To focus on doctoral degrees you need EDUCD rather than EDUC (but you can select that one once downloaded the data.)
 - Do not upload the raw data to GitHub - it is too big and also IPUMS asks that you do not.
 
-### Activity II {.unnumbered}
+### Task II {.unnumbered}
 
-The purpose of this activity is to:
+The purpose of this task is to:
 
 1. compare simple random with cluster sampling.
 2. consider the difference between probability and non-probability sampling.

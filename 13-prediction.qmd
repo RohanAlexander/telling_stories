@@ -29,6 +29,7 @@ engine: knitr
   - `tune` [@tune]
   - `yarkdstick` [@yardstick]
 - `tidyverse` [@tidyverse]
+- `tinytable` [@tinytable]
 
 ```{r}
 #| message: false
@@ -39,6 +40,7 @@ library(nflverse)
 library(poissonreg)
 library(tidymodels)
 library(tidyverse)
+library(tinytable)
 ```
 
 ## Introduction
@@ -228,17 +230,16 @@ We might be interested to understand the performance of our model and we can use
 
 collect_metrics(ces2020_cross_validation) |>
   select(.metric, mean) |>
-  knitr::kable(
-    col.names = c("Metric",
-                  "Mean"),
-    digits = 2,
-    format.args = list(big.mark = ",")
-  )
+  tt() |> 
+  style_tt(j = 1:2, align = "lr") |> 
+  format_tt(digits = 2, num_mark_big = ",", num_fmt = "decimal") |> 
+  setNames(c("Metric", "Mean"))
 
 conf_mat_resampled(ces2020_cross_validation) |>
   mutate(Proportion = Freq / sum(Freq)) |>
-  knitr::kable(digits = 2,
-               format.args = list(big.mark = ","))
+  tt() |> 
+  style_tt(j = 1:4, align = "llrr") |> 
+  format_tt(digits = 2, num_mark_big = ",", num_fmt = "decimal")
 ```
 
 What does this mean? Accuracy is the proportion of observations that were correctly classified. The result of 0.61 suggests the model is doing better than a coin toss, but not much more. Sensitivity is the proportion of true observations that are identified as true [@islr, p. 145]. In this case that would mean the model predicted a respondent voted for Trump and they did. Specificity is the proportion of false observations that are identified as false [@islr, p. 145]. In this case it is the proportion of voters that voted for Biden, that were predicted to vote for Biden. This confirms our initial thought that the model is having trouble identifying Trump supporters.
@@ -267,17 +268,16 @@ For instance, we can see that the model is essentially predicting support for Bi
 ces2020_with_predictions |>
   group_by(gender, education, voted_for) |>
   count(.pred_class) |>
-  knitr::kable(
-    col.names = c(
+  tt() |> 
+  style_tt(j = 1:5, align = "llllr") |> 
+  format_tt(digits = 0, num_mark_big = ",", num_fmt = "decimal") |> 
+  setNames(c(
       "Gender",
       "Education",
       "Voted for",
       "Predicted vote",
       "Number"
-    ),
-    digits = 0,
-    format.args = list(big.mark = ",")
-  )
+    ))
 ```
 
 
@@ -563,7 +563,9 @@ We will use Python within VSCode, which is a free IDE from Microsoft that you ca
 ### Quiz {.unnumbered}
 
 
-### Activity {.unnumbered}
+### Class activities {.unnumbered}
+
+### Task {.unnumbered}
 
 Please use `nflverse` to load some statistics for NFL quarterbacks during the regular season. The [data dictionary](https://nflreadr.nflverse.com/articles/dictionary_player_stats.html) will be useful to make sense of the data.
 

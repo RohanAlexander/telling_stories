@@ -30,7 +30,6 @@ engine: knitr
 
 - Base R [@citeR]
 - `janitor` [@janitor]
-- `knitr` [@citeknitr]
 - `lubridate` [@GrolemundWickham2011]
 - `modelsummary` [@citemodelsummary]
 - `opendatatoronto` [@citeSharla]
@@ -41,6 +40,7 @@ engine: knitr
 - `stringi` [@stringi]
 - `testthat` [@testthat]
 - `tidyverse` [@tidyverse]
+- `tinytable` [@tinytable]
 - `validate` [@validate]
 
 ```{r}
@@ -48,7 +48,6 @@ engine: knitr
 #| warning: false
 
 library(janitor)
-library(knitr)
 library(lubridate)
 library(modelsummary)
 library(opendatatoronto)
@@ -59,6 +58,7 @@ library(scales)
 library(stringi)
 library(testthat)
 library(tidyverse)
+library(tinytable)
 library(validate)
 ```
 
@@ -478,12 +478,10 @@ arrow::read_parquet(
   mutate(final_digit = str_sub(age, start= -1)) |> 
   summarise(sum = sum(number),
             .by = final_digit) |> 
-  kable(
-    col.names = c("Final digit of age", "Number of times"),
-    booktabs = TRUE,
-    linesep = "",
-    format.args = list(big.mark = ",")
-  )
+  tt() |> 
+  style_tt(j = 1:2, align = "lr") |> 
+  format_tt(digits = 0, num_mark_big = ",", num_fmt = "decimal") |> 
+  setNames(c("Final digit of age", "Number of times"))
 ```
 
 
@@ -1765,7 +1763,106 @@ tibble(
     d.  The interchange of the letter "I" with the number "1" or the letter "l"
 9. With regard to @Preece1981 please discuss two ways in which final digits can be informative. Write at least a paragraph about each and include examples.
 
-### Activity {.unnumbered}
+### Class activities {.unnumbered}
+
+
+- Pick a topic that you know well, then:
+    - Reproducibly simulate an idealized dataset in an R script.
+    - Write five tests for it in a different R script.
+    - Give the code to create the dataset (not the tests) to someone else, via a GitHub Gist. Have them use code to deliberately create three different data issues in the dataset and then send it back to you (some ideas include: inconsistent date formatting, adding missing values, adding negative values, changing the decimal place)
+    - Do your tests identify the issues?
+- Discuss, with the help of simulation, the following claim: "This house believes that strings are better than factors".^[The underlying idea for this exercise is from Michael Donnelly.] 
+- I obtain some data about income. Why would I be concerned if there were many respondents with income "999999"?
+- Create a new R project and use an R script to download and load the original "Adélie penguin data" [@penguinsoriginaldata], (some code^[This code is from Christina Wei.] is included below to help with this) then:
+    - Use `rename()` to improve the names.
+    - Add the folder to a GitHub repo.
+    - Exchange the repo with another student.
+    - Create a GitHub issue with two dot points about where the names could be improved.
+    - Discuss how your names compare with `palmerpenguins::penguins`.
+```{r}
+#| eval: false
+raw_penguin_data <-
+  read_csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-pal.219.5&entityid=002f3893385f710df69eeebe893144ff",
+           show_col_types = FALSE)
+```
+- Produce a tidy version of Anscombe's Quartet, available using `anscombe`.
+- How does the US General Social Survey code "don't know"?
+- Discuss the advantages and disadvantages of each option for coding missing data:
+```{r}
+#| eval: false
+tibble(
+  income_1 = c(88515, 103608, -99, 87644, 118279, 107342, 97300, 97226, 73367, 101528),
+  income_2 = c(88515, 103608, 102582, 87644, 118279, 107342, "missing", 97226, 73367, 101528),
+  income_3 = c(999999, 103608, 102582, 87644, 118279, 107342, 97300, 97226, 73367, 101528),
+  income_4 = c(88515, 103608, 102582, 87644, 0, 107342, 97300, 97226, 73367, 101528),
+  income_5 = c(88515, 103608, 102582, 87644, 118279, 107342, 97300, 97226, 73367, NA_integer_)
+)
+```
+- How do you think missing data should be coded in a dataset?
+- Using a new R project, for a city that you are interested in:^[The idea for this exercise is from Taylor John Wright.]  
+    - Write reproducible code to download a ShotSpotter dataset from [here](http://justicetechlab.org/shotspotter-data/) and clean up the dataset.
+    - Add your code to GitHub. 
+    - Exchange your repo with someone else in the class. They are to make a pull request that uses your dataset to make a graph.
+- Get the ImageNet dataset and open ten random images. Apply your own label. To what extent does your label agree with the actual label? What are the effects of this on the outcomes of models trained on this dataset?
+- Imagine you are interested in understanding intergenerational wealth, and one aspect of this is linking the educational outcomes of people today with those of people one hundred years ago, and in different countries. Please make the dataset consistent, and document why you made the choices that you made.
+```{r}
+#| echo: true
+#| eval: false
+
+tibble(
+  period = c(1901, 1901, 1901, 2023, 2023, 2023),
+  country = c(
+    "Prussia",
+    "Austro-Hungarian Empire",
+    "Kingdom of Hungary",
+    "Canada",
+    "Australia",
+    "UK"
+  ),
+  highest_education = c(
+    "Gymnasium",
+    "Higher Polytechnic School",
+    "Matura",
+    "High school",
+    "Undergraduate Honours",
+    "A-levels"
+  )
+)
+```
+- Make tidy data from `datasets::UCBAdmissions`.
+- Using `datasets::LifeCycleSavings`:
+    - First use `pivot_longer()` to make it long.
+    - Make a graph using `ggplot`.
+    - Then use `pivot_wider()` to change it back to wide.
+    - Make a table using `tinytable::tt()` for Australia, Canada, New Zealand, and a country that you choose.
+- Fix the following:
+```{r}
+#| echo: true
+#| eval: false
+
+tibble(
+  date = c("20-02-2023",
+           "20 February 2023",
+           "02-20-2023",
+           "2023-20-02",
+           "February 20, 2023")
+  )
+```
+- Fix the following:
+```{r}
+#| echo: true
+#| eval: false
+
+tibble(
+  date = c("01-02-2023",
+           "02-01-2023",
+           "2023-01-02")
+  )
+```
+- Assume you live in Toronto, Canada. What is wrong with the following date?^[The idea for this exercise is from Derek Beaton.] `2023-03-12 02:01:00`.
+- Following the example in @sec-multilevel-regression-with-post-stratification read in a ".dta" file from the [US General Social Survey](https://gss.norc.org/Get-The-Data), add the labels, and build a graph of some variable. What happens to the missing data?
+
+### Task {.unnumbered}
 
 With regard to @Jordan2019Artificial, @datafeminism2020 [Chapter 6], @thatrandyauperson, and other relevant work, to what extent do you think we should let the data speak for themselves? Please write at least two pages. 
 

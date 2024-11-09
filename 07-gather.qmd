@@ -32,7 +32,6 @@ Chapman and Hall/CRC published this book in July 2023. You can purchase that [he
 - `httr` [@citehttr]
 - `janitor` [@janitor]
 - `jsonlite` [@jsonlite]
-- `knitr` [@citeknitr]
 - `lubridate` [@GrolemundWickham2011]
 - `pdftools` [@pdftools]
 - `purrr` [@citepurrr]
@@ -40,6 +39,7 @@ Chapman and Hall/CRC published this book in July 2023. You can purchase that [he
 - `spotifyr` [@spotifyr] (this package is not on CRAN so install it with: `install.packages("devtools")` then `devtools::install_github("charlie86/spotifyr")`)
 - `tesseract` [@citetesseract]
 - `tidyverse` [@tidyverse]
+- `tinytable` [@tinytable]
 - `usethis` [@usethis]
 - `xml2` [@xml2]
 
@@ -53,7 +53,6 @@ library(here)
 library(httr)
 library(janitor)
 library(jsonlite)
-library(knitr)
 library(lubridate)
 library(pdftools)
 library(purrr)
@@ -61,6 +60,7 @@ library(rvest)
 library(spotifyr)
 library(tesseract)
 library(tidyverse)
+library(tinytable)
 library(usethis)
 library(xml2)
 ```
@@ -776,9 +776,9 @@ all_books |>
     first_letter = str_sub(author, 1, 1)
   ) |>
   count(.by = first_letter) |>
-  kable(
-    col.names = c("First letter", "Number of times")
-  )
+  tt() |> 
+  style_tt(j = 1:2, align = "lr") |> 
+  setNames(c("First letter", "Number of times"))
 ```
 
 
@@ -953,9 +953,9 @@ Our dataset looks similar to the one that we said we wanted at the start (@tbl-c
 
 cleaned_data |>
   head() |>
-  kable(
-    col.names = c("Prime Minister", "Birth year", "Death year", "Age at death")
-    )
+  tt() |> 
+  style_tt(j = 1:4, align = "lrrr") |> 
+  setNames(c("Prime Minister", "Birth year", "Death year", "Age at death"))
 ```
 
 
@@ -1244,9 +1244,9 @@ summary_tfr_dataset <- read_csv("inputs/tfr_tables_info.csv")
 summary_tfr_dataset |>
   select(year, page, table, column_name, url) |> 
   filter(year == 2000) |> 
-  kable(
-    col.names = c("Year", "Page", "Table", "Column", "URL")
-  )
+  tt() |> 
+  style_tt(j = 1:5, align = "lrrrr") |> 
+  setNames(c("Year", "Page", "Table", "Column", "URL"))
 ```
 :::
 
@@ -1426,11 +1426,10 @@ And we are done (@tbl-tfrforthewin). We can see that there is quite a wide distr
 
 dhs_2000_cleaned |>
   slice(1:10) |>
-  kable(
-    col.names = c("State", "TFR"),
-    digits = 0,
-    format.args = list(big.mark = ",")
-  )
+  tt() |> 
+  style_tt(j = 1:2, align = "lr") |> 
+  format_tt(digits = 0, num_mark_big = ",", num_fmt = "decimal") |> 
+  setNames(c("State", "TFR"))
 ```
 
 ```{r}
@@ -1657,7 +1656,25 @@ un_data |>
     b. "How do the economic factors affect prison management?".
     c. "Is the data being used to create public policy?".
 
-### Activity {.unnumbered}
+### Class activities {.unnumbered}
+
+
+- Use the [starter folder](https://github.com/RohanAlexander/starter_folder) and create a new repo. Add a link to the GitHub repo in the class's shared Google Doc.
+- Obtain the NASA APOD for today using the API and then add it to the Quarto document in the repo.
+- Which Beyonce album has the highest average "danceability"?
+- Please make a graph to answer the question of whether Camila Cabello's departure from Fifth Harmony in December 2016 affected the valence of the songs in their studio albums.^[Students who finish quickly should similarly look at Jessica's departure from Girls' Generation in September 2014, and then attempt to compare the two situations.] Some helpful cleaning code is below.
+```{r}
+#| eval: false 
+
+fifth_harmony |>
+  filter(album_name %in% c("Reflection", "7/27 (Deluxe)", "Fifth Harmony")) |> 
+  mutate(album_release_date = ymd(album_release_date)) |>
+  filter(album_release_date != "2017-10-29") # There is a essentially duplicate album
+```
+- Build an equivalent to @fig-pmslives, but for Canada.
+- *Paper review:* Please read @Kish1959 and write a review of at least one page, drawing on an example that you are familiar with.
+
+### Task {.unnumbered}
 
 Please redo the web scraping example, but for one of: [Australia](https://en.wikipedia.org/wiki/List_of_prime_ministers_of_Australia), [Canada](https://en.wikipedia.org/wiki/List_of_prime_ministers_of_Canada), [India](https://en.wikipedia.org/wiki/List_of_prime_ministers_of_India), or [New Zealand](https://en.wikipedia.org/wiki/List_of_prime_ministers_of_New_Zealand). 
 

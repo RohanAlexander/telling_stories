@@ -32,10 +32,10 @@ engine: knitr
 - `diffpriv` [@diffpriv]
 - `fs` [@fs]
 - `janitor` [@janitor]
-- `knitr` [@citeknitr]
 - `openssl` [@openssl]
 - `tictoc` [@Izrailev2014]
 - `tidyverse` [@tidyverse]
+- `tinytable` [@tinytable]
 
 ```{r}
 #| message: false
@@ -46,10 +46,10 @@ library(devtools)
 library(diffpriv)
 library(fs)
 library(janitor)
-library(knitr)
 library(openssl)
 library(tictoc)
 library(tidyverse)
+library(tinytable)
 ```
 
 
@@ -496,16 +496,14 @@ r <- releaseResponse(mech,
 #| message: false
 #| tbl-cap: "Comparing the actual mean with a differentially private mean"
 
-tibble(
-  actual = mean(grades$ps_1),
-  announce = r$response
-) |> 
-  kable(
-    col.names = c(
-      "Actual mean",
-      "Announceable mean"
-    )
-  )
+tibble(actual = mean(grades$ps_1),
+       announce = r$response) |>
+  tt() |>
+  style_tt(j = 1:2, align = "lr") |>
+  format_tt(digits = 1,
+            num_mark_big = ",",
+            num_fmt = "decimal") |>
+  setNames(c("Actual mean", "Announceable mean"))
 ```
 
 The implementation of differential privacy is a costs and benefits issue [@hotz2022balancing; @kennetal22]. Stronger privacy protection fundamentally must mean less information [@clairemckaybowen, p. 39], and this differently affects various aspects of society. For instance, @Suriyakumar2021 found that, in the context of health care, differentially private learning can result in models that are disproportionately affected by large demographic groups. A variant of differential privacy has recently been implemented by the US census.\index{privacy!differential privacy} It may have a significant effect on redistricting [@kenny2021impact] and result in some publicly available data that are unusable in the social sciences [@ruggles2019differential]. 
@@ -822,22 +820,27 @@ write_csv(file_size_comparison, file = "inputs/data/file_size_comparison.csv")
 #| message: false
 #| tbl-cap: "Comparing the file sizes, and read and write times, of CSV and parquet as the file size increases"
 
-read_csv(
-  "inputs/data/file_size_comparison.csv",
-  show_col_types = FALSE
-) |>
+read_csv("inputs/data/file_size_comparison.csv", show_col_types = FALSE) |>
   mutate(
     draws = format(draws, scientific = TRUE, big.mark = ","),
     csv_size = as_fs_bytes(csv_size),
     parquet_size = as_fs_bytes(parquet_size)
   ) |>
-  clean_names() |> 
-  select(draws, 
-         csv_size, csv_write, csv_read,
-         parquet_size, parquet_write, parquet_read
-         ) |> 
- kable(
-    col.names = c(
+  clean_names() |>
+  select(draws,
+         csv_size,
+         csv_write,
+         csv_read,
+         parquet_size,
+         parquet_write,
+         parquet_read) |>
+  tt() |>
+  style_tt(j = 1:7, align = "llrrlrr") |>
+  format_tt(digits = 2,
+            num_mark_big = ",",
+            num_fmt = "decimal") |>
+  setNames(
+    c(
       "Number",
       "CSV size",
       "CSV write time (sec)",
@@ -1094,7 +1097,101 @@ We will use parquet more in the remainder of this book.
     c. 14.9K; 5.02K
     d. 12.5K; 5.02K
 
-### Activity {.unnumbered}
+### Class activities {.unnumbered}
+
+
+- Use the [starter folder](https://github.com/RohanAlexander/starter_folder) and create a new repo. Add a link to the GitHub repo in the class's shared Google Doc.
+- Add the following code to a simulation R script, then lint it. What do you think about the recommendations?
+```{r}
+#| echo: true
+#| eval: false
+
+set.seed(853)
+tibble(
+  age_days=runif(n=10,min=0,max=36500),
+  age_years=age_days%/%365
+)
+```
+
+- Simulate a dataset with ten million observations and at least five variables, one of which must be a date. Save it in both CSV and parquet formats. What is the file size difference?
+- Discuss datasheets in the context of the dataset that you simulated.
+- Pretend you were joining two datasets with `left_join()`. When joining datasets it is easy to accidentally duplicate or remove rows. Please add some tests that might put your mind at ease.
+```{r}
+set.seed(853)
+
+# CONSIDER A CHANGE HERE
+
+main_data <-
+  tibble(
+    participant_id = stringi::stri_rand_strings(n = 100, length = 5),
+    education_value = sample(
+      x = 1:5,
+      size = 100,
+      replace = TRUE
+    )
+  )
+
+# CONSIDER A CHANGE HERE
+
+education_labels <-
+  tibble(
+    education_value = 1:5,
+    education_label = c(
+      "Some high school",
+      "High school",
+      "Some post secondary",
+      "Post secondary degree",
+      "Graduate degree"
+    )
+  )
+
+# CONSIDER A CHANGE HERE
+
+joined_data <-
+  main_data |>
+  left_join(education_labels, by = join_by(education_value))
+
+# CONSIDER A CHANGE HERE
+```
+- Modify the following code to show why using "T" instead of "TRUE" should generally not be done (hint: assign "T" to "FALSE")?
+```{r}
+set.seed(853)
+# MAKE CHANGE HERE
+sample(x = 1:5, size = 5, replace = T)
+```
+- Working with the instructor, pick a chapter from @lewiscrystal and create a five-slide summary of the key take-aways from the chapter. Present to the class.
+- Working with the instructor, make a pull request that fixes some small aspect of a work-in-progress book.^[Closely supervise the students, and especially check the pull requests before they are made to ensure they are reasonable; we don't want to annoy people. A good option might a fix to a couple of typos or similar.] Options include:^[These will need to change each year.] @lewiscrystal or @r4ds.
+- Pretend that you are in a small class, and have some results from an assessment (@tbl-classmarks). Use the code, but change the seed to generate your own dataset. 
+    - Hash, but do not salt, the names, and then exchange with another group. Can they work out what the names are?
+    - Continuing with the results that you generated, please write code that simulates the dataset. You will need to decide which features are important and which are not. Note two interesting aspects of this and then share with the class.
+    - Continuing with the results that you generated, please: 1) work out the class mean, 2) remove the mark of one student, 3) provide the mean and the off-by-one dataset to another group. Can they work out the mark of the student who opted not to share? 
+    - Finally, please do the same exercise, but create a differentially private mean. What are they able to figure out now?
+```{r}
+#| label: tbl-classmarks
+#| tbl-cap: "Simulated students and their mark (out of 100) in a particular class paper"
+
+library(babynames)
+
+set.seed(853)
+
+class_marks <-
+  tibble(
+    student = sample(
+      x = babynames |> filter(prop > 0.01) |>
+        select(name) |> unique() |> unlist(),
+      size = 10,
+      replace = FALSE
+    ),
+    mark = rnorm(n = 10, mean = 50, sd = 10) |> round(0)
+  )
+
+class_marks |>
+  tt() |> 
+  style_tt(j = 1:2, align = "lr") |> 
+  setNames(c("Student", "Mark"))
+```
+
+### Task {.unnumbered}
 
 Please identify a dataset you consider interesting and important, that does not have a datasheet [@gebru2021datasheets]. As a reminder, datasheets accompany datasets and document "motivation, composition, collection process, recommended uses," among other aspects. Please put together a datasheet for this dataset. You are welcome to use the template in the [starter folder](https://github.com/RohanAlexander/starter_folder).
 

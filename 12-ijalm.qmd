@@ -25,13 +25,13 @@ engine: knitr
 - `beepr` [@beepr]
 - `broom` [@broom]
 - `broom.mixed` [@mixedbroom]
-- `knitr` [@citeknitr]
 - `modelsummary` [@citemodelsummary]
 - `purrr` [@citepurrr]
 - `rstanarm` [@citerstanarm]
 - `testthat` [@testthat]
 - `tictoc` [@Izrailev2014]
 - `tidyverse` [@tidyverse]
+- `tinytable` [@tinytable]
 
 ```{r}
 #| message: false
@@ -40,13 +40,13 @@ engine: knitr
 library(beepr)
 library(broom)
 library(broom.mixed)
-library(knitr)
 library(modelsummary)
 library(purrr)
 library(rstanarm)
 library(testthat)
 library(tictoc)
 library(tidyverse)
+library(tinytable)
 ```
 
 
@@ -139,20 +139,17 @@ estimated_standard_deviation <-
 estimated_standard_error <-
   estimated_standard_deviation / sqrt(nrow(normal_example))
 
-kable(
-  tibble(mean = estimated_mean,
+tibble(mean = estimated_mean,
          sd = estimated_standard_deviation,
-         se = estimated_standard_error),
-  col.names = c(
+         se = estimated_standard_error) |> 
+  tt() |> 
+  style_tt(j = 1:3, align = "lrr") |> 
+  format_tt(digits = 2, num_mark_big = ",", num_fmt = "decimal") |> 
+  setNames(c(
     "Estimated mean",
     "Estimated standard deviation",
     "Estimated standard error"
-  ),
-  digits = 2,
-  align = c("l", "r", "r"),
-  booktabs = TRUE,
-  linesep = ""
-  )
+  ))
 ```
 
 We should not be too worried that our estimates are slightly off (@tbl-meanstdexample), relative to the "true" mean and SD of 0 and 1. We only considered 20 observations. It will typically take a larger number of draws before we get the expected shape, and our estimated parameters get close to the actual parameters, but it will almost surely happen (@fig-normaldistributiontakingshape). @wasserman [p. 76] considers our certainty of this, which is due to the Law of Large Numbers,\index{Law of Large Numbers} as a crowning accomplishment of probability, although @wood [p. 15], perhaps more prosaically, describes it as "almost" a statement "of the obvious"!\index{distribution!Normal}
@@ -1114,7 +1111,46 @@ In this chapter we have considered linear models. We established a foundation fo
 12. Discuss, with the help of examples and citations, the quote from @citemcelreath [p. 162] included toward the start of this chapter. Write at least three paragraphs.
 
 
-### Activity {.unnumbered}
+### Class activities {.unnumbered}
+
+
+- Use the [starter folder](https://github.com/RohanAlexander/starter_folder) and create a new repo. Add a link to the GitHub repo in the class's shared Google Doc.
+    - We are interested in understanding the relationship between bill length and depth for Adelie penguins using `palmerpenguins`. Begin by sketching and simulating. 
+    - Then add three graphs to the data section: one of each variable separately and a third of the relationship between the two. 
+    - Then in the model section, write out the model. Use `rstanarm` to estimate a linear model between the two variables in an R script. 
+    - Read that model into the results section and use `modelsummary` to create a summary table.
+
+```{r}
+palmerpenguins::penguins |> 
+  filter(species == "Adelie") |> 
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm)) +
+  geom_point()
+```
+
+- (This question is based on @gelmanonteaching [p. 32].) Please follow the instructions [here](https://youtu.be/_Dof_Ks-f9U) to make a paper plane. Measure: 1) the width of the wings; 2) the length of the wings; 3) the height of the winglets; 4) in a safe space, fly your plane and measure for how long it stays in the air. Combine your data with those of the rest of the class in a table that looks like @tbl-planes. Then use linear regression to explore the relationship between the dependent and independent variables. Based on the results, how would you change your plane design if you were to do this exercise again?
+
+```{r}
+#| echo: false
+#| label: tbl-planes
+#| tbl-cap: "Data gathered on the relationship between features of a paper plane and the length of time it stays in the air"
+
+tibble(
+  wing_width = "...",
+  wing_length = "...",
+  winglet_height = "...",
+  flying_time = "...") |> 
+  tt() |> 
+  style_tt(j = 1:4, align = "lllr") |> 
+  format_tt(digits = 0, num_mark_big = ",", num_fmt = "decimal") |> 
+  setNames(c("Wing width (mm)", "Wing length (mm)", "Winglet height (mm)", "Flying time (sec)"))
+```
+
+- Imagine that we add FIPS code as an explanatory variable in a linear regression model explaining inflation, by US county. Please discuss the likely effect of this and whether it is a good idea. You may want to simulate the situation to help you think it through more clearly.
+- Imagine that we add latitude and longitude as explanatory variables in a regression trying to explain flu prevalence in each UK city and town. Please discuss the likely effect of this and whether it is a good idea. You may want to simulate the situation to help you think it through more clearly.
+- In Shakespeare's *Julius Caesar*, the character Cassius famously says: "The fault, dear Brutus, is not in our stars, / But in ourselves, that we are underlings." Please discuss p-values, the common, but misleading, use of significance stars in regression tables, and @ioannidis2005most, with reference to this quote.
+- Imagine that a variance estimate ends up negative. Please discuss.
+
+### Task {.unnumbered}
 
 Allow that the true data generating process is a Normal distribution with mean of one, and standard deviation of 1. We obtain a sample of 1,000 observations using some instrument. Simulate the following situation:
 

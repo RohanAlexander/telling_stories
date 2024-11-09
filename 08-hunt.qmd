@@ -37,18 +37,18 @@ Chapman and Hall/CRC published this book in July 2023. You can purchase that [he
 
 - Base R [@citeR]
 - `haven` [@citehaven]
-- `knitr` [@citeknitr]
 - `labelled` [@citelabelled]
 - `tidyverse` [@tidyverse]
+- `tinytable` [@tinytable]
 
 ```{r}
 #| message: false
 #| warning: false
 
 library(haven)
-library(knitr)
 library(labelled)
 library(tidyverse)
+library(tinytable)
 ```
 
 ## Introduction
@@ -183,11 +183,10 @@ sample |>
   count(group, favorite_color) |>
   mutate(prop = n / sum(n),
          .by = group) |>
-  kable(
-    col.names = c("Group", "Prefers", "Number", "Proportion"),
-    digits = 2,
-    format.args = list(big.mark = ",")
-  )
+  tt() |> 
+  style_tt(j = 1:4, align = "llrr") |> 
+  format_tt(digits = 2, num_mark_big = ",", num_fmt = "decimal") |> 
+  setNames(c("Group", "Prefers", "Number", "Proportion"))
 ```
 
 We randomized\index{randomization} with favorite color only. But we should also find that we took dog or cat preferences along at the same time and will have a "representative" share of people who prefer dogs to cats. We can look at our dataset (@tbl-dogstocats). 
@@ -204,16 +203,15 @@ sample |>
   count(group, prefers_dogs) |>
   mutate(prop = n / sum(n),
          .by = group) |>
-  kable(
-    col.names = c(
+  tt() |> 
+  style_tt(j = 1:4, align = "llrr") |> 
+  format_tt(digits = 2, num_mark_big = ",", num_fmt = "decimal") |> 
+  setNames(c(
       "Group",
       "Prefers dogs to cats",
       "Number",
       "Proportion"
-    ),
-    digits = 2,
-    format.args = list(big.mark = ",")
-  )
+    ))
 ```
 
 It is exciting to have a representative\index{representative sample} share on "unobservables". (In this case, we do "observe" them---to illustrate the point---but we did not select on them). We get this because the variables were correlated. But it will break down in several ways that we will discuss. It also assumes large enough groups. For instance, if we considered specific dog breeds, instead of dogs as an entity, we may not find ourselves in this situation. To check that the two groups are the same, we look to see if we can identify a difference between the two groups based on observables, theory, experience, and expert opinion. In this case we looked at the mean, but we could look at other aspects as well. 
@@ -293,13 +291,13 @@ ate_example |>
 ate_example |>
   summarise(mean = mean(outcome),
             .by = treated) |> 
-  kable(
-    col.names = c(
+  tt() |> 
+  style_tt(j = 1:2, align = "lr") |> 
+  format_tt(digits = 2, num_fmt = "decimal") |> 
+  setNames(c(
       "Was treated?",
       "Average effect"
-    ),
-    digits = 2
-  )
+    ))
 ```
 
 Unfortunately, there is often a difference between simulated data and reality.\index{experiment!challenges} For instance, an experiment cannot run for too long otherwise people may be treated many times or become inured to the treatment; but it cannot be too short otherwise we cannot measure longer-term outcomes. We cannot have a "representative" sample across every facet of a population, but if not, then the treatment and control may be different. Practical difficulties may make it difficult to follow up with certain groups and so we end up with a biased collection. Some questions to explore when working with real experimental data include:\index{experiment!threats to validity} 
@@ -854,10 +852,10 @@ We could also consider a cross-tab (@tbl-datasummaryupworthy).
 question_or_not |> 
   summarise(mean = mean(ave_clicks),
             .by = asks_question) |> 
-  kable(
-    col.names = c("Asks a question?", "Mean clicks"),
-    digits = 0
-  )
+  tt() |> 
+  style_tt(j = 1:2, align = "lr") |> 
+  format_tt(digits = 0, num_fmt = "decimal") |> 
+  setNames(c("Asks a question?", "Mean clicks"))
 ```
 
 We find that in general, having a question in the headline may slightly decrease the number of clicks on a headline, although if there is an effect it does not appear to be very large (@fig-upworthy).\index{text!analysis of headlines}
@@ -1092,7 +1090,17 @@ netflix_data <-
     c. The differences between respondents and nonrespondents.
     d.  The rate at which respondents drop out before completing the survey.
 
-### Activity {.unnumbered}
+### Class activities {.unnumbered}
+
+
+- Use the [starter folder](https://github.com/RohanAlexander/starter_folder) and create a new repo. Add a link to the GitHub repo in the class's shared Google Doc.
+- Consider Fisher's tea tasting experiment. First, pretend that you had the results of a handful of tea tasting experiments each conducted separately. Sketch the table of data and a graph that you might make with the results. Then simulate these. Then in a small group, do the experiment (this will be more difficult than you think). Add your group's results to those of the whole class, and then make a graph.
+- Follow @sec-reproducible-workflows to build a quick personal website and deploy it using GitHub Pages. 
+- Build another website, but this time add Google Analytics. Deploy it using Netlify. Change some aspect of the website, add a different tracker, and push it to a new branch. Then use Netlify to conduct an A/B test.
+- *Paper review:* With reference to @Hammond2022, please discuss experimental design, informed consent and equipoise. Please write at least two pages.
+
+
+### Task {.unnumbered}
 
 Please consider the [Special Virtual Issue on Nonresponse Rates and Nonresponse Adjustments](https://academic.oup.com/jssam/pages/special-virtual-issue-on-nonresponse-rates-and-nonresponse-adjustments) of the *Journal of Survey Statistics and Methodology*. Focus on one aspect of the editorial, and with reference to relevant literature, please discuss it in at least two pages. Use Quarto, and include an appropriate title, author, date, link to a GitHub repo, and citations. Submit a PDF.
 
