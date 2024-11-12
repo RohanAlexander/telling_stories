@@ -34,6 +34,8 @@ Then we can use `uv` in that Terminal to install Python: `uv python install`.
 
 ## Getting started
 
+### Project set-up
+
 We are going to get started with an example that downloads some data from Open Data Toronto. To start, we need to create a project, which will allow all our code to be self-contained. 
 
 Open VS Code and open a new Terminal: "Terminal" -> "New Terminal". Then use Unix shell commands to navigate to where you want to create your folder. For instance, use `ls` to list all the folders in the current directory, then move to one using `cd` and then the name of the folder. If you need to go back one level then use `..`. 
@@ -77,7 +79,7 @@ We can then modify `hello.py` to use `numpy` to simulate from the Normal distrib
 import numpy as np
 
 def main():
-    np.random.seed(854)
+    np.random.seed(853)
 
     mu, sigma = 0, 1
     sample_sizes = [10, 100, 1000, 10000]
@@ -97,6 +99,87 @@ if __name__ == "__main__":
 
 After we have modified and saved `hello.py` we can run it with `uv run` in exactly the same way as before.
 
+At this point we should close VS Code. We want to re-open it to make sure that our project environment is working as it needs to. In VS Code, a project is a self-contained folder. You can open a folder with "File" -> "Open Folder..." and then select the relevant folder, in this case "shelter_usage". You should then be able to re-run `uv run hello.py` and it should work.
+
+### Simulating data
+
+We would like to more thoroughly simulate the dataset that we are interested in. We first used this dataset in @sec-fire-hose, but as a reminder, for each day, for each shelter, there is a number of people that used the shelter. So the dataset that we want to simulate is something like @fig-python_torontohomeless-data and we are wanting to create a table of average daily number of occupied beds each month, along the lines of @fig-python_torontohomeless-table.
+
+::: {#fig-python_torontohomeless layout-ncol="2"}
+![Quick sketch of a dataset](figures/B-raw_data.jpeg){#fig-python_torontohomeless-data width="50%"}
+
+![Quick sketch of a table of the average number of beds occupied each month](figures/B-by_month.jpeg){#fig-python_torontohomeless-table width="50%"}
+
+Sketches of a dataset and table related shelter usage in Toronto
+:::
+
+We will use `polars` to provide a dataframe to store our simulated results, so we should add this to our environment with `uv add`.
+
+```{bash}
+#| eval: false
+#| echo: true
+
+uv add polars
+```
+
+Create a new Python file called `00-simulate_data.py`. 
+
+```{python}
+#| eval: false
+#| echo: true
+#| warning: false
+#| message: false
+
+#### Preamble ####
+# Purpose: Simulates a dataset of the number of people in a bed, in each shelter, on each day.
+# Author: Rohan Alexander
+# Date: 12 November 2024
+# Contact: rohan.alexander@utoronto.ca
+# License: MIT
+# Pre-requisites:
+# - Add `polars`: uv add polars
+# - Add `numpy`: uv add numpy
+# - Add `datetime`: uv add datetime
+
+
+#### Workspace setup ####
+import polars as pl
+import numpy as np
+from datetime import date
+
+rng = np.random.default_rng(seed=853)
+
+
+#### Simulate data ####
+# Simulate 10 shelters and some set capacity
+shelters_df = pl.DataFrame(
+    {
+        "Shelters": [f"Shelter {i}" for i in range(1, 11)],
+        "Capacity": rng.integers(low=10, high=100, size=10),
+    }
+)
+
+# Create data frame of dates
+dates = pl.date_range(
+    start=date(2024, 1, 1), end=date(2024, 12, 31), interval="1d", eager=True
+).alias("Dates")
+
+# Convert dates into a data frame
+dates_df = pl.DataFrame(dates)
+
+# Combine dates and shelters
+data = dates_df.join(shelters_df, how="cross")
+
+# Add usage as a Poisson draw
+poisson_draw = rng.poisson(lam=data["Capacity"])
+usage = np.minimum(poisson_draw, data["Capacity"])
+
+data = data.with_columns([pl.Series("Usage", usage)])
+
+print(data)
+```
+
+
 Write tests
 
 Download data
@@ -108,6 +191,8 @@ Manipulate the data
 Make a graph
 
 Add it all into Quarto
+
+Add GitHub to VS code. Why environments.
 
 
 
