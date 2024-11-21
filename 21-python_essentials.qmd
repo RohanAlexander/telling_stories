@@ -189,17 +189,278 @@ usage = np.minimum(poisson_draw, data["Capacity"])
 
 data = data.with_columns([pl.Series("Usage", usage)])
 
-print(data)
+data.write_parquet("simulated_data.parquet")
 ```
 
 
-Write tests
+We would like to write tests based on this simulated data that we will then apply to our real data. We use `pydantic` to do this and so we should add this to our environment with `uv add`.
+
+```{bash}
+#| eval: false
+#| echo: true
+
+uv add pydantic
+```
+
+Create a new Python file called `00-test_simulated_data.py`. The first step is to define a subclass ``ShelterData` of `BaseModel` which comes from `pydantic`. 
+
+```{python}
+#| eval: false
+#| echo: true
+#| warning: false
+#| message: false
+
+from pydantic import BaseModel, Field, ValidationError, field_validator
+from datetime import date
+
+# Define the Pydantic model
+class ShelterData(BaseModel):
+    Dates: date  # Validates date format (e.g., 'YYYY-MM-DD')
+    Shelters: str  # Must be a string
+    Capacity: int = Field(..., ge=0)  # Must be a non-negative integer
+    Usage: int = Field(..., ge=0)  # Must be non-negative
+
+    # Add a field validator for usage to ensure it does not exceed capacity
+    @field_validator("Usage")
+    def check_usage_not_exceed_capacity(cls, usage, info):
+        capacity = info.data.get("Capacity")
+        if capacity is not None and usage > capacity:
+            raise ValueError(f"Usage ({usage}) exceeds capacity ({capacity}).")
+        return usage
+```
+
+We are interested in testing that dates are valid, shelters have the correct type, and that capacity and usage are both non-negative integers. One additional wrinkle is that usage should not exceed capacity. To write a test for that we use a `field_validator`.
+
+We can then import our simulated dataset and test it.
+
+```{python}
+#| eval: false
+#| echo: true
+#| warning: false
+#| message: false
+
+import polars as pl
+
+df = pl.read_parquet("simulated_data.parquet")
+
+# Convert Polars DataFrame to a list of dictionaries for validation
+data_dicts = df.to_dicts()
+
+# Validate the dataset in batches
+validated_data = []
+errors = []
+
+# Batch validation
+for i, row in enumerate(data_dicts):
+    try:
+        validated_row = ShelterData(**row)  # Validate each row
+        validated_data.append(validated_row)
+    except ValidationError as e:
+        errors.append((i, e))
+
+# Convert validated data back to a Polars DataFrame
+validated_df = pl.DataFrame([row.dict() for row in validated_data])
+
+# Display results
+print("Validated Rows:")
+print(validated_df)
+
+if errors:
+    print("\nErrors:")
+    for i, error in errors:
+        print(f"Row {i}: {error}")
+```
+
+To see what would have happened if there were an error we can consider a smaller dataset that contains two errors: one poorly formatted date and one situation where usage is above capacity.
+
+```{python}
+#| eval: false
+#| echo: true
+#| warning: false
+#| message: false
+
+import polars as pl
+from pydantic import BaseModel, Field, ValidationError, field_validator
+from datetime import date
+
+# Define the Pydantic model
+class ShelterData(BaseModel):
+    Dates: date  # Validates date format (e.g., 'YYYY-MM-DD')
+    Shelters: str  # Must be a string
+    Capacity: int = Field(..., ge=0)  # Must be a non-negative integer
+    Usage: int = Field(..., ge=0)  # Must be non-negative
+
+    # Add a field validator for Usage to ensure it does not exceed Capacity
+    @field_validator("Usage")
+    def check_usage_not_exceed_capacity(cls, usage, info):
+        capacity = info.data.get("Capacity")
+        if capacity is not None and usage > capacity:
+            raise ValueError(f"Usage ({usage}) cannot exceed Capacity ({capacity}).")
+        return usage
+
+# Define the dataset
+df = [
+    {"Dates": "2024-01-01", "Shelters": "Shelter 1", "Capacity": 23, "Usage": 22},
+    {"Dates": "rohan", "Shelters": "Shelter 2", "Capacity": 62, "Usage": 62},
+    {"Dates": "2024-01-01", "Shelters": "Shelter 3", "Capacity": 93, "Usage": 88},
+    # Add invalid row for testing
+    {"Dates": "2024-01-01", "Shelters": "Shelter 4", "Capacity": 50, "Usage": 55},
+]
+
+# Validate the dataset in batches
+validated_data = []
+errors = []
+
+# Batch validation
+for i, row in enumerate(df):
+    try:
+        validated_row = ShelterData(**row)  # Validate each row
+        validated_data.append(validated_row)
+    except ValidationError as e:
+        errors.append((i, e))
+
+# Convert validated data back to a Polars DataFrame
+validated_df = pl.DataFrame([row.dict() for row in validated_data])
+
+# Display results
+print("Validated Rows:")
+print(validated_df)
+
+if errors:
+    print("\nErrors:")
+    for i, error in errors:
+        print(f"Row {i}: {error}")
+
+```
+
+We get the following message:
+
+```
+Errors:
+Row 1: 1 validation error for ShelterData
+Dates
+  Input should be a valid date or datetime, input is too short [type=date_from_datetime_parsing, input_value='rohan', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.9/v/date_from_datetime_parsing
+Row 3: 1 validation error for ShelterData
+Usage
+  Value error, Usage (55) cannot exceed Capacity (50). [type=value_error, input_value=55, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.9/v/value_error
+```
+
 
 ### Acquire
 
-Download data
+Using the same source as before: https://open.toronto.ca/dataset/daily-shelter-overnight-service-occupancy-capacity/
 
-Apply tests
+
+```{python}
+#| eval: false
+#| echo: true
+#| warning: false
+#| message: false
+
+import polars as pl
+
+# URL of the CSV file
+url = "https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/21c83b32-d5a8-4106-a54f-010dbe49f6f2/resource/ffd20867-6e3c-4074-8427-d63810edf231/download/Daily%20shelter%20overnight%20occupancy.csv"
+
+# Read the CSV file into a Polars DataFrame
+df = pl.read_csv(url)
+
+# Save the raw data
+df.write_parquet("shelter_usage.parquet")
+```
+
+
+We are likely only interested in a few columns and only rows where there are data.
+
+```{python}
+#| eval: false
+#| echo: true
+#| warning: false
+#| message: false
+
+import polars as pl
+
+df = pl.read_parquet("shelter_usage.parquet")
+
+# Select specific columns
+selected_columns = ["OCCUPANCY_DATE", "SHELTER_ID", "OCCUPIED_BEDS", "CAPACITY_ACTUAL_BED"]
+
+selected_df = df.select(selected_columns)
+
+# Filter to only rows that have data
+filtered_df = selected_df.filter(df["OCCUPIED_BEDS"].is_not_null())
+
+print(filtered_df.head())
+
+renamed_df = filtered_df.rename({"OCCUPANCY_DATE": "date",
+                                 "SHELTER_ID": "Shelters",
+                                 "CAPACITY_ACTUAL_BED": "Capacity",
+                                 "OCCUPIED_BEDS": "Usage"
+                                 })
+
+print(renamed_df.head())
+
+renamed_df.write_parquet("cleaned_shelter_usage.parquet")
+```
+
+We may then want to apply the tests to the real dataset
+
+```{python}
+#| eval: false
+#| echo: true
+#| warning: false
+#| message: false
+
+import polars as pl
+from pydantic import BaseModel, Field, ValidationError, field_validator
+from datetime import date
+
+# Define the Pydantic model
+class ShelterData(BaseModel):
+    Dates: date  # Validates date format (e.g., 'YYYY-MM-DD')
+    Shelters: str  # Must be a string
+    Capacity: int = Field(..., ge=0)  # Must be a non-negative integer
+    Usage: int = Field(..., ge=0)  # Must be non-negative
+
+    # Add a field validator for Usage to ensure it does not exceed Capacity
+    @field_validator("Usage")
+    def check_usage_not_exceed_capacity(cls, usage, info):
+        capacity = info.data.get("Capacity")
+        if capacity is not None and usage > capacity:
+            raise ValueError(f"Usage ({usage}) cannot exceed Capacity ({capacity}).")
+        return usage
+
+df = pl.read_parquet("cleaned_shelter_usage.parquet")
+
+# Convert Polars DataFrame to a list of dictionaries for validation
+data_dicts = df.to_dicts()
+
+# Validate the dataset in batches
+validated_data = []
+errors = []
+
+# Batch validation
+for i, row in enumerate(data_dicts):
+    try:
+        validated_row = ShelterData(**row)  # Validate each row
+        validated_data.append(validated_row)
+    except ValidationError as e:
+        errors.append((i, e))
+
+# Convert validated data back to a Polars DataFrame
+validated_df = pl.DataFrame([row.dict() for row in validated_data])
+
+# Display results
+print("Validated Rows:")
+print(validated_df)
+
+if errors:
+    print("\nErrors:")
+    for i, error in errors:
+        print(f"Row {i}: {error}")
+```
 
 ### Explore
 
@@ -212,6 +473,24 @@ Manipulate the data
 #| message: false
 
 import polars as pl
+
+df = pl.read_parquet("cleaned_shelter_usage.parquet")
+
+# Convert the date column to datetime and rename it for clarity
+df = df.with_columns(pl.col("date").str.strptime(pl.Date, "%Y-%m-%d").alias("date"))
+
+# Group by "Dates" and calculate total "Capacity" and "Usage"
+aggregated_df = (
+    df.group_by("date")
+    .agg([
+        pl.col("Capacity").sum().alias("Total_Capacity"),
+        pl.col("Usage").sum().alias("Total_Usage")
+    ])
+    .sort("date")  # Sort the results by date
+)
+
+# Display the aggregated DataFrame
+print(aggregated_df)
 ```
 
 
@@ -223,17 +502,71 @@ Make a graph
 #| warning: false
 #| message: false
 
+import polars as pl
+import seaborn as sns
 import matplotlib.pyplot as plt
+import pandas as pd
+import matplotlib.dates as mdates
+
+# Read the Polars DataFrame from a Parquet file
+df = pl.read_parquet("analysis_data.parquet")
+
+# Ensure the 'date' column is of datetime type in Polars
+df = df.with_columns([
+    pl.col('date').cast(pl.Date)
+])
+
+# Select the relevant columns and reshape the DataFrame
+df_melted = df.select(["date", "Total_Capacity", "Total_Usage"]).melt(
+    id_vars="date",
+    variable_name="Metric",
+    value_name="Value"
+)
+
+# Convert Polars DataFrame to a Pandas DataFrame for Seaborn
+df_melted_pd = df_melted.to_pandas()
+
+# Ensure 'date' column is datetime in Pandas
+df_melted_pd['date'] = pd.to_datetime(df_melted_pd['date'])
+
+# Set the plotting style
+sns.set_theme(style="whitegrid")
+
+# Create the plot
+plt.figure(figsize=(12, 6))
+sns.lineplot(
+    data=df_melted_pd,
+    x="date",
+    y="Value",
+    hue="Metric",
+    linewidth=2.5
+)
+
+# Format the x-axis to show dates nicely
+plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+
+# Rotate x-axis labels for better readability
+plt.xticks(rotation=45)
+
+# Add labels and title
+plt.xlabel("Date")
+plt.ylabel("Values")
+plt.title("Total Capacity and Usage Over Time")
+
+# Adjust layout to prevent clipping of tick-labels
+plt.tight_layout()
+
+# Display the plot
+plt.show()
 ```
 
 
 ### Share
 
-Add it all into Quarto
+One nice aspect is that we can use Python in a Quarto document. To do this we need to add it to VS Code by installing the Quarto extension from [here](https://marketplace.visualstudio.com/items?itemName=quarto.quarto). You can render a document by running `quarto preview` in the terminal.
 
-Add GitHub to VS code. Why environments.
-
-
+VS Code is built by Microsoft which also owns GitHub. So we can add our account to VS Code by going to accounts and then signing in.
 
 ## Python
 
